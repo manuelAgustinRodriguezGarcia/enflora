@@ -1,0 +1,155 @@
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+
+  &__olvido {
+    align-self: flex-end;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-body-small);
+    font-weight: 500;
+    line-height: 1.3;
+
+    &:hover:not(:disabled) {
+      background: transparent;
+      color: var(--color-primary);
+    }
+  }
+
+  &__enviar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    width: 100%;
+    height: 48px;
+    padding: 0 20px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #22553a 0%, #0f392a 100%);
+    color: #fff;
+    font-weight: 600;
+    font-synthesis: none;
+    line-height: 1;
+    transition: background 180ms ease, transform 180ms ease;
+
+    svg {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    svg.formulario__carga {
+      position: static;
+      animation: girar 0.7s linear infinite;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(180deg, #1f4e36 0%, #0e3527 100%);
+      font-weight: 600;
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      &:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+    }
+  }
+
+  &__campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text);
+
+    &--falta input {
+      border-color: var(--color-error);
+    }
+  }
+
+  &__error {
+    color: var(--color-error);
+  }
+
+  &__clave {
+    position: relative;
+    display: flex;
+
+    input {
+      width: 100%;
+      padding-right: 3rem;
+    }
+
+    button {
+      position: absolute;
+      top: 0;
+      right: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      line-height: 0;
+      background: transparent;
+      color: var(--color-text-secondary);
+
+      &:hover:not(:disabled) {
+        background: transparent;
+        color: var(--color-primary);
+      }
+    }
+  }
+}
+
+button {
+  align-self: flex-start;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+input,
+select {
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+}

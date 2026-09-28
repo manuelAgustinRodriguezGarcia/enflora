@@ -1,0 +1,51 @@
+:root {
+  --brand-dark: #0B3D2A;
+  --brand-dark-700: #18543B;
+  --brand-medium: #397258;
+  --brand-accent: #A4C85B;
+  --brand-accent-hover: #94B452;
+  --brand-accent-light: #C9DE94;
+  --background: #F5F8EF;
+  --background-neutral: #FAFBF8;
+  --surface: #FFFFFF;
+  --surface-green: #EAF2DC;
+  --text-primary: #1F3129;
+  --text-secondary: #68766F;
+  --border: #DCE5D8;
+
+  --color-primary: var(--brand-dark);
+  --color-primary-hover: var(--brand-dark-700);
+  --color-accent: var(--brand-accent);
+  --color-accent-hover: var(--brand-accent-hover);
+  --color-accent-light: var(--brand-accent-light);
+  --color-background: var(--background);
+  --color-background-neutral: var(--background-neutral);
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-green);
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+  --color-error: #9b2c2c;
+
+  --font-identidad: var(--font-fredoka), sans-serif;
+  --font-funcional: var(--font-inter), sans-serif;
+
+  --font-size-h1: 2.5rem;
+  --font-weight-h1: 600;
+  --font-size-h2: 1.875rem;
+  --font-weight-h2: 600;
+  --font-size-h3: 1.5rem;
+  --font-weight-h3: 500;
+  --font-size-card: 1.25rem;
+  --font-weight-card: 500;
+  --font-size-button: 1rem;
+  --font-weight-button: 500;
+  --font-size-body: 1rem;
+  --font-weight-body: 400;
+  --font-size-body-small: 0.875rem;
+  --font-size-label: 0.875rem;
+  --font-weight-label: 500;
+  --font-size-input: 1rem;
+  --line-height-body: 1.5;
+  --line-height-heading: 1.2;
+}

@@ -1,0 +1,81 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-funcional);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-identidad);
+  line-height: var(--line-height-heading);
+  color: var(--color-primary);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-h3);
+}
+
+h4,
+h5,
+h6 {
+  font-family: var(--font-funcional);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+
+  &:hover {
+    color: var(--color-primary-hover);
+  }
+}
+
+button {
+  font-family: var(--font-identidad);
+  font-size: var(--font-size-button);
+  font-weight: var(--font-weight-button);
+}
+
+input,
+select {
+  font-family: var(--font-funcional);
+  font-size: var(--font-size-input);
+  font-weight: var(--font-weight-body);
+  color: var(--color-text);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+.pagina {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
