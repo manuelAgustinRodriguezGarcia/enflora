@@ -18,7 +18,7 @@ export default async function PaginaInicio({ searchParams }) {
   if (!configuracionLista()) {
     return (
       <section className="auth">
-        <h1>Enflorar</h1>
+        <h1>Enflora</h1>
         <p>Falta la configuración de Supabase.</p>
       </section>
     );

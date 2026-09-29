@@ -20,7 +20,7 @@ const fredoka = Fredoka({
 });
 
 export const metadata = {
-  title: "Enflorar",
+  title: "Enflora",
   description: "Espacios de cultivo y plantas",
 };
 
@@ -32,7 +32,7 @@ export default async function Layout({ children }) {
       <body>
         <header className="encabezado">
           <Link className="encabezado__marca" href={usuario ? "/espacios" : "/entrar"}>
-            <img src="/enflorar-logo-apaisado.svg" alt="Enflorar" />
+            <img src="/enflora-logo-apaisado.svg" alt="Enflora" />
           </Link>
           {usuario ? (
             <div className="encabezado__acciones">
