@@ -1,7 +1,7 @@
 import { FormularioEntrar } from "@/componentes/formulario-entrar";
 import { MarcoAuth } from "@/componentes/marco-auth";
 
-export default async function PaginaEntrar({ searchParams }) {
+export default async function PaginaIngreso({ searchParams }) {
   const parametros = await searchParams;
   const aviso =
     parametros.correo === "pendiente"

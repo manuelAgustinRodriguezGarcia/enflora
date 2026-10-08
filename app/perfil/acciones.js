@@ -59,7 +59,7 @@ export async function guardarPerfil(_estado, formulario) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/entrar");
+    redirect("/ingreso");
   }
 
   if (!datos.perfilExiste) {

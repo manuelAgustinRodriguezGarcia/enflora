@@ -20,7 +20,7 @@ const fredoka = Fredoka({
 });
 
 export const metadata = {
-  title: "Enflorar",
+  title: "ENFLORA",
   description: "Espacios de cultivo y plantas",
 };
 
@@ -31,8 +31,8 @@ export default async function Layout({ children }) {
     <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
       <body>
         <header className="encabezado">
-          <Link className="encabezado__marca" href={usuario ? "/espacios" : "/entrar"}>
-            <img src="/enflorar-logo-apaisado.svg" alt="Enflorar" />
+          <Link className="encabezado__marca" href={usuario ? "/espacios" : "/ingreso"}>
+            <img src="/enflorar-logo-apaisado.svg" alt="ENFLORA" />
           </Link>
           {usuario ? (
             <div className="encabezado__acciones">

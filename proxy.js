@@ -52,14 +52,14 @@ export async function proxy(request) {
     return respuesta;
   }
 
-  const esRutaPublica = ruta === "/entrar" || ruta === "/registro";
+  const esRutaPublica = ruta === "/ingreso" || ruta === "/registro";
 
   if (ruta === "/") {
-    return redirigir(request, user ? "/espacios" : "/entrar", respuesta);
+    return redirigir(request, user ? "/espacios" : "/ingreso", respuesta);
   }
 
   if (!user && !esRutaPublica) {
-    return redirigir(request, "/entrar", respuesta);
+    return redirigir(request, "/ingreso", respuesta);
   }
 
   if (user && esRutaPublica) {

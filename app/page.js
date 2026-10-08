@@ -18,12 +18,12 @@ export default async function PaginaInicio({ searchParams }) {
   if (!configuracionLista()) {
     return (
       <section className="auth">
-        <h1>Enflorar</h1>
+        <h1>ENFLORA</h1>
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
   }
 
   const usuario = await obtenerUsuario();
-  redirect(usuario ? "/espacios" : "/entrar");
+  redirect(usuario ? "/espacios" : "/ingreso");
 }

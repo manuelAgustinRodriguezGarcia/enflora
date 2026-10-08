@@ -1,29 +1,8 @@
 import Link from "next/link";
-import { FormularioEspacio } from "@/componentes/formulario-espacio";
+import { EliminarEspacio } from "@/componentes/eliminar-espacio";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-
-function etiquetaTipo(tipo) {
-  if (tipo === "interior") return "Interior";
-  if (tipo === "exterior") return "Exterior";
-  return tipo;
-}
-
-function contarPlantas(plantas) {
-  const cantidades = {};
-
-  for (const planta of plantas) {
-    const actual = cantidades[planta.espacio_id] || 0;
-    cantidades[planta.espacio_id] = actual + 1;
-  }
-
-  return cantidades;
-}
-
-function textoCantidad(cantidad) {
-  if (cantidad === 1) return "1 planta";
-  return `${cantidad} plantas`;
-}
+import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
 
 export default async function PaginaEspacios() {
   if (!configuracionLista()) {
@@ -31,46 +10,68 @@ export default async function PaginaEspacios() {
       <section className="espacios">
         <h1>Espacios</h1>
         <p>Falta la configuración de Supabase.</p>
-        <FormularioEspacio />
       </section>
     );
   }
 
   const supabase = await crearClienteServidor();
-  const [espaciosRespuesta, plantasRespuesta] = await Promise.all([
-    supabase
-      .from("espacios")
-      .select("id, nombre, tipo")
-      .order("fecha_creacion", { ascending: true }),
-    supabase.from("plantas").select("espacio_id"),
+  const [espaciosRespuesta, unidadesRespuesta, plantasRespuesta] = await Promise.all([
+    supabase.from("espacios").select("id, nombre, tipo").order("fecha_creacion", { ascending: true }),
+    supabase.from("unidades_cultivo").select("id, espacio_id"),
+    supabase.from("plantas").select("unidad_cultivo_id"),
   ]);
 
-  if (espaciosRespuesta.error || plantasRespuesta.error) {
+  if (espaciosRespuesta.error || unidadesRespuesta.error || plantasRespuesta.error) {
     return <p>No se pudieron cargar los espacios.</p>;
   }
 
+  const unidades = unidadesRespuesta.data || [];
+  const espacioDeUnidad = {};
+  const unidadesPorEspacio = {};
+
+  for (const unidad of unidades) {
+    espacioDeUnidad[unidad.id] = unidad.espacio_id;
+    unidadesPorEspacio[unidad.espacio_id] = (unidadesPorEspacio[unidad.espacio_id] || 0) + 1;
+  }
+
+  const plantasPorEspacio = {};
+  for (const planta of plantasRespuesta.data || []) {
+    const espacioId = espacioDeUnidad[planta.unidad_cultivo_id];
+    if (!espacioId) continue;
+    plantasPorEspacio[espacioId] = (plantasPorEspacio[espacioId] || 0) + 1;
+  }
+
   const espacios = espaciosRespuesta.data || [];
-  const cantidades = contarPlantas(plantasRespuesta.data || []);
 
   return (
     <section className="espacios">
       <h1>Espacios</h1>
-      <FormularioEspacio />
+      <Link href="/espacios/nuevo">Crear espacio</Link>
       {espacios.length === 0 ? (
-        <p>Todavía no hay espacios.</p>
+        <p>No hay espacios de cultivo.</p>
       ) : (
         <ul className="lista">
-          {espacios.map((espacio) => (
-            <li key={espacio.id}>
-              <Link className="tarjeta" href={`/espacios/${espacio.id}`}>
-                <span className="tarjeta__nombre">{espacio.nombre}</span>
-                <span className="tarjeta__meta">{etiquetaTipo(espacio.tipo)}</span>
-                <span className="tarjeta__meta">
-                  {textoCantidad(cantidades[espacio.id] || 0)}
-                </span>
-              </Link>
-            </li>
-          ))}
+          {espacios.map((espacio) => {
+            const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
+            return (
+              <li className="tarjeta" key={espacio.id}>
+                <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
+                  <span className="tarjeta__nombre">{espacio.nombre}</span>
+                  <span className="tarjeta__meta">{etiquetaTipoEspacio(espacio.tipo)}</span>
+                  <span className="tarjeta__meta">
+                    {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
+                  </span>
+                  <span className="tarjeta__meta">
+                    {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
+                  </span>
+                </Link>
+                <div className="acciones">
+                  <Link href={`/espacios/${espacio.id}/editar`}>Editar</Link>
+                  <EliminarEspacio espacioId={espacio.id} />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

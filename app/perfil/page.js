@@ -14,7 +14,7 @@ export default async function PaginaPerfil() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/entrar");
+    redirect("/ingreso");
   }
 
   const { data: perfil, error } = await supabase

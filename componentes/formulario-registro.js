@@ -72,76 +72,82 @@ export function FormularioRegistro() {
               </span>
             </label>
           </div>
-          <label className="formulario__campo">
-            Teléfono
-            <span className="formulario__control">
-              <Phone className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
-              <input
-                name="telefono"
-                type="text"
-                inputMode="numeric"
-                autoComplete="tel"
-                placeholder="11 4200 4200"
-                defaultValue={estado?.telefono || ""}
-                onChange={dejarDigitos}
-              />
-            </span>
-          </label>
-          <label className={claseCampo("email")}>
-            Email
-            <span className="formulario__control">
-              <Mail className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
-              <input
-                name="email"
-                type="text"
-                autoComplete="email"
-                placeholder="flora.trico420@mail.com"
-                defaultValue={estado?.email || ""}
-                onChange={alEscribir("email")}
-              />
-            </span>
-          </label>
-          <label className={claseCampo("contrasena")}>
-            Contraseña
+          <div className="formulario__fila">
+            <label className="formulario__campo">
+              Teléfono
+              <span className="formulario__control">
+                <Phone className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
+                <input
+                  name="telefono"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  placeholder="11 4200 4200"
+                  defaultValue={estado?.telefono || ""}
+                  onChange={dejarDigitos}
+                />
+              </span>
+            </label>
+            <label className={claseCampo("email")}>
+              Email
+              <span className="formulario__control">
+                <Mail className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
+                <input
+                  name="email"
+                  type="text"
+                  autoComplete="email"
+                  placeholder="flora.trico420@mail.com"
+                  defaultValue={estado?.email || ""}
+                  onChange={alEscribir("email")}
+                />
+              </span>
+            </label>
+          </div>
+          <div className="formulario__claves">
+            <div className="formulario__fila">
+              <label className={claseCampo("contrasena")}>
+                Contraseña
+                <span className="formulario__clave">
+                  <LockKeyhole className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
+                  <input
+                    name="contrasena"
+                    type={tipoClave}
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    onChange={alEscribir("contrasena")}
+                  />
+                  <button
+                    type="button"
+                    aria-label={visibles ? "Ocultar contraseñas" : "Mostrar contraseñas"}
+                    aria-pressed={visibles}
+                    onClick={() => setVisibles((valor) => !valor)}
+                  >
+                    {visibles ? (
+                      <EyeOff size={20} strokeWidth={2} aria-hidden="true" />
+                    ) : (
+                      <Eye size={20} strokeWidth={2} aria-hidden="true" />
+                    )}
+                  </button>
+                </span>
+              </label>
+              <label className={claseCampo("confirmar_contrasena")}>
+                Confirmar contraseña
+                <span className="formulario__control">
+                  <LockKeyhole className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
+                  <input
+                    name="confirmar_contrasena"
+                    type={tipoClave}
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    onChange={alEscribir("confirmar_contrasena")}
+                  />
+                </span>
+              </label>
+            </div>
             <ul className="auth__requisitos">
-              <li>Debe contener minúscula, mayúscula y un número.</li>
+              <li>Mínimo 8 caracteres, debe contener minúscula, mayúscula y un número.</li>
             </ul>
-            <span className="formulario__clave">
-              <LockKeyhole className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
-              <input
-                name="contrasena"
-                type={tipoClave}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                onChange={alEscribir("contrasena")}
-              />
-              <button
-                type="button"
-                aria-label={visibles ? "Ocultar contraseñas" : "Mostrar contraseñas"}
-                aria-pressed={visibles}
-                onClick={() => setVisibles((valor) => !valor)}
-              >
-                {visibles ? (
-                  <EyeOff size={20} strokeWidth={2} aria-hidden="true" />
-                ) : (
-                  <Eye size={20} strokeWidth={2} aria-hidden="true" />
-                )}
-              </button>
-            </span>
-          </label>
-          <label className={claseCampo("confirmar_contrasena")}>
-            Confirmar contraseña
-            <span className="formulario__control">
-              <LockKeyhole className="formulario__icono" size={20} strokeWidth={2} aria-hidden="true" />
-              <input
-                name="confirmar_contrasena"
-                type={tipoClave}
-                autoComplete="new-password"
-                placeholder="••••••••"
-                onChange={alEscribir("confirmar_contrasena")}
-              />
-            </span>
-          </label>
+          </div>
           <button
             className="formulario__enviar"
             type="submit"
@@ -160,7 +166,7 @@ export function FormularioRegistro() {
           </button>
         </form>
         <p className="auth__alta">
-          Ya tenés una cuenta? <Link href="/entrar">Iniciá sesión</Link>
+          Ya tenés una cuenta? <Link href="/ingreso">Iniciá sesión</Link>
         </p>
       </section>
       {estado?.error ? (

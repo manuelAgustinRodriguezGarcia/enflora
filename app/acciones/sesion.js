@@ -192,7 +192,7 @@ export async function registrar(_estado, formulario) {
   }
 
   if (!data.session) {
-    redirect("/entrar?correo=pendiente");
+    redirect("/ingreso?correo=pendiente");
   }
 
   redirect("/espacios");
@@ -204,5 +204,5 @@ export async function salir() {
     await supabase.auth.signOut();
   }
 
-  redirect("/entrar");
+  redirect("/ingreso");
 }

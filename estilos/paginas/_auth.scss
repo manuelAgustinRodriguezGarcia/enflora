@@ -111,6 +111,12 @@
       gap: 0.75rem;
     }
 
+    .formulario__claves {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
     .auth__requisitos {
       margin: 0;
       padding-left: 0;
@@ -281,7 +287,10 @@
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
-    padding: 6vh 7vw;
+    height: calc(100dvh - 4.5rem);
+    min-height: 0;
+    padding: 1.5rem 7vw;
+    overflow: hidden;
 
     .marco-auth__panel {
       width: 100%;
@@ -292,6 +301,14 @@
       padding: 2.25rem 1.75rem;
       overflow: visible;
       border-radius: 28px;
+    }
+
+    &--registro .marco-auth__panel {
+      max-width: 600px;
+    }
+
+    &--registro .marco-auth__contenido {
+      width: 100%;
     }
 
     .auth__aviso {

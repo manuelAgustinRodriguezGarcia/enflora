@@ -8,14 +8,14 @@ export async function GET(request) {
   const token = url.searchParams.get("token_hash");
   const tipo = url.searchParams.get("type");
   const exito = new URL("/correo-validado", url.origin);
-  const entrar = new URL("/entrar", url.origin);
+  const ingreso = new URL("/ingreso", url.origin);
 
   if (!codigo && !token) {
-    return NextResponse.redirect(entrar);
+    return NextResponse.redirect(ingreso);
   }
 
   if (!configuracionLista()) {
-    return NextResponse.redirect(entrar);
+    return NextResponse.redirect(ingreso);
   }
 
   const supabase = await crearClienteServidor();
@@ -24,7 +24,7 @@ export async function GET(request) {
     : await supabase.auth.verifyOtp({ token_hash: token, type: tipo });
 
   if (resultado.error) {
-    return NextResponse.redirect(entrar);
+    return NextResponse.redirect(ingreso);
   }
 
   await supabase.auth.signOut();
