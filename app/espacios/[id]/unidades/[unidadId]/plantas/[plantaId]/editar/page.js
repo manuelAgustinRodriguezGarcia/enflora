@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormularioEditarPlanta } from "@/componentes/formulario-editar-planta";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -54,14 +55,16 @@ export default async function PaginaEditarPlanta({ params }) {
   const metodosPersonalizados = (metodosRespuesta.data || []).map((metodo) => metodo.nombre);
 
   return (
-    <section className="espacio">
-      <Link href={`/espacios/${id}/unidades/${unidadId}/plantas/${planta.id}`}>Volver a la planta</Link>
-      <h1>Editar planta</h1>
-      <FormularioEditarPlanta
-        planta={planta}
-        unidades={unidades}
-        metodosPersonalizados={metodosPersonalizados}
-      />
-    </section>
+    <TransicionVista>
+      <section className="espacio">
+        <Link href={`/espacios/${id}/unidades/${unidadId}/plantas/${planta.id}`}>Volver a la planta</Link>
+        <h1>Editar planta</h1>
+        <FormularioEditarPlanta
+          planta={planta}
+          unidades={unidades}
+          metodosPersonalizados={metodosPersonalizados}
+        />
+      </section>
+    </TransicionVista>
   );
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { esEtapa } from "@/lib/etapas";
+import { estadoPorEtapa, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -55,13 +55,16 @@ export async function crearCultivo(_estado, formulario) {
     for (const planta of plantas) {
       const metodo = String(planta?.metodo || "").trim();
       const etapa = String(planta?.etapa || "").trim();
+      const fechaInicioEtapa = String(planta?.fechaInicioEtapa || "").trim();
       if (metodo === "otro") return { error: "Escribí el nombre del método." };
-      if (!esEtapa(etapa)) return { error: "Seleccioná una etapa." };
+      const errorEtapa = validarEtapaInicial(etapa, fechaInicioEtapa);
+      if (errorEtapa) return { error: errorEtapa };
       filas.push({
         genetica: String(planta?.genetica || "").trim(),
         metodo,
         sustrato: String(planta?.sustrato || "").trim(),
         etapa,
+        fechaInicioEtapa,
       });
     }
 
@@ -103,6 +106,7 @@ export async function crearCultivo(_estado, formulario) {
 
   const porNumero = new Map(unidadesCreadas.map((unidad) => [unidad.numero, unidad.id]));
   const filasPlantas = [];
+  const origenes = [];
 
   plantasPorUnidad.forEach((plantas, indice) => {
     const unidadId = porNumero.get(indice + 1);
@@ -116,16 +120,37 @@ export async function crearCultivo(_estado, formulario) {
         metodo: planta.metodo || null,
         sustrato: planta.sustrato || null,
         etapa: planta.etapa,
-        estado: "activa",
+        estado: estadoPorEtapa(planta.etapa),
+      });
+      origenes.push({
+        unidad_cultivo_id: unidadId,
+        numero,
+        etapa: planta.etapa,
+        fechaInicioEtapa: planta.fechaInicioEtapa,
       });
     });
   });
 
-  const { error: errorPlantas } = await supabase.from("plantas").insert(filasPlantas);
+  const { data: plantasCreadas, error: errorPlantas } = await supabase
+    .from("plantas")
+    .insert(filasPlantas)
+    .select("id, unidad_cultivo_id, numero");
 
-  if (errorPlantas) {
+  if (errorPlantas || !plantasCreadas?.length) {
     await supabase.from("espacios").delete().eq("id", espacio.id);
     return { error: "No se pudieron crear las plantas." };
+  }
+
+  const historial = filasDeHistorial(plantasCreadas, origenes);
+  if (historial.some((fila) => !fila)) {
+    await supabase.from("espacios").delete().eq("id", espacio.id);
+    return { error: "No se pudo guardar la etapa." };
+  }
+
+  const { error: errorHistorial } = await supabase.from("historial_etapas").insert(historial);
+  if (errorHistorial) {
+    await supabase.from("espacios").delete().eq("id", espacio.id);
+    return { error: "No se pudo guardar la etapa." };
   }
 
   const errorMetodos = await guardarMetodosPersonalizados(

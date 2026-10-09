@@ -1,5 +1,6 @@
 "use client";
 
+import { Aparecer } from "@/componentes/aparecer";
 import { METODOS_BASE, metodoPreguntaSustrato, muestraSustrato } from "@/lib/metodos";
 
 export function SelectorMetodo({
@@ -34,7 +35,7 @@ export function SelectorMetodo({
           <option value="otro">OTRO</option>
         </select>
       </label>
-      {valor === "otro" ? (
+      <Aparecer visible={valor === "otro"}>
         <label className="formulario__campo">
           Nombre del método
           <input
@@ -43,8 +44,8 @@ export function SelectorMetodo({
             onChange={(evento) => onChangeNombre(evento.target.value)}
           />
         </label>
-      ) : null}
-      {pregunta ? (
+      </Aparecer>
+      <Aparecer visible={pregunta}>
         <fieldset className="opciones">
           <legend>¿Utiliza sustrato?</legend>
           <label>
@@ -64,8 +65,8 @@ export function SelectorMetodo({
             No
           </label>
         </fieldset>
-      ) : null}
-      {visible ? (
+      </Aparecer>
+      <Aparecer visible={visible}>
         <label className="formulario__campo">
           Sustrato
           <input
@@ -74,7 +75,7 @@ export function SelectorMetodo({
             onChange={(evento) => onChangeSustrato(evento.target.value)}
           />
         </label>
-      ) : null}
+      </Aparecer>
     </>
   );
 }

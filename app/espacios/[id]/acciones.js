@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { esEtapa } from "@/lib/etapas";
+import { estadoPorEtapa, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -47,13 +47,15 @@ export async function crearPlantas(_estado, formulario) {
 
   for (const item of lista) {
     const fechaInicio = String(item?.fechaInicio || "").trim();
+    const fechaInicioEtapa = String(item?.fechaInicioEtapa || "").trim();
     const metodo = String(item?.metodo || "").trim();
     const etapa = String(item?.etapa || "").trim();
 
     if (item?.metodoIncompleto || metodo === "otro") {
       return { error: "Escribí el nombre del método." };
     }
-    if (!esEtapa(etapa)) return { error: "Seleccioná una etapa." };
+    const errorEtapa = validarEtapaInicial(etapa, fechaInicioEtapa);
+    if (errorEtapa) return { error: errorEtapa };
     if (fechaInicio && !/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
       return { error: "La fecha de inicio no es válida." };
     }
@@ -65,6 +67,7 @@ export async function crearPlantas(_estado, formulario) {
       sustrato: String(item?.sustrato || "").trim(),
       etapa,
       fechaInicio,
+      fechaInicioEtapa,
     });
   }
 
@@ -99,8 +102,15 @@ export async function crearPlantas(_estado, formulario) {
     if (fila.numero > numero) numero = fila.numero;
   }
 
+  const origenes = [];
   const filas = plantas.map((planta) => {
     numero += 1;
+    origenes.push({
+      unidad_cultivo_id: unidadId,
+      numero,
+      etapa: planta.etapa,
+      fechaInicioEtapa: planta.fechaInicioEtapa,
+    });
     return {
       unidad_cultivo_id: unidadId,
       numero,
@@ -110,12 +120,27 @@ export async function crearPlantas(_estado, formulario) {
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
       fecha_inicio: planta.fechaInicio || null,
-      estado: "activa",
+      estado: estadoPorEtapa(planta.etapa),
     };
   });
 
-  const { error } = await supabase.from("plantas").insert(filas);
-  if (error) return { error: "No se pudieron crear las plantas." };
+  const { data: creadas, error } = await supabase
+    .from("plantas")
+    .insert(filas)
+    .select("id, unidad_cultivo_id, numero");
+  if (error || !creadas?.length) return { error: "No se pudieron crear las plantas." };
+
+  const historial = filasDeHistorial(creadas, origenes);
+  if (historial.some((fila) => !fila)) {
+    await supabase.from("plantas").delete().in("id", creadas.map((planta) => planta.id));
+    return { error: "No se pudo guardar la etapa." };
+  }
+
+  const { error: errorHistorial } = await supabase.from("historial_etapas").insert(historial);
+  if (errorHistorial) {
+    await supabase.from("plantas").delete().in("id", creadas.map((planta) => planta.id));
+    return { error: "No se pudo guardar la etapa." };
+  }
 
   revalidatePath("/espacios");
   revalidatePath(`/espacios/${unidad.espacio_id}`);
@@ -131,17 +156,15 @@ export async function editarPlanta(_estado, formulario) {
   const genetica = String(formulario.get("genetica") || "").trim();
   const metodo = String(formulario.get("metodo") || "").trim();
   const sustrato = String(formulario.get("sustrato") || "").trim();
-  const etapa = String(formulario.get("etapa") || "").trim();
   const fechaInicio = String(formulario.get("fecha_inicio") || "").trim();
   const estado = String(formulario.get("estado") || "").trim();
-  const datos = { nombre, genetica, metodo, sustrato, etapa, fechaInicio, estadoPlanta: estado, unidadId };
+  const datos = { nombre, genetica, metodo, sustrato, fechaInicio, estadoPlanta: estado, unidadId };
 
   if (!nombre) return { error: "El nombre de la planta es obligatorio.", ...datos };
   if (estado !== "activa" && estado !== "finalizada") {
     return { error: "El estado es obligatorio.", ...datos };
   }
   if (!unidadId) return { error: "Seleccioná una unidad.", ...datos };
-  if (!esEtapa(etapa) && etapa) return { error: "Seleccioná una etapa.", ...datos };
   if (fechaInicio && !/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
     return { error: "La fecha de inicio no es válida.", ...datos };
   }
@@ -202,7 +225,6 @@ export async function editarPlanta(_estado, formulario) {
       genetica: genetica || null,
       metodo: metodo || null,
       sustrato: sustrato || null,
-      etapa: etapa || null,
       fecha_inicio: fechaInicio || null,
       estado,
       unidad_cultivo_id: unidadId,
@@ -222,6 +244,56 @@ export async function editarPlanta(_estado, formulario) {
   revalidatePath(`/espacios/${unidad.espacio_id}`);
   revalidatePath(rutaUnidad(unidad.espacio_id, unidadId));
   redirect(`/espacios/${unidad.espacio_id}/unidades/${unidadId}/plantas/${plantaId}`);
+}
+
+function mensajeCambio(error) {
+  const texto = String(error?.message || "");
+  if (texto.includes("La fecha no puede ser anterior")) {
+    return "La fecha no puede ser anterior al inicio de la etapa actual.";
+  }
+  if (texto.includes("Seleccioná una etapa")) return "Seleccioná una etapa.";
+  if (texto.includes("La fecha de inicio no es válida")) return "La fecha de inicio no es válida.";
+  if (texto.includes("No se encontró la planta")) return "No se encontró la planta.";
+  return "No se pudo cambiar la etapa.";
+}
+
+export async function cambiarEtapa(_estado, formulario) {
+  const plantaId = String(formulario.get("planta_id") || "").trim();
+  const unidadId = String(formulario.get("unidad_id") || "").trim();
+  const espacioId = String(formulario.get("espacio_id") || "").trim();
+  const etapa = String(formulario.get("etapa") || "").trim();
+  const fecha = String(formulario.get("fecha_inicio") || "").trim();
+  const datos = { etapa, fechaInicio: fecha };
+
+  if (!plantaId || !unidadId || !espacioId) return { error: "No se encontró la planta.", ...datos };
+  const errorEtapa = validarEtapaInicial(etapa, fecha);
+  if (errorEtapa) return { error: errorEtapa, ...datos };
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error, ...datos };
+
+  const { data: planta } = await acceso.supabase
+    .from("plantas")
+    .select("id")
+    .eq("id", plantaId)
+    .eq("unidad_cultivo_id", unidadId)
+    .maybeSingle();
+
+  if (!planta) return { error: "No se encontró la planta.", ...datos };
+
+  const { error } = await acceso.supabase.rpc("cambiar_etapa_planta", {
+    p_planta_id: plantaId,
+    p_etapa: etapa,
+    p_fecha: fecha,
+  });
+
+  if (error) return { error: mensajeCambio(error), ...datos };
+
+  revalidatePath("/espacios");
+  revalidatePath(`/espacios/${espacioId}`);
+  revalidatePath(rutaUnidad(espacioId, unidadId));
+  revalidatePath(`/espacios/${espacioId}/unidades/${unidadId}/plantas/${plantaId}`);
+  redirect(`/espacios/${espacioId}/unidades/${unidadId}/plantas/${plantaId}`);
 }
 
 export async function eliminarPlanta(_estado, formulario) {
@@ -390,13 +462,16 @@ export async function agregarUnidad(_estado, formulario) {
   for (const planta of plantasEntrada) {
     const metodo = String(planta?.metodo || "").trim();
     const etapa = String(planta?.etapa || "").trim();
+    const fechaInicioEtapa = String(planta?.fechaInicioEtapa || "").trim();
     if (metodo === "otro") return { error: "Escribí el nombre del método." };
-    if (!esEtapa(etapa)) return { error: "Seleccioná una etapa." };
+    const errorEtapa = validarEtapaInicial(etapa, fechaInicioEtapa);
+    if (errorEtapa) return { error: errorEtapa };
     filas.push({
       genetica: String(planta?.genetica || "").trim(),
       metodo,
       sustrato: String(planta?.sustrato || "").trim(),
       etapa,
+      fechaInicioEtapa,
     });
   }
 
@@ -414,8 +489,15 @@ export async function agregarUnidad(_estado, formulario) {
 
   if (errorUnidad || !creada) return { error: "No se pudo crear la unidad." };
 
+  const origenes = [];
   const filasPlantas = filas.map((planta, posicion) => {
     const n = posicion + 1;
+    origenes.push({
+      unidad_cultivo_id: creada.id,
+      numero: n,
+      etapa: planta.etapa,
+      fechaInicioEtapa: planta.fechaInicioEtapa,
+    });
     return {
       unidad_cultivo_id: creada.id,
       numero: n,
@@ -424,14 +506,29 @@ export async function agregarUnidad(_estado, formulario) {
       metodo: planta.metodo || null,
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
-      estado: "activa",
+      estado: estadoPorEtapa(planta.etapa),
     };
   });
 
-  const { error: errorPlantas } = await supabase.from("plantas").insert(filasPlantas);
-  if (errorPlantas) {
+  const { data: plantasCreadas, error: errorPlantas } = await supabase
+    .from("plantas")
+    .insert(filasPlantas)
+    .select("id, unidad_cultivo_id, numero");
+  if (errorPlantas || !plantasCreadas?.length) {
     await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
     return { error: "No se pudieron crear las plantas." };
+  }
+
+  const historial = filasDeHistorial(plantasCreadas, origenes);
+  if (historial.some((fila) => !fila)) {
+    await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
+    return { error: "No se pudo guardar la etapa." };
+  }
+
+  const { error: errorHistorial } = await supabase.from("historial_etapas").insert(historial);
+  if (errorHistorial) {
+    await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
+    return { error: "No se pudo guardar la etapa." };
   }
 
   const errorMetodos = await guardarMetodosPersonalizados(

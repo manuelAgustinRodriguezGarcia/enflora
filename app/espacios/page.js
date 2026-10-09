@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
+import { ListaEntrada } from "@/componentes/lista-entrada";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
@@ -44,13 +47,14 @@ export default async function PaginaEspacios() {
   const espacios = espaciosRespuesta.data || [];
 
   return (
+    <TransicionVista>
     <section className="espacios">
       <h1>Espacios</h1>
-      <Link href="/espacios/nuevo">Crear espacio</Link>
+      <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
       {espacios.length === 0 ? (
         <p>No hay espacios de cultivo.</p>
       ) : (
-        <ul className="lista">
+        <ListaEntrada>
           {espacios.map((espacio) => {
             const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
             return (
@@ -72,8 +76,9 @@ export default async function PaginaEspacios() {
               </li>
             );
           })}
-        </ul>
+        </ListaEntrada>
       )}
     </section>
+    </TransicionVista>
   );
 }

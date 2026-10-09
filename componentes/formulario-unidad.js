@@ -2,6 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { editarUnidad } from "@/app/espacios/[id]/acciones";
+import { Aparecer } from "@/componentes/aparecer";
+import { Boton } from "@/componentes/boton";
 import { tiposDeUnidad } from "@/lib/unidades";
 
 export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
@@ -33,7 +35,7 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
           ))}
         </select>
       </label>
-      {tipo === "otro" ? (
+      <Aparecer visible={tipo === "otro"}>
         <label className="formulario__campo">
           Tipo de unidad
           <input
@@ -43,12 +45,11 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
             onChange={(evento) => setTipoPersonalizado(evento.target.value)}
           />
         </label>
-      ) : (
-        <input type="hidden" name="tipo_personalizado" value="" />
-      )}
-      <button type="submit" disabled={pendiente}>
+      </Aparecer>
+      {tipo === "otro" ? null : <input type="hidden" name="tipo_personalizado" value="" />}
+      <Boton type="submit" disabled={pendiente}>
         Guardar
-      </button>
+      </Boton>
     </form>
   );
 }

@@ -2,8 +2,10 @@
 
 import { useActionState, useState } from "react";
 import { crearPlantas } from "@/app/espacios/[id]/acciones";
+import { Aparecer } from "@/componentes/aparecer";
+import { Boton } from "@/componentes/boton";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
-import { ETAPAS } from "@/lib/etapas";
+import { ETAPAS, fechaHoy } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
 const MAXIMO = 100;
@@ -17,6 +19,7 @@ function plantaNueva(fechaInicio) {
     usaSustrato: "",
     sustrato: "",
     etapa: "",
+    fechaInicioEtapa: fechaHoy(),
     fechaInicio,
   };
 }
@@ -66,19 +69,29 @@ function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, onChange })
         onChangeSustrato={(valor) => onChange("sustrato", valor)}
         onChangeUsaSustrato={(valor) => onChange("usaSustrato", valor)}
       />
-      {mostrarEtapa ? (
-        <label className="formulario__campo">
-          Etapa
-          <select value={planta.etapa} onChange={(evento) => onChange("etapa", evento.target.value)}>
-            <option value="">Seleccionar</option>
-            {ETAPAS.map((etapa) => (
-              <option key={etapa.valor} value={etapa.valor}>
-                {etapa.etiqueta}
-              </option>
-            ))}
-          </select>
-        </label>
-      ) : null}
+      <Aparecer visible={mostrarEtapa}>
+        <div>
+          <label className="formulario__campo">
+            Etapa
+            <select value={planta.etapa} onChange={(evento) => onChange("etapa", evento.target.value)}>
+              <option value="">Seleccionar</option>
+              {ETAPAS.map((etapa) => (
+                <option key={etapa.valor} value={etapa.valor}>
+                  {etapa.etiqueta}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="formulario__campo">
+            Inicio de la etapa
+            <input
+              type="date"
+              value={planta.fechaInicioEtapa}
+              onChange={(evento) => onChange("fechaInicioEtapa", evento.target.value)}
+            />
+          </label>
+        </div>
+      </Aparecer>
       <label className="formulario__campo">
         Fecha de inicio
         <input
@@ -102,6 +115,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
     usaSustrato: "",
     sustrato: "",
     etapa: "",
+    fechaInicioEtapa: fechaHoy(),
   });
   const [plantas, setPlantas] = useState(() => [plantaNueva("")]);
   const varias = plantas.length > 1;
@@ -132,6 +146,8 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
               ? general.sustrato
               : "",
           etapa: etapaCompartida,
+          fechaInicioEtapa:
+            modoEtapa === "misma" ? general.fechaInicioEtapa || fechaHoy() : fechaHoy(),
         });
       }
       return [...actuales, ...extra];
@@ -241,8 +257,10 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
     setModoEtapa(nuevo);
     if (nuevo !== "misma") return;
     const etapa = general.etapa || valorDeLaPrimera(plantas, "etapa");
-    setGeneral((actual) => ({ ...actual, etapa }));
-    setPlantas((actuales) => actuales.map((planta) => ({ ...planta, etapa })));
+    const fechaInicioEtapa =
+      general.fechaInicioEtapa || valorDeLaPrimera(plantas, "fechaInicioEtapa") || fechaHoy();
+    setGeneral((actual) => ({ ...actual, etapa, fechaInicioEtapa }));
+    setPlantas((actuales) => actuales.map((planta) => ({ ...planta, etapa, fechaInicioEtapa })));
   }
 
   const carga = plantas.map((planta) => ({
@@ -252,6 +270,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
     metodoIncompleto: planta.metodo === "otro" && !planta.metodoNombre.trim(),
     sustrato: muestraSustrato(planta.metodo, planta.usaSustrato) ? planta.sustrato : "",
     etapa: planta.etapa,
+    fechaInicioEtapa: planta.fechaInicioEtapa,
     fechaInicio: planta.fechaInicio,
   }));
 
@@ -314,7 +333,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
             />
             Misma genética y método
           </label>
-          {usaGenetica(modo) ? (
+          <Aparecer visible={usaGenetica(modo)}>
             <label className="formulario__campo">
               Genética
               <input
@@ -323,8 +342,8 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
                 onChange={(evento) => aplicarCompartido("genetica", evento.target.value)}
               />
             </label>
-          ) : null}
-          {usaMetodo(modo) ? (
+          </Aparecer>
+          <Aparecer visible={usaMetodo(modo)}>
             <SelectorMetodo
               metodosPersonalizados={metodosPersonalizados}
               valor={general.metodo}
@@ -336,7 +355,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
               onChangeSustrato={(valor) => aplicarCompartido("sustrato", valor)}
               onChangeUsaSustrato={(valor) => cambiarUsoSustrato(valor)}
             />
-          ) : null}
+          </Aparecer>
           <label>
             <input
               type="radio"
@@ -353,22 +372,32 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
             />
             Personalizar por planta
           </label>
-          {modoEtapa === "misma" ? (
-            <label className="formulario__campo">
-              Etapa
-              <select
-                value={general.etapa}
-                onChange={(evento) => aplicarCompartido("etapa", evento.target.value)}
-              >
-                <option value="">Seleccionar</option>
-                {ETAPAS.map((etapa) => (
-                  <option key={etapa.valor} value={etapa.valor}>
-                    {etapa.etiqueta}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+          <Aparecer visible={modoEtapa === "misma"}>
+            <div>
+              <label className="formulario__campo">
+                Etapa
+                <select
+                  value={general.etapa}
+                  onChange={(evento) => aplicarCompartido("etapa", evento.target.value)}
+                >
+                  <option value="">Seleccionar</option>
+                  {ETAPAS.map((etapa) => (
+                    <option key={etapa.valor} value={etapa.valor}>
+                      {etapa.etiqueta}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="formulario__campo">
+                Inicio de la etapa
+                <input
+                  type="date"
+                  value={general.fechaInicioEtapa}
+                  onChange={(evento) => aplicarCompartido("fechaInicioEtapa", evento.target.value)}
+                />
+              </label>
+            </div>
+          </Aparecer>
         </fieldset>
       ) : null}
       {plantas.map((planta, indice) => {
@@ -385,9 +414,9 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
           </div>
         );
       })}
-      <button type="submit" disabled={pendiente}>
+      <Boton type="submit" disabled={pendiente}>
         {plantas.length === 1 ? "Crear 1 planta" : `Crear ${plantas.length} plantas`}
-      </button>
+      </Boton>
     </form>
   );
 }

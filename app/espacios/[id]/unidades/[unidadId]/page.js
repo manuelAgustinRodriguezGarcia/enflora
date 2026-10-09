@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ListaEntrada } from "@/componentes/lista-entrada";
 import { EliminarUnidad } from "@/componentes/eliminar-unidad";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { FormularioPlanta } from "@/componentes/formulario-planta";
 import { FormularioUnidad } from "@/componentes/formulario-unidad";
 import { etiquetaEtapa } from "@/lib/etapas";
@@ -69,6 +71,7 @@ export default async function PaginaUnidad({ params }) {
   const metodosPersonalizados = (metodosRespuesta.data || []).map((metodo) => metodo.nombre);
 
   return (
+    <TransicionVista>
     <section className="espacio">
       <Link href={`/espacios/${unidad.espacio_id}`}>Volver al espacio</Link>
       <h1>{unidad.nombre}</h1>
@@ -91,7 +94,7 @@ export default async function PaginaUnidad({ params }) {
       {lista.length === 0 ? (
         <p>No hay plantas en esta unidad.</p>
       ) : (
-        <ul className="lista">
+        <ListaEntrada>
           {lista.map((planta) => (
             <li key={planta.id}>
               <Link
@@ -113,8 +116,9 @@ export default async function PaginaUnidad({ params }) {
               </Link>
             </li>
           ))}
-        </ul>
+        </ListaEntrada>
       )}
     </section>
+    </TransicionVista>
   );
 }

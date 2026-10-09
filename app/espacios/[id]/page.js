@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
+import { ListaEntrada } from "@/componentes/lista-entrada";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { etiquetaTipoEspacio, etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
@@ -55,6 +58,7 @@ export default async function PaginaEspacio({ params }) {
   const total = Object.values(cantidades).reduce((suma, cantidad) => suma + cantidad, 0);
 
   return (
+    <TransicionVista>
     <section className="espacio">
       <Link href="/espacios">Volver a espacios</Link>
       <h1>{espacio.nombre}</h1>
@@ -68,7 +72,7 @@ export default async function PaginaEspacio({ params }) {
       {lista.length === 0 ? (
         <p>No hay unidades de cultivo.</p>
       ) : (
-        <ul className="lista">
+        <ListaEntrada>
           {lista.map((unidad) => (
             <li key={unidad.id}>
               <Link className="tarjeta" href={`/espacios/${espacio.id}/unidades/${unidad.id}`}>
@@ -80,11 +84,12 @@ export default async function PaginaEspacio({ params }) {
               </Link>
             </li>
           ))}
-        </ul>
+        </ListaEntrada>
       )}
-      <Link className="boton" href={`/espacios/${espacio.id}/unidades/nueva`}>
+      <EnlaceBoton className="boton" href={`/espacios/${espacio.id}/unidades/nueva`}>
         Agregar unidad
-      </Link>
+      </EnlaceBoton>
     </section>
+    </TransicionVista>
   );
 }

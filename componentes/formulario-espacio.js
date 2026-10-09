@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { editarEspacio } from "@/app/espacios/acciones";
+import { Boton } from "@/componentes/boton";
 
 export function FormularioEspacio({ espacio }) {
   const [estado, accion, pendiente] = useActionState(editarEspacio, null);
@@ -24,9 +25,9 @@ export function FormularioEspacio({ espacio }) {
           <option value="exterior">Exterior</option>
         </select>
       </label>
-      <button type="submit" disabled={pendiente}>
+      <Boton type="submit" disabled={pendiente}>
         Guardar
-      </button>
+      </Boton>
     </form>
   );
 }

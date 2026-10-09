@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FormularioEspacio } from "@/componentes/formulario-espacio";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -28,10 +29,12 @@ export default async function PaginaEditarEspacio({ params }) {
   }
 
   return (
-    <section className="espacio">
-      <Link href={`/espacios/${espacio.id}`}>Volver al espacio</Link>
-      <h1>Editar espacio</h1>
-      <FormularioEspacio espacio={espacio} />
-    </section>
+    <TransicionVista>
+      <section className="espacio">
+        <Link href={`/espacios/${espacio.id}`}>Volver al espacio</Link>
+        <h1>Editar espacio</h1>
+        <FormularioEspacio espacio={espacio} />
+      </section>
+    </TransicionVista>
   );
 }

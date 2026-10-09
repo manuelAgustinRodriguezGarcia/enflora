@@ -1,8 +1,12 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { agregarUnidad } from "@/app/espacios/[id]/acciones";
 import { crearCultivo } from "@/app/espacios/acciones";
+import { Aparecer, TextoCambio } from "@/componentes/aparecer";
+import { Boton } from "@/componentes/boton";
+import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
 import { ETAPAS } from "@/lib/etapas";
 import {
@@ -12,6 +16,7 @@ import {
   cambiarCantidadPlantas,
   cambiarCantidadUnidades,
   cambiarEtapaGeneral,
+  cambiarFechaEtapaGeneral,
   cambiarGeneral,
   cambiarModo,
   cambiarModoEtapa,
@@ -46,6 +51,7 @@ import {
   textoCantidad,
   tiposDeUnidad,
 } from "@/lib/unidades";
+import { toque, transicionRapida, transicionToque, variantesPaso } from "@/lib/animaciones";
 
 const MODOS = [
   {
@@ -115,6 +121,7 @@ function SelectorEtapa({ valor, onChange }) {
 export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null }) {
   const guardar = espacio ? agregarUnidad : crearCultivo;
   const [estado, setEstado] = useState(() => (espacio ? estadoInicialUnidad(espacio) : estadoInicial()));
+  const [sentido, setSentido] = useState(1);
   const [resultado, accion, pendiente] = useActionState(guardar, null);
 
   function aplicar(funcion, ...args) {
@@ -134,7 +141,13 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   });
 
   function seguir() {
+    setSentido(1);
     setEstado((actual) => (actual.confirmacion ? aplicarConfirmacion(actual) : continuar(actual)));
+  }
+
+  function retroceder(funcion, ...args) {
+    setSentido(-1);
+    aplicar(funcion, ...args);
   }
 
   return (
@@ -146,7 +159,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           return (
             <li key={paso.id}>
               {habilitado && !actual ? (
-                <button type="button" onClick={() => aplicar(irAVisible, paso.id)}>
+                <button type="button" onClick={() => retroceder(irAVisible, paso.id)}>
                   {indice + 1}. {paso.etiqueta}
                 </button>
               ) : (
@@ -184,21 +197,27 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                       <span>
                         {signo} {item.nombre}
                       </span>
-                      <span>{detalle}</span>
+                      <span>
+                        <TextoCambio>{detalle}</TextoCambio>
+                      </span>
                     </>
                   );
 
                   if (item.estado === "completada" && !estado.confirmacion) {
                     return (
-                      <li key={item.numero}>
-                        <button type="button" onClick={() => aplicar(abrirUnidad, indice)}>
+                      <motion.li layout key={item.numero} transition={transicionRapida}>
+                        <button type="button" onClick={() => retroceder(abrirUnidad, indice)}>
                           {contenido}
                         </button>
-                      </li>
+                      </motion.li>
                     );
                   }
 
-                  return <li key={item.numero}>{contenido}</li>;
+                  return (
+                    <motion.li layout key={item.numero} transition={transicionRapida}>
+                      {contenido}
+                    </motion.li>
+                  );
                 })}
               </ul>
             </>
@@ -206,15 +225,26 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         </aside>
       ) : null}
 
-      {estado.error ? <p className="formulario__error">{estado.error}</p> : null}
-      {resultado?.error && estado.paso === "resumen" ? (
-        <p className="formulario__error">{resultado.error}</p>
-      ) : null}
+      <Aparecer visible={Boolean(estado.error)}>
+        <p className="formulario__error">{estado.error}</p>
+      </Aparecer>
+      <Aparecer visible={Boolean(resultado?.error) && estado.paso === "resumen"}>
+        <p className="formulario__error">{resultado?.error}</p>
+      </Aparecer>
 
       {unidad && estado.paso !== "espacio" && estado.paso !== "tipo_unidad" && estado.paso !== "cantidad_unidades" && estado.paso !== "resumen" ? (
         <p className="asistente__actual">CONFIGURANDO: {unidad.nombre.trim().toUpperCase() || "UNIDAD"}</p>
       ) : null}
 
+      <AnimatePresence mode="wait" initial={false} custom={sentido}>
+      <motion.div
+        key={estado.paso}
+        custom={sentido}
+        variants={variantesPaso}
+        initial="entrar"
+        animate="centro"
+        exit="salir"
+      >
       {estado.paso === "espacio" ? (
         <div className="bloque">
           <label className="formulario__campo">
@@ -243,18 +273,20 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         <div className="bloque">
           <div className="eleccion">
             {tipos.map((tipo) => (
-              <button
+              <motion.button
                 key={tipo.valor}
                 type="button"
                 className={estado.tipoUnidad === tipo.valor ? "eleccion__activa" : undefined}
                 aria-pressed={estado.tipoUnidad === tipo.valor}
+                whileTap={toque}
+                transition={transicionToque}
                 onClick={() => aplicar(cambiarTipoUnidad, tipo.valor)}
               >
                 {tipo.etiqueta}
-              </button>
+              </motion.button>
             ))}
           </div>
-          {estado.tipoUnidad === "otro" ? (
+          <Aparecer visible={estado.tipoUnidad === "otro"}>
             <label className="formulario__campo">
               Tipo de unidad
               <input
@@ -263,7 +295,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 onChange={(evento) => aplicar(cambiarTipoPersonalizado, evento.target.value)}
               />
             </label>
-          ) : null}
+          </Aparecer>
         </div>
       ) : null}
 
@@ -305,21 +337,23 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           </p>
           <div className="eleccion eleccion--modos">
             {MODOS.map((modo) => (
-              <button
+              <motion.button
                 key={modo.valor}
                 type="button"
                 className={unidad.modo === modo.valor ? "eleccion__activa" : undefined}
                 aria-pressed={unidad.modo === modo.valor}
+                whileTap={toque}
+                transition={transicionToque}
                 onClick={() => aplicar(cambiarModo, modo.valor)}
               >
                 {modo.etiqueta}
-              </button>
+              </motion.button>
             ))}
           </div>
           <p className="eleccion__nota">
-            {MODOS.find((modo) => modo.valor === unidad.modo)?.descripcion}
+            <TextoCambio>{MODOS.find((modo) => modo.valor === unidad.modo)?.descripcion}</TextoCambio>
           </p>
-          {usaGenetica(unidad.modo) ? (
+          <Aparecer visible={usaGenetica(unidad.modo)}>
             <label className="formulario__campo">
               Genética
               <input
@@ -328,8 +362,8 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 onChange={(evento) => aplicar(cambiarGeneral, "genetica", evento.target.value)}
               />
             </label>
-          ) : null}
-          {usaMetodo(unidad.modo) ? (
+          </Aparecer>
+          <Aparecer visible={usaMetodo(unidad.modo)}>
             <SelectorMetodo
               metodosPersonalizados={metodos}
               valor={unidad.general.metodo}
@@ -341,7 +375,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               onChangeSustrato={(valor) => aplicar(cambiarGeneral, "sustrato", valor)}
               onChangeUsaSustrato={(valor) => aplicar(cambiarGeneral, "usaSustrato", valor)}
             />
-          ) : null}
+          </Aparecer>
           {unidad.plantas.map((planta, indice) => (
             <div
               className="bloque asistente__planta"
@@ -396,11 +430,29 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               Personalizar por planta
             </label>
           </fieldset>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={unidad.modoEtapa}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={transicionRapida}
+            >
           {unidad.modoEtapa === "misma" ? (
-            <SelectorEtapa
-              valor={unidad.etapaGeneral}
-              onChange={(valor) => aplicar(cambiarEtapaGeneral, valor)}
-            />
+            <>
+              <SelectorEtapa
+                valor={unidad.etapaGeneral}
+                onChange={(valor) => aplicar(cambiarEtapaGeneral, valor)}
+              />
+              <label className="formulario__campo">
+                Inicio de la etapa
+                <input
+                  type="date"
+                  value={unidad.fechaEtapaGeneral}
+                  onChange={(evento) => aplicar(cambiarFechaEtapaGeneral, evento.target.value)}
+                />
+              </label>
+            </>
           ) : (
             unidad.plantas.map((planta, indice) => (
               <div className="bloque" key={`${unidad.numero}-etapa-${indice}`}>
@@ -409,9 +461,21 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   valor={planta.etapa}
                   onChange={(valor) => aplicar(cambiarPlanta, indice, "etapa", valor)}
                 />
+                <label className="formulario__campo">
+                  Inicio de la etapa
+                  <input
+                    type="date"
+                    value={planta.fechaInicioEtapa}
+                    onChange={(evento) =>
+                      aplicar(cambiarPlanta, indice, "fechaInicioEtapa", evento.target.value)
+                    }
+                  />
+                </label>
               </div>
             ))
           )}
+            </motion.div>
+          </AnimatePresence>
         </div>
       ) : null}
 
@@ -429,8 +493,9 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 />
                 Replicar configuración de {unidad.nombre}
               </label>
-              {estado.replicar
-                ? estado.unidades.slice(1).map((item, desplazamiento) => {
+              <Aparecer visible={estado.replicar}>
+                <div>
+                {estado.unidades.slice(1).map((item, desplazamiento) => {
                     const indice = desplazamiento + 1;
                     return (
                       <label key={item.numero}>
@@ -444,9 +509,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                         {item.nombre}
                       </label>
                     );
-                  })
-                : null}
-              {estado.replicar ? (
+                  })}
                 <label>
                   <input
                     type="checkbox"
@@ -458,7 +521,8 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   />
                   Todas las siguientes
                 </label>
-              ) : null}
+                </div>
+              </Aparecer>
             </fieldset>
           ) : null}
         </div>
@@ -479,44 +543,39 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           <p>Total: {textoCantidad(totalPlantas(estado.unidades))}</p>
           <input type="hidden" name="cultivo" value={JSON.stringify(payloadCultivo(estado))} />
           {estado.soloUnidad ? <input type="hidden" name="espacio_id" value={estado.espacioId} /> : null}
-          <button type="submit" disabled={pendiente}>
+          <Boton type="submit" disabled={pendiente}>
             {estado.soloUnidad ? "Crear unidad" : "Crear espacio"}
-          </button>
+          </Boton>
         </form>
       ) : null}
+      </motion.div>
+      </AnimatePresence>
 
-      {estado.confirmacion ? (
-        <div className="confirmacion">
-          <p>{estado.confirmacion.mensaje}</p>
-          <div className="confirmacion__acciones">
-            <button type="button" onClick={seguir}>
-              Continuar
-            </button>
-            <button
-              className="acciones__texto"
-              type="button"
-              onClick={() => aplicar(cancelarConfirmacion)}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      ) : estado.paso !== "resumen" ? (
+      <ModalConfirmacion
+        abierto={Boolean(estado.confirmacion)}
+        onCerrar={() => aplicar(cancelarConfirmacion)}
+        titulo="Confirmar"
+        descripcion={estado.confirmacion?.mensaje || ""}
+        textoConfirmar="Continuar"
+        onConfirmar={seguir}
+      />
+
+      {estado.paso !== "resumen" ? (
         <div className="asistente__nav">
           {puedeVolver ? (
-            <button type="button" onClick={() => aplicar(volver)}>
+            <Boton type="button" onClick={() => retroceder(volver)}>
               Volver
-            </button>
+            </Boton>
           ) : null}
-          <button type="button" onClick={seguir}>
+          <Boton type="button" onClick={seguir}>
             Continuar
-          </button>
+          </Boton>
         </div>
       ) : (
         <div className="asistente__nav">
-          <button type="button" onClick={() => aplicar(volver)} disabled={pendiente}>
+          <Boton type="button" onClick={() => retroceder(volver)} disabled={pendiente}>
             Volver
-          </button>
+          </Boton>
         </div>
       )}
     </div>

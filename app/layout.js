@@ -1,6 +1,7 @@
 import { Fredoka, Inter } from "next/font/google";
 import Link from "next/link";
 import { salir } from "@/app/acciones/sesion";
+import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
@@ -30,6 +31,7 @@ export default async function Layout({ children }) {
   return (
     <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
       <body>
+        <ProveedorMotion>
         <header className="encabezado">
           <Link className="encabezado__marca" href={usuario ? "/espacios" : "/ingreso"}>
             <img src="/enflorar-logo-apaisado.svg" alt="ENFLORA" />
@@ -44,6 +46,7 @@ export default async function Layout({ children }) {
           ) : null}
         </header>
         <main className="pagina">{children}</main>
+        </ProveedorMotion>
       </body>
     </html>
   );

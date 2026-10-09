@@ -2,8 +2,8 @@
 
 import { useActionState, useState } from "react";
 import { editarPlanta } from "@/app/espacios/[id]/acciones";
+import { Boton } from "@/componentes/boton";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
-import { ETAPAS } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
 export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados = [] }) {
@@ -19,7 +19,6 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
   const metodoGuardado = metodo === "otro" ? metodoNombre.trim() : metodo;
   const metodoIncompleto = metodo === "otro" && !metodoNombre.trim();
   const sustratoVisible = muestraSustrato(metodo, usaSustrato);
-  const etapa = resultado?.etapa ?? planta.etapa ?? "";
   const fechaInicio = resultado?.fechaInicio ?? planta.fecha_inicio ?? "";
   const estadoPlanta = resultado?.estadoPlanta ?? planta.estado ?? "activa";
   const unidadId = resultado?.unidadId ?? planta.unidad_cultivo_id ?? "";
@@ -61,17 +60,6 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
         }}
       />
       <label className="formulario__campo">
-        Etapa
-        <select name="etapa" defaultValue={etapa || ""}>
-          <option value="">Seleccionar</option>
-          {ETAPAS.map((item) => (
-            <option key={item.valor} value={item.valor}>
-              {item.etiqueta}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="formulario__campo">
         Fecha de inicio
         <input name="fecha_inicio" type="date" defaultValue={fechaInicio || ""} />
       </label>
@@ -94,9 +82,9 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
           ))}
         </select>
       </label>
-      <button type="submit" disabled={pendiente}>
+      <Boton type="submit" disabled={pendiente}>
         Guardar
-      </button>
+      </Boton>
     </form>
   );
 }

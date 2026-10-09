@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AsistenteEspacio } from "@/componentes/asistente-espacio";
+import { TransicionVista } from "@/componentes/transicion-vista";
 import { MAXIMO_UNIDADES, etiquetaTipoEspacio } from "@/lib/unidades";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -39,6 +40,7 @@ export default async function PaginaNuevaUnidad({ params }) {
     : (metodosRespuesta.data || []).map((metodo) => metodo.nombre);
 
   return (
+    <TransicionVista>
     <section className="espacio">
       <Link href={`/espacios/${espacio.id}`}>Volver al espacio</Link>
       <h1>Agregar unidad</h1>
@@ -66,5 +68,6 @@ export default async function PaginaNuevaUnidad({ params }) {
         />
       )}
     </section>
+    </TransicionVista>
   );
 }
