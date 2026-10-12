@@ -7,8 +7,8 @@ import { crearCultivo } from "@/app/espacios/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
-import { ETAPAS } from "@/lib/etapas";
 import {
   PASOS_VISIBLES,
   abrirUnidad,
@@ -99,22 +99,6 @@ function Contador({ etiqueta, valor, minimo, maximo, onChange }) {
         +
       </button>
     </div>
-  );
-}
-
-function SelectorEtapa({ valor, onChange }) {
-  return (
-    <label className="formulario__campo">
-      Etapa
-      <select value={valor} onChange={(evento) => onChange(evento.target.value)}>
-        <option value="">Seleccionar</option>
-        {ETAPAS.map((etapa) => (
-          <option key={etapa.valor} value={etapa.valor}>
-            {etapa.etiqueta}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 
@@ -441,6 +425,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           {unidad.modoEtapa === "misma" ? (
             <>
               <SelectorEtapa
+                nombre={`etapa-unidad-${unidad.numero}`}
                 valor={unidad.etapaGeneral}
                 onChange={(valor) => aplicar(cambiarEtapaGeneral, valor)}
               />
@@ -458,6 +443,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               <div className="bloque" key={`${unidad.numero}-etapa-${indice}`}>
                 <h3>Planta {indice + 1}</h3>
                 <SelectorEtapa
+                  nombre={`etapa-unidad-${unidad.numero}-planta-${indice}`}
                   valor={planta.etapa}
                   onChange={(valor) => aplicar(cambiarPlanta, indice, "etapa", valor)}
                 />

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -125,4 +126,36 @@ export async function guardarPerfil(_estado, formulario) {
 
   revalidatePath("/perfil");
   redirect("/perfil");
+}
+
+export async function guardarTipoSeguimiento(_estado, formulario) {
+  const tipo = String(formulario.get("tipo_seguimiento") || "");
+  const volver = formulario.get("destino") === "onboarding" ? "/espacios" : "/perfil";
+
+  if (!esTipoSeguimiento(tipo)) {
+    return { error: "Seleccioná un tipo de seguimiento.", tipo };
+  }
+
+  if (!configuracionLista()) {
+    return { error: "Falta la configuración de Supabase.", tipo };
+  }
+
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/ingreso");
+  }
+
+  const { error } = await supabase.rpc("guardar_tipo_seguimiento", { tipo });
+
+  if (error) {
+    return { error: "No se pudo guardar la configuración.", tipo };
+  }
+
+  revalidatePath("/perfil");
+  revalidatePath("/onboarding");
+  redirect(volver);
 }

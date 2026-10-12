@@ -1,6 +1,7 @@
 import { Fredoka, Inter } from "next/font/google";
 import Link from "next/link";
-import { salir } from "@/app/acciones/sesion";
+import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
+import { BottomNav } from "@/componentes/bottom-nav";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
@@ -25,6 +26,12 @@ export const metadata = {
   description: "Espacios de cultivo y plantas",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
 export default async function Layout({ children }) {
   const usuario = configuracionLista() ? await obtenerUsuario() : null;
 
@@ -36,16 +43,10 @@ export default async function Layout({ children }) {
           <Link className="encabezado__marca" href={usuario ? "/espacios" : "/ingreso"}>
             <img src="/enflorar-logo-apaisado.svg" alt="ENFLORA" />
           </Link>
-          {usuario ? (
-            <div className="encabezado__acciones">
-              <Link href="/perfil">Perfil</Link>
-              <form action={salir}>
-                <button type="submit">Salir</button>
-              </form>
-            </div>
-          ) : null}
+          {usuario ? <BotonNotificaciones /> : null}
         </header>
         <main className="pagina">{children}</main>
+        {usuario ? <BottomNav /> : null}
         </ProveedorMotion>
       </body>
     </html>

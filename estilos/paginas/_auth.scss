@@ -8,6 +8,21 @@
   }
 }
 
+.perfil__salir {
+  margin-top: 0.25rem;
+
+  button {
+    background: transparent;
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+
+    &:hover:not(:disabled) {
+      background: var(--color-surface-secondary);
+      color: var(--color-primary);
+    }
+  }
+}
+
 .auth {
   display: flex;
   flex-direction: column;

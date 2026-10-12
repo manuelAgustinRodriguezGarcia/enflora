@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 
 function redirigir(request, pathname, respuesta) {
@@ -53,9 +54,11 @@ export async function proxy(request) {
   }
 
   const esRutaPublica = ruta === "/ingreso" || ruta === "/registro";
+  const pendiente = user ? await onboardingPendiente(supabase, user.id) : false;
+  const destino = pendiente ? "/onboarding" : "/espacios";
 
   if (ruta === "/") {
-    return redirigir(request, user ? "/espacios" : "/ingreso", respuesta);
+    return redirigir(request, user ? destino : "/ingreso", respuesta);
   }
 
   if (!user && !esRutaPublica) {
@@ -63,10 +66,37 @@ export async function proxy(request) {
   }
 
   if (user && esRutaPublica) {
+    return redirigir(request, destino, respuesta);
+  }
+
+  if (user && pendiente && ruta !== "/onboarding") {
+    return redirigir(request, "/onboarding", respuesta);
+  }
+
+  if (user && !pendiente && ruta === "/onboarding") {
     return redirigir(request, "/espacios", respuesta);
   }
 
   return respuesta;
+}
+
+async function onboardingPendiente(supabase, usuarioId) {
+  const { data, error } = await supabase
+    .from("perfiles")
+    .select("tipo_seguimiento")
+    .eq("id", usuarioId)
+    .maybeSingle();
+
+  if (error || !data || esTipoSeguimiento(data.tipo_seguimiento)) return false;
+
+  const { data: espacio, error: errorEspacio } = await supabase
+    .from("espacios")
+    .select("id")
+    .limit(1)
+    .maybeSingle();
+
+  if (errorEspacio || !espacio) return false;
+  return true;
 }
 
 export const config = {

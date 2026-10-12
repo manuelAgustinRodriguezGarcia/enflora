@@ -4,8 +4,9 @@ import { useActionState, useState } from "react";
 import { crearPlantas } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
-import { ETAPAS, fechaHoy } from "@/lib/etapas";
+import { fechaHoy } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
 const MAXIMO = 100;
@@ -39,7 +40,7 @@ function usaMetodo(modo) {
   return modo === "mismo_metodo" || modo === "misma_genetica_y_metodo";
 }
 
-function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, onChange }) {
+function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, nombreEtapa, onChange }) {
   return (
     <>
       <label className="formulario__campo">
@@ -71,17 +72,11 @@ function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, onChange })
       />
       <Aparecer visible={mostrarEtapa}>
         <div>
-          <label className="formulario__campo">
-            Etapa
-            <select value={planta.etapa} onChange={(evento) => onChange("etapa", evento.target.value)}>
-              <option value="">Seleccionar</option>
-              {ETAPAS.map((etapa) => (
-                <option key={etapa.valor} value={etapa.valor}>
-                  {etapa.etiqueta}
-                </option>
-              ))}
-            </select>
-          </label>
+          <SelectorEtapa
+            nombre={nombreEtapa}
+            valor={planta.etapa}
+            onChange={(valor) => onChange("etapa", valor)}
+          />
           <label className="formulario__campo">
             Inicio de la etapa
             <input
@@ -374,20 +369,11 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
           </label>
           <Aparecer visible={modoEtapa === "misma"}>
             <div>
-              <label className="formulario__campo">
-                Etapa
-                <select
-                  value={general.etapa}
-                  onChange={(evento) => aplicarCompartido("etapa", evento.target.value)}
-                >
-                  <option value="">Seleccionar</option>
-                  {ETAPAS.map((etapa) => (
-                    <option key={etapa.valor} value={etapa.valor}>
-                      {etapa.etiqueta}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SelectorEtapa
+                nombre="etapa-general"
+                valor={general.etapa}
+                onChange={(valor) => aplicarCompartido("etapa", valor)}
+              />
               <label className="formulario__campo">
                 Inicio de la etapa
                 <input
@@ -409,6 +395,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
               planta={planta}
               metodosPersonalizados={metodosPersonalizados}
               mostrarEtapa={!varias || modoEtapa === "individual"}
+              nombreEtapa={`etapa-planta-${numero}`}
               onChange={(campo, valor) => cambiarPlanta(indice, campo, valor)}
             />
           </div>

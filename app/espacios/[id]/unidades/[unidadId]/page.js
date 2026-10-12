@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { EliminarUnidad } from "@/componentes/eliminar-unidad";
+import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { FormularioPlanta } from "@/componentes/formulario-planta";
 import { FormularioUnidad } from "@/componentes/formulario-unidad";
-import { etiquetaEtapa } from "@/lib/etapas";
+import { datosEtapaActual, esEtapa, fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
@@ -69,6 +70,22 @@ export default async function PaginaUnidad({ params }) {
 
   const lista = plantasRespuesta.data || [];
   const metodosPersonalizados = (metodosRespuesta.data || []).map((metodo) => metodo.nombre);
+  const hoy = fechaHoy();
+  let abiertas = [];
+
+  if (lista.length) {
+    const historialRespuesta = await supabase
+      .from("historial_etapas")
+      .select("planta_id, etapa, fecha_inicio, fecha_fin")
+      .in(
+        "planta_id",
+        lista.map((planta) => planta.id)
+      )
+      .is("fecha_fin", null);
+    if (!historialRespuesta.error) abiertas = historialRespuesta.data || [];
+  }
+
+  const inicioPorPlanta = new Map(abiertas.map((fila) => [fila.planta_id, fila]));
 
   return (
     <TransicionVista>
@@ -95,19 +112,27 @@ export default async function PaginaUnidad({ params }) {
         <p>No hay plantas en esta unidad.</p>
       ) : (
         <ListaEntrada>
-          {lista.map((planta) => (
+          {lista.map((planta) => {
+            const datos = datosEtapaActual(
+              planta.etapa,
+              inicioPorPlanta.has(planta.id) ? [inicioPorPlanta.get(planta.id)] : [],
+              hoy
+            );
+            const claseTarjeta = esEtapa(planta.etapa) ? `tarjeta tarjeta--${planta.etapa}` : "tarjeta";
+            return (
             <li key={planta.id}>
               <Link
-                className="tarjeta"
+                className={claseTarjeta}
                 href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}`}
               >
                 <span className="tarjeta__nombre">{planta.nombre}</span>
+                <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />
+                {datos.dia === null ? null : <span className="tarjeta__meta">Día {datos.dia}</span>}
                 <span className="tarjeta__meta">Genética: {planta.genetica || "—"}</span>
                 <span className="tarjeta__meta">Método: {planta.metodo || "—"}</span>
                 {planta.sustrato ? (
                   <span className="tarjeta__meta">Sustrato: {planta.sustrato}</span>
                 ) : null}
-                <span className="tarjeta__meta">Etapa: {etiquetaEtapa(planta.etapa)}</span>
                 {planta.numero && planta.nombre !== `Planta ${planta.numero}` ? (
                   <span className="tarjeta__meta">Planta #{planta.numero}</span>
                 ) : null}
@@ -115,7 +140,8 @@ export default async function PaginaUnidad({ params }) {
                 <span className="tarjeta__meta">{etiquetaEstado(planta.estado)}</span>
               </Link>
             </li>
-          ))}
+            );
+          })}
         </ListaEntrada>
       )}
     </section>

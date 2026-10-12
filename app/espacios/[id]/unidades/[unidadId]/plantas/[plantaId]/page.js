@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TextoCambio } from "@/componentes/aparecer";
 import { CambiarEtapa } from "@/componentes/cambiar-etapa";
+import { CicloEtapas } from "@/componentes/ciclo-etapas";
 import { EliminarPlanta } from "@/componentes/eliminar-planta";
+import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
-import { diasEntre, etiquetaEtapa, fechaHoy, formatearFecha, textoDias } from "@/lib/etapas";
+import { datosEtapaActual, diasEntre, fechaHoy, formatearFecha, textoDias } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -13,13 +15,6 @@ function etiquetaEstado(estado) {
   if (estado === "activa") return "Activa";
   if (estado === "finalizada") return "Finalizada";
   return estado;
-}
-
-function textoEtapaActual(etapa, historial, hoy) {
-  const abierta = (historial || []).find((item) => !item.fecha_fin && item.fecha_inicio);
-  if (!abierta) return etiquetaEtapa(etapa);
-  const dias = diasEntre(abierta.fecha_inicio, hoy);
-  return `${etiquetaEtapa(abierta.etapa)} · Día ${dias}`;
 }
 
 function periodoHistorial(registro) {
@@ -68,6 +63,7 @@ export default async function PaginaPlanta({ params }) {
 
   const espacioNombre = unidad.espacios?.nombre || "—";
   const hoy = fechaHoy();
+  const datos = datosEtapaActual(planta.etapa, errorHistorial ? [] : historial, hoy);
 
   return (
     <TransicionVista>
@@ -77,9 +73,15 @@ export default async function PaginaPlanta({ params }) {
       <p>Genética: {planta.genetica || "—"}</p>
       <p>Método: {planta.metodo || "—"}</p>
       {planta.sustrato ? <p>Sustrato: {planta.sustrato}</p> : null}
-      <p>
-        Etapa: <TextoCambio>{textoEtapaActual(planta.etapa, historial, hoy)}</TextoCambio>
-      </p>
+      <section className="etapa-actual" aria-labelledby="etapa-actual-titulo">
+        <p className="etapa-actual__titulo" id="etapa-actual-titulo">
+          Etapa actual
+        </p>
+        <IndicadorEtapa etapa={datos.etapa} tamano="normal" animar />
+        {datos.dia === null ? null : <p className="etapa-actual__dia">Día {datos.dia}</p>}
+        {datos.inicio ? <p>Inicio: {formatearFecha(datos.inicio)}</p> : null}
+      </section>
+      <CicloEtapas etapa={planta.etapa} historial={errorHistorial ? [] : historial || []} />
       {planta.numero && planta.nombre !== `Planta ${planta.numero}` ? (
         <p>Planta #{planta.numero}</p>
       ) : null}
@@ -100,7 +102,7 @@ export default async function PaginaPlanta({ params }) {
             const fin = registro.fecha_fin || hoy;
             return (
               <li className="tarjeta" key={registro.id}>
-                <span className="tarjeta__nombre">{etiquetaEtapa(registro.etapa)}</span>
+                <IndicadorEtapa etapa={registro.etapa} tamano="compacto" />
                 <span className="tarjeta__meta">{periodoHistorial(registro)}</span>
                 <span className="tarjeta__meta">{textoDias(diasEntre(registro.fecha_inicio, fin))}</span>
               </li>
