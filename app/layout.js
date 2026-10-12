@@ -1,4 +1,5 @@
 import { Fredoka, Inter } from "next/font/google";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
 import { BottomNav } from "@/componentes/bottom-nav";
@@ -33,6 +34,16 @@ export const viewport = {
 };
 
 export default async function Layout({ children }) {
+  const ruta = (await headers()).get("x-enflora-ruta");
+
+  if (ruta === "/") {
+    return (
+      <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
+        <body className="landing-cuerpo">{children}</body>
+      </html>
+    );
+  }
+
   const usuario = configuracionLista() ? await obtenerUsuario() : null;
 
   return (
@@ -41,7 +52,7 @@ export default async function Layout({ children }) {
         <ProveedorMotion>
         <header className="encabezado">
           <Link className="encabezado__marca" href={usuario ? "/espacios" : "/ingreso"}>
-            <img src="/enflorar-logo-apaisado.svg" alt="ENFLORA" />
+            <img src="/logos/enflora-logo-apaisado.svg" alt="ENFLORA" />
           </Link>
           {usuario ? <BotonNotificaciones /> : null}
         </header>

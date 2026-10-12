@@ -73,19 +73,10 @@
     z-index: 0;
     inset: 0;
     background-color: #0f392a;
-    background-image: var(--marco-imagen);
-    background-repeat: no-repeat;
-    background-position: center top;
-    background-size: cover;
     pointer-events: none;
   }
 
-  &--entrar {
-    --marco-imagen: url("/background-login.jpg");
-  }
-
   &--registro {
-    --marco-imagen: url("/background-register.jpg");
 
     .marco-auth__panel {
       background: linear-gradient(180deg, #4a3021 0%, #3a2418 45%, #2c1a11 100%);
@@ -262,10 +253,6 @@
   @media (max-width: 1023px) {
     min-height: 100dvh;
 
-    &::before {
-      background-size: 100% auto;
-    }
-
     .auth h1 {
       font-size: 1.75rem;
     }
@@ -281,13 +268,7 @@
   }
 
   @media (min-width: 1024px) {
-    &--entrar {
-      --marco-imagen: url("/background-desktop-login.png");
-    }
-
     &--registro {
-      --marco-imagen: url("/background-desktop-register.png");
-
       .formulario__fila {
         flex-direction: row;
         align-items: flex-start;

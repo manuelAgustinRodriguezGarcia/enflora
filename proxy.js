@@ -15,12 +15,20 @@ function redirigir(request, pathname, respuesta) {
   return redireccion;
 }
 
+function continuar(request) {
+  const cabeceras = new Headers(request.headers);
+  cabeceras.set("x-enflora-ruta", request.nextUrl.pathname);
+  return NextResponse.next({
+    request: { headers: cabeceras },
+  });
+}
+
 export async function proxy(request) {
   if (!configuracionLista()) {
-    return NextResponse.next();
+    return continuar(request);
   }
 
-  let respuesta = NextResponse.next({ request });
+  let respuesta = continuar(request);
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -34,7 +42,7 @@ export async function proxy(request) {
           cookiesAGuardar.forEach(({ name, value }) => {
             request.cookies.set(name, value);
           });
-          respuesta = NextResponse.next({ request });
+          respuesta = continuar(request);
           cookiesAGuardar.forEach(({ name, value, options }) => {
             respuesta.cookies.set(name, value, options);
           });
@@ -58,7 +66,12 @@ export async function proxy(request) {
   const destino = pendiente ? "/onboarding" : "/espacios";
 
   if (ruta === "/") {
-    return redirigir(request, user ? destino : "/ingreso", respuesta);
+    const codigo = request.nextUrl.searchParams.get("code");
+    const token = request.nextUrl.searchParams.get("token_hash");
+    if (codigo || token) {
+      return redirigir(request, "/correo/confirmar", respuesta);
+    }
+    return respuesta;
   }
 
   if (!user && !esRutaPublica) {

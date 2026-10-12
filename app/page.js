@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
-import { configuracionLista } from "@/lib/supabase/configuracion";
-import { obtenerUsuario } from "@/lib/supabase/servidor";
+import { Landing } from "@/componentes/landing/landing";
+
+export const metadata = {
+  title: "ENFLORA",
+  description:
+    "Registrá tus plantas, seguí su evolución y armá un historial para entender cada cultivo.",
+};
 
 export default async function PaginaInicio({ searchParams }) {
   const parametros = await searchParams;
@@ -15,15 +20,5 @@ export default async function PaginaInicio({ searchParams }) {
     redirect(`/correo/confirmar?${consulta.toString()}`);
   }
 
-  if (!configuracionLista()) {
-    return (
-      <section className="auth">
-        <h1>ENFLORA</h1>
-        <p>Falta la configuración de Supabase.</p>
-      </section>
-    );
-  }
-
-  const usuario = await obtenerUsuario();
-  redirect(usuario ? "/espacios" : "/ingreso");
+  return <Landing />;
 }
