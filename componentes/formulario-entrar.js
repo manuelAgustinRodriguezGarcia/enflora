@@ -63,6 +63,7 @@ export function FormularioEntrar({ aviso }) {
                 placeholder="••••••••"
               />
               <button
+                className="formulario__revelar"
                 type="button"
                 aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
                 aria-pressed={visible}

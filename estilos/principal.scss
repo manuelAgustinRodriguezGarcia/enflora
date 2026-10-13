@@ -1,11 +1,13 @@
 @use "base/tokens";
 @use "base/base";
 @use "componentes/formularios";
+@use "componentes/controles";
 @use "componentes/listas";
 @use "componentes/etapas";
 @use "componentes/seguimiento";
 @use "paginas/auth";
 @use "paginas/landing";
 @use "paginas/espacios";
+@use "paginas/registros";
 @use "secciones/encabezado";
 @use "secciones/bottom-nav";

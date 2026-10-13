@@ -51,9 +51,9 @@ export function ModalConfirmacion({
             {textoConfirmar}
           </Boton>
         )}
-        <button className="acciones__texto" type="button" onClick={() => cambiar(false)} disabled={pendiente}>
+        <Boton type="button" variante="ghost" onClick={() => cambiar(false)} disabled={pendiente}>
           {textoCancelar}
-        </button>
+        </Boton>
       </div>
     </>
   );

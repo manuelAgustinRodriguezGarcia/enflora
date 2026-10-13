@@ -59,37 +59,59 @@ export default async function PaginaEspacio({ params }) {
 
   return (
     <TransicionVista>
-    <section className="espacio">
-      <Link href="/espacios">Volver a espacios</Link>
-      <h1>{espacio.nombre}</h1>
-      <p>{etiquetaTipoEspacio(espacio.tipo)}</p>
-      <p>{textoCantidad(total)}</p>
-      <div className="acciones">
-        <Link href={`/espacios/${espacio.id}/editar`}>Editar</Link>
-        <EliminarEspacio espacioId={espacio.id} />
-      </div>
-      <h2>Unidades</h2>
-      {lista.length === 0 ? (
-        <p>No hay unidades de cultivo.</p>
-      ) : (
-        <ListaEntrada>
-          {lista.map((unidad) => (
-            <li key={unidad.id}>
-              <Link className="tarjeta" href={`/espacios/${espacio.id}/unidades/${unidad.id}`}>
-                <span className="tarjeta__nombre">{unidad.nombre}</span>
-                <span className="tarjeta__meta">
-                  {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
-                </span>
-                <span className="tarjeta__meta">{textoCantidad(cantidades[unidad.id] || 0)}</span>
-              </Link>
-            </li>
-          ))}
-        </ListaEntrada>
-      )}
-      <EnlaceBoton className="boton" href={`/espacios/${espacio.id}/unidades/nueva`}>
-        Agregar unidad
-      </EnlaceBoton>
-    </section>
+      <section className="espacio">
+        <Link href="/espacios">Volver a espacios</Link>
+        <header className="detalle-cabecera">
+          <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
+          <div className="detalle-cabecera__fila">
+            <span className="detalle-cabecera__chip">{etiquetaTipoEspacio(espacio.tipo)}</span>
+            <span className="detalle-cabecera__meta">
+              {lista.length === 1 ? "1 unidad" : `${lista.length} unidades`}
+            </span>
+            <span className="detalle-cabecera__meta">{textoCantidad(total)}</span>
+          </div>
+          <div className="acciones">
+            <EnlaceBoton className="boton boton--secundario" href={`/espacios/${espacio.id}/editar`}>
+              Editar
+            </EnlaceBoton>
+            <EliminarEspacio espacioId={espacio.id} />
+          </div>
+        </header>
+        <h2>Unidades</h2>
+        {lista.length === 0 ? (
+          <div className="vacio">
+            <p>Todavía no hay unidades en este espacio.</p>
+            <EnlaceBoton href={`/espacios/${espacio.id}/unidades/nueva`}>Agregar unidad</EnlaceBoton>
+          </div>
+        ) : (
+          <ListaEntrada>
+            {lista.map((unidad) => (
+              <li key={unidad.id}>
+                <Link
+                  className="tarjeta"
+                  href={`/espacios/${espacio.id}/unidades/${unidad.id}`}
+                >
+                  <div className="tarjeta__cabecera">
+                    <span className="tarjeta__nombre">{unidad.nombre}</span>
+                    <span className="tarjeta__tipo">
+                      {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
+                    </span>
+                  </div>
+                  <div className="tarjeta__metricas">
+                    <span className="tarjeta__dato">
+                      <span className="tarjeta__etiqueta">Plantas</span>
+                      <span className="tarjeta__valor">{textoCantidad(cantidades[unidad.id] || 0)}</span>
+                    </span>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ListaEntrada>
+        )}
+        {lista.length ? (
+          <EnlaceBoton href={`/espacios/${espacio.id}/unidades/nueva`}>Agregar unidad</EnlaceBoton>
+        ) : null}
+      </section>
     </TransicionVista>
   );
 }

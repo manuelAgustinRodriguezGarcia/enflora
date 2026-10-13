@@ -5,6 +5,7 @@ import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
+import { SelectorFecha } from "@/componentes/selector-fecha";
 import { fechaHoy } from "@/lib/etapas";
 
 export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
@@ -33,10 +34,12 @@ export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
             valor={etapa}
             onChange={setEtapa}
           />
-          <label className="formulario__campo">
-            Fecha de inicio
-            <input type="date" name="fecha_inicio" value={fecha} onChange={(evento) => setFecha(evento.target.value)} />
-          </label>
+          <SelectorFecha
+            etiqueta="Fecha de inicio"
+            nombre="fecha_inicio"
+            valor={fecha}
+            onChange={setFecha}
+          />
           <Boton type="submit" disabled={pendiente}>
             Guardar
           </Boton>

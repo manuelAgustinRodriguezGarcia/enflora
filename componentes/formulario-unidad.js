@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { editarUnidad } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { Selector } from "@/componentes/selector";
 import { tiposDeUnidad } from "@/lib/unidades";
 
 export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
@@ -13,7 +14,10 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
   const [tipoPersonalizado, setTipoPersonalizado] = useState(
     estado?.tipoPersonalizado ?? unidad.tipo_personalizado ?? ""
   );
-  const tipos = tiposDeUnidad(tipoEspacio);
+  const tipos = tiposDeUnidad(tipoEspacio).map((opcion) => ({
+    valor: opcion.valor,
+    etiqueta: opcion.etiqueta,
+  }));
 
   return (
     <form key={estado?.error || "inicial"} className="formulario" action={accion}>
@@ -21,20 +25,18 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
       {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
       <input type="hidden" name="unidad_id" value={unidad.id} />
       <input type="hidden" name="espacio_id" value={espacioId} />
+      <input type="hidden" name="tipo" value={tipo} />
       <label className="formulario__campo">
         Nombre
         <input name="nombre" type="text" defaultValue={nombre} />
       </label>
-      <label className="formulario__campo">
-        Tipo
-        <select name="tipo" value={tipo} onChange={(evento) => setTipo(evento.target.value)}>
-          {tipos.map((opcion) => (
-            <option key={opcion.valor} value={opcion.valor}>
-              {opcion.etiqueta}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Selector
+        etiqueta="Tipo"
+        valor={tipo || null}
+        onChange={setTipo}
+        opciones={tipos}
+        placeholder="Seleccionar"
+      />
       <Aparecer visible={tipo === "otro"}>
         <label className="formulario__campo">
           Tipo de unidad

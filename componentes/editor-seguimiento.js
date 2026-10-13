@@ -41,6 +41,7 @@ export function EditorSeguimiento({
   encabezado = "",
   textoGuardar = "Guardar preferencias",
   continuarEn = "",
+  onActualizado,
 }) {
   const [estado, accion, pendiente] = useActionState(guardarConfiguracionSeguimiento, null);
   const [estadoCrear, accionCrear, pendienteCrear] = useActionState(crearOpcionSeguimiento, null);
@@ -61,13 +62,26 @@ export function EditorSeguimiento({
     if (!estado?.ok) return;
     setElegidas({ acciones: estado.acciones, parametros: estado.parametros });
     setEditado(false);
+    onActualizado?.({
+      tipo: estado.tipo || tipo,
+      acciones: estado.acciones,
+      parametros: estado.parametros,
+      opciones,
+    });
   }, [estado]);
 
   useEffect(() => {
     if (!estadoCrear?.ok || estadoCrear.marca !== marca || !estadoCrear.opcion) return;
     setOpciones((lista) => {
       if (lista.some((item) => item.id === estadoCrear.opcion.id)) return lista;
-      return [...lista, estadoCrear.opcion];
+      const siguiente = [...lista, estadoCrear.opcion];
+      onActualizado?.({
+        tipo,
+        acciones: elegidas.acciones,
+        parametros: elegidas.parametros,
+        opciones: siguiente,
+      });
+      return siguiente;
     });
     setBorrador(null);
     setEditado(true);
@@ -75,13 +89,20 @@ export function EditorSeguimiento({
 
   useEffect(() => {
     if (!estadoEditar?.ok || estadoEditar.marca !== marca || !estadoEditar.opcion) return;
-    setOpciones((lista) =>
-      lista.map((item) =>
+    setOpciones((lista) => {
+      const siguiente = lista.map((item) =>
         item.id === estadoEditar.opcion.id
           ? { ...estadoEditar.opcion, prioritaria: item.prioritaria }
           : item
-      )
-    );
+      );
+      onActualizado?.({
+        tipo,
+        acciones: elegidas.acciones,
+        parametros: elegidas.parametros,
+        opciones: siguiente,
+      });
+      return siguiente;
+    });
     setBorrador(null);
     setEditado(true);
   }, [estadoEditar, marca]);
@@ -138,7 +159,16 @@ export function EditorSeguimiento({
       setErrorQuitar(resultado.error);
       return;
     }
-    setOpciones((lista) => lista.filter((item) => item.id !== borrador.id));
+    setOpciones((lista) => {
+      const siguiente = lista.filter((item) => item.id !== borrador.id);
+      onActualizado?.({
+        tipo,
+        acciones: elegidas.acciones,
+        parametros: elegidas.parametros,
+        opciones: siguiente,
+      });
+      return siguiente;
+    });
     setBorrador(null);
     setEditado(true);
   }

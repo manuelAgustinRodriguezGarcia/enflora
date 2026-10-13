@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { eliminarEspacio } from "@/app/espacios/acciones";
+import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
 export function EliminarEspacio({ espacioId }) {
@@ -10,9 +11,9 @@ export function EliminarEspacio({ espacioId }) {
 
   return (
     <>
-      <button className="acciones__texto" type="button" onClick={() => setAbierto(true)}>
+      <Boton className="boton boton--destructivo" type="button" onClick={() => setAbierto(true)}>
         Eliminar
-      </button>
+      </Boton>
       <ModalConfirmacion
         abierto={abierto}
         onCerrar={() => setAbierto(false)}

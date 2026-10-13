@@ -1,6 +1,7 @@
 "use client";
 
 import { Aparecer } from "@/componentes/aparecer";
+import { Selector } from "@/componentes/selector";
 import { METODOS_BASE, metodoPreguntaSustrato, muestraSustrato } from "@/lib/metodos";
 
 export function SelectorMetodo({
@@ -14,27 +15,26 @@ export function SelectorMetodo({
   onChangeSustrato,
   onChangeUsaSustrato,
 }) {
-  const opciones = [...METODOS_BASE, ...metodosPersonalizados];
-  const conocidas = new Set([...opciones, "", "otro"]);
+  const opcionesBase = [...METODOS_BASE, ...metodosPersonalizados];
+  const conocidas = new Set([...opcionesBase, "", "otro"]);
   const extra = valor && !conocidas.has(valor) ? valor : "";
   const pregunta = metodoPreguntaSustrato(valor);
   const visible = muestraSustrato(valor, usaSustrato);
+  const opciones = [
+    ...opcionesBase.map((metodo) => ({ valor: metodo, etiqueta: metodo })),
+    ...(extra ? [{ valor: extra, etiqueta: extra }] : []),
+    { valor: "otro", etiqueta: "OTRO" },
+  ];
 
   return (
     <>
-      <label className="formulario__campo">
-        Método
-        <select value={valor} onChange={(evento) => onChange(evento.target.value)}>
-          <option value="">Seleccionar</option>
-          {opciones.map((metodo) => (
-            <option key={metodo} value={metodo}>
-              {metodo}
-            </option>
-          ))}
-          {extra ? <option value={extra}>{extra}</option> : null}
-          <option value="otro">OTRO</option>
-        </select>
-      </label>
+      <Selector
+        etiqueta="Método"
+        valor={valor || null}
+        onChange={onChange}
+        opciones={opciones}
+        placeholder="Seleccionar"
+      />
       <Aparecer visible={valor === "otro"}>
         <label className="formulario__campo">
           Nombre del método

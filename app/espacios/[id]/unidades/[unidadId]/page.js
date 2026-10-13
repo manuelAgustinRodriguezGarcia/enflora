@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { EliminarUnidad } from "@/componentes/eliminar-unidad";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
+import { PanelAgregarPlanta } from "@/componentes/panel-agregar-planta";
 import { TransicionVista } from "@/componentes/transicion-vista";
-import { FormularioPlanta } from "@/componentes/formulario-planta";
 import { FormularioUnidad } from "@/componentes/formulario-unidad";
 import { datosEtapaActual, esEtapa, fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -89,62 +89,93 @@ export default async function PaginaUnidad({ params }) {
 
   return (
     <TransicionVista>
-    <section className="espacio">
-      <Link href={`/espacios/${unidad.espacio_id}`}>Volver al espacio</Link>
-      <h1>{unidad.nombre}</h1>
-      <p>{etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}</p>
-      <p>{textoCantidad(lista.length)}</p>
-      <div className="acciones">
-        <EliminarUnidad unidadId={unidad.id} espacioId={unidad.espacio_id} />
-      </div>
-      <FormularioUnidad
-        unidad={unidad}
-        espacioId={unidad.espacio_id}
-        tipoEspacio={espacioRespuesta.data.tipo}
-      />
-      <FormularioPlanta
-        unidadId={unidad.id}
-        siguienteNumero={siguienteNumero(lista)}
-        metodosPersonalizados={metodosPersonalizados}
-      />
-      <h2>Plantas</h2>
-      {lista.length === 0 ? (
-        <p>No hay plantas en esta unidad.</p>
-      ) : (
-        <ListaEntrada>
-          {lista.map((planta) => {
-            const datos = datosEtapaActual(
-              planta.etapa,
-              inicioPorPlanta.has(planta.id) ? [inicioPorPlanta.get(planta.id)] : [],
-              hoy
-            );
-            const claseTarjeta = esEtapa(planta.etapa) ? `tarjeta tarjeta--${planta.etapa}` : "tarjeta";
-            return (
-            <li key={planta.id}>
-              <Link
-                className={claseTarjeta}
-                href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}`}
-              >
-                <span className="tarjeta__nombre">{planta.nombre}</span>
-                <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />
-                {datos.dia === null ? null : <span className="tarjeta__meta">Día {datos.dia}</span>}
-                <span className="tarjeta__meta">Genética: {planta.genetica || "—"}</span>
-                <span className="tarjeta__meta">Método: {planta.metodo || "—"}</span>
-                {planta.sustrato ? (
-                  <span className="tarjeta__meta">Sustrato: {planta.sustrato}</span>
-                ) : null}
-                {planta.numero && planta.nombre !== `Planta ${planta.numero}` ? (
-                  <span className="tarjeta__meta">Planta #{planta.numero}</span>
-                ) : null}
-                <span className="tarjeta__meta">Inicio: {formatearFecha(planta.fecha_inicio)}</span>
-                <span className="tarjeta__meta">{etiquetaEstado(planta.estado)}</span>
-              </Link>
-            </li>
-            );
-          })}
-        </ListaEntrada>
-      )}
-    </section>
+      <section className="espacio">
+        <Link href={`/espacios/${unidad.espacio_id}`}>Volver al espacio</Link>
+        <header className="detalle-cabecera">
+          <h1 className="detalle-cabecera__titulo">{unidad.nombre}</h1>
+          <div className="detalle-cabecera__fila">
+            <span className="detalle-cabecera__chip">
+              {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
+            </span>
+            <span className="detalle-cabecera__meta">{textoCantidad(lista.length)}</span>
+          </div>
+          <div className="acciones">
+            <EliminarUnidad unidadId={unidad.id} espacioId={unidad.espacio_id} />
+          </div>
+        </header>
+        <FormularioUnidad
+          unidad={unidad}
+          espacioId={unidad.espacio_id}
+          tipoEspacio={espacioRespuesta.data.tipo}
+        />
+        <h2>Plantas</h2>
+        {lista.length === 0 ? (
+          <div className="vacio">
+            <p>Todavía no hay plantas en esta unidad.</p>
+          </div>
+        ) : (
+          <ListaEntrada>
+            {lista.map((planta) => {
+              const datos = datosEtapaActual(
+                planta.etapa,
+                inicioPorPlanta.has(planta.id) ? [inicioPorPlanta.get(planta.id)] : [],
+                hoy
+              );
+              const claseTarjeta = esEtapa(planta.etapa)
+                ? `tarjeta tarjeta--planta tarjeta--${planta.etapa}`
+                : "tarjeta tarjeta--planta";
+              return (
+                <li key={planta.id}>
+                  <Link
+                    className={claseTarjeta}
+                    href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}`}
+                  >
+                    <div className="tarjeta__cabecera">
+                      <span className="tarjeta__nombre">{planta.nombre}</span>
+                      <span className="tarjeta__estado">
+                        <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />
+                      </span>
+                    </div>
+                    <div className="tarjeta__metricas">
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Genética</span>
+                        <span className="tarjeta__valor">{planta.genetica || "—"}</span>
+                      </span>
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Método</span>
+                        <span className="tarjeta__valor">{planta.metodo || "—"}</span>
+                      </span>
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">
+                          {datos.dia === null ? "Inicio" : "Día"}
+                        </span>
+                        <span className="tarjeta__valor">
+                          {datos.dia === null ? formatearFecha(planta.fecha_inicio) : datos.dia}
+                        </span>
+                      </span>
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Estado</span>
+                        <span className="tarjeta__valor">{etiquetaEstado(planta.estado)}</span>
+                      </span>
+                      {planta.sustrato ? (
+                        <span className="tarjeta__dato">
+                          <span className="tarjeta__etiqueta">Sustrato</span>
+                          <span className="tarjeta__valor">{planta.sustrato}</span>
+                        </span>
+                      ) : null}
+                    </div>
+                  </Link>
+                </li>
+              );
+            })}
+          </ListaEntrada>
+        )}
+        <PanelAgregarPlanta
+          unidadId={unidad.id}
+          siguienteNumero={siguienteNumero(lista)}
+          metodosPersonalizados={metodosPersonalizados}
+        />
+      </section>
     </TransicionVista>
   );
 }

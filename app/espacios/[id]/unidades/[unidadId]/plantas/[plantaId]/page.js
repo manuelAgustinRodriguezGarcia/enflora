@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TextoCambio } from "@/componentes/aparecer";
+import { EnlaceBoton } from "@/componentes/boton";
 import { CambiarEtapa } from "@/componentes/cambiar-etapa";
-import { CicloEtapas } from "@/componentes/ciclo-etapas";
 import { EliminarPlanta } from "@/componentes/eliminar-planta";
+import { EtapaProgreso } from "@/componentes/etapa-progreso";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
@@ -67,56 +68,77 @@ export default async function PaginaPlanta({ params }) {
 
   return (
     <TransicionVista>
-    <section className="espacio">
-      <Link href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}`}>Volver a la unidad</Link>
-      <h1>{planta.nombre}</h1>
-      <p>Genética: {planta.genetica || "—"}</p>
-      <p>Método: {planta.metodo || "—"}</p>
-      {planta.sustrato ? <p>Sustrato: {planta.sustrato}</p> : null}
-      <section className="etapa-actual" aria-labelledby="etapa-actual-titulo">
-        <p className="etapa-actual__titulo" id="etapa-actual-titulo">
-          Etapa actual
-        </p>
-        <IndicadorEtapa etapa={datos.etapa} tamano="normal" animar />
-        {datos.dia === null ? null : <p className="etapa-actual__dia">Día {datos.dia}</p>}
-        {datos.inicio ? <p>Inicio: {formatearFecha(datos.inicio)}</p> : null}
+      <section className="espacio">
+        <Link href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}`}>Volver a la unidad</Link>
+        <header className="detalle-cabecera">
+          <h1 className="detalle-cabecera__titulo">{planta.nombre}</h1>
+          <div className="tarjeta__metricas">
+            <span className="tarjeta__dato">
+              <span className="tarjeta__etiqueta">Genética</span>
+              <span className="tarjeta__valor">{planta.genetica || "—"}</span>
+            </span>
+            <span className="tarjeta__dato">
+              <span className="tarjeta__etiqueta">Método</span>
+              <span className="tarjeta__valor">{planta.metodo || "—"}</span>
+            </span>
+            {planta.sustrato ? (
+              <span className="tarjeta__dato">
+                <span className="tarjeta__etiqueta">Sustrato</span>
+                <span className="tarjeta__valor">{planta.sustrato}</span>
+              </span>
+            ) : null}
+            <span className="tarjeta__dato">
+              <span className="tarjeta__etiqueta">Estado</span>
+              <span className="tarjeta__valor">
+                <TextoCambio>{etiquetaEstado(planta.estado)}</TextoCambio>
+              </span>
+            </span>
+            <span className="tarjeta__dato">
+              <span className="tarjeta__etiqueta">Inicio</span>
+              <span className="tarjeta__valor">{formatearFecha(planta.fecha_inicio)}</span>
+            </span>
+            <span className="tarjeta__dato">
+              <span className="tarjeta__etiqueta">Ubicación</span>
+              <span className="tarjeta__valor">
+                {espacioNombre} · {unidad.nombre}
+              </span>
+            </span>
+          </div>
+        </header>
+        <EtapaProgreso
+          etapa={datos.etapa}
+          dia={datos.dia}
+          inicio={datos.inicio ? formatearFecha(datos.inicio) : ""}
+        />
+        <h2>Historial de etapas</h2>
+        {errorHistorial ? <p>No se pudo cargar el historial de etapas.</p> : null}
+        {!errorHistorial && (historial || []).length === 0 ? (
+          <p>Esta planta no tiene historial de etapas.</p>
+        ) : null}
+        {!errorHistorial && historial?.length ? (
+          <ListaEntrada>
+            {historial.map((registro) => {
+              const fin = registro.fecha_fin || hoy;
+              return (
+                <li className="tarjeta" key={registro.id}>
+                  <IndicadorEtapa etapa={registro.etapa} tamano="compacto" />
+                  <span className="tarjeta__meta">{periodoHistorial(registro)}</span>
+                  <span className="tarjeta__meta">{textoDias(diasEntre(registro.fecha_inicio, fin))}</span>
+                </li>
+              );
+            })}
+          </ListaEntrada>
+        ) : null}
+        <CambiarEtapa plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id}>
+          <EnlaceBoton
+            className="boton boton--secundario"
+            href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}/editar`}
+          >
+            Editar
+          </EnlaceBoton>
+          <EliminarPlanta plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id} />
+        </CambiarEtapa>
       </section>
-      <CicloEtapas etapa={planta.etapa} historial={errorHistorial ? [] : historial || []} />
-      {planta.numero && planta.nombre !== `Planta ${planta.numero}` ? (
-        <p>Planta #{planta.numero}</p>
-      ) : null}
-      <p>Fecha de inicio: {formatearFecha(planta.fecha_inicio)}</p>
-      <p>
-        Estado: <TextoCambio>{etiquetaEstado(planta.estado)}</TextoCambio>
-      </p>
-      <p>Espacio: {espacioNombre}</p>
-      <p>Unidad: {unidad.nombre}</p>
-      <h2>Historial de etapas</h2>
-      {errorHistorial ? <p>No se pudo cargar el historial de etapas.</p> : null}
-      {!errorHistorial && (historial || []).length === 0 ? (
-        <p>Esta planta no tiene historial de etapas.</p>
-      ) : null}
-      {!errorHistorial && historial?.length ? (
-        <ListaEntrada>
-          {historial.map((registro) => {
-            const fin = registro.fecha_fin || hoy;
-            return (
-              <li className="tarjeta" key={registro.id}>
-                <IndicadorEtapa etapa={registro.etapa} tamano="compacto" />
-                <span className="tarjeta__meta">{periodoHistorial(registro)}</span>
-                <span className="tarjeta__meta">{textoDias(diasEntre(registro.fecha_inicio, fin))}</span>
-              </li>
-            );
-          })}
-        </ListaEntrada>
-      ) : null}
-      <CambiarEtapa plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id}>
-        <Link href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}/editar`}>
-          Editar
-        </Link>
-        <EliminarPlanta plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id} />
-      </CambiarEtapa>
-    </section>
     </TransicionVista>
   );
 }

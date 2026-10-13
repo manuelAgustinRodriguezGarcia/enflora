@@ -3,8 +3,15 @@
 import { useActionState, useState } from "react";
 import { editarPlanta } from "@/app/espacios/[id]/acciones";
 import { Boton } from "@/componentes/boton";
+import { Selector } from "@/componentes/selector";
+import { SelectorFecha } from "@/componentes/selector-fecha";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
+
+const ESTADOS = [
+  { valor: "activa", etiqueta: "Activa" },
+  { valor: "finalizada", etiqueta: "Finalizada" },
+];
 
 export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados = [] }) {
   const [resultado, accion, pendiente] = useActionState(editarPlanta, null);
@@ -19,9 +26,14 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
   const metodoGuardado = metodo === "otro" ? metodoNombre.trim() : metodo;
   const metodoIncompleto = metodo === "otro" && !metodoNombre.trim();
   const sustratoVisible = muestraSustrato(metodo, usaSustrato);
-  const fechaInicio = resultado?.fechaInicio ?? planta.fecha_inicio ?? "";
-  const estadoPlanta = resultado?.estadoPlanta ?? planta.estado ?? "activa";
-  const unidadId = resultado?.unidadId ?? planta.unidad_cultivo_id ?? "";
+  const [fechaInicio, setFechaInicio] = useState(resultado?.fechaInicio ?? planta.fecha_inicio ?? "");
+  const [estadoPlanta, setEstadoPlanta] = useState(resultado?.estadoPlanta ?? planta.estado ?? "activa");
+  const [unidadId, setUnidadId] = useState(resultado?.unidadId ?? planta.unidad_cultivo_id ?? "");
+
+  const opcionesUnidad = unidades.map((unidad) => ({
+    valor: unidad.id,
+    etiqueta: `${unidad.espacioNombre} — ${unidad.nombre}`,
+  }));
 
   return (
     <form key={resultado?.error || "inicial"} className="formulario" action={accion}>
@@ -31,6 +43,9 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
       <input type="hidden" name="metodo" value={metodoGuardado} />
       <input type="hidden" name="metodo_incompleto" value={metodoIncompleto ? "si" : "no"} />
       <input type="hidden" name="sustrato" value={sustratoVisible ? sustrato : ""} />
+      <input type="hidden" name="fecha_inicio" value={fechaInicio} />
+      <input type="hidden" name="estado" value={estadoPlanta} />
+      <input type="hidden" name="unidad_id" value={unidadId} />
       <label className="formulario__campo">
         Nombre
         <input name="nombre" type="text" defaultValue={nombre} />
@@ -59,29 +74,25 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
           if (valor !== "si") setSustrato("");
         }}
       />
-      <label className="formulario__campo">
-        Fecha de inicio
-        <input name="fecha_inicio" type="date" defaultValue={fechaInicio || ""} />
-      </label>
-      <label className="formulario__campo">
-        Estado
-        <select name="estado" defaultValue={estadoPlanta}>
-          <option value="">Seleccionar</option>
-          <option value="activa">Activa</option>
-          <option value="finalizada">Finalizada</option>
-        </select>
-      </label>
-      <label className="formulario__campo">
-        Unidad
-        <select name="unidad_id" defaultValue={unidadId}>
-          <option value="">Seleccionar</option>
-          {unidades.map((unidad) => (
-            <option key={unidad.id} value={unidad.id}>
-              {unidad.espacioNombre} — {unidad.nombre}
-            </option>
-          ))}
-        </select>
-      </label>
+      <SelectorFecha
+        etiqueta="Fecha de inicio"
+        valor={fechaInicio}
+        onChange={setFechaInicio}
+      />
+      <Selector
+        etiqueta="Estado"
+        valor={estadoPlanta || null}
+        onChange={setEstadoPlanta}
+        opciones={ESTADOS}
+        placeholder="Seleccionar"
+      />
+      <Selector
+        etiqueta="Unidad"
+        valor={unidadId || null}
+        onChange={setUnidadId}
+        opciones={opcionesUnidad}
+        placeholder="Seleccionar"
+      />
       <Boton type="submit" disabled={pendiente}>
         Guardar
       </Boton>

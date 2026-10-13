@@ -6,8 +6,13 @@ import { agregarUnidad } from "@/app/espacios/[id]/acciones";
 import { crearCultivo } from "@/app/espacios/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { ContadorCantidad } from "@/componentes/contador-cantidad";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { PlantaAccordion } from "@/componentes/planta-accordion";
+import { ResumenConfiguracion } from "@/componentes/resumen-configuracion";
+import { Selector } from "@/componentes/selector";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
+import { SelectorFecha } from "@/componentes/selector-fecha";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
 import {
   PASOS_VISIBLES,
@@ -53,6 +58,11 @@ import {
 } from "@/lib/unidades";
 import { toque, transicionRapida, transicionToque, variantesPaso } from "@/lib/animaciones";
 
+const TIPOS_ESPACIO = [
+  { valor: "interior", etiqueta: "Interior" },
+  { valor: "exterior", etiqueta: "Exterior" },
+];
+
 const MODOS = [
   {
     valor: "misma_genetica",
@@ -87,25 +97,11 @@ function usaMetodo(modo) {
   return modo === "mismo_metodo" || modo === "misma_genetica_y_metodo";
 }
 
-function Contador({ etiqueta, valor, minimo, maximo, onChange }) {
-  return (
-    <div className="contador">
-      <span className="contador__etiqueta">{etiqueta}</span>
-      <button type="button" onClick={() => onChange(valor - 1)} disabled={valor <= minimo}>
-        -
-      </button>
-      <span className="contador__valor">{valor}</span>
-      <button type="button" onClick={() => onChange(valor + 1)} disabled={valor >= maximo}>
-        +
-      </button>
-    </div>
-  );
-}
-
 export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null }) {
   const guardar = espacio ? agregarUnidad : crearCultivo;
   const [estado, setEstado] = useState(() => (espacio ? estadoInicialUnidad(espacio) : estadoInicial()));
   const [sentido, setSentido] = useState(1);
+  const [abiertas, setAbiertas] = useState(() => new Set([0]));
   const [resultado, accion, pendiente] = useActionState(guardar, null);
 
   function aplicar(funcion, ...args) {
@@ -134,6 +130,40 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
     aplicar(funcion, ...args);
   }
 
+  const gruposResumen = [];
+  if (estado.nombre.trim()) {
+    gruposResumen.push({
+      id: "espacio",
+      titulo: "Espacio",
+      valor: `${estado.nombre.trim()} · ${etiquetaTipoEspacio(estado.tipo) || "—"}`,
+    });
+  }
+  if (estado.unidades.length) {
+    gruposResumen.push({
+      id: "unidades",
+      titulo: "Unidades",
+      items: estado.unidades.map((item, indice) => {
+        const marca = estadoVisibleUnidad(estado, indice);
+        const meta =
+          marca === "completada"
+            ? textoCantidad(item.plantas.length)
+            : marca === "configurando"
+              ? "configurando"
+              : "pendiente";
+        const signo = marca === "completada" ? "✓ " : marca === "configurando" ? "▾ " : "○ ";
+        return {
+          id: item.numero,
+          titulo: `${signo}${item.nombre}`,
+          meta,
+          onClick:
+            item.estado === "completada" && !estado.confirmacion
+              ? () => retroceder(abrirUnidad, indice)
+              : undefined,
+        };
+      }),
+    });
+  }
+
   return (
     <div className="asistente">
       <ol className="asistente__pasos">
@@ -156,58 +186,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         })}
       </ol>
 
-      {estado.nombre.trim() || estado.unidades.length ? (
-        <aside className="asistente__resumen">
-          {estado.nombre.trim() ? (
-            <p>
-              <span>ESPACIO:</span> {estado.nombre.trim()}
-            </p>
-          ) : null}
-          {estado.unidades.length ? (
-            <>
-              <p>UNIDADES:</p>
-              <ul>
-                {estado.unidades.map((item, indice) => {
-                  const marca = estadoVisibleUnidad(estado, indice);
-                  const signo = marca === "completada" ? "✓" : marca === "configurando" ? "▾" : "○";
-                  const detalle =
-                    marca === "completada"
-                      ? textoCantidad(item.plantas.length)
-                      : marca === "configurando"
-                        ? "configurando"
-                        : "pendiente";
-                  const contenido = (
-                    <>
-                      <span>
-                        {signo} {item.nombre}
-                      </span>
-                      <span>
-                        <TextoCambio>{detalle}</TextoCambio>
-                      </span>
-                    </>
-                  );
-
-                  if (item.estado === "completada" && !estado.confirmacion) {
-                    return (
-                      <motion.li layout key={item.numero} transition={transicionRapida}>
-                        <button type="button" onClick={() => retroceder(abrirUnidad, indice)}>
-                          {contenido}
-                        </button>
-                      </motion.li>
-                    );
-                  }
-
-                  return (
-                    <motion.li layout key={item.numero} transition={transicionRapida}>
-                      {contenido}
-                    </motion.li>
-                  );
-                })}
-              </ul>
-            </>
-          ) : null}
-        </aside>
-      ) : null}
+      {gruposResumen.length ? <ResumenConfiguracion grupos={gruposResumen} /> : null}
 
       <Aparecer visible={Boolean(estado.error)}>
         <p className="formulario__error">{estado.error}</p>
@@ -216,325 +195,376 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         <p className="formulario__error">{resultado?.error}</p>
       </Aparecer>
 
-      {unidad && estado.paso !== "espacio" && estado.paso !== "tipo_unidad" && estado.paso !== "cantidad_unidades" && estado.paso !== "resumen" ? (
-        <p className="asistente__actual">CONFIGURANDO: {unidad.nombre.trim().toUpperCase() || "UNIDAD"}</p>
+      {unidad &&
+      estado.paso !== "espacio" &&
+      estado.paso !== "tipo_unidad" &&
+      estado.paso !== "cantidad_unidades" &&
+      estado.paso !== "resumen" ? (
+        <p className="asistente__actual">
+          Configurando: {unidad.nombre.trim() || "Unidad"}
+        </p>
       ) : null}
 
       <AnimatePresence mode="wait" initial={false} custom={sentido}>
-      <motion.div
-        key={estado.paso}
-        custom={sentido}
-        variants={variantesPaso}
-        initial="entrar"
-        animate="centro"
-        exit="salir"
-      >
-      {estado.paso === "espacio" ? (
-        <div className="bloque">
-          <label className="formulario__campo">
-            Nombre del espacio
-            <input
-              type="text"
-              value={estado.nombre}
-              onChange={(evento) => aplicar(cambiarNombreEspacio, evento.target.value)}
-            />
-          </label>
-          <label className="formulario__campo">
-            Tipo
-            <select
-              value={estado.tipo}
-              onChange={(evento) => aplicar(cambiarTipoEspacio, evento.target.value)}
-            >
-              <option value="">Seleccionar</option>
-              <option value="interior">Interior</option>
-              <option value="exterior">Exterior</option>
-            </select>
-          </label>
-        </div>
-      ) : null}
-
-      {estado.paso === "tipo_unidad" ? (
-        <div className="bloque">
-          <div className="eleccion">
-            {tipos.map((tipo) => (
-              <motion.button
-                key={tipo.valor}
-                type="button"
-                className={estado.tipoUnidad === tipo.valor ? "eleccion__activa" : undefined}
-                aria-pressed={estado.tipoUnidad === tipo.valor}
-                whileTap={toque}
-                transition={transicionToque}
-                onClick={() => aplicar(cambiarTipoUnidad, tipo.valor)}
-              >
-                {tipo.etiqueta}
-              </motion.button>
-            ))}
-          </div>
-          <Aparecer visible={estado.tipoUnidad === "otro"}>
-            <label className="formulario__campo">
-              Tipo de unidad
-              <input
-                type="text"
-                value={estado.tipoPersonalizado || ""}
-                onChange={(evento) => aplicar(cambiarTipoPersonalizado, evento.target.value)}
-              />
-            </label>
-          </Aparecer>
-        </div>
-      ) : null}
-
-      {estado.paso === "cantidad_unidades" ? (
-        <Contador
-          etiqueta={preguntaCantidadUnidades(estado.tipoUnidad)}
-          valor={estado.cantidadUnidades}
-          minimo={1}
-          maximo={20}
-          onChange={(cantidad) => aplicar(cambiarCantidadUnidades, cantidad)}
-        />
-      ) : null}
-
-      {unidad && (estado.paso === "cantidad_plantas" || estado.paso === "configuracion" || estado.paso === "etapa" || estado.paso === "cierre_unidad") ? (
-        <label className="formulario__campo">
-          Nombre
-          <input
-            type="text"
-            value={unidad.nombre}
-            onChange={(evento) => aplicar(cambiarNombreUnidad, evento.target.value)}
-          />
-        </label>
-      ) : null}
-
-      {unidad && estado.paso === "cantidad_plantas" ? (
-        <Contador
-          etiqueta={`¿Cuántas plantas habrá en ${unidad.nombre.trim() || "esta unidad"}?`}
-          valor={estado.cantidadPlantas}
-          minimo={1}
-          maximo={100}
-          onChange={(cantidad) => aplicar(cambiarCantidadPlantas, cantidad)}
-        />
-      ) : null}
-
-      {unidad && estado.paso === "configuracion" ? (
-        <div className="bloque">
-          <p className="asistente__actual">
-            {unidad.nombre} — {textoCantidad(unidad.plantas.length)}
-          </p>
-          <div className="eleccion eleccion--modos">
-            {MODOS.map((modo) => (
-              <motion.button
-                key={modo.valor}
-                type="button"
-                className={unidad.modo === modo.valor ? "eleccion__activa" : undefined}
-                aria-pressed={unidad.modo === modo.valor}
-                whileTap={toque}
-                transition={transicionToque}
-                onClick={() => aplicar(cambiarModo, modo.valor)}
-              >
-                {modo.etiqueta}
-              </motion.button>
-            ))}
-          </div>
-          <p className="eleccion__nota">
-            <TextoCambio>{MODOS.find((modo) => modo.valor === unidad.modo)?.descripcion}</TextoCambio>
-          </p>
-          <Aparecer visible={usaGenetica(unidad.modo)}>
-            <label className="formulario__campo">
-              Genética
-              <input
-                type="text"
-                value={unidad.general.genetica}
-                onChange={(evento) => aplicar(cambiarGeneral, "genetica", evento.target.value)}
-              />
-            </label>
-          </Aparecer>
-          <Aparecer visible={usaMetodo(unidad.modo)}>
-            <SelectorMetodo
-              metodosPersonalizados={metodos}
-              valor={unidad.general.metodo}
-              nombreOtro={unidad.general.metodoNombre}
-              sustrato={unidad.general.sustrato}
-              usaSustrato={unidad.general.usaSustrato}
-              onChange={(valor) => aplicar(cambiarGeneral, "metodo", valor)}
-              onChangeNombre={(valor) => aplicar(cambiarGeneral, "metodoNombre", valor)}
-              onChangeSustrato={(valor) => aplicar(cambiarGeneral, "sustrato", valor)}
-              onChangeUsaSustrato={(valor) => aplicar(cambiarGeneral, "usaSustrato", valor)}
-            />
-          </Aparecer>
-          {unidad.plantas.map((planta, indice) => (
-            <div
-              className="bloque asistente__planta"
-              key={`${unidad.numero}-${indice}`}
-              style={{ borderLeftColor: colorPlanta(planta, unidad.modo) }}
-            >
-              <h3>Planta {indice + 1}</h3>
+        <motion.div
+          key={estado.paso}
+          custom={sentido}
+          variants={variantesPaso}
+          initial="entrar"
+          animate="centro"
+          exit="salir"
+        >
+          {estado.paso === "espacio" ? (
+            <div className="bloque">
               <label className="formulario__campo">
-                Genética
+                Nombre del espacio
                 <input
                   type="text"
-                  value={planta.genetica}
-                  onChange={(evento) =>
-                    aplicar(cambiarPlanta, indice, "genetica", evento.target.value)
-                  }
+                  value={estado.nombre}
+                  onChange={(evento) => aplicar(cambiarNombreEspacio, evento.target.value)}
                 />
               </label>
-              <SelectorMetodo
-                metodosPersonalizados={metodos}
-                valor={planta.metodo}
-                nombreOtro={planta.metodoNombre}
-                sustrato={planta.sustrato}
-                usaSustrato={planta.usaSustrato}
-                onChange={(valor) => aplicar(cambiarPlanta, indice, "metodo", valor)}
-                onChangeNombre={(valor) => aplicar(cambiarPlanta, indice, "metodoNombre", valor)}
-                onChangeSustrato={(valor) => aplicar(cambiarPlanta, indice, "sustrato", valor)}
-                onChangeUsaSustrato={(valor) => aplicar(cambiarPlanta, indice, "usaSustrato", valor)}
+              <Selector
+                etiqueta="Tipo"
+                valor={estado.tipo || null}
+                onChange={(valor) => aplicar(cambiarTipoEspacio, valor)}
+                opciones={TIPOS_ESPACIO}
+                placeholder="Seleccionar"
               />
             </div>
-          ))}
-        </div>
-      ) : null}
+          ) : null}
 
-      {unidad && estado.paso === "etapa" ? (
-        <div className="bloque">
-          <fieldset className="opciones">
-            <legend>Etapa inicial</legend>
-            <label>
-              <input
-                type="radio"
-                checked={unidad.modoEtapa === "misma"}
-                onChange={() => aplicar(cambiarModoEtapa, "misma")}
-              />
-              Misma etapa para todas
-            </label>
-            <label>
-              <input
-                type="radio"
-                checked={unidad.modoEtapa === "individual"}
-                onChange={() => aplicar(cambiarModoEtapa, "individual")}
-              />
-              Personalizar por planta
-            </label>
-          </fieldset>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={unidad.modoEtapa}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={transicionRapida}
-            >
-          {unidad.modoEtapa === "misma" ? (
-            <>
-              <SelectorEtapa
-                nombre={`etapa-unidad-${unidad.numero}`}
-                valor={unidad.etapaGeneral}
-                onChange={(valor) => aplicar(cambiarEtapaGeneral, valor)}
-              />
-              <label className="formulario__campo">
-                Inicio de la etapa
-                <input
-                  type="date"
-                  value={unidad.fechaEtapaGeneral}
-                  onChange={(evento) => aplicar(cambiarFechaEtapaGeneral, evento.target.value)}
-                />
-              </label>
-            </>
-          ) : (
-            unidad.plantas.map((planta, indice) => (
-              <div className="bloque" key={`${unidad.numero}-etapa-${indice}`}>
-                <h3>Planta {indice + 1}</h3>
-                <SelectorEtapa
-                  nombre={`etapa-unidad-${unidad.numero}-planta-${indice}`}
-                  valor={planta.etapa}
-                  onChange={(valor) => aplicar(cambiarPlanta, indice, "etapa", valor)}
-                />
+          {estado.paso === "tipo_unidad" ? (
+            <div className="bloque">
+              <div className="eleccion">
+                {tipos.map((tipo) => (
+                  <motion.button
+                    key={tipo.valor}
+                    type="button"
+                    className={estado.tipoUnidad === tipo.valor ? "eleccion__activa" : undefined}
+                    aria-pressed={estado.tipoUnidad === tipo.valor}
+                    whileTap={toque}
+                    transition={transicionToque}
+                    onClick={() => aplicar(cambiarTipoUnidad, tipo.valor)}
+                  >
+                    {tipo.etiqueta}
+                  </motion.button>
+                ))}
+              </div>
+              <Aparecer visible={estado.tipoUnidad === "otro"}>
                 <label className="formulario__campo">
-                  Inicio de la etapa
+                  Tipo de unidad
                   <input
-                    type="date"
-                    value={planta.fechaInicioEtapa}
-                    onChange={(evento) =>
-                      aplicar(cambiarPlanta, indice, "fechaInicioEtapa", evento.target.value)
-                    }
+                    type="text"
+                    value={estado.tipoPersonalizado || ""}
+                    onChange={(evento) => aplicar(cambiarTipoPersonalizado, evento.target.value)}
                   />
                 </label>
-              </div>
-            ))
-          )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      ) : null}
+              </Aparecer>
+            </div>
+          ) : null}
 
-      {unidad && estado.paso === "cierre_unidad" ? (
-        <div className="bloque">
-          <CierreUnidad unidad={unidad} />
-          {estado.indice === 0 && admiteVarias(unidad.tipo) && estado.unidades.length > 1 ? (
-            <fieldset className="opciones">
-              <legend>Replicar</legend>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={estado.replicar}
-                  onChange={(evento) => aplicar(cambiarReplicar, evento.target.checked)}
+          {estado.paso === "cantidad_unidades" ? (
+            <ContadorCantidad
+              valor={estado.cantidadUnidades}
+              minimo={1}
+              maximo={20}
+              contexto={preguntaCantidadUnidades(estado.tipoUnidad)}
+              ariaLabel="Cantidad de unidades"
+              onChange={(cantidad) => aplicar(cambiarCantidadUnidades, cantidad)}
+            />
+          ) : null}
+
+          {unidad &&
+          (estado.paso === "cantidad_plantas" ||
+            estado.paso === "configuracion" ||
+            estado.paso === "etapa" ||
+            estado.paso === "cierre_unidad") ? (
+            <label className="formulario__campo">
+              Nombre
+              <input
+                type="text"
+                value={unidad.nombre}
+                onChange={(evento) => aplicar(cambiarNombreUnidad, evento.target.value)}
+              />
+            </label>
+          ) : null}
+
+          {unidad && estado.paso === "cantidad_plantas" ? (
+            <ContadorCantidad
+              valor={estado.cantidadPlantas}
+              minimo={1}
+              maximo={100}
+              contexto={`¿Cuántas plantas habrá en ${unidad.nombre.trim() || "esta unidad"}?`}
+              ariaLabel="Cantidad de plantas"
+              onChange={(cantidad) => aplicar(cambiarCantidadPlantas, cantidad)}
+            />
+          ) : null}
+
+          {unidad && estado.paso === "configuracion" ? (
+            <div className="bloque">
+              <p className="asistente__actual">
+                {unidad.nombre} — {textoCantidad(unidad.plantas.length)}
+              </p>
+              <div className="eleccion eleccion--modos">
+                {MODOS.map((modo) => (
+                  <motion.button
+                    key={modo.valor}
+                    type="button"
+                    className={unidad.modo === modo.valor ? "eleccion__activa" : undefined}
+                    aria-pressed={unidad.modo === modo.valor}
+                    whileTap={toque}
+                    transition={transicionToque}
+                    onClick={() => aplicar(cambiarModo, modo.valor)}
+                  >
+                    {modo.etiqueta}
+                  </motion.button>
+                ))}
+              </div>
+              <p className="eleccion__nota">
+                <TextoCambio>{MODOS.find((modo) => modo.valor === unidad.modo)?.descripcion}</TextoCambio>
+              </p>
+              <Aparecer visible={usaGenetica(unidad.modo)}>
+                <label className="formulario__campo">
+                  Genética
+                  <input
+                    type="text"
+                    value={unidad.general.genetica}
+                    onChange={(evento) => aplicar(cambiarGeneral, "genetica", evento.target.value)}
+                  />
+                </label>
+              </Aparecer>
+              <Aparecer visible={usaMetodo(unidad.modo)}>
+                <SelectorMetodo
+                  metodosPersonalizados={metodos}
+                  valor={unidad.general.metodo}
+                  nombreOtro={unidad.general.metodoNombre}
+                  sustrato={unidad.general.sustrato}
+                  usaSustrato={unidad.general.usaSustrato}
+                  onChange={(valor) => aplicar(cambiarGeneral, "metodo", valor)}
+                  onChangeNombre={(valor) => aplicar(cambiarGeneral, "metodoNombre", valor)}
+                  onChangeSustrato={(valor) => aplicar(cambiarGeneral, "sustrato", valor)}
+                  onChangeUsaSustrato={(valor) => aplicar(cambiarGeneral, "usaSustrato", valor)}
                 />
-                Replicar configuración de {unidad.nombre}
-              </label>
-              <Aparecer visible={estado.replicar}>
-                <div>
-                {estado.unidades.slice(1).map((item, desplazamiento) => {
-                    const indice = desplazamiento + 1;
-                    return (
-                      <label key={item.numero}>
-                        <input
-                          type="checkbox"
-                          checked={estado.replicarIndices.includes(indice)}
-                          onChange={(evento) =>
-                            aplicar(cambiarReplicarIndice, indice, evento.target.checked)
-                          }
-                        />
-                        {item.nombre}
-                      </label>
-                    );
-                  })}
+              </Aparecer>
+              <div className="asistente__plantas">
+                {unidad.plantas.map((planta, indice) => (
+                  <PlantaAccordion
+                    key={`${unidad.numero}-${indice}`}
+                    className="asistente__planta"
+                    style={{ borderLeftColor: colorPlanta(planta, unidad.modo) }}
+                    titulo={`Planta ${indice + 1}`}
+                    meta={planta.genetica || ""}
+                    abierto={abiertas.has(indice)}
+                    onToggle={() =>
+                      setAbiertas((actual) => {
+                        const siguiente = new Set(actual);
+                        if (siguiente.has(indice)) siguiente.delete(indice);
+                        else siguiente.add(indice);
+                        return siguiente;
+                      })
+                    }
+                  >
+                    <label className="formulario__campo">
+                      Genética
+                      <input
+                        type="text"
+                        value={planta.genetica}
+                        onChange={(evento) =>
+                          aplicar(cambiarPlanta, indice, "genetica", evento.target.value)
+                        }
+                      />
+                    </label>
+                    <SelectorMetodo
+                      metodosPersonalizados={metodos}
+                      valor={planta.metodo}
+                      nombreOtro={planta.metodoNombre}
+                      sustrato={planta.sustrato}
+                      usaSustrato={planta.usaSustrato}
+                      onChange={(valor) => aplicar(cambiarPlanta, indice, "metodo", valor)}
+                      onChangeNombre={(valor) =>
+                        aplicar(cambiarPlanta, indice, "metodoNombre", valor)
+                      }
+                      onChangeSustrato={(valor) =>
+                        aplicar(cambiarPlanta, indice, "sustrato", valor)
+                      }
+                      onChangeUsaSustrato={(valor) =>
+                        aplicar(cambiarPlanta, indice, "usaSustrato", valor)
+                      }
+                    />
+                  </PlantaAccordion>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {unidad && estado.paso === "etapa" ? (
+            <div className="bloque">
+              <fieldset className="opciones">
+                <legend>Etapa inicial</legend>
                 <label>
                   <input
-                    type="checkbox"
-                    checked={
-                      estado.unidades.length > 1 &&
-                      estado.replicarIndices.length === estado.unidades.length - 1
-                    }
-                    onChange={(evento) => aplicar(cambiarTodasSiguientes, evento.target.checked)}
+                    type="radio"
+                    checked={unidad.modoEtapa === "misma"}
+                    onChange={() => aplicar(cambiarModoEtapa, "misma")}
                   />
-                  Todas las siguientes
+                  Misma etapa para todas
                 </label>
-                </div>
-              </Aparecer>
-            </fieldset>
+                <label>
+                  <input
+                    type="radio"
+                    checked={unidad.modoEtapa === "individual"}
+                    onChange={() => aplicar(cambiarModoEtapa, "individual")}
+                  />
+                  Personalizar por planta
+                </label>
+              </fieldset>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={unidad.modoEtapa}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  transition={transicionRapida}
+                >
+                  {unidad.modoEtapa === "misma" ? (
+                    <>
+                      <SelectorEtapa
+                        nombre={`etapa-unidad-${unidad.numero}`}
+                        valor={unidad.etapaGeneral}
+                        onChange={(valor) => aplicar(cambiarEtapaGeneral, valor)}
+                      />
+                      <SelectorFecha
+                        etiqueta="Inicio de la etapa"
+                        valor={unidad.fechaEtapaGeneral}
+                        onChange={(valor) => aplicar(cambiarFechaEtapaGeneral, valor)}
+                      />
+                    </>
+                  ) : (
+                    <div className="asistente__plantas">
+                      {unidad.plantas.map((planta, indice) => (
+                        <PlantaAccordion
+                          key={`${unidad.numero}-etapa-${indice}`}
+                          titulo={`Planta ${indice + 1}`}
+                          meta={planta.genetica || ""}
+                          abierto={abiertas.has(indice)}
+                          onToggle={() =>
+                            setAbiertas((actual) => {
+                              const siguiente = new Set(actual);
+                              if (siguiente.has(indice)) siguiente.delete(indice);
+                              else siguiente.add(indice);
+                              return siguiente;
+                            })
+                          }
+                        >
+                          <SelectorEtapa
+                            nombre={`etapa-unidad-${unidad.numero}-planta-${indice}`}
+                            valor={planta.etapa}
+                            onChange={(valor) => aplicar(cambiarPlanta, indice, "etapa", valor)}
+                          />
+                          <SelectorFecha
+                            etiqueta="Inicio de la etapa"
+                            valor={planta.fechaInicioEtapa}
+                            onChange={(valor) =>
+                              aplicar(cambiarPlanta, indice, "fechaInicioEtapa", valor)
+                            }
+                          />
+                        </PlantaAccordion>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </div>
           ) : null}
-        </div>
-      ) : null}
 
-      {estado.paso === "resumen" ? (
-        <form className="bloque" action={accion}>
-          <h2>{estado.nombre.trim()}</h2>
-          <p>{etiquetaTipoEspacio(estado.tipo)}</p>
-          <ul className="lista">
-            {estado.unidades.map((item) => (
-              <li key={item.numero}>
-                <span className="tarjeta__nombre">{item.nombre}</span>
-                <span className="tarjeta__meta">{textoCantidad(item.plantas.length)}</span>
-              </li>
-            ))}
-          </ul>
-          <p>Total: {textoCantidad(totalPlantas(estado.unidades))}</p>
-          <input type="hidden" name="cultivo" value={JSON.stringify(payloadCultivo(estado))} />
-          {estado.soloUnidad ? <input type="hidden" name="espacio_id" value={estado.espacioId} /> : null}
-          <Boton type="submit" disabled={pendiente}>
-            {estado.soloUnidad ? "Crear unidad" : "Crear espacio"}
-          </Boton>
-        </form>
-      ) : null}
-      </motion.div>
+          {unidad && estado.paso === "cierre_unidad" ? (
+            <div className="bloque">
+              <CierreUnidad unidad={unidad} />
+              {estado.indice === 0 && admiteVarias(unidad.tipo) && estado.unidades.length > 1 ? (
+                <fieldset className="opciones">
+                  <legend>Replicar</legend>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={estado.replicar}
+                      onChange={(evento) => aplicar(cambiarReplicar, evento.target.checked)}
+                    />
+                    Replicar configuración de {unidad.nombre}
+                  </label>
+                  <Aparecer visible={estado.replicar}>
+                    <div>
+                      {estado.unidades.slice(1).map((item, desplazamiento) => {
+                        const indice = desplazamiento + 1;
+                        return (
+                          <label key={item.numero}>
+                            <input
+                              type="checkbox"
+                              checked={estado.replicarIndices.includes(indice)}
+                              onChange={(evento) =>
+                                aplicar(cambiarReplicarIndice, indice, evento.target.checked)
+                              }
+                            />
+                            {item.nombre}
+                          </label>
+                        );
+                      })}
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={
+                            estado.unidades.length > 1 &&
+                            estado.replicarIndices.length === estado.unidades.length - 1
+                          }
+                          onChange={(evento) =>
+                            aplicar(cambiarTodasSiguientes, evento.target.checked)
+                          }
+                        />
+                        Todas las siguientes
+                      </label>
+                    </div>
+                  </Aparecer>
+                </fieldset>
+              ) : null}
+            </div>
+          ) : null}
+
+          {estado.paso === "resumen" ? (
+            <form className="bloque asistente__final" action={accion}>
+              <ResumenConfiguracion
+                titulo={estado.nombre.trim() || "Resumen"}
+                grupos={[
+                  {
+                    id: "tipo",
+                    titulo: "Espacio",
+                    valor: `${estado.nombre.trim()} · ${etiquetaTipoEspacio(estado.tipo)}`,
+                  },
+                  {
+                    id: "unidades-final",
+                    titulo: "Unidades",
+                    items: estado.unidades.map((item) => ({
+                      id: item.numero,
+                      titulo: item.nombre,
+                      meta: textoCantidad(item.plantas.length),
+                    })),
+                  },
+                  {
+                    id: "total",
+                    titulo: "Total",
+                    valor: textoCantidad(totalPlantas(estado.unidades)),
+                  },
+                ]}
+              />
+              <input type="hidden" name="cultivo" value={JSON.stringify(payloadCultivo(estado))} />
+              {estado.soloUnidad ? (
+                <input type="hidden" name="espacio_id" value={estado.espacioId} />
+              ) : null}
+              <Boton className="boton boton--cta" type="submit" disabled={pendiente}>
+                {estado.soloUnidad ? "Crear unidad" : "Crear espacio"}
+              </Boton>
+            </form>
+          ) : null}
+        </motion.div>
       </AnimatePresence>
 
       <ModalConfirmacion
@@ -549,17 +579,19 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
       {estado.paso !== "resumen" ? (
         <div className="asistente__nav">
           {puedeVolver ? (
-            <Boton type="button" onClick={() => retroceder(volver)}>
+            <Boton type="button" variante="ghost" onClick={() => retroceder(volver)}>
               Volver
             </Boton>
-          ) : null}
+          ) : (
+            <span />
+          )}
           <Boton type="button" onClick={seguir}>
             Continuar
           </Boton>
         </div>
       ) : (
         <div className="asistente__nav">
-          <Boton type="button" onClick={() => retroceder(volver)} disabled={pendiente}>
+          <Boton type="button" variante="ghost" onClick={() => retroceder(volver)} disabled={pendiente}>
             Volver
           </Boton>
         </div>
@@ -571,13 +603,18 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
 function CierreUnidad({ unidad }) {
   const resumen = resumenUnidad(unidad);
   return (
-    <>
-      <h2>{unidad.nombre}</h2>
-      <p>{textoCantidad(resumen.plantas)}</p>
-      <p>Genética: {resumen.genetica}</p>
-      <p>Método: {resumen.metodo}</p>
-      <p>Etapa: {resumen.etapa}</p>
-      <p>{etiquetaTipoUnidad(unidad.tipo, unidad.tipoPersonalizado)}</p>
-    </>
+    <ResumenConfiguracion
+      titulo={unidad.nombre}
+      grupos={[
+        {
+          id: "meta",
+          titulo: "Unidad",
+          valor: `${etiquetaTipoUnidad(unidad.tipo, unidad.tipoPersonalizado)} · ${textoCantidad(resumen.plantas)}`,
+        },
+        { id: "genetica", titulo: "Genética", valor: resumen.genetica },
+        { id: "metodo", titulo: "Método", valor: resumen.metodo },
+        { id: "etapa", titulo: "Etapa", valor: resumen.etapa },
+      ]}
+    />
   );
 }

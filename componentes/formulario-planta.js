@@ -4,12 +4,41 @@ import { useActionState, useState } from "react";
 import { crearPlantas } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { ContadorCantidad } from "@/componentes/contador-cantidad";
+import { PlantaAccordion } from "@/componentes/planta-accordion";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
+import { SelectorFecha } from "@/componentes/selector-fecha";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
 import { fechaHoy } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
 const MAXIMO = 100;
+
+const MODOS = [
+  {
+    valor: "misma_genetica",
+    etiqueta: "Misma genética",
+    descripcion:
+      "Todas las plantas tendrán inicialmente la misma genética. Podés modificar plantas individuales después.",
+  },
+  {
+    valor: "mismo_metodo",
+    etiqueta: "Mismo método",
+    descripcion:
+      "Todas las plantas utilizarán inicialmente el mismo método de cultivo. Podés modificar plantas individuales después.",
+  },
+  {
+    valor: "misma_genetica_y_metodo",
+    etiqueta: "Misma genética y método",
+    descripcion:
+      "Todas las plantas tendrán inicialmente la misma genética y utilizarán el mismo método de cultivo. Podés modificar plantas individuales después.",
+  },
+  {
+    valor: "diferente",
+    etiqueta: "Diferente genética y método",
+    descripcion: "Cada planta podrá tener su propia genética y método de cultivo.",
+  },
+];
 
 function plantaNueva(fechaInicio) {
   return {
@@ -77,32 +106,32 @@ function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, nombreEtapa
             valor={planta.etapa}
             onChange={(valor) => onChange("etapa", valor)}
           />
-          <label className="formulario__campo">
-            Inicio de la etapa
-            <input
-              type="date"
-              value={planta.fechaInicioEtapa}
-              onChange={(evento) => onChange("fechaInicioEtapa", evento.target.value)}
-            />
-          </label>
+          <SelectorFecha
+            etiqueta="Inicio de la etapa"
+            valor={planta.fechaInicioEtapa}
+            onChange={(valor) => onChange("fechaInicioEtapa", valor)}
+          />
         </div>
       </Aparecer>
-      <label className="formulario__campo">
-        Fecha de inicio
-        <input
-          type="date"
-          value={planta.fechaInicio}
-          onChange={(evento) => onChange("fechaInicio", evento.target.value)}
-        />
-      </label>
+      <SelectorFecha
+        etiqueta="Fecha de inicio"
+        valor={planta.fechaInicio}
+        onChange={(valor) => onChange("fechaInicio", valor)}
+      />
     </>
   );
 }
 
-export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersonalizados = [] }) {
+export function FormularioPlanta({
+  unidadId,
+  siguienteNumero = 1,
+  metodosPersonalizados = [],
+  onCancelar,
+}) {
   const [estado, accion, pendiente] = useActionState(crearPlantas, null);
   const [modo, setModo] = useState("diferente");
   const [modoEtapa, setModoEtapa] = useState("misma");
+  const [abiertas, setAbiertas] = useState(() => new Set([0]));
   const [general, setGeneral] = useState({
     genetica: "",
     metodo: "",
@@ -147,6 +176,11 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
       }
       return [...actuales, ...extra];
     });
+    setAbiertas((actual) => {
+      const siguiente = new Set([...actual].filter((indice) => indice < nueva));
+      if (!siguiente.size) siguiente.add(0);
+      return siguiente;
+    });
   }
 
   function aplicarCompartido(campo, valor) {
@@ -190,7 +224,9 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
         sustrato:
           sustrato === null
             ? planta.sustrato
-            : muestraSustrato(metodo, usaSustrato) ? sustrato || "" : "",
+            : muestraSustrato(metodo, usaSustrato)
+              ? sustrato || ""
+              : "",
       }))
     );
   }
@@ -199,8 +235,7 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
     const todas = indice === undefined;
     setGeneral((actual) => {
       if (!todas) return actual;
-      const next = estadoTrasMetodo(actual, valor);
-      return next;
+      return estadoTrasMetodo(actual, valor);
     });
     setPlantas((actuales) =>
       actuales.map((planta, i) => {
@@ -275,59 +310,32 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
       {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
       <input type="hidden" name="unidad_id" value={unidadId} />
       <input type="hidden" name="plantas" value={JSON.stringify(carga)} />
-      <div className="contador">
-        <span className="contador__etiqueta">Cantidad de plantas</span>
-        <button
-          type="button"
-          onClick={() => cambiarCantidad(plantas.length - 1)}
-          disabled={pendiente || plantas.length <= 1}
-        >
-          -
-        </button>
-        <span className="contador__valor">{plantas.length}</span>
-        <button
-          type="button"
-          onClick={() => cambiarCantidad(plantas.length + 1)}
-          disabled={pendiente || plantas.length >= MAXIMO}
-        >
-          +
-        </button>
-      </div>
+      <ContadorCantidad
+        valor={plantas.length}
+        onChange={cambiarCantidad}
+        minimo={1}
+        maximo={MAXIMO}
+        contexto="Cantidad de plantas"
+        ariaLabel="Cantidad de plantas"
+        deshabilitado={pendiente}
+      />
       {varias ? (
-        <fieldset className="opciones">
-          <legend>Configuración general</legend>
-          <label>
-            <input
-              type="radio"
-              checked={modo === "diferente"}
-              onChange={() => cambiarModo("diferente")}
-            />
-            Diferente genética y método
-          </label>
-          <label>
-            <input
-              type="radio"
-              checked={modo === "misma_genetica"}
-              onChange={() => cambiarModo("misma_genetica")}
-            />
-            Misma genética
-          </label>
-          <label>
-            <input
-              type="radio"
-              checked={modo === "mismo_metodo"}
-              onChange={() => cambiarModo("mismo_metodo")}
-            />
-            Mismo método
-          </label>
-          <label>
-            <input
-              type="radio"
-              checked={modo === "misma_genetica_y_metodo"}
-              onChange={() => cambiarModo("misma_genetica_y_metodo")}
-            />
-            Misma genética y método
-          </label>
+        <div className="bloque">
+          <p className="asistente__actual">Configuración general</p>
+          <div className="eleccion eleccion--modos">
+            {MODOS.map((item) => (
+              <button
+                key={item.valor}
+                type="button"
+                className={modo === item.valor ? "eleccion__activa" : undefined}
+                aria-pressed={modo === item.valor}
+                onClick={() => cambiarModo(item.valor)}
+              >
+                {item.etiqueta}
+              </button>
+            ))}
+          </div>
+          <p className="eleccion__nota">{MODOS.find((item) => item.valor === modo)?.descripcion}</p>
           <Aparecer visible={usaGenetica(modo)}>
             <label className="formulario__campo">
               Genética
@@ -351,22 +359,25 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
               onChangeUsaSustrato={(valor) => cambiarUsoSustrato(valor)}
             />
           </Aparecer>
-          <label>
-            <input
-              type="radio"
-              checked={modoEtapa === "misma"}
-              onChange={() => cambiarModoEtapa("misma")}
-            />
-            Misma etapa para todas
-          </label>
-          <label>
-            <input
-              type="radio"
-              checked={modoEtapa === "individual"}
-              onChange={() => cambiarModoEtapa("individual")}
-            />
-            Personalizar por planta
-          </label>
+          <fieldset className="opciones">
+            <legend>Etapa inicial</legend>
+            <label>
+              <input
+                type="radio"
+                checked={modoEtapa === "misma"}
+                onChange={() => cambiarModoEtapa("misma")}
+              />
+              Misma etapa para todas
+            </label>
+            <label>
+              <input
+                type="radio"
+                checked={modoEtapa === "individual"}
+                onChange={() => cambiarModoEtapa("individual")}
+              />
+              Personalizar por planta
+            </label>
+          </fieldset>
           <Aparecer visible={modoEtapa === "misma"}>
             <div>
               <SelectorEtapa
@@ -374,23 +385,33 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
                 valor={general.etapa}
                 onChange={(valor) => aplicarCompartido("etapa", valor)}
               />
-              <label className="formulario__campo">
-                Inicio de la etapa
-                <input
-                  type="date"
-                  value={general.fechaInicioEtapa}
-                  onChange={(evento) => aplicarCompartido("fechaInicioEtapa", evento.target.value)}
-                />
-              </label>
+              <SelectorFecha
+                etiqueta="Inicio de la etapa"
+                valor={general.fechaInicioEtapa}
+                onChange={(valor) => aplicarCompartido("fechaInicioEtapa", valor)}
+              />
             </div>
           </Aparecer>
-        </fieldset>
+        </div>
       ) : null}
       {plantas.map((planta, indice) => {
         const numero = siguienteNumero + indice;
+        const titulo = planta.nombre.trim() || `Planta ${numero}`;
         return (
-          <div className="bloque" key={numero}>
-            <h3>Planta {numero}</h3>
+          <PlantaAccordion
+            key={numero}
+            titulo={titulo}
+            meta={planta.genetica || ""}
+            abierto={abiertas.has(indice)}
+            onToggle={() =>
+              setAbiertas((actual) => {
+                const siguiente = new Set(actual);
+                if (siguiente.has(indice)) siguiente.delete(indice);
+                else siguiente.add(indice);
+                return siguiente;
+              })
+            }
+          >
             <CamposPlanta
               planta={planta}
               metodosPersonalizados={metodosPersonalizados}
@@ -398,12 +419,19 @@ export function FormularioPlanta({ unidadId, siguienteNumero = 1, metodosPersona
               nombreEtapa={`etapa-planta-${numero}`}
               onChange={(campo, valor) => cambiarPlanta(indice, campo, valor)}
             />
-          </div>
+          </PlantaAccordion>
         );
       })}
-      <Boton type="submit" disabled={pendiente}>
-        {plantas.length === 1 ? "Crear 1 planta" : `Crear ${plantas.length} plantas`}
-      </Boton>
+      <div className="acciones">
+        {onCancelar ? (
+          <Boton type="button" variante="ghost" onClick={onCancelar} disabled={pendiente}>
+            Cancelar
+          </Boton>
+        ) : null}
+        <Boton type="submit" disabled={pendiente}>
+          {plantas.length === 1 ? "Crear 1 planta" : `Crear ${plantas.length} plantas`}
+        </Boton>
+      </div>
     </form>
   );
 }

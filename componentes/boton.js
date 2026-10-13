@@ -6,17 +6,28 @@ import { toque, transicionToque } from "@/lib/animaciones";
 
 const Enlace = motion.create(Link);
 
-export function Boton({ children, className, ...props }) {
+function clasesBoton(variante, className) {
+  const base = variante ? `boton boton--${variante}` : "boton";
+  return className ? `${base} ${className}` : base;
+}
+
+export function Boton({ children, className, variante, ...props }) {
+  const tieneClaseBoton = typeof className === "string" && className.split(/\s+/).includes("boton");
+  const final = tieneClaseBoton ? className : clasesBoton(variante, className);
+
   return (
-    <motion.button className={className} whileTap={toque} transition={transicionToque} {...props}>
+    <motion.button className={final} whileTap={toque} transition={transicionToque} {...props}>
       {children}
     </motion.button>
   );
 }
 
-export function EnlaceBoton({ href, children, className }) {
+export function EnlaceBoton({ href, children, className, variante }) {
+  const tieneClaseBoton = typeof className === "string" && className.split(/\s+/).includes("boton");
+  const final = tieneClaseBoton ? className : clasesBoton(variante, className);
+
   return (
-    <Enlace className={className} href={href} whileTap={toque} transition={transicionToque}>
+    <Enlace className={final} href={href} whileTap={toque} transition={transicionToque}>
       {children}
     </Enlace>
   );

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { Selector } from "@/componentes/selector";
 import { TIPOS_VALOR } from "@/lib/seguimiento";
 
 export function ModalOpcionSeguimiento({
@@ -39,6 +41,7 @@ export function ModalOpcionSeguimiento({
     >
       <input type="hidden" name="marca" value={marca} />
       <input type="hidden" name="categoria" value={borrador?.categoria || ""} />
+      <input type="hidden" name="tipo_valor" value={tipoValor} />
       {borrador?.id ? <input type="hidden" name="opcion_id" value={borrador.id} /> : null}
       <label className="formulario__campo">
         Nombre
@@ -52,16 +55,15 @@ export function ModalOpcionSeguimiento({
       </label>
       {esParametro ? (
         <>
-          <label className="formulario__campo">
-            Tipo de valor
-            <select name="tipo_valor" value={tipoValor} onChange={(evento) => setTipoValor(evento.target.value)}>
-              {TIPOS_VALOR.map((tipo) => (
-                <option key={tipo.valor} value={tipo.valor}>
-                  {tipo.etiqueta}
-                </option>
-              ))}
-            </select>
-          </label>
+          <Selector
+            etiqueta="Tipo de valor"
+            valor={tipoValor}
+            onChange={setTipoValor}
+            opciones={TIPOS_VALOR.map((tipo) => ({
+              valor: tipo.valor,
+              etiqueta: tipo.etiqueta,
+            }))}
+          />
           <label className="formulario__campo">
             Unidad
             <input
@@ -75,9 +77,14 @@ export function ModalOpcionSeguimiento({
         </>
       ) : null}
       {borrador?.id ? (
-        <button className="acciones__texto" type="button" onClick={onQuitar} disabled={pendiente || pendienteQuitar}>
+        <Boton
+          className="boton boton--destructivo"
+          type="button"
+          onClick={onQuitar}
+          disabled={pendiente || pendienteQuitar}
+        >
           {pendienteQuitar ? "Quitando..." : "Quitar"}
-        </button>
+        </Boton>
       ) : null}
     </ModalConfirmacion>
   );

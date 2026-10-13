@@ -154,7 +154,7 @@ export async function registrar(_estado, formulario) {
     return estadoCredenciales("Las contraseñas no coinciden.", email, datos);
   }
 
-  if (contrasena.length < 6) {
+  if (contrasena.length < 8) {
     return estadoCredenciales("La contraseña es demasiado corta.", email, datos);
   }
 

@@ -48,37 +48,55 @@ export default async function PaginaEspacios() {
 
   return (
     <TransicionVista>
-    <section className="espacios">
-      <h1>Espacios</h1>
-      <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
-      {espacios.length === 0 ? (
-        <p>No hay espacios de cultivo.</p>
-      ) : (
-        <ListaEntrada>
-          {espacios.map((espacio) => {
-            const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
-            return (
-              <li className="tarjeta" key={espacio.id}>
-                <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
-                  <span className="tarjeta__nombre">{espacio.nombre}</span>
-                  <span className="tarjeta__meta">{etiquetaTipoEspacio(espacio.tipo)}</span>
-                  <span className="tarjeta__meta">
-                    {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
-                  </span>
-                  <span className="tarjeta__meta">
-                    {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
-                  </span>
-                </Link>
-                <div className="acciones">
-                  <Link href={`/espacios/${espacio.id}/editar`}>Editar</Link>
-                  <EliminarEspacio espacioId={espacio.id} />
-                </div>
-              </li>
-            );
-          })}
-        </ListaEntrada>
-      )}
-    </section>
+      <section className="espacios">
+        <h1>Espacios</h1>
+        <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
+        {espacios.length === 0 ? (
+          <div className="vacio">
+            <p>Todavía no hay espacios de cultivo.</p>
+            <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
+          </div>
+        ) : (
+          <ListaEntrada>
+            {espacios.map((espacio) => {
+              const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
+              return (
+                <li className="tarjeta" key={espacio.id}>
+                  <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
+                    <div className="tarjeta__cabecera">
+                      <span className="tarjeta__nombre">{espacio.nombre}</span>
+                      <span className="tarjeta__tipo">{etiquetaTipoEspacio(espacio.tipo)}</span>
+                    </div>
+                    <div className="tarjeta__metricas">
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Unidades</span>
+                        <span className="tarjeta__valor">
+                          {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
+                        </span>
+                      </span>
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Plantas</span>
+                        <span className="tarjeta__valor">
+                          {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
+                        </span>
+                      </span>
+                    </div>
+                  </Link>
+                  <div className="acciones acciones--tarjeta">
+                    <EnlaceBoton
+                      className="boton boton--secundario"
+                      href={`/espacios/${espacio.id}/editar`}
+                    >
+                      Editar
+                    </EnlaceBoton>
+                    <EliminarEspacio espacioId={espacio.id} />
+                  </div>
+                </li>
+              );
+            })}
+          </ListaEntrada>
+        )}
+      </section>
     </TransicionVista>
   );
 }

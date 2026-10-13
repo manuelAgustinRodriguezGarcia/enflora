@@ -6,6 +6,14 @@ const TRAZOS = {
       <path d="M12 6V4" />
     </>
   ),
+  registro: (
+    <>
+      <path d="M7 4.5h7.5L17 7v12.5H7z" />
+      <path d="M14.5 4.5V7H17" />
+      <path d="M9.5 11h5" />
+      <path d="M9.5 14h5" />
+    </>
+  ),
   perfil: (
     <>
       <circle cx="12" cy="8" r="3" />
