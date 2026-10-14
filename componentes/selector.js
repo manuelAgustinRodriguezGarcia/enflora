@@ -48,7 +48,13 @@ export function Selector({
           </Select.Icon>
         </Select.Trigger>
         <Select.Portal>
-          <Select.Positioner sideOffset={6} className="selector__positioner" alignItemWithTrigger={false}>
+          <Select.Positioner
+            className="selector__positioner"
+            side="bottom"
+            align="end"
+            sideOffset={6}
+            alignItemWithTrigger={false}
+          >
             <Select.Popup className="selector__popup">
               <Select.List>
                 {opciones.map((opcion) => (

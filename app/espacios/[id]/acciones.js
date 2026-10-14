@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { estadoPorEtapa, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
+import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -46,7 +46,7 @@ export async function crearPlantas(_estado, formulario) {
   const plantas = [];
 
   for (const item of lista) {
-    const fechaInicio = String(item?.fechaInicio || "").trim();
+    const fechaInicio = String(item?.fechaInicio || "").trim() || fechaHoy();
     const fechaInicioEtapa = String(item?.fechaInicioEtapa || "").trim();
     const metodo = String(item?.metodo || "").trim();
     const etapa = String(item?.etapa || "").trim();
@@ -56,7 +56,7 @@ export async function crearPlantas(_estado, formulario) {
     }
     const errorEtapa = validarEtapaInicial(etapa, fechaInicioEtapa);
     if (errorEtapa) return { error: errorEtapa };
-    if (fechaInicio && !/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
       return { error: "La fecha de inicio no es válida." };
     }
 
@@ -119,7 +119,7 @@ export async function crearPlantas(_estado, formulario) {
       metodo: planta.metodo || null,
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
-      fecha_inicio: planta.fechaInicio || null,
+      fecha_inicio: planta.fechaInicio,
       estado: estadoPorEtapa(planta.etapa),
     };
   });
@@ -156,7 +156,7 @@ export async function editarPlanta(_estado, formulario) {
   const genetica = String(formulario.get("genetica") || "").trim();
   const metodo = String(formulario.get("metodo") || "").trim();
   const sustrato = String(formulario.get("sustrato") || "").trim();
-  const fechaInicio = String(formulario.get("fecha_inicio") || "").trim();
+  const fechaInicio = String(formulario.get("fecha_inicio") || "").trim() || fechaHoy();
   const estado = String(formulario.get("estado") || "").trim();
   const datos = { nombre, genetica, metodo, sustrato, fechaInicio, estadoPlanta: estado, unidadId };
 
@@ -165,7 +165,7 @@ export async function editarPlanta(_estado, formulario) {
     return { error: "El estado es obligatorio.", ...datos };
   }
   if (!unidadId) return { error: "Seleccioná una unidad.", ...datos };
-  if (fechaInicio && !/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaInicio)) {
     return { error: "La fecha de inicio no es válida.", ...datos };
   }
   if (formulario.get("metodo_incompleto") === "si" || metodo === "otro") {
@@ -225,7 +225,7 @@ export async function editarPlanta(_estado, formulario) {
       genetica: genetica || null,
       metodo: metodo || null,
       sustrato: sustrato || null,
-      fecha_inicio: fechaInicio || null,
+      fecha_inicio: fechaInicio,
       estado,
       unidad_cultivo_id: unidadId,
       numero,
@@ -489,6 +489,7 @@ export async function agregarUnidad(_estado, formulario) {
 
   if (errorUnidad || !creada) return { error: "No se pudo crear la unidad." };
 
+  const hoy = fechaHoy();
   const origenes = [];
   const filasPlantas = filas.map((planta, posicion) => {
     const n = posicion + 1;
@@ -506,6 +507,7 @@ export async function agregarUnidad(_estado, formulario) {
       metodo: planta.metodo || null,
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
+      fecha_inicio: hoy,
       estado: estadoPorEtapa(planta.etapa),
     };
   });

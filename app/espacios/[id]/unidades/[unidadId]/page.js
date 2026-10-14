@@ -1,15 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ListaEntrada } from "@/componentes/lista-entrada";
-import { EliminarUnidad } from "@/componentes/eliminar-unidad";
+import { CabeceraUnidad } from "@/componentes/cabecera-unidad";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
+import { ListaEntrada } from "@/componentes/lista-entrada";
 import { PanelAgregarPlanta } from "@/componentes/panel-agregar-planta";
 import { TransicionVista } from "@/componentes/transicion-vista";
-import { FormularioUnidad } from "@/componentes/formulario-unidad";
-import { datosEtapaActual, esEtapa, fechaHoy } from "@/lib/etapas";
+import { datosEtapaActual, esEtapa, fechaHoy, fechaInicioPlanta } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
 
 function etiquetaEstado(estado) {
   if (estado === "activa") return "Activa";
@@ -38,7 +37,7 @@ export default async function PaginaUnidad({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href={`/espacios/${id}`}>Volver al espacio</Link>
+        <EnlaceVolver href={`/espacios/${id}`} etiqueta="Volver al espacio" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -57,7 +56,7 @@ export default async function PaginaUnidad({ params }) {
   const [plantasRespuesta, metodosRespuesta, espacioRespuesta] = await Promise.all([
     supabase
       .from("plantas")
-      .select("id, nombre, genetica, metodo, sustrato, etapa, fecha_inicio, estado, numero")
+      .select("id, nombre, genetica, metodo, sustrato, etapa, fecha_inicio, fecha_creacion, estado, numero")
       .eq("unidad_cultivo_id", unidad.id)
       .order("numero", { ascending: true }),
     supabase.from("metodos_personalizados").select("nombre").order("nombre", { ascending: true }),
@@ -90,23 +89,12 @@ export default async function PaginaUnidad({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
-        <Link href={`/espacios/${unidad.espacio_id}`}>Volver al espacio</Link>
-        <header className="detalle-cabecera">
-          <h1 className="detalle-cabecera__titulo">{unidad.nombre}</h1>
-          <div className="detalle-cabecera__fila">
-            <span className="detalle-cabecera__chip">
-              {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
-            </span>
-            <span className="detalle-cabecera__meta">{textoCantidad(lista.length)}</span>
-          </div>
-          <div className="acciones">
-            <EliminarUnidad unidadId={unidad.id} espacioId={unidad.espacio_id} />
-          </div>
-        </header>
-        <FormularioUnidad
+        <EnlaceVolver href={`/espacios/${unidad.espacio_id}`} etiqueta="Volver al espacio" />
+        <CabeceraUnidad
           unidad={unidad}
           espacioId={unidad.espacio_id}
           tipoEspacio={espacioRespuesta.data.tipo}
+          cantidadPlantas={lista.length}
         />
         <h2>Plantas</h2>
         {lista.length === 0 ? (
@@ -150,7 +138,7 @@ export default async function PaginaUnidad({ params }) {
                           {datos.dia === null ? "Inicio" : "Día"}
                         </span>
                         <span className="tarjeta__valor">
-                          {datos.dia === null ? formatearFecha(planta.fecha_inicio) : datos.dia}
+                          {datos.dia === null ? formatearFecha(fechaInicioPlanta(planta)) : datos.dia}
                         </span>
                       </span>
                       <span className="tarjeta__dato">

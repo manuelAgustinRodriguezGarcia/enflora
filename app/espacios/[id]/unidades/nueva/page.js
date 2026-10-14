@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AsistenteEspacio } from "@/componentes/asistente-espacio";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { MAXIMO_UNIDADES, etiquetaTipoEspacio } from "@/lib/unidades";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -12,7 +12,7 @@ export default async function PaginaNuevaUnidad({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href={`/espacios/${id}`}>Volver al espacio</Link>
+        <EnlaceVolver href={`/espacios/${id}`} etiqueta="Volver al espacio" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -42,7 +42,7 @@ export default async function PaginaNuevaUnidad({ params }) {
   return (
     <TransicionVista>
     <section className="espacio">
-      <Link href={`/espacios/${espacio.id}`}>Volver al espacio</Link>
+      <EnlaceVolver href={`/espacios/${espacio.id}`} etiqueta="Volver al espacio" />
       <h1>Agregar unidad</h1>
       <p>
         {espacio.nombre} · {etiquetaTipoEspacio(espacio.tipo)}

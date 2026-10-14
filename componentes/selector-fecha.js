@@ -66,7 +66,12 @@ export function SelectorFecha({
           <IconoCalendario className="selector-fecha__icono" />
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Positioner sideOffset={8} className="selector-fecha__positioner">
+          <Popover.Positioner
+            className="selector-fecha__positioner"
+            side="bottom"
+            align="end"
+            sideOffset={8}
+          >
             <Popover.Popup className="selector-fecha__popup">
               <DayPicker
                 mode="single"

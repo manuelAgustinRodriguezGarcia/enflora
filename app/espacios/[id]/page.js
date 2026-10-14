@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -14,7 +15,7 @@ export default async function PaginaEspacio({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href="/espacios">Volver a espacios</Link>
+        <EnlaceVolver href="/espacios" etiqueta="Volver a espacios" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -60,7 +61,7 @@ export default async function PaginaEspacio({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
-        <Link href="/espacios">Volver a espacios</Link>
+        <EnlaceVolver href="/espacios" etiqueta="Volver a espacios" />
         <header className="detalle-cabecera">
           <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
           <div className="detalle-cabecera__fila">

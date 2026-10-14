@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { eliminarEspacio } from "@/app/espacios/acciones";
 import { Boton } from "@/componentes/boton";
+import { IconoBasura } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
 export function EliminarEspacio({ espacioId }) {
@@ -23,6 +24,8 @@ export function EliminarEspacio({ espacioId }) {
         pendiente={pendiente}
         error={estado?.error || ""}
         accion={accion}
+        icono={<IconoBasura />}
+        varianteConfirmar="destructivo"
       >
         <input type="hidden" name="espacio_id" value={espacioId} />
       </ModalConfirmacion>

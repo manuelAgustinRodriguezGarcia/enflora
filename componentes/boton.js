@@ -22,12 +22,12 @@ export function Boton({ children, className, variante, ...props }) {
   );
 }
 
-export function EnlaceBoton({ href, children, className, variante }) {
+export function EnlaceBoton({ href, children, className, variante, ...props }) {
   const tieneClaseBoton = typeof className === "string" && className.split(/\s+/).includes("boton");
   const final = tieneClaseBoton ? className : clasesBoton(variante, className);
 
   return (
-    <Enlace className={final} href={href} whileTap={toque} transition={transicionToque}>
+    <Enlace className={final} href={href} whileTap={toque} transition={transicionToque} {...props}>
       {children}
     </Enlace>
   );

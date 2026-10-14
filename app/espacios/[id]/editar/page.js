@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { FormularioEspacio } from "@/componentes/formulario-espacio";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -11,7 +11,7 @@ export default async function PaginaEditarEspacio({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href="/espacios">Volver a espacios</Link>
+        <EnlaceVolver href="/espacios" etiqueta="Volver a espacios" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -31,7 +31,7 @@ export default async function PaginaEditarEspacio({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
-        <Link href={`/espacios/${espacio.id}`}>Volver al espacio</Link>
+        <EnlaceVolver href={`/espacios/${espacio.id}`} etiqueta="Volver al espacio" />
         <h1>Editar espacio</h1>
         <FormularioEspacio espacio={espacio} />
       </section>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { estadoPorEtapa, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
+import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -107,6 +107,7 @@ export async function crearCultivo(_estado, formulario) {
   const porNumero = new Map(unidadesCreadas.map((unidad) => [unidad.numero, unidad.id]));
   const filasPlantas = [];
   const origenes = [];
+  const hoy = fechaHoy();
 
   plantasPorUnidad.forEach((plantas, indice) => {
     const unidadId = porNumero.get(indice + 1);
@@ -120,6 +121,7 @@ export async function crearCultivo(_estado, formulario) {
         metodo: planta.metodo || null,
         sustrato: planta.sustrato || null,
         etapa: planta.etapa,
+        fecha_inicio: hoy,
         estado: estadoPorEtapa(planta.etapa),
       });
       origenes.push({

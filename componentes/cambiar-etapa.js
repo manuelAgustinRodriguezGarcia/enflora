@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { IconoFlecha } from "@/componentes/iconos-ui";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { fechaHoy } from "@/lib/etapas";
@@ -16,30 +17,37 @@ export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
 
   return (
     <>
-      <div className="acciones">
+      <div className="acciones acciones--ancho">
         {children}
-        <Boton type="button" onClick={() => setAbierto((actual) => !actual)}>
+        <Boton
+          type="button"
+          className="boton boton--ancho cambiar-etapa__abrir"
+          onClick={() => setAbierto((actual) => !actual)}
+        >
+          <IconoFlecha />
           Cambiar etapa
         </Boton>
       </div>
       <Aparecer visible={abierto}>
-        <form className="formulario" action={accion}>
+        <form className="formulario cambiar-etapa" action={accion}>
           {resultado?.error ? <p className="formulario__error">{resultado.error}</p> : null}
           <input type="hidden" name="planta_id" value={plantaId} />
           <input type="hidden" name="unidad_id" value={unidadId} />
           <input type="hidden" name="espacio_id" value={espacioId} />
-          <SelectorEtapa
-            leyenda="Nueva etapa"
-            nombre="etapa"
-            valor={etapa}
-            onChange={setEtapa}
-          />
-          <SelectorFecha
-            etiqueta="Fecha de inicio"
-            nombre="fecha_inicio"
-            valor={fecha}
-            onChange={setFecha}
-          />
+          <div className="cambiar-etapa__campos">
+            <SelectorEtapa
+              leyenda="Nueva etapa"
+              nombre="etapa"
+              valor={etapa}
+              onChange={setEtapa}
+            />
+            <SelectorFecha
+              etiqueta="Fecha de inicio"
+              nombre="fecha_inicio"
+              valor={fecha}
+              onChange={setFecha}
+            />
+          </div>
           <Boton type="submit" disabled={pendiente}>
             Guardar
           </Boton>

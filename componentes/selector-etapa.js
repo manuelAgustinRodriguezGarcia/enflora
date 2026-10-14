@@ -1,8 +1,17 @@
 "use client";
 
-import { IndicadorEtapa } from "@/componentes/indicador-etapa";
+import { IconoEtapa } from "@/componentes/icono-etapa";
 import { Selector } from "@/componentes/selector";
 import { ETAPAS } from "@/lib/etapas";
+
+function FilaEtapa({ valor, etiqueta }) {
+  return (
+    <span className={`fila-etapa fila-etapa--${valor}`}>
+      <IconoEtapa etapa={valor} />
+      <span className="fila-etapa__texto">{etiqueta}</span>
+    </span>
+  );
+}
 
 export function SelectorEtapa({ valor, onChange, nombre, leyenda = "Etapa", id }) {
   const opciones = ETAPAS.map((etapa) => ({
@@ -21,9 +30,9 @@ export function SelectorEtapa({ valor, onChange, nombre, leyenda = "Etapa", id }
       opciones={opciones}
       placeholder="Seleccionar etapa"
       renderValor={(opcion) =>
-        opcion ? <IndicadorEtapa etapa={opcion.valor} tamano="compacto" /> : null
+        opcion ? <FilaEtapa valor={opcion.valor} etiqueta={opcion.etiqueta} /> : null
       }
-      renderOpcion={(opcion) => <IndicadorEtapa etapa={opcion.valor} tamano="compacto" />}
+      renderOpcion={(opcion) => <FilaEtapa valor={opcion.valor} etiqueta={opcion.etiqueta} />}
     />
   );
 }

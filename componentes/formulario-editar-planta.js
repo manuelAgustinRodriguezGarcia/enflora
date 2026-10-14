@@ -6,12 +6,8 @@ import { Boton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
+import { fechaHoy, fechaInicioPlanta } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
-
-const ESTADOS = [
-  { valor: "activa", etiqueta: "Activa" },
-  { valor: "finalizada", etiqueta: "Finalizada" },
-];
 
 export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados = [] }) {
   const [resultado, accion, pendiente] = useActionState(editarPlanta, null);
@@ -26,9 +22,12 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
   const metodoGuardado = metodo === "otro" ? metodoNombre.trim() : metodo;
   const metodoIncompleto = metodo === "otro" && !metodoNombre.trim();
   const sustratoVisible = muestraSustrato(metodo, usaSustrato);
-  const [fechaInicio, setFechaInicio] = useState(resultado?.fechaInicio ?? planta.fecha_inicio ?? "");
+  const [fechaInicio, setFechaInicio] = useState(
+    resultado?.fechaInicio ?? (fechaInicioPlanta(planta) || fechaHoy())
+  );
   const [estadoPlanta, setEstadoPlanta] = useState(resultado?.estadoPlanta ?? planta.estado ?? "activa");
   const [unidadId, setUnidadId] = useState(resultado?.unidadId ?? planta.unidad_cultivo_id ?? "");
+  const activa = estadoPlanta === "activa";
 
   const opcionesUnidad = unidades.map((unidad) => ({
     valor: unidad.id,
@@ -46,10 +45,39 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
       <input type="hidden" name="fecha_inicio" value={fechaInicio} />
       <input type="hidden" name="estado" value={estadoPlanta} />
       <input type="hidden" name="unidad_id" value={unidadId} />
-      <label className="formulario__campo">
-        Nombre
-        <input name="nombre" type="text" defaultValue={nombre} />
-      </label>
+      <div className="estado-toggle">
+        <span className={`estado-toggle__texto${activa ? "" : " estado-toggle__texto--apagado"}`}>
+          {activa ? "Activa" : "Desactivada"}
+        </span>
+        <button
+          type="button"
+          className={`estado-toggle__boton${activa ? " estado-toggle__boton--activo" : ""}`}
+          role="switch"
+          aria-checked={activa}
+          aria-label={activa ? "Planta activa" : "Planta desactivada"}
+          onClick={() => setEstadoPlanta(activa ? "finalizada" : "activa")}
+        >
+          <span className="estado-toggle__pulgar" />
+        </button>
+      </div>
+      <div className="formulario__fila">
+        <label className="formulario__campo">
+          Nombre
+          <input name="nombre" type="text" defaultValue={nombre} />
+        </label>
+        <SelectorFecha
+          etiqueta="Fecha de inicio"
+          valor={fechaInicio}
+          onChange={setFechaInicio}
+        />
+      </div>
+      <Selector
+        etiqueta="Unidad"
+        valor={unidadId || null}
+        onChange={setUnidadId}
+        opciones={opcionesUnidad}
+        placeholder="Seleccionar"
+      />
       <label className="formulario__campo">
         Genética
         <input name="genetica" type="text" defaultValue={genetica || ""} />
@@ -73,25 +101,6 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
           setUsaSustrato(valor);
           if (valor !== "si") setSustrato("");
         }}
-      />
-      <SelectorFecha
-        etiqueta="Fecha de inicio"
-        valor={fechaInicio}
-        onChange={setFechaInicio}
-      />
-      <Selector
-        etiqueta="Estado"
-        valor={estadoPlanta || null}
-        onChange={setEstadoPlanta}
-        opciones={ESTADOS}
-        placeholder="Seleccionar"
-      />
-      <Selector
-        etiqueta="Unidad"
-        valor={unidadId || null}
-        onChange={setUnidadId}
-        opciones={opcionesUnidad}
-        placeholder="Seleccionar"
       />
       <Boton type="submit" disabled={pendiente}>
         Guardar
