@@ -35,9 +35,6 @@ export function OpcionPreferencia({
           <span className="preferencia__nombre">{etiqueta}</span>
           {detalle ? <span className="preferencia__detalle">{detalle}</span> : null}
         </span>
-        <span className="preferencia__marca" aria-hidden="true">
-          {activo ? "✓" : ""}
-        </span>
       </motion.label>
       {onEditar ? (
         <button

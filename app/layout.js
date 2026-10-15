@@ -51,8 +51,17 @@ export default async function Layout({ children }) {
       <body>
         <ProveedorMotion>
         <header className="encabezado">
-          <Link className="encabezado__marca" href={usuario ? "/espacios" : "/ingreso"}>
-            <img src="/logos/enflora-logo-apaisado.svg" alt="ENFLORA" />
+          <Link className="encabezado__marca" href={usuario ? "/espacios" : "/"}>
+            <img
+              className="encabezado__logo encabezado__logo--oscuro"
+              src="/logos/enflora-logo-apaisado.svg"
+              alt="ENFLORA"
+            />
+            <img
+              className="encabezado__logo encabezado__logo--claro"
+              src="/logos/enflora-logo-apaisado-light.svg"
+              alt="ENFLORA"
+            />
           </Link>
           {usuario ? <BotonNotificaciones /> : null}
         </header>

@@ -40,7 +40,7 @@ export function Historial() {
   }, { scope: ref });
 
   return (
-    <section className="historial" id="historial" ref={ref}>
+    <section className="historial" id="historial" data-logo="dark" ref={ref}>
       <div className="historial__texto">
         <h2>{historial.titulo}</h2>
         <p>{historial.bajada}</p>

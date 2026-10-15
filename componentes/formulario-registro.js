@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { registrar } from "@/app/acciones/sesion";
+import { SpinnerCarga } from "@/componentes/spinner-carga";
 
 function Icono({ className, size = 20, children }) {
   return (
@@ -298,9 +299,7 @@ export function FormularioRegistro() {
             aria-label={pendiente ? "Creando cuenta" : undefined}
           >
             {pendiente ? (
-              <Icono className="formulario__carga">
-                <path d="M12 3a9 9 0 1 0 9 9" />
-              </Icono>
+              <SpinnerCarga size={22} etiqueta="Creando cuenta" />
             ) : (
               <>
                 Crear cuenta

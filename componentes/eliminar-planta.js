@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { eliminarPlanta } from "@/app/espacios/[id]/acciones";
 import { Boton } from "@/componentes/boton";
-import { IconoEliminarPlanta, IconoEliminarPlantaMin } from "@/componentes/iconos-ui";
+import { IconoBasura, IconoEliminarPlanta } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
 export function EliminarPlanta({ plantaId, unidadId, espacioId }) {
@@ -18,7 +18,7 @@ export function EliminarPlanta({ plantaId, unidadId, espacioId }) {
         onClick={() => setAbierto(true)}
         aria-label="Eliminar planta"
       >
-        <IconoEliminarPlantaMin />
+        <IconoBasura />
       </Boton>
       <ModalConfirmacion
         abierto={abierto}

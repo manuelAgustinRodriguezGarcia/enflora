@@ -2,8 +2,10 @@
 
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { entrar } from "@/app/acciones/sesion";
+import { SlideCommit } from "@/componentes/slide-commit";
+import { SpinnerCarga } from "@/componentes/spinner-carga";
 
 function IconoOjo() {
   return (
@@ -36,13 +38,65 @@ function IconoOjoTachado() {
 
 export function FormularioEntrar({ aviso }) {
   const [estado, accion, pendiente] = useActionState(entrar, null);
+  const [, startTransition] = useTransition();
   const [visible, setVisible] = useState(false);
+  const [email, setEmail] = useState(estado?.email || "");
+  const [contrasena, setContrasena] = useState("");
+  const [anchoDeslizar, setAnchoDeslizar] = useState(280);
+  const formularioRef = useRef(null);
+  const deslizarRef = useRef(null);
+  const esperaRef = useRef(null);
+  const pendientePrevio = useRef(false);
+
+  const listo = email.trim().length > 0 && contrasena.trim().length > 0;
+
+  useEffect(() => {
+    if (estado?.email) setEmail(estado.email);
+  }, [estado?.email]);
+
+  useEffect(() => {
+    const nodo = deslizarRef.current;
+    if (!nodo) return undefined;
+    const medir = () => setAnchoDeslizar(Math.max(200, Math.round(nodo.getBoundingClientRect().width)));
+    medir();
+    const observador = new ResizeObserver(medir);
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (pendientePrevio.current && !pendiente && esperaRef.current) {
+      const { resolve, reject } = esperaRef.current;
+      esperaRef.current = null;
+      if (estado?.error) reject(new Error(estado.error));
+      else resolve();
+    }
+    pendientePrevio.current = pendiente;
+  }, [pendiente, estado]);
+
+  const confirmarDesliz = () =>
+    new Promise((resolve, reject) => {
+      const formulario = formularioRef.current;
+      if (!formulario || !listo) {
+        reject(new Error("Completá email y contraseña."));
+        return;
+      }
+      esperaRef.current = { resolve, reject };
+      startTransition(() => {
+        accion(new FormData(formulario));
+      });
+    });
 
   return (
     <>
       <section className="auth">
         <h1>Iniciar Sesión</h1>
-        <form key={estado?.error || "inicial"} className="formulario" action={accion}>
+        <form
+          ref={formularioRef}
+          key={estado?.error || "inicial"}
+          className="formulario"
+          action={accion}
+        >
           <label className="formulario__campo">
             Email
             <input
@@ -51,6 +105,7 @@ export function FormularioEntrar({ aviso }) {
               autoComplete="email"
               placeholder="flora.trico420@mail.com"
               defaultValue={estado?.email || ""}
+              onChange={(evento) => setEmail(evento.target.value)}
             />
           </label>
           <label className="formulario__campo">
@@ -61,6 +116,7 @@ export function FormularioEntrar({ aviso }) {
                 type={visible ? "text" : "password"}
                 autoComplete="current-password"
                 placeholder="••••••••"
+                onChange={(evento) => setContrasena(evento.target.value)}
               />
               <button
                 className="formulario__revelar"
@@ -76,10 +132,39 @@ export function FormularioEntrar({ aviso }) {
           <button className="formulario__olvido" type="button">
             Olvidaste tu contraseña?
           </button>
-          <button className="formulario__enviar" type="submit" disabled={pendiente}>
-            Entrar
-            <ArrowRight size={20} strokeWidth={2} color="white" aria-hidden="true" />
+          <button
+            className="formulario__enviar formulario__enviar--escritorio"
+            type="submit"
+            disabled={pendiente}
+            aria-busy={pendiente}
+            aria-label={pendiente ? "Entrando" : undefined}
+          >
+            {pendiente ? (
+              <SpinnerCarga size={22} etiqueta="Entrando" />
+            ) : (
+              <>
+                Entrar
+                <ArrowRight size={20} strokeWidth={2} color="white" aria-hidden="true" />
+              </>
+            )}
           </button>
+          <div className="formulario__deslizar" ref={deslizarRef}>
+            <SlideCommit
+              label="Deslizar para entrar"
+              doneLabel="Listo"
+              errorLabel="No se pudo entrar"
+              onConfirm={confirmarDesliz}
+              disabled={!listo || pendiente}
+              trackColor="#0B3D2A"
+              handleColor="#F4F8EE"
+              successColor="#A4C85B"
+              dangerColor="#9b2c2c"
+              width={anchoDeslizar}
+              height={48}
+              radius={18}
+              holdMs={0}
+            />
+          </div>
         </form>
         <p className="auth__alta">No tenés cuenta? <Link href="/registro">Creá una</Link>.</p>
       </section>

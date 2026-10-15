@@ -23,10 +23,12 @@ export function ModalConfirmacion({
   icono = null,
   varianteIcono = "",
   varianteConfirmar,
+  className = "",
   children,
 }) {
   const acciones = useRef(null);
   const claseIcono = varianteIcono ? `modal__icono modal__icono--${varianteIcono}` : "modal__icono";
+  const clasePanel = className ? `modal__panel ${className}` : "modal__panel";
 
   function cambiar(siguiente, detalles) {
     if (!siguiente && pendiente) {
@@ -84,10 +86,14 @@ export function ModalConfirmacion({
           <Dialog.Popup
             render={
               <motion.div
-                className="modal__panel"
+                className={clasePanel}
+                layout
                 initial={panelCerrado}
                 animate={abierto ? panelAbierto : panelCerrado}
-                transition={transicionVista}
+                transition={{
+                  ...transicionVista,
+                  layout: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
+                }}
                 onAnimationComplete={() => {
                   if (!abierto) acciones.current?.unmount();
                 }}

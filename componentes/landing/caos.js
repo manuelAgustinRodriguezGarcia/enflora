@@ -6,7 +6,7 @@ import { textos } from "@/lib/landing";
 
 export function Caos() {
   const ref = useRef(null);
-  const { caos, problema } = textos;
+  const { caos } = textos;
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
@@ -66,7 +66,7 @@ export function Caos() {
   }, { scope: ref });
 
   return (
-    <section className="caos" id="problema" ref={ref}>
+    <section className="caos" id="problema" data-logo="light" ref={ref}>
       <div className="caos__escena">
         <div className="caos__intro">
           <p className="caos__fases">
@@ -79,7 +79,7 @@ export function Caos() {
         <div className="caos__marco">
           <p className="caos__panel">{caos.panel}</p>
           <ul className="caos__piezas">
-            {problema.piezas.map((pieza) => (
+            {caos.piezas.map((pieza) => (
               <li className="caos__pieza" key={pieza}>{pieza}</li>
             ))}
           </ul>

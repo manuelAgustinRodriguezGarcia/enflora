@@ -77,12 +77,22 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   &--normal {
     padding: 0.4rem 0.75rem;
     font-family: var(--font-identidad);
-    font-size: var(--font-size-card);
+    font-size: clamp(0.85rem, 3.6vw, var(--font-size-card));
     font-weight: var(--font-weight-card);
 
+    > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
     .icono-etapa {
-      width: 1.85rem;
-      height: 1.85rem;
+      width: clamp(1.35rem, 5.5vw, 1.85rem);
+      height: clamp(1.35rem, 5.5vw, 1.85rem);
+    }
+
+    @media (max-width: 22rem) {
+      gap: 0.25rem;
+      padding: 0.3rem 0.55rem;
     }
   }
 

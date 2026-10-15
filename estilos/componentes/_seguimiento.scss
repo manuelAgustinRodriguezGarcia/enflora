@@ -184,6 +184,89 @@
   gap: 0.85rem;
 }
 
+.tipo-valor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
+
+  &__etiqueta {
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text);
+    text-align: left;
+  }
+
+  &__opciones {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    width: 100%;
+    min-height: var(--touch-min);
+    padding: 0.2rem;
+    border-radius: 999px;
+    background: var(--color-surface-secondary);
+  }
+
+  &__deslizante {
+    position: absolute;
+    top: 0.2rem;
+    bottom: 0.2rem;
+    left: 0.2rem;
+    z-index: 0;
+    width: calc((100% - 0.4rem) / 2);
+    border-radius: 999px;
+    background: var(--brand-accent-light);
+    box-shadow: 0 1px 2px rgb(11 61 42 / 10%);
+  }
+
+  &__unidad {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  &__boton {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: calc(var(--touch-min) - 0.4rem);
+    padding: 0.45rem 0.75rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-family: var(--font-identidad);
+    font-size: var(--font-size-button);
+    font-weight: var(--font-weight-button);
+    cursor: pointer;
+    transition: color 160ms ease;
+
+    &:hover:not(:disabled):not(.tipo-valor__boton--activo) {
+      color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
+    &--activo {
+      color: var(--brand-dark);
+    }
+  }
+}
+
 .preferencia {
   position: relative;
   display: flex;
@@ -256,13 +339,6 @@
       background: transparent;
       color: var(--color-primary);
     }
-  }
-
-  &__marca {
-    width: 1rem;
-    color: var(--color-primary);
-    font-size: var(--font-size-body-small);
-    text-align: center;
   }
 
   &:focus-within:has(:focus-visible) {

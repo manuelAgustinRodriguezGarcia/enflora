@@ -29,14 +29,14 @@ export function Cierre() {
   }, { scope: ref });
 
   return (
-    <section className="cierre" ref={ref}>
+    <section className="cierre" data-logo="light" ref={ref}>
       <img data-cierre src="/logos/enflora-isotipo-light.svg" alt="Flora" />
       <h2 data-cierre>
         {cierre.titulo.map((linea) => (
           <span key={linea}>{linea}</span>
         ))}
       </h2>
-      <Link data-cierre className="landing__accion landing__accion--principal" href="/registro">Empezar gratis</Link>
+      <Link data-cierre className="landing__accion landing__accion--acento" href="/registro">Empezar gratis</Link>
     </section>
   );
 }

@@ -33,20 +33,15 @@ export function EtapaProgreso({
           <IndicadorEtapa etapa={etapa} tamano="normal" animar />
         </div>
         {puedeAvanzar ? (
-          <>
-            <div className="etapa-progreso__flecha" aria-hidden="true">
-              <IconoFlecha />
-            </div>
-            <button
-              type="button"
-              className={`etapa-progreso__siguiente etapa-progreso__siguiente--${siguiente.valor}`}
-              onClick={() => setAbierto(true)}
-              aria-label={`Pasar a ${siguiente.etiqueta}`}
-            >
-              <p className="etapa-progreso__etiqueta">Siguiente etapa</p>
-              <IndicadorEtapa etapa={siguiente.valor} tamano="compacto" />
-            </button>
-          </>
+          <button
+            type="button"
+            className={`etapa-progreso__siguiente etapa-progreso__siguiente--${siguiente.valor}`}
+            onClick={() => setAbierto(true)}
+            aria-label={`Pasar a ${siguiente.etiqueta}`}
+          >
+            <p className="etapa-progreso__etiqueta">Siguiente etapa</p>
+            <IndicadorEtapa etapa={siguiente.valor} tamano="compacto" />
+          </button>
         ) : null}
       </div>
       {mostrarPie ? (

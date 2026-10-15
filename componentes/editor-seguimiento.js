@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { forwardRef, useActionState, useEffect, useImperativeHandle, useRef, useState } from "react";
 import {
   crearOpcionSeguimiento,
   editarOpcionSeguimiento,
@@ -19,6 +19,10 @@ import {
   presetDe,
 } from "@/lib/seguimiento";
 
+function esRedireccion(error) {
+  return typeof error?.digest === "string" && error.digest.startsWith("NEXT_REDIRECT");
+}
+
 function alternar(lista, valor, activo) {
   if (activo) {
     return lista.includes(valor) ? lista : [...lista, valor];
@@ -32,17 +36,24 @@ function detalleDe(opcion) {
   return partes.join(" · ");
 }
 
-export function EditorSeguimiento({
-  modo = "edicion",
-  tipoInicial = "",
-  acciones = [],
-  parametros = [],
-  opcionesIniciales = [],
-  encabezado = "",
-  textoGuardar = "Guardar preferencias",
-  continuarEn = "",
-  onActualizado,
-}) {
+export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
+  {
+    modo = "edicion",
+    tipoInicial = "",
+    acciones = [],
+    parametros = [],
+    opcionesIniciales = [],
+    encabezado = "",
+    textoGuardar = "Guardar preferencias",
+    continuarEn = "",
+    onActualizado,
+    onSucioChange,
+    ocultarGuardar = false,
+    idFormulario,
+  },
+  ref,
+) {
+  const formRef = useRef(null);
   const [estado, accion, pendiente] = useActionState(guardarConfiguracionSeguimiento, null);
   const [estadoCrear, accionCrear, pendienteCrear] = useActionState(crearOpcionSeguimiento, null);
   const [estadoEditar, accionEditar, pendienteEditar] = useActionState(editarOpcionSeguimiento, null);
@@ -57,11 +68,51 @@ export function EditorSeguimiento({
   const [marca, setMarca] = useState("");
   const [pendienteQuitar, setPendienteQuitar] = useState(false);
   const [errorQuitar, setErrorQuitar] = useState("");
+  const [respaldoPersonalizado, setRespaldoPersonalizado] = useState(null);
+  const [errorLocal, setErrorLocal] = useState("");
+
+  useImperativeHandle(ref, () => ({
+    async guardar() {
+      const formulario = formRef.current;
+      if (!formulario) return false;
+      setErrorLocal("");
+      const datos = new FormData(formulario);
+      try {
+        const resultado = await guardarConfiguracionSeguimiento(null, datos);
+        if (resultado?.error) {
+          setErrorLocal(resultado.error);
+          return false;
+        }
+        if (resultado?.ok) {
+          setElegidas({ acciones: resultado.acciones, parametros: resultado.parametros });
+          setEditado(false);
+          onSucioChange?.(false);
+          onActualizado?.({
+            tipo: resultado.tipo || tipo,
+            acciones: resultado.acciones,
+            parametros: resultado.parametros,
+            opciones,
+          });
+          return true;
+        }
+        return false;
+      } catch (error) {
+        if (esRedireccion(error)) {
+          setEditado(false);
+          onSucioChange?.(false);
+          throw error;
+        }
+        setErrorLocal("No se pudo guardar la configuración.");
+        return false;
+      }
+    },
+  }));
 
   useEffect(() => {
     if (!estado?.ok) return;
     setElegidas({ acciones: estado.acciones, parametros: estado.parametros });
     setEditado(false);
+    onSucioChange?.(false);
     onActualizado?.({
       tipo: estado.tipo || tipo,
       acciones: estado.acciones,
@@ -69,6 +120,10 @@ export function EditorSeguimiento({
       opciones,
     });
   }, [estado]);
+
+  useEffect(() => {
+    onSucioChange?.(editado);
+  }, [editado, onSucioChange]);
 
   useEffect(() => {
     if (!estadoCrear?.ok || estadoCrear.marca !== marca || !estadoCrear.opcion) return;
@@ -107,33 +162,80 @@ export function EditorSeguimiento({
     setEditado(true);
   }, [estadoEditar, marca]);
 
+  function capturarSeleccion() {
+    return {
+      acciones: [...elegidas.acciones],
+      parametros: [...elegidas.parametros],
+      opciones: opciones.map((item) => ({
+        id: item.id,
+        prioritaria: Boolean(item.prioritaria),
+      })),
+    };
+  }
+
+  function restaurarSeleccion(respaldo) {
+    setElegidas({
+      acciones: [...respaldo.acciones],
+      parametros: [...respaldo.parametros],
+    });
+    const mapa = new Map(respaldo.opciones.map((item) => [item.id, item.prioritaria]));
+    setOpciones((lista) =>
+      lista.map((item) =>
+        mapa.has(item.id) ? { ...item, prioritaria: mapa.get(item.id) } : item
+      )
+    );
+  }
+
   function elegirTipo(siguiente) {
+    if (siguiente === tipo) return;
     setTipo(siguiente);
     setEditado(true);
-    if (modo === "inicial") {
+
+    if (siguiente === "relajado" || siguiente === "profesional") {
+      const saleDePreset = tipo === "relajado" || tipo === "profesional";
+      if (!saleDePreset || !respaldoPersonalizado) {
+        setRespaldoPersonalizado(capturarSeleccion());
+      }
       setElegidas(presetDe(siguiente));
+      setOpciones((lista) => lista.map((item) => ({ ...item, prioritaria: false })));
+      return;
     }
+
+    if (siguiente === "personalizado" && respaldoPersonalizado) {
+      restaurarSeleccion(respaldoPersonalizado);
+    }
+  }
+
+  function pasarAPersonalizado(siguienteElegidas, siguientesOpciones) {
+    if (tipo !== "relajado" && tipo !== "profesional") return;
+    setTipo("personalizado");
+    setRespaldoPersonalizado({
+      acciones: [...siguienteElegidas.acciones],
+      parametros: [...siguienteElegidas.parametros],
+      opciones: siguientesOpciones.map((item) => ({
+        id: item.id,
+        prioritaria: Boolean(item.prioritaria),
+      })),
+    });
   }
 
   function cambiar(grupo, valor, activo) {
     setEditado(true);
-    setElegidas((actual) => ({
-      ...actual,
-      [grupo]: alternar(actual[grupo], valor, activo),
-    }));
+    const siguiente = {
+      ...elegidas,
+      [grupo]: alternar(elegidas[grupo], valor, activo),
+    };
+    setElegidas(siguiente);
+    pasarAPersonalizado(siguiente, opciones);
   }
 
   function cambiarOpcion(id, activo) {
     setEditado(true);
-    setOpciones((lista) =>
-      lista.map((item) => (item.id === id ? { ...item, prioritaria: activo } : item))
+    const siguientes = opciones.map((item) =>
+      item.id === id ? { ...item, prioritaria: activo } : item
     );
-  }
-
-  function restablecer() {
-    if (tipo !== "relajado" && tipo !== "profesional") return;
-    setEditado(true);
-    setElegidas(presetDe(tipo));
+    setOpciones(siguientes);
+    pasarAPersonalizado(elegidas, siguientes);
   }
 
   function abrir(categoria, opcion) {
@@ -178,15 +280,21 @@ export function EditorSeguimiento({
   const editando = Boolean(borrador?.id);
   const estadoModal = editando ? estadoEditar : estadoCrear;
   const errorModal = estadoModal?.marca === marca ? estadoModal.error : "";
-  const puedeRestablecer = tipo === "relajado" || tipo === "profesional";
-
   return (
-    <form className="formulario editor-seguimiento" action={accion}>
+    <form
+      ref={formRef}
+      id={idFormulario}
+      className="formulario editor-seguimiento"
+      action={accion}
+      onSubmit={ocultarGuardar ? (evento) => evento.preventDefault() : undefined}
+    >
       {encabezado ? <h2>{encabezado}</h2> : null}
       <p>
         Estas preferencias determinan qué herramientas aparecerán primero. No limitan las funciones disponibles.
       </p>
-      {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
+      {errorLocal || estado?.error ? (
+        <p className="formulario__error">{errorLocal || estado.error}</p>
+      ) : null}
       <Aparecer visible={Boolean(estado?.ok) && !editado && !pendiente && modo === "edicion"}>
         <p className="preferencias__ok">Preferencias actualizadas.</p>
       </Aparecer>
@@ -275,21 +383,13 @@ export function EditorSeguimiento({
           </fieldset>
         </div>
       </Aparecer>
-      <div className="acciones">
-        <Boton type="submit" disabled={pendiente || !tipo}>
-          {pendiente ? "Guardando..." : textoGuardar}
-        </Boton>
-        {puedeRestablecer ? (
-          <Boton
-            type="button"
-            className="preferencias__restablecer"
-            onClick={restablecer}
-            disabled={pendiente}
-          >
-            Restablecer según mi tipo
+      {ocultarGuardar ? null : (
+        <div className="acciones acciones--ancho">
+          <Boton type="submit" className="boton--ancho" disabled={pendiente || !tipo}>
+            {pendiente ? "Guardando..." : textoGuardar}
           </Boton>
-        ) : null}
-      </div>
+        </div>
+      )}
       {borrador ? (
         <ModalOpcionSeguimiento
           key={marca}
@@ -306,4 +406,4 @@ export function EditorSeguimiento({
       ) : null}
     </form>
   );
-}
+});

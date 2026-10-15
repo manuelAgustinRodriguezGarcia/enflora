@@ -1,7 +1,5 @@
 import { redirect } from "next/navigation";
-import { salir } from "@/app/acciones/sesion";
-import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
-import { FormularioPerfil } from "@/componentes/formulario-perfil";
+import { PerfilVista } from "@/componentes/perfil-vista";
 import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -37,24 +35,10 @@ export default async function PaginaPerfil() {
       : null;
 
   return (
-    <section className="auth">
-      <h1>Perfil</h1>
-      <FormularioPerfil perfil={perfil} email={user.email || ""} />
-      {seguimiento?.error ? <p>No se pudieron cargar las preferencias.</p> : null}
-      {seguimiento && !seguimiento.error ? (
-        <EditorSeguimiento
-          modo="edicion"
-          encabezado="Seguimiento"
-          tipoInicial={perfil.tipo_seguimiento}
-          acciones={seguimiento.acciones}
-          parametros={seguimiento.parametros}
-          opcionesIniciales={seguimiento.opciones}
-          textoGuardar="Guardar preferencias"
-        />
-      ) : null}
-      <form className="perfil__salir" action={salir}>
-        <button type="submit">Salir</button>
-      </form>
-    </section>
+    <PerfilVista
+      perfil={perfil}
+      email={user.email || ""}
+      seguimiento={seguimiento}
+    />
   );
 }

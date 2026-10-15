@@ -1,19 +1,22 @@
 "use client";
 
+import { motion, useReducedMotion } from "motion/react";
 import { useActionState, useState } from "react";
 import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
-import { IconoFlecha } from "@/componentes/iconos-ui";
+import { IconoChevron } from "@/componentes/iconos-ui";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { fechaHoy } from "@/lib/etapas";
+import { transicionRapida } from "@/lib/animaciones";
 
 export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
   const [abierto, setAbierto] = useState(false);
   const [resultado, accion, pendiente] = useActionState(cambiarEtapa, null);
   const [fecha, setFecha] = useState(fechaHoy);
   const [etapa, setEtapa] = useState("");
+  const reducido = useReducedMotion();
 
   return (
     <>
@@ -22,10 +25,17 @@ export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
         <Boton
           type="button"
           className="boton boton--ancho cambiar-etapa__abrir"
+          aria-expanded={abierto}
           onClick={() => setAbierto((actual) => !actual)}
         >
-          <IconoFlecha />
           Cambiar etapa
+          <motion.span
+            className="cambiar-etapa__chevron"
+            animate={{ rotate: abierto ? 180 : 0 }}
+            transition={reducido ? { duration: 0 } : transicionRapida}
+          >
+            <IconoChevron />
+          </motion.span>
         </Boton>
       </div>
       <Aparecer visible={abierto}>
