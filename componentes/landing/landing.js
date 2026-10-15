@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Caos } from "@/componentes/landing/caos";
 import { Cierre } from "@/componentes/landing/cierre";
 import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
+import { EscenaSolar } from "@/componentes/landing/escena-solar";
 import { Hero } from "@/componentes/landing/hero";
 import { Historial } from "@/componentes/landing/historial";
 import { NavegacionFlotante } from "@/componentes/landing/navegacion-flotante";
+import { ParaQueSirve } from "@/componentes/landing/para-que-sirve";
 import { Producto } from "@/componentes/landing/producto";
 import { Revelar } from "@/componentes/landing/revelar";
 import { SeccionRegalo } from "@/componentes/landing/seccion-regalo";
@@ -14,7 +15,6 @@ import { textos } from "@/lib/landing";
 
 export function Landing() {
   const {
-    queEs,
     beneficios,
     flora,
     planes,
@@ -28,24 +28,14 @@ export function Landing() {
       <div className="landing">
         <EncabezadoPublico />
         <main>
-          <Hero />
-          <Caos />
+          <EscenaSolar>
+            <Hero />
+            <Revelar>
+              <ParaQueSirve />
+            </Revelar>
+          </EscenaSolar>
           <Revelar>
-            <section className="para-que-sirve" id="para-que-sirve" data-logo="dark">
-              <div className="para-que-sirve__texto" data-revelar>
-                <h2>{queEs.titulo}</h2>
-                <p>{queEs.bajada}</p>
-              </div>
-              <ol className="para-que-sirve__pasos">
-                {queEs.pasos.map((paso) => (
-                  <li data-revelar key={paso.nombre}>
-                    <span>{paso.nombre}</span>
-                    <strong>{paso.ejemplo}</strong>
-                  </li>
-                ))}
-              </ol>
-              <ConEnflora />
-            </section>
+            <ConEnflora />
           </Revelar>
           <Revelar>
             <section className="beneficios" id="beneficios" data-logo="dark">

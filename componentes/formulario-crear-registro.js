@@ -1,20 +1,22 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion } from "motion/react";
-import { guardarRegistro } from "@/app/registros/acciones";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { guardarRegistro, obtenerRegistroCompleto } from "@/app/registros/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
+import { IconoNavegacion } from "@/componentes/icono-navegacion";
+import { IconoAmbiente, IconoPlanta } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { toque, transicionToque } from "@/lib/animaciones";
-import { formatearFecha } from "@/lib/etapas";
 import {
   agruparPlantasPorGenetica,
+  claveParametroRegistro,
   fechaEventoDesdeDia,
   ordenarAccionesRegistro,
   ordenarParametrosRegistro,
@@ -26,11 +28,23 @@ import {
 } from "@/lib/registros";
 import { textoCantidad } from "@/lib/unidades";
 
-const MODOS = [
+const TIPOS_REGISTRO = [
+  {
+    valor: "plantas",
+    etiqueta: "Plantas",
+    descripcion: "Acciones, parámetros y observaciones sobre tus plantas.",
+  },
+  {
+    valor: "ambiente",
+    etiqueta: "Ambiente",
+    descripcion: "Condiciones y parámetros ambientales de tu unidad de cultivo.",
+  },
+];
+
+const MODOS_PLANTAS = [
   { valor: "unidad", etiqueta: "Toda la unidad" },
   { valor: "genetica", etiqueta: "Por genética" },
   { valor: "manual", etiqueta: "Selección manual" },
-  { valor: "ambiente", etiqueta: "Ambiente" },
 ];
 
 function claveAccion(item) {
@@ -64,11 +78,11 @@ function etiquetaResumenRegistro(item) {
   return partes.join(" · ");
 }
 
-function resumenAlcance({ aplicaA, plantasSeleccionadas, plantasUnidad }) {
+function resumenAlcance({ aplicaA, plantasSeleccionadas, plantasUnidad, unidadNombre }) {
   if (aplicaA === "ambiente") {
     return {
-      titulo: "Ambiente de la unidad",
-      detalle: "Sin plantas asociadas",
+      titulo: unidadNombre ? `Ambiente — ${unidadNombre}` : "Ambiente de la unidad",
+      detalle: "Condiciones de la unidad",
     };
   }
 
@@ -145,16 +159,16 @@ export function FormularioCrearRegistro({
   registrosHoy = [],
 }) {
   const inicial = partesFechaLocal();
+  const reducido = useReducedMotion();
   const [estado, accion, pendiente] = useActionState(guardarRegistro, null);
-  const [unidadId, setUnidadId] = useState(unidades[0]?.id || "");
-  const [modo, setModo] = useState("unidad");
-  const [idsSeleccionados, setIdsSeleccionados] = useState(() => {
-    const primera = unidades[0];
-    return new Set((primera?.plantas || []).map((planta) => planta.id));
-  });
+  const [unidadId, setUnidadId] = useState("");
+  const [tipoRegistro, setTipoRegistro] = useState("plantas");
+  const [modoSeleccion, setModoSeleccion] = useState("unidad");
+  const [idsSeleccionados, setIdsSeleccionados] = useState(() => new Set());
   const [accionesElegidas, setAccionesElegidas] = useState(() => new Set());
   const [valoresParametros, setValoresParametros] = useState({});
   const [paramsHistoricos, setParamsHistoricos] = useState([]);
+  const [accionesHistoricas, setAccionesHistoricas] = useState([]);
   const [mostrarMasAcciones, setMostrarMasAcciones] = useState(false);
   const [mostrarMasParametros, setMostrarMasParametros] = useState(false);
   const [editorPlantas, setEditorPlantas] = useState(false);
@@ -162,7 +176,8 @@ export function FormularioCrearRegistro({
   const [fecha, setFecha] = useState(inicial.fecha);
   const [configurar, setConfigurar] = useState(false);
   const [editandoId, setEditandoId] = useState("");
-  const [modoPendiente, setModoPendiente] = useState("");
+  const [tipoPendiente, setTipoPendiente] = useState("");
+  const [cargandoEdicion, setCargandoEdicion] = useState(false);
   const [accionesPrioritarias, setAccionesPrioritarias] = useState(
     seguimientoInicial?.acciones || []
   );
@@ -175,6 +190,17 @@ export function FormularioCrearRegistro({
   const [errorLocal, setErrorLocal] = useState("");
   const ultimoPayload = useRef(null);
   const ultimoExitoId = useRef("");
+  const seguimientoRef = useRef(null);
+
+  useEffect(() => {
+    if (!configurar) return undefined;
+    const nodo = seguimientoRef.current;
+    if (!nodo) return undefined;
+    const timer = window.setTimeout(() => {
+      nodo.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [configurar]);
 
   const unidad = useMemo(
     () => unidades.find((item) => item.id === unidadId) || null,
@@ -187,42 +213,45 @@ export function FormularioCrearRegistro({
     [accionesPrioritarias, opciones]
   );
   const parametrosOrdenados = useMemo(
-    () => ordenarParametrosRegistro(parametrosPrioritarios, opciones, paramsHistoricos),
-    [parametrosPrioritarios, opciones, paramsHistoricos]
+    () =>
+      ordenarParametrosRegistro(parametrosPrioritarios, opciones, paramsHistoricos, {
+        aplicaA: tipoRegistro,
+      }),
+    [parametrosPrioritarios, opciones, paramsHistoricos, tipoRegistro]
   );
 
-  const aplicaA = modo === "ambiente" ? "ambiente" : "plantas";
+  const aplicaA = tipoRegistro === "ambiente" ? "ambiente" : "plantas";
   const plantasSeleccionadas = plantas.filter((planta) => idsSeleccionados.has(planta.id));
   const resumen = resumenAlcance({
     aplicaA,
     plantasSeleccionadas,
     plantasUnidad: plantas,
+    unidadNombre: unidad?.nombre || "",
   });
 
-  const accionesVisibles =
-    accionesOrdenadas.prioritarias.length > 0
-      ? accionesOrdenadas.prioritarias
-      : accionesOrdenadas.secundarias;
-  const accionesExtra =
-    accionesOrdenadas.prioritarias.length > 0 ? accionesOrdenadas.secundarias : [];
+  const accionesVisibles = accionesOrdenadas.prioritarias;
+  const accionesExtra = accionesOrdenadas.secundarias;
 
   const onSeguimientoActualizado = useCallback((datos) => {
     if (datos.acciones) setAccionesPrioritarias(datos.acciones);
     if (datos.parametros) setParametrosPrioritarios(datos.parametros);
     if (datos.opciones) setOpciones(datos.opciones);
     if (datos.tipo) setTipoSeguimiento(datos.tipo);
+    setConfigurar(false);
   }, []);
 
   function limpiarFormulario(mantenerFecha = true) {
     setAccionesElegidas(new Set());
     setValoresParametros({});
     setParamsHistoricos([]);
+    setAccionesHistoricas([]);
     setObservacion("");
     if (mantenerFecha) setFecha(partesFechaLocal().fecha);
     setErrorLocal("");
     setEditorPlantas(false);
     setEditandoId("");
     setMostrarMasParametros(false);
+    setMostrarMasAcciones(false);
   }
 
   useEffect(() => {
@@ -272,24 +301,55 @@ export function FormularioCrearRegistro({
     setEditorPlantas(false);
     const siguiente = unidades.find((item) => item.id === siguienteId);
     const lista = siguiente?.plantas || [];
-    if (modo === "ambiente") {
+    if (tipoRegistro === "ambiente") {
       setIdsSeleccionados(new Set());
       return;
     }
-    if (modo === "unidad") {
+    if (modoSeleccion === "unidad") {
       setIdsSeleccionados(new Set(lista.map((planta) => planta.id)));
       return;
     }
     setIdsSeleccionados(new Set());
   }
 
-  function aplicarModo(siguiente) {
-    setModo(siguiente);
+  function aplicarTipoRegistro(siguiente) {
+    setTipoRegistro(siguiente);
     setErrorLocal("");
+    setEditorPlantas(false);
+    setTipoPendiente("");
+    setValoresParametros({});
+    setAccionesElegidas(new Set());
+    setObservacion("");
+    if (!editandoId) {
+      setParamsHistoricos([]);
+      setAccionesHistoricas([]);
+    }
+
     if (siguiente === "ambiente") {
       setIdsSeleccionados(new Set());
       return;
     }
+
+    setModoSeleccion("unidad");
+    setIdsSeleccionados(new Set(plantas.map((planta) => planta.id)));
+  }
+
+  function elegirTipoRegistro(siguiente) {
+    if (siguiente === tipoRegistro) return;
+    const sucio =
+      hayValoresParametros(valoresParametros) ||
+      accionesElegidas.size > 0 ||
+      String(observacion || "").trim() !== "";
+    if (sucio) {
+      setTipoPendiente(siguiente);
+      return;
+    }
+    aplicarTipoRegistro(siguiente);
+  }
+
+  function aplicarModoSeleccion(siguiente) {
+    setModoSeleccion(siguiente);
+    setErrorLocal("");
     if (siguiente === "unidad") {
       setIdsSeleccionados(new Set(plantas.map((planta) => planta.id)));
       return;
@@ -297,15 +357,6 @@ export function FormularioCrearRegistro({
     if (siguiente === "manual" || siguiente === "genetica") {
       setIdsSeleccionados(new Set());
     }
-  }
-
-  function elegirModo(siguiente) {
-    const cambiaAplica = (siguiente === "ambiente") !== (modo === "ambiente");
-    if (cambiaAplica && hayValoresParametros(valoresParametros)) {
-      setModoPendiente(siguiente);
-      return;
-    }
-    aplicarModo(siguiente);
   }
 
   function elegirGenetica(clave) {
@@ -316,15 +367,15 @@ export function FormularioCrearRegistro({
   }
 
   function alternarPlanta(plantaId) {
-    if (modo === "ambiente") return;
+    if (tipoRegistro === "ambiente") return;
     setIdsSeleccionados((actual) => {
       const siguiente = new Set(actual);
       if (siguiente.has(plantaId)) siguiente.delete(plantaId);
       else siguiente.add(plantaId);
       return siguiente;
     });
-    if (modo === "unidad" || modo === "genetica") {
-      setModo("manual");
+    if (modoSeleccion === "unidad" || modoSeleccion === "genetica") {
+      setModoSeleccion("manual");
     }
     setErrorLocal("");
   }
@@ -340,7 +391,7 @@ export function FormularioCrearRegistro({
     setErrorLocal("");
   }
 
-  function cargarEdicion(registro) {
+  function aplicarRegistroEnFormulario(registro) {
     if (!registro?.id) return;
     setEditandoId(registro.id);
     setErrorLocal("");
@@ -351,20 +402,21 @@ export function FormularioCrearRegistro({
     }
 
     const aplica = registro.aplica_a === "ambiente" ? "ambiente" : "plantas";
+    setTipoRegistro(aplica);
+
     if (aplica === "ambiente") {
-      setModo("ambiente");
       setIdsSeleccionados(new Set());
     } else if (registro.alcance === "unidad") {
-      setModo("unidad");
+      setModoSeleccion("unidad");
       const unidadReg = unidades.find((item) => item.id === registro.unidad_cultivo_id);
       setIdsSeleccionados(new Set((unidadReg?.plantas || []).map((planta) => planta.id)));
     } else if (registro.alcance === "genetica") {
-      setModo("genetica");
+      setModoSeleccion("genetica");
       setIdsSeleccionados(
         new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
       );
     } else {
-      setModo(registro.alcance === "planta" ? "manual" : "manual");
+      setModoSeleccion("manual");
       setIdsSeleccionados(
         new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
       );
@@ -383,10 +435,29 @@ export function FormularioCrearRegistro({
       }
     }
     setAccionesElegidas(acciones);
+    setAccionesHistoricas(registro.registro_acciones || []);
     setValoresParametros(valoresDesdeRegistroParametros(registro.registro_parametros));
     setParamsHistoricos(registro.registro_parametros || []);
     setMostrarMasParametros(true);
     setEditorPlantas(false);
+  }
+
+  async function cargarEdicion(registro) {
+    if (!registro?.id || cargandoEdicion) return;
+    setCargandoEdicion(true);
+    setErrorLocal("");
+    try {
+      const respuesta = await obtenerRegistroCompleto(registro.id);
+      if (respuesta.error || !respuesta.registro) {
+        setErrorLocal(respuesta.error || "No se pudo cargar el registro completo.");
+        return;
+      }
+      aplicarRegistroEnFormulario(respuesta.registro);
+    } catch {
+      setErrorLocal("No se pudo cargar el registro completo.");
+    } finally {
+      setCargandoEdicion(false);
+    }
   }
 
   function armarPayload() {
@@ -417,7 +488,7 @@ export function FormularioCrearRegistro({
       ...accionesOrdenadas.prioritarias,
       ...accionesOrdenadas.secundarias,
     ];
-    const acciones = catalogoAcciones
+    let acciones = catalogoAcciones
       .filter((item) => accionesElegidas.has(claveAccion(item)))
       .map((item) =>
         item.origen === "nativa"
@@ -432,6 +503,36 @@ export function FormularioCrearRegistro({
               nombre: item.etiqueta,
             }
       );
+
+    if (aplicaA === "ambiente" && !editandoId) {
+      acciones = [];
+    }
+
+    if (aplicaA === "ambiente" && editandoId && accionesHistoricas.length > 0) {
+      const claves = new Set(
+        acciones.map((item) =>
+          item.origen === "nativa"
+            ? `nativa:${item.clave_nativa}`
+            : `personalizada:${item.opcion_id}`
+        )
+      );
+      for (const fila of accionesHistoricas) {
+        const clave =
+          fila.origen === "nativa" && fila.clave_nativa
+            ? `nativa:${fila.clave_nativa}`
+            : fila.opcion_id
+              ? `personalizada:${fila.opcion_id}`
+              : "";
+        if (!clave || !accionesElegidas.has(clave) || claves.has(clave)) continue;
+        acciones.push({
+          origen: fila.origen,
+          clave_nativa: fila.clave_nativa || null,
+          opcion_id: fila.opcion_id || null,
+          nombre: fila.nombre || "Acción",
+        });
+        claves.add(clave);
+      }
+    }
 
     const catalogoParametros = [
       ...parametrosOrdenados.prioritarias,
@@ -490,8 +591,52 @@ export function FormularioCrearRegistro({
     etiqueta: `${item.nombre} · ${item.espacio_nombre}`,
   }));
 
+  const bloqueado = pendiente || cargandoEdicion;
+  const cantidadParametros = useMemo(() => {
+    const catalogo = [
+      ...parametrosOrdenados.prioritarias,
+      ...parametrosOrdenados.secundarias,
+    ];
+    return catalogo.filter((item) => {
+      const valor = valoresParametros[claveParametroRegistro(item)];
+      return String(valor ?? "").trim() !== "";
+    }).length;
+  }, [parametrosOrdenados, valoresParametros]);
+
+  const accionesPill = useMemo(() => {
+    const catalogo = [
+      ...accionesOrdenadas.prioritarias,
+      ...accionesOrdenadas.secundarias,
+    ];
+    return catalogo
+      .filter((item) => accionesElegidas.has(claveAccion(item)))
+      .map((item) => item.etiqueta);
+  }, [accionesOrdenadas, accionesElegidas]);
+
   return (
     <div className="registro-crear">
+      {unidad ? (
+        <div className="registro-crear__pill" role="status">
+          <span className="registro-crear__pill-icono" aria-hidden="true">
+            <IconoNavegacion clave="registro" />
+          </span>
+          <p className="registro-crear__pill-texto">
+            Registro en: <strong>{unidad.nombre}</strong>
+            {aplicaA === "ambiente" ? (
+              <>
+                {" · "}ambiente
+                {" · "}parámetros: {cantidadParametros}
+              </>
+            ) : (
+              <>
+                {" · "}plantas: {plantasSeleccionadas.length}
+                {accionesPill.length > 0 ? ` · ${accionesPill.join(" · ")}` : null}
+              </>
+            )}
+          </p>
+        </div>
+      ) : null}
+
       <form className="formulario registro-crear__formulario" action={enviar}>
         {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
         {errorLocal ? <p className="formulario__error">{errorLocal}</p> : null}
@@ -505,153 +650,191 @@ export function FormularioCrearRegistro({
               type="button"
               className="registro-crear__enlace"
               onClick={() => limpiarFormulario(true)}
-              disabled={pendiente}
+              disabled={bloqueado}
             >
               Cancelar edición
             </button>
           </p>
         ) : null}
 
-        <header className="registro-crear__cabecera">
-          <Selector
-            etiqueta="Unidad"
-            valor={unidadId || null}
-            onChange={elegirUnidad}
-            opciones={opcionesUnidad}
-            placeholder="Elegir unidad"
-            id="registro-unidad"
-          />
-          {unidad ? (
-            <div className="registro-crear__contexto">
-              <p className="registro-crear__contexto-titulo">{unidad.nombre}</p>
-              <p className="registro-crear__contexto-meta">
-                {aplicaA === "ambiente"
-                  ? "Ambiente"
-                  : textoCantidad(plantasSeleccionadas.length)}
-                {" · "}
-                {formatearFecha(fecha)}
-              </p>
-            </div>
-          ) : null}
-        </header>
-
         <section className="registro-crear__seccion">
-          <h2 className="registro-crear__etiqueta">Fecha del evento</h2>
-          <div className="registro-crear__cuando">
-            <SelectorFecha
-              valor={fecha}
-              onChange={setFecha}
-              id="registro-fecha"
-              deshabilitado={pendiente}
-            />
+          <div className="registro-crear__cultivo-fecha">
+            <div className="registro-crear__cultivo">
+              <h2 className="registro-crear__etiqueta" id="registro-unidad-titulo">
+                ¿Qué cultivo vas a registrar?
+              </h2>
+              <Selector
+                valor={unidadId || null}
+                onChange={elegirUnidad}
+                opciones={opcionesUnidad}
+                placeholder="Seleccione un cultivo"
+                id="registro-unidad"
+              />
+            </div>
+            <div className="registro-crear__cuando">
+              <h2 className="registro-crear__etiqueta" id="registro-fecha-titulo">
+                Fecha
+              </h2>
+              <SelectorFecha
+                valor={fecha}
+                onChange={setFecha}
+                id="registro-fecha"
+                deshabilitado={bloqueado}
+                sinIcono
+              />
+            </div>
           </div>
         </section>
 
         <section className="registro-crear__seccion">
-          <h2 className="registro-crear__etiqueta">Plantas seleccionadas</h2>
-          <div className="registro-crear__resumen">
-            <div className="registro-crear__resumen-texto">
-              <p className="registro-crear__resumen-titulo">{resumen.titulo}</p>
-              <p className="registro-crear__resumen-detalle">{resumen.detalle}</p>
-            </div>
-            <button
-              type="button"
-              className="registro-crear__enlace"
-              onClick={() => setEditorPlantas((valor) => !valor)}
-              disabled={pendiente}
-            >
-              {editorPlantas ? "Cerrar selección" : "Editar selección"}
-            </button>
+          <h2 className="registro-crear__etiqueta">¿Qué querés registrar?</h2>
+          <div className="registro-crear__tipos" role="group" aria-label="Tipo de registro">
+            {TIPOS_REGISTRO.map((item) => {
+              const activo = tipoRegistro === item.valor;
+              return (
+                <button
+                  key={item.valor}
+                  type="button"
+                  className={`registro-crear__tipo${activo ? " registro-crear__tipo--activo" : ""}`}
+                  onClick={() => elegirTipoRegistro(item.valor)}
+                  disabled={bloqueado}
+                  aria-pressed={activo}
+                >
+                  <span className="registro-crear__tipo-icono" aria-hidden="true">
+                    {item.valor === "ambiente" ? <IconoAmbiente /> : <IconoPlanta />}
+                  </span>
+                  <span className="registro-crear__tipo-cuerpo">
+                    <span className="registro-crear__tipo-nombre">{item.etiqueta}</span>
+                    <span className="registro-crear__tipo-desc">{item.descripcion}</span>
+                  </span>
+                </button>
+              );
+            })}
           </div>
+        </section>
 
-          <Aparecer visible={editorPlantas}>
-            <div className="registro-crear__editor-plantas">
-              <div className="registro-crear__chips">
-                {MODOS.map((item) => (
-                  <button
-                    key={item.valor}
-                    type="button"
-                    className={`registro-crear__chip${modo === item.valor ? " registro-crear__chip--activo" : ""}`}
-                    onClick={() => elegirModo(item.valor)}
-                    disabled={pendiente}
-                    aria-pressed={modo === item.valor}
+        <Aparecer visible={tipoRegistro === "plantas"} espacio="1.15rem">
+          <section className="registro-crear__seccion">
+            <h2 className="registro-crear__etiqueta">Plantas seleccionadas</h2>
+            <div className="registro-crear__resumen-wrap">
+              <AnimatePresence>
+                {!unidadId ? (
+                  <motion.div
+                    key="bloqueo-cultivo"
+                    className="registro-crear__overlay"
+                    initial={reducido ? { opacity: 1 } : { opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={reducido ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    {item.etiqueta}
-                  </button>
-                ))}
+                    <p className="registro-crear__overlay-texto">Primero seleccione un cultivo</p>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+              <div
+                className={`registro-crear__resumen${!unidadId ? " registro-crear__resumen--bloqueado" : ""}`}
+                inert={!unidadId || undefined}
+                aria-hidden={!unidadId}
+              >
+              <div className="registro-crear__resumen-texto">
+                <p className="registro-crear__resumen-titulo">{resumen.titulo}</p>
+                <p className="registro-crear__resumen-detalle">{resumen.detalle}</p>
               </div>
+              <button
+                type="button"
+                className="registro-crear__enlace"
+                onClick={() => setEditorPlantas((valor) => !valor)}
+                disabled={bloqueado || !unidadId}
+              >
+                {editorPlantas ? "Cerrar" : "Elegir plantas"}
+              </button>
+              </div>
+            </div>
 
-              <Aparecer visible={modo === "ambiente"}>
-                <p className="registro-crear__ayuda">
-                  Ambiente de la unidad: no se asocia a plantas individuales.
-                </p>
-              </Aparecer>
-
-              <Aparecer visible={modo === "genetica" && gruposGenetica.length > 0}>
+            <Aparecer visible={editorPlantas}>
+              <div className="registro-crear__editor-plantas">
                 <div className="registro-crear__chips">
-                  {gruposGenetica.map((grupo) => {
-                    const activo =
-                      plantasSeleccionadas.length === grupo.plantas.length &&
-                      grupo.plantas.every((planta) => idsSeleccionados.has(planta.id));
-                    return (
-                      <button
-                        key={grupo.clave}
-                        type="button"
-                        className={`registro-crear__chip${activo ? " registro-crear__chip--activo" : ""}`}
-                        onClick={() => elegirGenetica(grupo.clave)}
-                        disabled={pendiente}
-                        aria-pressed={activo}
-                      >
-                        {grupo.etiqueta} ({grupo.plantas.length})
-                      </button>
-                    );
-                  })}
+                  {MODOS_PLANTAS.map((item) => (
+                    <button
+                      key={item.valor}
+                      type="button"
+                      className={`registro-crear__chip${modoSeleccion === item.valor ? " registro-crear__chip--activo" : ""}`}
+                      onClick={() => aplicarModoSeleccion(item.valor)}
+                      disabled={bloqueado}
+                      aria-pressed={modoSeleccion === item.valor}
+                    >
+                      {item.etiqueta}
+                    </button>
+                  ))}
                 </div>
-              </Aparecer>
 
-              <Aparecer visible={modo === "genetica" && gruposGenetica.length === 0}>
-                <p className="registro-crear__ayuda">
-                  No hay genéticas cargadas en esta unidad. Usá selección manual.
-                </p>
-              </Aparecer>
-
-              <Aparecer visible={modo !== "ambiente" && plantas.length > 0}>
-                <div className="registro-crear__plantas-bloque">
-                  <p className="registro-crear__plantas-cabecera">
-                    {idsSeleccionados.size} de {plantas.length} plantas seleccionadas
-                  </p>
-                  <div className="registro-crear__plantas">
-                    {plantas.map((planta) => {
-                      const activa = idsSeleccionados.has(planta.id);
-                      const titulo = planta.nombre || `Planta ${planta.numero || ""}`.trim();
+                <Aparecer visible={modoSeleccion === "genetica" && gruposGenetica.length > 0}>
+                  <div className="registro-crear__geneticas" role="group" aria-label="Genéticas de la unidad">
+                    {gruposGenetica.map((grupo) => {
+                      const activo =
+                        plantasSeleccionadas.length === grupo.plantas.length &&
+                        grupo.plantas.every((planta) => idsSeleccionados.has(planta.id));
                       return (
-                        <motion.button
-                          key={planta.id}
+                        <button
+                          key={grupo.clave}
                           type="button"
-                          className={`registro-crear__planta${activa ? " registro-crear__planta--activa" : ""}`}
-                          onClick={() => alternarPlanta(planta.id)}
-                          disabled={pendiente}
-                          aria-pressed={activa}
-                          whileTap={pendiente ? undefined : toque}
-                          transition={transicionToque}
+                          className={`registro-crear__pill-genetica${activo ? " registro-crear__pill-genetica--activa" : ""}`}
+                          onClick={() => elegirGenetica(grupo.clave)}
+                          disabled={bloqueado}
+                          aria-pressed={activo}
                         >
-                          <span className="registro-crear__planta-nombre">{titulo}</span>
-                          {planta.genetica ? (
-                            <span className="registro-crear__planta-meta">{planta.genetica}</span>
-                          ) : null}
-                        </motion.button>
+                          <span className="registro-crear__pill-genetica-nombre">{grupo.etiqueta}</span>
+                          <span className="registro-crear__pill-genetica-cuenta">{grupo.plantas.length}</span>
+                        </button>
                       );
                     })}
                   </div>
-                </div>
-              </Aparecer>
+                </Aparecer>
 
-              <Aparecer visible={modo !== "ambiente" && plantas.length === 0}>
-                <p className="registro-crear__ayuda">Esta unidad todavía no tiene plantas.</p>
-              </Aparecer>
-            </div>
-          </Aparecer>
-        </section>
+                <Aparecer visible={modoSeleccion === "genetica" && gruposGenetica.length === 0}>
+                  <p className="registro-crear__ayuda">
+                    No hay genéticas cargadas en esta unidad. Usá selección manual.
+                  </p>
+                </Aparecer>
+
+                <Aparecer visible={plantas.length > 0}>
+                  <div className="registro-crear__plantas-bloque">
+                    <p className="registro-crear__plantas-cabecera">
+                      {idsSeleccionados.size} de {plantas.length} plantas seleccionadas
+                    </p>
+                    <div className="registro-crear__plantas">
+                      {plantas.map((planta) => {
+                        const activa = idsSeleccionados.has(planta.id);
+                        const titulo = planta.nombre || `Planta ${planta.numero || ""}`.trim();
+                        return (
+                          <motion.button
+                            key={planta.id}
+                            type="button"
+                            className={`registro-crear__planta${activa ? " registro-crear__planta--activa" : ""}`}
+                            onClick={() => alternarPlanta(planta.id)}
+                            disabled={bloqueado}
+                            aria-pressed={activa}
+                            whileTap={bloqueado ? undefined : toque}
+                            transition={transicionToque}
+                          >
+                            <span className="registro-crear__planta-nombre">{titulo}</span>
+                            {planta.genetica ? (
+                              <span className="registro-crear__planta-meta">{planta.genetica}</span>
+                            ) : null}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Aparecer>
+
+                <Aparecer visible={plantas.length === 0}>
+                  <p className="registro-crear__ayuda">Esta unidad todavía no tiene plantas.</p>
+                </Aparecer>
+              </div>
+            </Aparecer>
+          </section>
+        </Aparecer>
 
         <SeccionParametrosRegistro
           prioritarias={parametrosOrdenados.prioritarias}
@@ -662,76 +845,81 @@ export function FormularioCrearRegistro({
           }
           mostrarMas={mostrarMasParametros}
           onToggleMas={() => setMostrarMasParametros((valor) => !valor)}
-          pendiente={pendiente}
+          pendiente={bloqueado}
+          accionCabecera={
+            <button
+              type="button"
+              className="registro-crear__enlace"
+              onClick={() => setConfigurar((valor) => !valor)}
+              disabled={bloqueado}
+            >
+              {configurar ? "Cerrar" : "Editar"}
+            </button>
+          }
         />
 
-        <section className="registro-crear__seccion">
-          <h2 className="registro-crear__etiqueta">Acciones</h2>
-          <div className="registro-crear__acciones-grid">
-            {accionesVisibles.map((item) => {
-              const clave = claveAccion(item);
-              return (
-                <BotonAccion
-                  key={clave}
-                  item={item}
-                  activa={accionesElegidas.has(clave)}
-                  disabled={pendiente}
-                  onClick={() => alternarAccion(item)}
-                />
-              );
-            })}
-          </div>
-          {accionesExtra.length > 0 ? (
-            <>
+        <Aparecer visible={tipoRegistro === "plantas"} espacio="1.15rem">
+          <section className="registro-crear__seccion">
+            <div className="registro-crear__seccion-cabecera">
+              <h2 className="registro-crear__etiqueta">Acciones</h2>
               <button
                 type="button"
                 className="registro-crear__enlace"
-                onClick={() => setMostrarMasAcciones((valor) => !valor)}
-                disabled={pendiente}
+                onClick={() => setConfigurar((valor) => !valor)}
+                disabled={bloqueado}
               >
-                {mostrarMasAcciones ? "Ocultar más acciones" : "Más acciones"}
+                {configurar ? "Cerrar" : "Editar"}
               </button>
-              <Aparecer visible={mostrarMasAcciones}>
-                <div className="registro-crear__acciones-grid">
-                  {accionesExtra.map((item) => {
-                    const clave = claveAccion(item);
-                    return (
-                      <BotonAccion
-                        key={clave}
-                        item={item}
-                        activa={accionesElegidas.has(clave)}
-                        disabled={pendiente}
-                        onClick={() => alternarAccion(item)}
-                      />
-                    );
-                  })}
-                </div>
-              </Aparecer>
-            </>
-          ) : null}
-          <button
-            type="button"
-            className="registro-crear__enlace"
-            onClick={() => setConfigurar((valor) => !valor)}
-            disabled={pendiente}
-          >
-            {configurar ? "Cerrar seguimiento" : "Configurar seguimiento"}
-          </button>
-        </section>
-
-        <Aparecer visible={configurar}>
-          <div className="registro-crear__seguimiento">
-            <EditorSeguimiento
-              modo="edicion"
-              encabezado="Configurar seguimiento"
-              tipoInicial={tipoSeguimiento}
-              acciones={accionesPrioritarias}
-              parametros={parametrosPrioritarios}
-              opcionesIniciales={opciones}
-              textoGuardar="Guardar preferencias"
-              onActualizado={onSeguimientoActualizado}
-            />
-          </div>
+            </div>
+            {accionesVisibles.length === 0 ? (
+              <p className="registro-crear__ayuda">
+                Todavía no elegiste acciones prioritarias. Tocá Editar para configurarlas.
+              </p>
+            ) : (
+              <div className="registro-crear__acciones-grid">
+                {accionesVisibles.map((item) => {
+                  const clave = claveAccion(item);
+                  return (
+                    <BotonAccion
+                      key={clave}
+                      item={item}
+                      activa={accionesElegidas.has(clave)}
+                      disabled={bloqueado}
+                      onClick={() => alternarAccion(item)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+            {accionesExtra.length > 0 ? (
+              <>
+                <button
+                  type="button"
+                  className="registro-crear__enlace"
+                  onClick={() => setMostrarMasAcciones((valor) => !valor)}
+                  disabled={bloqueado}
+                >
+                  {mostrarMasAcciones ? "Ocultar más acciones" : "Más acciones"}
+                </button>
+                <Aparecer visible={mostrarMasAcciones}>
+                  <div className="registro-crear__acciones-grid">
+                    {accionesExtra.map((item) => {
+                      const clave = claveAccion(item);
+                      return (
+                        <BotonAccion
+                          key={clave}
+                          item={item}
+                          activa={accionesElegidas.has(clave)}
+                          disabled={bloqueado}
+                          onClick={() => alternarAccion(item)}
+                        />
+                      );
+                    })}
+                  </div>
+                </Aparecer>
+              </>
+            ) : null}
+          </section>
         </Aparecer>
 
         <section className="registro-crear__seccion">
@@ -743,8 +931,12 @@ export function FormularioCrearRegistro({
               onChange={(evento) => setObservacion(evento.target.value)}
               rows={4}
               maxLength={4000}
-              placeholder="¿Qué sucedió con estas plantas?"
-              disabled={pendiente}
+              placeholder={
+                tipoRegistro === "ambiente"
+                  ? "¿Qué pasó con las condiciones de la unidad?"
+                  : "¿Qué sucedió con estas plantas?"
+              }
+              disabled={bloqueado}
             />
           </label>
         </section>
@@ -755,10 +947,14 @@ export function FormularioCrearRegistro({
             <ul className="registro-crear__lista">
               {listaHoy.map((item) => {
                 const hora = etiquetaHora(item.fecha_evento);
+                const etiquetaTipo =
+                  item.aplica_a === "ambiente" ? "Ambiente" : "Plantas";
                 return (
                   <li key={item.id}>
                     <span className="registro-crear__lista-hora">{hora || "—"}</span>
                     <span className="registro-crear__lista-texto">
+                      <span className="registro-crear__lista-tipo">{etiquetaTipo}</span>
+                      {" · "}
                       {etiquetaResumenRegistro(item)}
                       {item.observacion &&
                       !(item.registro_acciones || []).length &&
@@ -772,7 +968,7 @@ export function FormularioCrearRegistro({
                         type="button"
                         className="registro-crear__enlace"
                         onClick={() => cargarEdicion(item)}
-                        disabled={pendiente}
+                        disabled={bloqueado}
                       >
                         Editar
                       </button>
@@ -788,27 +984,47 @@ export function FormularioCrearRegistro({
           <Boton
             type="submit"
             className="boton boton--cta boton--ancho"
-            disabled={pendiente || !unidad}
+            disabled={bloqueado || !unidad}
           >
             {pendiente
               ? "Guardando..."
-              : editandoId
-                ? "Guardar cambios"
-                : "Guardar registro"}
+              : cargandoEdicion
+                ? "Cargando..."
+                : editandoId
+                  ? "Guardar cambios"
+                  : "Guardar registro"}
           </Boton>
         </div>
       </form>
 
+      <Aparecer visible={configurar}>
+        <div
+          className="registro-crear__seguimiento"
+          ref={seguimientoRef}
+          id="registro-configurar-seguimiento"
+        >
+          <EditorSeguimiento
+            modo="edicion"
+            encabezado="Configurar seguimiento"
+            tipoInicial={tipoSeguimiento}
+            acciones={accionesPrioritarias}
+            parametros={parametrosPrioritarios}
+            opcionesIniciales={opciones}
+            textoGuardar="Guardar preferencias"
+            onActualizado={onSeguimientoActualizado}
+          />
+        </div>
+      </Aparecer>
+
       <ModalConfirmacion
-        abierto={Boolean(modoPendiente)}
-        onCerrar={() => setModoPendiente("")}
-        titulo="Cambiar alcance"
-        descripcion="Hay parámetros escritos. Se aplicarán al nuevo alcance (plantas o ambiente)."
-        textoConfirmar="Cambiar alcance"
+        abierto={Boolean(tipoPendiente)}
+        onCerrar={() => setTipoPendiente("")}
+        titulo="¿Cambiar el tipo de registro?"
+        descripcion="Estás cambiando el tipo de registro. Algunos datos ingresados no corresponden al nuevo tipo y se descartarán. ¿Querés continuar?"
+        textoConfirmar="Cambiar tipo"
         textoCancelar="Cancelar"
         onConfirmar={() => {
-          aplicarModo(modoPendiente);
-          setModoPendiente("");
+          aplicarTipoRegistro(tipoPendiente);
         }}
       />
     </div>

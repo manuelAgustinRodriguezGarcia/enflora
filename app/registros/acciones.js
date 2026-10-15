@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cargarRegistroPorId } from "@/lib/cargar-registros";
 import {
   argumentosRpcRegistro,
   prepararDatosRegistro,
@@ -160,6 +161,25 @@ export async function editarRegistro(_estado, formularioODatos) {
 
   revalidarContexto(preparado.datos);
   return { ok: true, registro: data };
+}
+
+export async function obtenerRegistroCompleto(registroId) {
+  const id = String(registroId || "").trim();
+  if (!id) {
+    return { error: "No se encontró el registro.", registro: null };
+  }
+
+  const acceso = await sesion();
+  if (acceso.error) {
+    return { error: acceso.error, registro: null };
+  }
+
+  const { error, registro } = await cargarRegistroPorId(acceso.supabase, id);
+  if (error || !registro) {
+    return { error: "No se encontró el registro.", registro: null };
+  }
+
+  return { error: "", registro };
 }
 
 export async function eliminarRegistro(_estado, formularioODatos) {

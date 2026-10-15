@@ -28,11 +28,13 @@ export function SelectorFecha({
   id,
   deshabilitado = false,
   placeholder = "Elegir fecha",
+  sinIcono = false,
 }) {
   const [abierto, setAbierto] = useState(false);
   const [interno, setInterno] = useState(valor || "");
   const controlado = onChange !== undefined;
   const actual = controlado ? valor || "" : interno;
+  const etiquetaFecha = actual ? formatearFecha(actual) : placeholder;
 
   useEffect(() => {
     if (!controlado) setInterno(valor || "");
@@ -46,7 +48,7 @@ export function SelectorFecha({
   }
 
   return (
-    <div className="selector-fecha">
+    <div className={`selector-fecha${sinIcono ? " selector-fecha--sin-icono" : ""}`}>
       {etiqueta ? (
         <label className="selector__etiqueta" htmlFor={id}>
           {etiqueta}
@@ -61,9 +63,9 @@ export function SelectorFecha({
           type="button"
         >
           <span className={`selector-fecha__texto${actual ? "" : " selector-fecha__vacio"}`}>
-            {actual ? formatearFecha(actual) : placeholder}
+            {etiquetaFecha}
           </span>
-          <IconoCalendario className="selector-fecha__icono" />
+          {sinIcono ? null : <IconoCalendario className="selector-fecha__icono" />}
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Positioner

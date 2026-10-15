@@ -286,7 +286,10 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
       id={idFormulario}
       className="formulario editor-seguimiento"
       action={accion}
-      onSubmit={ocultarGuardar ? (evento) => evento.preventDefault() : undefined}
+      onSubmit={(evento) => {
+        evento.stopPropagation();
+        if (ocultarGuardar) evento.preventDefault();
+      }}
     >
       {encabezado ? <h2>{encabezado}</h2> : null}
       <p>

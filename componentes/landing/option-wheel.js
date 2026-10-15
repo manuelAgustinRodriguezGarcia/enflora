@@ -81,8 +81,9 @@ export function OptionWheel({
 
       const els = itemRefs.current;
       const n = cfg.count;
+      const centrado = cfg.side === "center";
       const mirror = cfg.side === "right" ? -1 : 1;
-      const tiltRad = (cfg.tilt * Math.PI) / 180;
+      const tiltRad = centrado ? 0 : (cfg.tilt * Math.PI) / 180;
       const R = tiltRad > 0.0005 ? cfg.rowH / tiltRad : 0;
 
       for (let i = 0; i < n; i++) {
@@ -103,7 +104,8 @@ export function OptionWheel({
           x = -mirror * R * (1 - Math.cos(ang)) * cfg.curve;
           rot = (mirror * ang * 180) / Math.PI;
         }
-        el.style.transform = `translate(${x.toFixed(2)}px, calc(${y.toFixed(2)}px - 50%)) rotate(${rot.toFixed(3)}deg)`;
+        const desplazamientoX = centrado ? `calc(-50% + ${x.toFixed(2)}px)` : `${x.toFixed(2)}px`;
+        el.style.transform = `translate(${desplazamientoX}, calc(${y.toFixed(2)}px - 50%)) rotate(${rot.toFixed(3)}deg)`;
         el.style.opacity = String(Math.max(cfg.minOpacity, 1 - dist * cfg.fade));
         el.style.filter = cfg.blur > 0 ? `blur(${(dist * cfg.blur).toFixed(2)}px)` : "none";
         el.style.setProperty("--ow-p", Math.max(0, 1 - Math.min(dist, 1)).toFixed(4));
@@ -241,6 +243,7 @@ export function OptionWheel({
   const clases = [
     "option-wheel",
     side === "right" ? "option-wheel--right" : "",
+    side === "center" ? "option-wheel--center" : "",
     isDragging ? "option-wheel--dragging" : "",
     capturarRueda ? "" : "option-wheel--scroll",
     className,

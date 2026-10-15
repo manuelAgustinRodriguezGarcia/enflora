@@ -17,7 +17,7 @@ export function Selector({
   renderOpcion,
   className = "",
 }) {
-  const valorActual = valor === undefined || valor === null ? null : valor;
+  const valorActual = valor === undefined || valor === null || valor === "" ? null : valor;
 
   return (
     <div className={`selector${error ? " selector--error" : ""}${className ? ` ${className}` : ""}`}>
@@ -35,13 +35,17 @@ export function Selector({
       >
         <Select.Trigger className="selector__trigger">
           <span className="selector__valor">
-            <Select.Value placeholder={<span className="selector__placeholder">{placeholder}</span>}>
-              {(selected) => {
-                const opcion = opciones.find((item) => item.valor === selected);
-                if (renderValor) return renderValor(opcion, selected);
-                return opcion?.etiqueta || String(selected ?? "");
-              }}
-            </Select.Value>
+            {valorActual == null ? (
+              <span className="selector__placeholder">{placeholder}</span>
+            ) : (
+              <Select.Value>
+                {(selected) => {
+                  const opcion = opciones.find((item) => item.valor === selected);
+                  if (renderValor) return renderValor(opcion, selected);
+                  return opcion?.etiqueta || String(selected ?? "");
+                }}
+              </Select.Value>
+            )}
           </span>
           <Select.Icon className="selector__icono">
             <IconoChevron />

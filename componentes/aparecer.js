@@ -3,16 +3,22 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { transicionRapida } from "@/lib/animaciones";
 
-export function Aparecer({ visible, children }) {
+export function Aparecer({ visible, children, espacio }) {
   const reducido = useReducedMotion();
-  const cerrado = reducido ? { opacity: 0 } : { opacity: 0, height: 0, y: 4 };
-  const abierto = reducido ? { opacity: 1 } : { opacity: 1, height: "auto", y: 0 };
+  const conEspacio = Boolean(espacio);
+  const cerrado = reducido
+    ? { opacity: 0, ...(conEspacio ? { marginTop: 0 } : {}) }
+    : { opacity: 0, height: 0, y: 4, ...(conEspacio ? { marginTop: 0 } : {}) };
+  const abierto = reducido
+    ? { opacity: 1, ...(conEspacio ? { marginTop: espacio } : {}) }
+    : { opacity: 1, height: "auto", y: 0, ...(conEspacio ? { marginTop: espacio } : {}) };
 
   return (
     <AnimatePresence initial={false}>
       {visible ? (
         <motion.div
           key="aparecer"
+          className={conEspacio ? "aparecer aparecer--espacio" : "aparecer"}
           initial={cerrado}
           animate={abierto}
           exit={cerrado}

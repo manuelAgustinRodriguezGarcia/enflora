@@ -11,9 +11,10 @@ export function SeccionParametrosRegistro({
   mostrarMas,
   onToggleMas,
   pendiente = false,
+  accionCabecera = null,
 }) {
-  const visibles = prioritarias.length > 0 ? prioritarias : secundarias;
-  const extras = prioritarias.length > 0 ? secundarias : [];
+  const visibles = prioritarias;
+  const extras = secundarias;
   const numericos = visibles.filter((item) => item.tipo_valor === "numero");
   const textos = visibles.filter((item) => item.tipo_valor === "texto");
   const extrasNumericos = extras.filter((item) => item.tipo_valor === "numero");
@@ -60,12 +61,19 @@ export function SeccionParametrosRegistro({
     );
   }
 
+  const cabecera = (
+    <div className="registro-crear__seccion-cabecera">
+      <h2 className="registro-crear__etiqueta">Parámetros</h2>
+      {accionCabecera}
+    </div>
+  );
+
   if (visibles.length === 0 && extras.length === 0) {
     return (
       <section className="registro-crear__seccion">
-        <h2 className="registro-crear__etiqueta">Parámetros</h2>
+        {cabecera}
         <p className="registro-crear__ayuda">
-          No hay parámetros disponibles. Podés agregarlos en Configurar seguimiento.
+          No hay parámetros disponibles. Podés agregarlos con Editar.
         </p>
       </section>
     );
@@ -73,7 +81,12 @@ export function SeccionParametrosRegistro({
 
   return (
     <section className="registro-crear__seccion">
-      <h2 className="registro-crear__etiqueta">Parámetros</h2>
+      {cabecera}
+      {visibles.length === 0 ? (
+        <p className="registro-crear__ayuda">
+          Todavía no elegiste parámetros prioritarios. Tocá Editar para configurarlos.
+        </p>
+      ) : null}
       {numericos.length > 0 ? (
         <div className="registro-crear__params-grid">{numericos.map(renderNumerico)}</div>
       ) : null}

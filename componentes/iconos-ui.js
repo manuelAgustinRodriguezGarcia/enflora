@@ -123,3 +123,24 @@ export function IconoPlanta({ className }) {
     </svg>
   );
 }
+
+export function IconoAmbiente({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M4 18h16" />
+      <path d="M6 18V9.5a2.5 2.5 0 0 1 5 0V18" />
+      <path d="M13 18v-5.2a2.3 2.3 0 0 1 4.6 0V18" />
+      <path d="M8.5 6.2c.4-1.4 1.4-2.4 2.7-2.7" />
+      <path d="M15.2 8.1c.5-1.1 1.4-1.9 2.5-2.2" />
+    </svg>
+  );
+}
