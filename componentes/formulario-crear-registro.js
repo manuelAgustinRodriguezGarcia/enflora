@@ -2,11 +2,13 @@
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { crearRegistro } from "@/app/registros/acciones";
+import { guardarRegistro } from "@/app/registros/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
+import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { toque, transicionToque } from "@/lib/animaciones";
@@ -15,9 +17,12 @@ import {
   agruparPlantasPorGenetica,
   fechaEventoDesdeDia,
   ordenarAccionesRegistro,
+  ordenarParametrosRegistro,
+  parametrosDesdeValores,
   partesFechaLocal,
   prepararPlantasRegistro,
   resolverAlcanceRegistro,
+  valoresDesdeRegistroParametros,
 } from "@/lib/registros";
 import { textoCantidad } from "@/lib/unidades";
 
@@ -40,12 +45,23 @@ function etiquetaHora(fechaIso) {
   if (!fechaIso) return "";
   const fecha = new Date(fechaIso);
   if (Number.isNaN(fecha.getTime())) return "";
+  const partes = partesFechaLocal(fecha);
+  if (partes.hora === "00:00") return "";
   return fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function etiquetaAcciones(acciones) {
-  if (!acciones?.length) return "Observación";
-  return acciones.map((item) => item.nombre).join(" · ");
+function etiquetaResumenRegistro(item) {
+  const acciones = (item.registro_acciones || []).map((fila) => fila.nombre);
+  const parametros = (item.registro_parametros || []).map((fila) => {
+    if (fila.tipo_valor === "numero") {
+      const unidad = fila.unidad ? ` ${fila.unidad}` : "";
+      return `${fila.nombre} ${fila.valor_numero}${unidad}`;
+    }
+    return `${fila.nombre}: ${fila.valor_texto}`;
+  });
+  const partes = [...acciones, ...parametros];
+  if (!partes.length) return item.observacion ? "Observación" : "Registro";
+  return partes.join(" · ");
 }
 
 function resumenAlcance({ aplicaA, plantasSeleccionadas, plantasUnidad }) {
@@ -119,13 +135,17 @@ function BotonAccion({ item, activa, disabled, onClick }) {
   );
 }
 
+function hayValoresParametros(valores) {
+  return Object.values(valores || {}).some((valor) => String(valor ?? "").trim() !== "");
+}
+
 export function FormularioCrearRegistro({
   unidades = [],
   seguimientoInicial,
   registrosHoy = [],
 }) {
   const inicial = partesFechaLocal();
-  const [estado, accion, pendiente] = useActionState(crearRegistro, null);
+  const [estado, accion, pendiente] = useActionState(guardarRegistro, null);
   const [unidadId, setUnidadId] = useState(unidades[0]?.id || "");
   const [modo, setModo] = useState("unidad");
   const [idsSeleccionados, setIdsSeleccionados] = useState(() => {
@@ -133,11 +153,16 @@ export function FormularioCrearRegistro({
     return new Set((primera?.plantas || []).map((planta) => planta.id));
   });
   const [accionesElegidas, setAccionesElegidas] = useState(() => new Set());
+  const [valoresParametros, setValoresParametros] = useState({});
+  const [paramsHistoricos, setParamsHistoricos] = useState([]);
   const [mostrarMasAcciones, setMostrarMasAcciones] = useState(false);
+  const [mostrarMasParametros, setMostrarMasParametros] = useState(false);
   const [editorPlantas, setEditorPlantas] = useState(false);
   const [observacion, setObservacion] = useState("");
   const [fecha, setFecha] = useState(inicial.fecha);
   const [configurar, setConfigurar] = useState(false);
+  const [editandoId, setEditandoId] = useState("");
+  const [modoPendiente, setModoPendiente] = useState("");
   const [accionesPrioritarias, setAccionesPrioritarias] = useState(
     seguimientoInicial?.acciones || []
   );
@@ -160,6 +185,10 @@ export function FormularioCrearRegistro({
   const accionesOrdenadas = useMemo(
     () => ordenarAccionesRegistro(accionesPrioritarias, opciones),
     [accionesPrioritarias, opciones]
+  );
+  const parametrosOrdenados = useMemo(
+    () => ordenarParametrosRegistro(parametrosPrioritarios, opciones, paramsHistoricos),
+    [parametrosPrioritarios, opciones, paramsHistoricos]
   );
 
   const aplicaA = modo === "ambiente" ? "ambiente" : "plantas";
@@ -184,6 +213,18 @@ export function FormularioCrearRegistro({
     if (datos.tipo) setTipoSeguimiento(datos.tipo);
   }, []);
 
+  function limpiarFormulario(mantenerFecha = true) {
+    setAccionesElegidas(new Set());
+    setValoresParametros({});
+    setParamsHistoricos([]);
+    setObservacion("");
+    if (mantenerFecha) setFecha(partesFechaLocal().fecha);
+    setErrorLocal("");
+    setEditorPlantas(false);
+    setEditandoId("");
+    setMostrarMasParametros(false);
+  }
+
   useEffect(() => {
     if (!estado?.ok || !estado.registro?.id) return;
     if (ultimoExitoId.current === estado.registro.id) return;
@@ -195,17 +236,34 @@ export function FormularioCrearRegistro({
         id: estado.registro.id,
         fecha_evento: resumenGuardado?.fecha_evento || estado.registro.fecha_evento,
         observacion: resumenGuardado?.observacion || estado.registro.observacion || "",
+        alcance: resumenGuardado?.alcance || estado.registro.alcance,
+        aplica_a: resumenGuardado?.aplica_a || estado.registro.aplica_a,
+        unidad_cultivo_id:
+          resumenGuardado?.unidad_cultivo_id || estado.registro.unidad_cultivo_id,
         registro_acciones: (resumenGuardado?.acciones || []).map((item) => ({
+          origen: item.origen,
+          clave_nativa: item.clave_nativa,
+          opcion_id: item.opcion_id,
           nombre: item.nombre,
         })),
+        registro_parametros: (resumenGuardado?.parametros || []).map((item) => ({
+          origen: item.origen,
+          clave_nativa: item.clave_nativa,
+          opcion_id: item.opcion_id,
+          nombre: item.nombre,
+          tipo_valor: item.tipo_valor,
+          valor_numero: item.valor_numero,
+          valor_texto: item.valor_texto,
+          unidad: item.unidad,
+        })),
+        registro_plantas: (resumenGuardado?.plantas || []).map((planta) => ({
+          planta_id: planta.id,
+          nombre_planta: planta.nombre,
+        })),
       },
-      ...lista,
+      ...lista.filter((item) => item.id !== estado.registro.id),
     ]);
-    setAccionesElegidas(new Set());
-    setObservacion("");
-    setFecha(partesFechaLocal().fecha);
-    setErrorLocal("");
-    setEditorPlantas(false);
+    limpiarFormulario(true);
   }, [estado]);
 
   function elegirUnidad(siguienteId) {
@@ -225,7 +283,7 @@ export function FormularioCrearRegistro({
     setIdsSeleccionados(new Set());
   }
 
-  function elegirModo(siguiente) {
+  function aplicarModo(siguiente) {
     setModo(siguiente);
     setErrorLocal("");
     if (siguiente === "ambiente") {
@@ -239,6 +297,15 @@ export function FormularioCrearRegistro({
     if (siguiente === "manual" || siguiente === "genetica") {
       setIdsSeleccionados(new Set());
     }
+  }
+
+  function elegirModo(siguiente) {
+    const cambiaAplica = (siguiente === "ambiente") !== (modo === "ambiente");
+    if (cambiaAplica && hayValoresParametros(valoresParametros)) {
+      setModoPendiente(siguiente);
+      return;
+    }
+    aplicarModo(siguiente);
   }
 
   function elegirGenetica(clave) {
@@ -273,6 +340,55 @@ export function FormularioCrearRegistro({
     setErrorLocal("");
   }
 
+  function cargarEdicion(registro) {
+    if (!registro?.id) return;
+    setEditandoId(registro.id);
+    setErrorLocal("");
+    setConfigurar(false);
+
+    if (registro.unidad_cultivo_id) {
+      setUnidadId(registro.unidad_cultivo_id);
+    }
+
+    const aplica = registro.aplica_a === "ambiente" ? "ambiente" : "plantas";
+    if (aplica === "ambiente") {
+      setModo("ambiente");
+      setIdsSeleccionados(new Set());
+    } else if (registro.alcance === "unidad") {
+      setModo("unidad");
+      const unidadReg = unidades.find((item) => item.id === registro.unidad_cultivo_id);
+      setIdsSeleccionados(new Set((unidadReg?.plantas || []).map((planta) => planta.id)));
+    } else if (registro.alcance === "genetica") {
+      setModo("genetica");
+      setIdsSeleccionados(
+        new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
+      );
+    } else {
+      setModo(registro.alcance === "planta" ? "manual" : "manual");
+      setIdsSeleccionados(
+        new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
+      );
+    }
+
+    const partes = partesFechaLocal(registro.fecha_evento);
+    setFecha(partes.fecha);
+    setObservacion(registro.observacion || "");
+
+    const acciones = new Set();
+    for (const fila of registro.registro_acciones || []) {
+      if (fila.origen === "nativa" && fila.clave_nativa) {
+        acciones.add(`nativa:${fila.clave_nativa}`);
+      } else if (fila.opcion_id) {
+        acciones.add(`personalizada:${fila.opcion_id}`);
+      }
+    }
+    setAccionesElegidas(acciones);
+    setValoresParametros(valoresDesdeRegistroParametros(registro.registro_parametros));
+    setParamsHistoricos(registro.registro_parametros || []);
+    setMostrarMasParametros(true);
+    setEditorPlantas(false);
+  }
+
   function armarPayload() {
     if (!unidad) {
       return { error: "Seleccioná una unidad." };
@@ -297,8 +413,11 @@ export function FormularioCrearRegistro({
       return { error: "La fecha del evento no es válida." };
     }
 
-    const catalogo = [...accionesOrdenadas.prioritarias, ...accionesOrdenadas.secundarias];
-    const acciones = catalogo
+    const catalogoAcciones = [
+      ...accionesOrdenadas.prioritarias,
+      ...accionesOrdenadas.secundarias,
+    ];
+    const acciones = catalogoAcciones
       .filter((item) => accionesElegidas.has(claveAccion(item)))
       .map((item) =>
         item.origen === "nativa"
@@ -314,28 +433,39 @@ export function FormularioCrearRegistro({
             }
       );
 
+    const catalogoParametros = [
+      ...parametrosOrdenados.prioritarias,
+      ...parametrosOrdenados.secundarias,
+    ];
+    const parametrosOk = parametrosDesdeValores(valoresParametros, catalogoParametros);
+    if (parametrosOk.error) return { error: parametrosOk.error };
+
     const observacionLimpia = observacion.trim();
-    if (acciones.length === 0 && !observacionLimpia) {
-      return { error: "El registro necesita una acción o una observación." };
+    if (
+      acciones.length === 0 &&
+      parametrosOk.parametros.length === 0 &&
+      !observacionLimpia
+    ) {
+      return { error: "El registro necesita una acción, un parámetro o una observación." };
     }
 
-    return {
-      error: "",
-      datos: {
-        alcance: alcanceResuelto.alcance,
-        aplica_a: aplicaA,
-        espacio_id: unidad.espacio_id,
-        unidad_cultivo_id: unidad.id,
-        genetica_clave: alcanceResuelto.genetica_clave,
-        genetica_etiqueta: alcanceResuelto.genetica_etiqueta,
-        observacion: observacionLimpia || null,
-        fecha_evento: fechaEvento,
-        plantas:
-          aplicaA === "ambiente" ? [] : prepararPlantasRegistro(plantasSeleccionadas, unidad),
-        acciones,
-        parametros: [],
-      },
+    const datos = {
+      alcance: alcanceResuelto.alcance,
+      aplica_a: aplicaA,
+      espacio_id: unidad.espacio_id,
+      unidad_cultivo_id: unidad.id,
+      genetica_clave: alcanceResuelto.genetica_clave,
+      genetica_etiqueta: alcanceResuelto.genetica_etiqueta,
+      observacion: observacionLimpia || null,
+      fecha_evento: fechaEvento,
+      plantas:
+        aplicaA === "ambiente" ? [] : prepararPlantasRegistro(plantasSeleccionadas, unidad),
+      acciones,
+      parametros: parametrosOk.parametros,
     };
+
+    if (editandoId) datos.id = editandoId;
+    return { error: "", datos };
   }
 
   function enviar(formData) {
@@ -366,8 +496,21 @@ export function FormularioCrearRegistro({
         {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
         {errorLocal ? <p className="formulario__error">{errorLocal}</p> : null}
         <Aparecer visible={Boolean(estado?.ok) && !pendiente && !errorLocal && !estado?.error}>
-          <p className="registro-crear__ok">Registro guardado. Podés cargar otro cuando quieras.</p>
+          <p className="registro-crear__ok">Registro guardado. Podés cargar otro o editar uno de hoy.</p>
         </Aparecer>
+        {editandoId ? (
+          <p className="registro-crear__editando">
+            Editando un registro existente.{" "}
+            <button
+              type="button"
+              className="registro-crear__enlace"
+              onClick={() => limpiarFormulario(true)}
+              disabled={pendiente}
+            >
+              Cancelar edición
+            </button>
+          </p>
+        ) : null}
 
         <header className="registro-crear__cabecera">
           <Selector
@@ -440,8 +583,7 @@ export function FormularioCrearRegistro({
 
               <Aparecer visible={modo === "ambiente"}>
                 <p className="registro-crear__ayuda">
-                  Ambiente de la unidad: no se asocia a plantas individuales. Los parámetros
-                  ambientales se suman en la siguiente iteración.
+                  Ambiente de la unidad: no se asocia a plantas individuales.
                 </p>
               </Aparecer>
 
@@ -510,6 +652,18 @@ export function FormularioCrearRegistro({
             </div>
           </Aparecer>
         </section>
+
+        <SeccionParametrosRegistro
+          prioritarias={parametrosOrdenados.prioritarias}
+          secundarias={parametrosOrdenados.secundarias}
+          valores={valoresParametros}
+          onChange={(clave, valor) =>
+            setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
+          }
+          mostrarMas={mostrarMasParametros}
+          onToggleMas={() => setMostrarMasParametros((valor) => !valor)}
+          pendiente={pendiente}
+        />
 
         <section className="registro-crear__seccion">
           <h2 className="registro-crear__etiqueta">Acciones</h2>
@@ -599,17 +753,33 @@ export function FormularioCrearRegistro({
           <section className="registro-crear__hoy">
             <h2 className="registro-crear__etiqueta">Registros de hoy</h2>
             <ul className="registro-crear__lista">
-              {listaHoy.map((item) => (
-                <li key={item.id}>
-                  <span className="registro-crear__lista-hora">
-                    {etiquetaHora(item.fecha_evento)}
-                  </span>
-                  <span className="registro-crear__lista-texto">
-                    {etiquetaAcciones(item.registro_acciones)}
-                    {item.observacion ? ` · ${item.observacion}` : ""}
-                  </span>
-                </li>
-              ))}
+              {listaHoy.map((item) => {
+                const hora = etiquetaHora(item.fecha_evento);
+                return (
+                  <li key={item.id}>
+                    <span className="registro-crear__lista-hora">{hora || "—"}</span>
+                    <span className="registro-crear__lista-texto">
+                      {etiquetaResumenRegistro(item)}
+                      {item.observacion &&
+                      !(item.registro_acciones || []).length &&
+                      !(item.registro_parametros || []).length
+                        ? ""
+                        : item.observacion
+                          ? ` · ${item.observacion}`
+                          : ""}
+                      {" "}
+                      <button
+                        type="button"
+                        className="registro-crear__enlace"
+                        onClick={() => cargarEdicion(item)}
+                        disabled={pendiente}
+                      >
+                        Editar
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ) : null}
@@ -620,10 +790,27 @@ export function FormularioCrearRegistro({
             className="boton boton--cta boton--ancho"
             disabled={pendiente || !unidad}
           >
-            {pendiente ? "Guardando..." : "Guardar registro"}
+            {pendiente
+              ? "Guardando..."
+              : editandoId
+                ? "Guardar cambios"
+                : "Guardar registro"}
           </Boton>
         </div>
       </form>
+
+      <ModalConfirmacion
+        abierto={Boolean(modoPendiente)}
+        onCerrar={() => setModoPendiente("")}
+        titulo="Cambiar alcance"
+        descripcion="Hay parámetros escritos. Se aplicarán al nuevo alcance (plantas o ambiente)."
+        textoConfirmar="Cambiar alcance"
+        textoCancelar="Cancelar"
+        onConfirmar={() => {
+          aplicarModo(modoPendiente);
+          setModoPendiente("");
+        }}
+      />
     </div>
   );
 }

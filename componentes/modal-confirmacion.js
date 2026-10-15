@@ -20,9 +20,13 @@ export function ModalConfirmacion({
   error = "",
   accion,
   onConfirmar,
+  icono = null,
+  varianteIcono = "",
+  varianteConfirmar,
   children,
 }) {
   const acciones = useRef(null);
+  const claseIcono = varianteIcono ? `modal__icono modal__icono--${varianteIcono}` : "modal__icono";
 
   function cambiar(siguiente, detalles) {
     if (!siguiente && pendiente) {
@@ -37,23 +41,28 @@ export function ModalConfirmacion({
 
   const cuerpo = (
     <>
+      {icono ? (
+        <div className={claseIcono} aria-hidden="true">
+          {icono}
+        </div>
+      ) : null}
       <Dialog.Title className="modal__titulo">{titulo}</Dialog.Title>
       {descripcion ? <Dialog.Description className="modal__texto">{descripcion}</Dialog.Description> : null}
       {error ? <p className="formulario__error">{error}</p> : null}
       {children}
       <div className="modal__acciones">
-        {accion ? (
-          <Boton type="submit" disabled={pendiente}>
-            {textoConfirmar}
-          </Boton>
-        ) : (
-          <Boton type="button" onClick={onConfirmar} disabled={pendiente}>
-            {textoConfirmar}
-          </Boton>
-        )}
         <Boton type="button" variante="ghost" onClick={() => cambiar(false)} disabled={pendiente}>
           {textoCancelar}
         </Boton>
+        {accion ? (
+          <Boton type="submit" variante={varianteConfirmar} disabled={pendiente}>
+            {textoConfirmar}
+          </Boton>
+        ) : (
+          <Boton type="button" variante={varianteConfirmar} onClick={onConfirmar} disabled={pendiente}>
+            {textoConfirmar}
+          </Boton>
+        )}
       </div>
     </>
   );

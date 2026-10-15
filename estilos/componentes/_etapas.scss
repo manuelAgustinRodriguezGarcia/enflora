@@ -5,6 +5,51 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   width: 1em;
   height: 1em;
   flex: 0 0 auto;
+
+  &--mascara {
+    background-color: currentColor;
+    mask-image: var(--icono-etapa-url);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: var(--icono-etapa-url);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+  }
+}
+
+.fila-etapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--color-text);
+
+  .icono-etapa {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  &__texto {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  @each $etapa in $etapas {
+    &--#{$etapa} {
+      color: var(--etapa-#{$etapa}-texto);
+
+      .icono-etapa {
+        color: var(--etapa-#{$etapa});
+      }
+    }
+  }
+
+  &--enflora .fila-etapa__texto {
+    font-weight: 600;
+    letter-spacing: -0.045em;
+  }
 }
 
 .indicador-etapa {
@@ -22,6 +67,11 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   &--compacto {
     padding: 0.2rem 0.55rem;
     font-size: var(--font-size-body-small);
+
+    .icono-etapa {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
   }
 
   &--normal {
@@ -29,6 +79,24 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
     font-family: var(--font-identidad);
     font-size: var(--font-size-card);
     font-weight: var(--font-weight-card);
+
+    .icono-etapa {
+      width: 1.85rem;
+      height: 1.85rem;
+    }
+  }
+
+  &--icono {
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: 999px;
+
+    .icono-etapa {
+      width: 1.55rem;
+      height: 1.55rem;
+    }
   }
 
   &--vacia {
@@ -42,6 +110,11 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
       background: var(--etapa-#{$etapa}-fondo);
       border-color: var(--etapa-#{$etapa}-borde);
     }
+  }
+
+  &--enflora > span {
+    font-weight: 600;
+    letter-spacing: -0.045em;
   }
 }
 
@@ -156,10 +229,62 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   }
 }
 
+@each $etapa in $etapas {
+  .etapa-progreso__siguiente--#{$etapa} {
+    background: var(--etapa-#{$etapa}-fondo);
+    border-color: var(--etapa-#{$etapa}-borde);
+    color: var(--etapa-#{$etapa}-texto);
+
+    &:hover {
+      background: var(--etapa-#{$etapa}-fondo);
+      border-color: var(--etapa-#{$etapa}-texto);
+      filter: brightness(0.97);
+    }
+
+    .etapa-progreso__etiqueta {
+      color: var(--etapa-#{$etapa}-texto);
+      opacity: 0.72;
+    }
+
+    .indicador-etapa {
+      color: var(--etapa-#{$etapa}-texto);
+      background: transparent;
+      border: 0;
+    }
+  }
+}
+
 .selector-etapa {
-  .selector__opcion[data-selected] {
-    background: var(--color-surface-secondary);
-    color: var(--color-text);
+  .selector__opcion {
+    gap: 0.55rem;
+
+    &[data-highlighted] {
+      background: var(--color-surface-secondary);
+    }
+
+    &[data-selected] {
+      background: var(--color-surface-secondary);
+      color: inherit;
+    }
+
+    .fila-etapa {
+      width: 100%;
+
+      .icono-etapa {
+        width: 1.9rem;
+        height: 1.9rem;
+      }
+
+      &__texto {
+        font-size: var(--font-size-input);
+        font-weight: var(--font-weight-label);
+      }
+    }
+  }
+
+  .selector__valor .fila-etapa .icono-etapa {
+    width: 1.55rem;
+    height: 1.55rem;
   }
 }
 
@@ -167,5 +292,25 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   .tarjeta--#{$etapa} {
     border-left-width: 3px;
     border-left-color: var(--etapa-#{$etapa}-borde);
+  }
+
+  .tarjeta--historial.tarjeta--#{$etapa} {
+    background: var(--etapa-#{$etapa}-fondo);
+    border-color: var(--etapa-#{$etapa}-borde);
+    border-left-width: 1px;
+    border-left-color: var(--etapa-#{$etapa}-borde);
+
+    &:hover {
+      border-color: var(--etapa-#{$etapa}-borde);
+    }
+
+    .tarjeta__dias {
+      color: var(--etapa-#{$etapa}-texto);
+    }
+
+    .tarjeta__meta {
+      color: var(--etapa-#{$etapa}-texto);
+      opacity: 0.78;
+    }
   }
 }

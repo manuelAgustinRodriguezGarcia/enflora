@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { FormularioEditarPlanta } from "@/componentes/formulario-editar-planta";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -11,7 +11,7 @@ export default async function PaginaEditarPlanta({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href={`/espacios/${id}/unidades/${unidadId}`}>Volver a la unidad</Link>
+        <EnlaceVolver href={`/espacios/${id}/unidades/${unidadId}`} etiqueta="Volver a la unidad" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -20,7 +20,9 @@ export default async function PaginaEditarPlanta({ params }) {
   const supabase = await crearClienteServidor();
   const { data: planta, error: errorPlanta } = await supabase
     .from("plantas")
-    .select("id, nombre, genetica, metodo, sustrato, etapa, fecha_inicio, estado, unidad_cultivo_id")
+    .select(
+      "id, nombre, genetica, metodo, sustrato, etapa, fecha_inicio, fecha_creacion, estado, unidad_cultivo_id"
+    )
     .eq("id", plantaId)
     .eq("unidad_cultivo_id", unidadId)
     .maybeSingle();
@@ -57,7 +59,10 @@ export default async function PaginaEditarPlanta({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
-        <Link href={`/espacios/${id}/unidades/${unidadId}/plantas/${planta.id}`}>Volver a la planta</Link>
+        <EnlaceVolver
+          href={`/espacios/${id}/unidades/${unidadId}/plantas/${planta.id}`}
+          etiqueta="Volver a la planta"
+        />
         <h1>Editar planta</h1>
         <FormularioEditarPlanta
           planta={planta}

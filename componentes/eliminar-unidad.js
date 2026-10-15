@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { eliminarUnidad } from "@/app/espacios/[id]/acciones";
 import { Boton } from "@/componentes/boton";
+import { IconoBasura } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
 export function EliminarUnidad({ unidadId, espacioId }) {
@@ -11,8 +12,13 @@ export function EliminarUnidad({ unidadId, espacioId }) {
 
   return (
     <>
-      <Boton className="boton boton--destructivo" type="button" onClick={() => setAbierto(true)}>
-        Eliminar
+      <Boton
+        className="boton boton--destructivo boton--icono"
+        type="button"
+        onClick={() => setAbierto(true)}
+        aria-label="Eliminar unidad"
+      >
+        <IconoBasura />
       </Boton>
       <ModalConfirmacion
         abierto={abierto}
@@ -23,6 +29,8 @@ export function EliminarUnidad({ unidadId, espacioId }) {
         pendiente={pendiente}
         error={estado?.error || ""}
         accion={accion}
+        icono={<IconoBasura />}
+        varianteConfirmar="destructivo"
       >
         <input type="hidden" name="unidad_id" value={unidadId} />
         <input type="hidden" name="espacio_id" value={espacioId} />

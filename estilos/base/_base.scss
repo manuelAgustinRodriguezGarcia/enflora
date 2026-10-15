@@ -4,6 +4,17 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible) {
+  outline: none;
+}
+
 body {
   margin: 0;
   font-family: var(--font-funcional);
@@ -51,12 +62,22 @@ a {
   &:hover {
     color: var(--color-primary-hover);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+  }
 }
 
 button {
   font-family: var(--font-identidad);
   font-size: var(--font-size-button);
   font-weight: var(--font-weight-button);
+
+  &:focus-visible {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 2px;
+  }
 }
 
 input,

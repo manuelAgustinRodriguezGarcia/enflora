@@ -40,6 +40,7 @@ const MENSAJES = [
   "Hay un parámetro personalizado sin identificador.",
   "Hay un parámetro de texto vacío.",
   "Hay un parámetro numérico inválido.",
+  "Hay un parámetro duplicado.",
   "La observación es demasiado larga.",
 ];
 
@@ -85,6 +86,17 @@ function leerEntrada(formularioODatos) {
     }
   }
   return formularioODatos;
+}
+
+export async function guardarRegistro(_estado, formularioODatos) {
+  const entrada = leerEntrada(formularioODatos);
+  if (!entrada) {
+    return { error: "No se pudo leer el registro." };
+  }
+  if (entrada.id || entrada.registro_id) {
+    return editarRegistro(_estado, entrada);
+  }
+  return crearRegistro(_estado, entrada);
 }
 
 export async function crearRegistro(_estado, formularioODatos) {

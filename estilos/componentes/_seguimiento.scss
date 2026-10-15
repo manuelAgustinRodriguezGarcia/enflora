@@ -83,7 +83,7 @@
       color: var(--color-surface);
     }
 
-    &:focus-within {
+    &:focus-within:has(:focus-visible) {
       outline: 2px solid var(--color-primary);
       outline-offset: 2px;
     }
@@ -265,7 +265,7 @@
     text-align: center;
   }
 
-  &:focus-within {
+  &:focus-within:has(:focus-visible) {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }

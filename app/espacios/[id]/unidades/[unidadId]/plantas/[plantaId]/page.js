@@ -1,14 +1,23 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TextoCambio } from "@/componentes/aparecer";
 import { EnlaceBoton } from "@/componentes/boton";
 import { CambiarEtapa } from "@/componentes/cambiar-etapa";
 import { EliminarPlanta } from "@/componentes/eliminar-planta";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { EtapaProgreso } from "@/componentes/etapa-progreso";
+import { IconoLapiz } from "@/componentes/iconos-ui";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
-import { datosEtapaActual, diasEntre, fechaHoy, formatearFecha, textoDias } from "@/lib/etapas";
+import {
+  datosEtapaActual,
+  diasEntre,
+  esEtapa,
+  fechaHoy,
+  fechaInicioPlanta,
+  formatearFecha,
+  textoDias,
+} from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -30,7 +39,7 @@ export default async function PaginaPlanta({ params }) {
   if (!configuracionLista()) {
     return (
       <section className="espacio">
-        <Link href={`/espacios/${id}/unidades/${unidadId}`}>Volver a la unidad</Link>
+        <EnlaceVolver href={`/espacios/${id}/unidades/${unidadId}`} etiqueta="Volver a la unidad" />
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -48,7 +57,9 @@ export default async function PaginaPlanta({ params }) {
 
   const { data: planta, error: errorPlanta } = await supabase
     .from("plantas")
-    .select("id, nombre, genetica, metodo, sustrato, etapa, numero, fecha_inicio, estado, unidad_cultivo_id")
+    .select(
+      "id, nombre, genetica, metodo, sustrato, etapa, numero, fecha_inicio, fecha_creacion, estado, unidad_cultivo_id"
+    )
     .eq("id", plantaId)
     .eq("unidad_cultivo_id", unidad.id)
     .maybeSingle();
@@ -69,9 +80,24 @@ export default async function PaginaPlanta({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
-        <Link href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}`}>Volver a la unidad</Link>
+        <EnlaceVolver
+          href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}`}
+          etiqueta="Volver a la unidad"
+        />
         <header className="detalle-cabecera">
-          <h1 className="detalle-cabecera__titulo">{planta.nombre}</h1>
+          <div className="detalle-cabecera__superior">
+            <h1 className="detalle-cabecera__titulo">{planta.nombre}</h1>
+            <div className="detalle-cabecera__acciones">
+              <EnlaceBoton
+                className="boton boton--secundario boton--icono"
+                href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}/editar`}
+                aria-label="Editar planta"
+              >
+                <IconoLapiz />
+              </EnlaceBoton>
+              <EliminarPlanta plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id} />
+            </div>
+          </div>
           <div className="tarjeta__metricas">
             <span className="tarjeta__dato">
               <span className="tarjeta__etiqueta">Genética</span>
@@ -95,7 +121,7 @@ export default async function PaginaPlanta({ params }) {
             </span>
             <span className="tarjeta__dato">
               <span className="tarjeta__etiqueta">Inicio</span>
-              <span className="tarjeta__valor">{formatearFecha(planta.fecha_inicio)}</span>
+              <span className="tarjeta__valor">{formatearFecha(fechaInicioPlanta(planta))}</span>
             </span>
             <span className="tarjeta__dato">
               <span className="tarjeta__etiqueta">Ubicación</span>
@@ -109,6 +135,9 @@ export default async function PaginaPlanta({ params }) {
           etapa={datos.etapa}
           dia={datos.dia}
           inicio={datos.inicio ? formatearFecha(datos.inicio) : ""}
+          plantaId={planta.id}
+          unidadId={unidad.id}
+          espacioId={unidad.espacio_id}
         />
         <h2>Historial de etapas</h2>
         {errorHistorial ? <p>No se pudo cargar el historial de etapas.</p> : null}
@@ -119,25 +148,22 @@ export default async function PaginaPlanta({ params }) {
           <ListaEntrada>
             {historial.map((registro) => {
               const fin = registro.fecha_fin || hoy;
+              const clase = esEtapa(registro.etapa)
+                ? `tarjeta tarjeta--historial tarjeta--${registro.etapa}`
+                : "tarjeta tarjeta--historial";
               return (
-                <li className="tarjeta" key={registro.id}>
+                <li className={clase} key={registro.id}>
                   <IndicadorEtapa etapa={registro.etapa} tamano="compacto" />
-                  <span className="tarjeta__meta">{periodoHistorial(registro)}</span>
-                  <span className="tarjeta__meta">{textoDias(diasEntre(registro.fecha_inicio, fin))}</span>
+                  <div className="tarjeta__historial-derecha">
+                    <span className="tarjeta__dias">{textoDias(diasEntre(registro.fecha_inicio, fin))}</span>
+                    <span className="tarjeta__meta">{periodoHistorial(registro)}</span>
+                  </div>
                 </li>
               );
             })}
           </ListaEntrada>
         ) : null}
-        <CambiarEtapa plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id}>
-          <EnlaceBoton
-            className="boton boton--secundario"
-            href={`/espacios/${unidad.espacio_id}/unidades/${unidad.id}/plantas/${planta.id}/editar`}
-          >
-            Editar
-          </EnlaceBoton>
-          <EliminarPlanta plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id} />
-        </CambiarEtapa>
+        <CambiarEtapa plantaId={planta.id} unidadId={unidad.id} espacioId={unidad.espacio_id} />
       </section>
     </TransicionVista>
   );

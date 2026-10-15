@@ -14,6 +14,14 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
 
+  &__fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.65rem;
+    align-items: end;
+    min-width: 0;
+  }
+
   &__olvido {
     align-self: flex-end;
     padding: 0;
@@ -148,7 +156,7 @@
   }
 }
 
-button:not(.boton):not(.selector__trigger):not(.selector__opcion):not(.selector-fecha__trigger):not(.contador-cantidad__boton):not(.contador-cantidad__input):not(.planta-accordion__cabecera):not(.resumen-config__boton):not(.preferencia):not(.preferencia__editar):not(.formulario__olvido):not(.formulario__enviar):not(.formulario__revelar):not(.acciones__texto):not(.eleccion button):not(.asistente__pasos button):not(.seguimiento__opcion):not(.registro-crear__chip):not(.registro-crear__planta):not(.registro-crear__enlace):not(.registro-crear__accion) {
+button:not(.boton):not(.selector__trigger):not(.selector__opcion):not(.selector-fecha__trigger):not(.contador-cantidad__boton):not(.contador-cantidad__input):not(.planta-accordion__cabecera):not(.resumen-config__boton):not(.preferencia):not(.preferencia__editar):not(.formulario__olvido):not(.formulario__enviar):not(.formulario__revelar):not(.acciones__texto):not(.eleccion button):not(.asistente__pasos button):not(.seguimiento__opcion):not(.registro-crear__chip):not(.registro-crear__planta):not(.registro-crear__enlace):not(.registro-crear__accion):not(.etapa-progreso__boton):not(.etapa-progreso__siguiente):not(.rdp-day_button):not(.rdp-button_previous):not(.rdp-button_next):not(.estado-toggle__boton) {
   align-self: flex-start;
   min-height: var(--touch-min);
   padding: 0.55rem 0.9rem;
@@ -175,7 +183,7 @@ button:not(.boton):not(.selector__trigger):not(.selector__opcion):not(.selector-
   }
 }
 
-input:not([type="checkbox"]):not([type="radio"]):not(.contador-cantidad__input) {
+input:not([type="checkbox"]):not([type="radio"]):not(.contador-cantidad__input):not(.registro-crear__param-input) {
   min-height: var(--touch-min);
   padding: 0.45rem 0.7rem;
   border: 1px solid var(--color-border);

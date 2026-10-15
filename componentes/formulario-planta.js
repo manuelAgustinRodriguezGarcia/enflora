@@ -141,7 +141,7 @@ export function FormularioPlanta({
     etapa: "",
     fechaInicioEtapa: fechaHoy(),
   });
-  const [plantas, setPlantas] = useState(() => [plantaNueva("")]);
+  const [plantas, setPlantas] = useState(() => [plantaNueva(fechaHoy())]);
   const varias = plantas.length > 1;
 
   function cambiarCantidad(nueva) {
@@ -156,7 +156,7 @@ export function FormularioPlanta({
     setPlantas((actuales) => {
       if (nueva <= actuales.length) return actuales.slice(0, nueva);
 
-      const fecha = actuales[0]?.fechaInicio || "";
+      const fecha = actuales[0]?.fechaInicio || fechaHoy();
       const extra = [];
       for (let i = actuales.length; i < nueva; i += 1) {
         extra.push({
