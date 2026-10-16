@@ -750,7 +750,12 @@ const GooeyNav = ({
       );
       if (!interactive) {
         return (
-          <li key={index} className="gooey-nav__item">
+          <li
+            key={index}
+            className="gooey-nav__item"
+            data-active={index === current ? '' : undefined}
+            data-accent={item.accent ? '' : undefined}
+          >
             <span className="gooey-nav__link">{content}</span>
           </li>
         );
@@ -769,6 +774,7 @@ const GooeyNav = ({
           className="gooey-nav__item"
           data-gooey-index={index}
           data-active={index === current ? '' : undefined}
+          data-accent={item.accent ? '' : undefined}
         >
           {item.href ? (
             <a href={item.href} {...shared}>

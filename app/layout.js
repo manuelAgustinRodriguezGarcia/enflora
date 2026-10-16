@@ -23,8 +23,18 @@ const fredoka = Fredoka({
 });
 
 export const metadata = {
-  title: "ENFLORA",
+  title: "Enflora",
   description: "Espacios de cultivo y plantas",
+  applicationName: "Enflora",
+  appleWebApp: {
+    capable: true,
+    title: "Enflora",
+    statusBarStyle: "default",
+  },
+  icons: {
+    icon: "/logos/enflora-isotipo-light.svg",
+    apple: "/logos/enflora-isotipo-dark-green.svg",
+  },
 };
 
 export const viewport = {

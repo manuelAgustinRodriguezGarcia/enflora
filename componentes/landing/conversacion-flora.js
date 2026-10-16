@@ -16,7 +16,7 @@ const OPCIONES = [
   },
   {
     id: "lista",
-    etiqueta: "Estoy en la lista querida!",
+    etiqueta: "Estoy en la lista!",
     respuesta: "Es cierto! Mil disculpas.",
   },
   {
@@ -229,7 +229,7 @@ export function ConversacionFlora({ onContinuar, className = "" }) {
             >
               <button type="button" className="flora-chat__continuar" onClick={onContinuar}>
                 <Ticket aria-hidden="true" strokeWidth={1.75} />
-                Agarrar entrada
+                Ver entrada
               </button>
             </motion.div>
           ) : null}

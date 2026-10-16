@@ -10,7 +10,8 @@ const EXPANDIR_HASTA = 0.2;
 const RUEDA_HASTA = 0.72;
 const PIN_PROPS =
   "position,top,left,right,bottom,width,height,maxWidth,maxHeight,margin,padding,transform,inset,zIndex";
-const ESCENA_PROPS = "top,right,bottom,left,inset,padding,paddingLeft,paddingRight";
+const CLIP_PROPS = "clipPath,webkitClipPath";
+const COLUMNA_PROPS = "transform,x,y";
 const SPREAD_PROPS = "maxWidth,width,flexGrow,flexBasis";
 
 function leerInsets(nodo) {
@@ -61,6 +62,13 @@ function leerSpreadBase(spread) {
   );
 }
 
+function clipInset(top, right, bottom, left, radio) {
+  if (radio > 0) {
+    return `inset(${top}px ${right}px ${bottom}px ${left}px round ${radio}px ${radio}px 0px 0px)`;
+  }
+  return `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+}
+
 function progresoAIndice(progreso, ultimo) {
   if (progreso <= EXPANDIR_HASTA) return 0;
   if (progreso >= RUEDA_HASTA) return ultimo;
@@ -80,7 +88,9 @@ export function ConEnflora() {
   const ref = useRef(null);
   const fondoRef = useRef(null);
   const escenaRef = useRef(null);
+  const tituloRef = useRef(null);
   const spreadRef = useRef(null);
+  const ruedaRef = useRef(null);
   const triggerRef = useRef(null);
   const sincronizandoRef = useRef(false);
   const [compacto, setCompacto] = useState(false);
@@ -110,12 +120,18 @@ export function ConEnflora() {
       const nodo = ref.current;
       const fondo = fondoRef.current;
       const escena = escenaRef.current;
+      const tituloEl = tituloRef.current;
       const spread = spreadRef.current;
+      const ruedaEl = ruedaRef.current;
       if (!nodo || !fondo || !escena || !listo) return undefined;
 
       const limpiar = () => {
-        gsap.set(fondo, { clearProps: "top,right,bottom,left,inset,borderRadius" });
-        gsap.set(escena, { clearProps: ESCENA_PROPS });
+        gsap.set(fondo, { clearProps: `${CLIP_PROPS},top,right,bottom,left,inset,borderRadius` });
+        gsap.set(escena, {
+          clearProps: `${CLIP_PROPS},top,right,bottom,left,inset,padding,paddingLeft,paddingRight`,
+        });
+        if (tituloEl) gsap.set(tituloEl, { clearProps: COLUMNA_PROPS });
+        if (ruedaEl) gsap.set(ruedaEl, { clearProps: COLUMNA_PROPS });
         if (spread) gsap.set(spread, { clearProps: SPREAD_PROPS });
         gsap.set(nodo, { clearProps: PIN_PROPS });
         triggerRef.current = null;
@@ -129,6 +145,7 @@ export function ConEnflora() {
           bottom: 0,
           left: 0,
           borderRadius: 0,
+          clipPath: "none",
         });
         gsap.set(escena, {
           top: 0,
@@ -137,8 +154,11 @@ export function ConEnflora() {
           left: 0,
           paddingLeft: pad.left,
           paddingRight: pad.right,
+          clipPath: "none",
         });
         if (spread) gsap.set(spread, { maxWidth: 10000, flexBasis: 0, flexGrow: 1 });
+        if (tituloEl) gsap.set(tituloEl, { x: 0 });
+        if (ruedaEl) gsap.set(ruedaEl, { x: 0 });
         return limpiar;
       }
 
@@ -148,34 +168,64 @@ export function ConEnflora() {
       const insetsInicial = esDesktop
         ? { top: 0, right: leidos.right, bottom: 0, left: leidos.left }
         : { top: 0, right: 0, bottom: 0, left: 0 };
-      const radioInicial = esDesktop ? "40px 40px 0px 0px" : 0;
+      const radioInicial = esDesktop ? 40 : 0;
       const padInicial = leerPadEscena(escena);
       const padFinal = esDesktop ? leerPadHeader() : padInicial;
       const spreadBase = esDesktop && spread ? leerSpreadBase(spread) : 0;
+      const clipInicial = clipInset(
+        insetsInicial.top,
+        insetsInicial.right,
+        insetsInicial.bottom,
+        insetsInicial.left,
+        radioInicial,
+      );
+      const clipFinal = clipInset(0, 0, 0, 0, 0);
 
       gsap.set(fondo, {
-        top: insetsInicial.top,
-        right: insetsInicial.right,
-        bottom: insetsInicial.bottom,
-        left: insetsInicial.left,
-        borderRadius: radioInicial,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        borderRadius: 0,
+        clipPath: esDesktop ? clipInicial : "none",
+        force3D: true,
       });
 
       gsap.set(escena, {
-        top: insetsInicial.top,
-        right: insetsInicial.right,
-        bottom: insetsInicial.bottom,
-        left: insetsInicial.left,
-        paddingLeft: padInicial.left,
-        paddingRight: padInicial.right,
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        paddingLeft: esDesktop ? padFinal.left : padInicial.left,
+        paddingRight: esDesktop ? padFinal.right : padInicial.right,
+        clipPath: esDesktop ? clipInicial : "none",
+        force3D: true,
       });
 
-      if (spread && esDesktop) {
+      let tituloX0 = 0;
+      let ruedaX0 = 0;
+
+      if (spread && esDesktop && tituloEl && ruedaEl) {
         gsap.set(spread, {
-          maxWidth: spreadBase,
-          flexBasis: spreadBase,
-          flexGrow: 0,
+          maxWidth: 10000,
+          flexBasis: 0,
+          flexGrow: 1,
         });
+
+        const padOrigenL = insetsInicial.left + padInicial.left;
+        const padOrigenR = insetsInicial.right + padInicial.right;
+        const anchoOrigen = Math.max(0, window.innerWidth - padOrigenL - padOrigenR);
+        const grupo = tituloEl.offsetWidth + spreadBase + ruedaEl.offsetWidth;
+        const origenCentro = padOrigenL + anchoOrigen / 2;
+        const tituloFinalLeft = tituloEl.getBoundingClientRect().left;
+        const ruedaFinalLeft = ruedaEl.getBoundingClientRect().left;
+        const tituloInicialLeft = origenCentro - grupo / 2;
+        const ruedaInicialLeft = origenCentro + grupo / 2 - ruedaEl.offsetWidth;
+        tituloX0 = tituloInicialLeft - tituloFinalLeft;
+        ruedaX0 = ruedaInicialLeft - ruedaFinalLeft;
+
+        gsap.set(tituloEl, { x: tituloX0, force3D: true });
+        gsap.set(ruedaEl, { x: ruedaX0, force3D: true });
       }
 
       const tl = gsap.timeline({
@@ -185,9 +235,9 @@ export function ConEnflora() {
           end: () => `+=${Math.round(window.innerHeight * (compacto ? 2.8 : 3.5))}`,
           pin: true,
           pinType: "fixed",
-          scrub: compacto ? true : 0.55,
+          scrub: compacto ? true : 0.7,
           anticipatePin: 1,
-          fastScrollEnd: true,
+          fastScrollEnd: false,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             triggerRef.current = self;
@@ -204,46 +254,12 @@ export function ConEnflora() {
         },
       });
 
-      tl.fromTo(
-        fondo,
-        {
-          top: insetsInicial.top,
-          right: insetsInicial.right,
-          bottom: insetsInicial.bottom,
-          left: insetsInicial.left,
-          borderRadius: radioInicial,
-        },
-        {
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          borderRadius: 0,
-          duration: EXPANDIR_HASTA,
-          ease: "none",
-          immediateRender: true,
-        },
-        0,
-      );
-
       if (esDesktop) {
         tl.fromTo(
-          escena,
+          fondo,
+          { clipPath: clipInicial },
           {
-            top: insetsInicial.top,
-            right: insetsInicial.right,
-            bottom: insetsInicial.bottom,
-            left: insetsInicial.left,
-            paddingLeft: padInicial.left,
-            paddingRight: padInicial.right,
-          },
-          {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            paddingLeft: padFinal.left,
-            paddingRight: padFinal.right,
+            clipPath: clipFinal,
             duration: EXPANDIR_HASTA,
             ease: "none",
             immediateRender: true,
@@ -251,25 +267,66 @@ export function ConEnflora() {
           0,
         );
 
-        if (spread) {
+        tl.fromTo(
+          escena,
+          { clipPath: clipInicial },
+          {
+            clipPath: clipFinal,
+            duration: EXPANDIR_HASTA,
+            ease: "none",
+            immediateRender: true,
+          },
+          0,
+        );
+
+        if (tituloEl && ruedaEl) {
           tl.fromTo(
-            spread,
+            tituloEl,
+            { x: tituloX0 },
             {
-              maxWidth: spreadBase,
-              flexBasis: spreadBase,
-              flexGrow: 0,
-            },
-            {
-              maxWidth: 10000,
-              flexBasis: 0,
-              flexGrow: 1,
+              x: 0,
               duration: EXPANDIR_HASTA,
               ease: "none",
               immediateRender: true,
+              force3D: true,
+            },
+            0,
+          );
+          tl.fromTo(
+            ruedaEl,
+            { x: ruedaX0 },
+            {
+              x: 0,
+              duration: EXPANDIR_HASTA,
+              ease: "none",
+              immediateRender: true,
+              force3D: true,
             },
             0,
           );
         }
+      } else {
+        tl.fromTo(
+          fondo,
+          {
+            top: insetsInicial.top,
+            right: insetsInicial.right,
+            bottom: insetsInicial.bottom,
+            left: insetsInicial.left,
+            borderRadius: radioInicial,
+          },
+          {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            borderRadius: 0,
+            duration: EXPANDIR_HASTA,
+            ease: "none",
+            immediateRender: true,
+          },
+          0,
+        );
       }
 
       tl.to({}, { duration: 1 - EXPANDIR_HASTA }, EXPANDIR_HASTA);
@@ -308,7 +365,7 @@ export function ConEnflora() {
         <div className="con-enflora__media" />
       </div>
       <div className="con-enflora__escena" ref={escenaRef}>
-        <div className="con-enflora__titulo">
+        <div className="con-enflora__titulo" ref={tituloRef}>
           <motion.p
             className="con-enflora__antetitulo"
             initial={animarTitulo ? { opacity: 0, y: 10 } : { opacity: 1, y: 0 }}
@@ -350,42 +407,44 @@ export function ConEnflora() {
           </h2>
         </div>
         <div className="con-enflora__spread" ref={spreadRef} aria-hidden="true" />
-        <motion.div
-          className="con-enflora__rueda"
-          initial={entrada.initial}
-          {...(animarEntrada
-            ? {
-                whileInView: entrada.animate,
-                viewport: { once: true, amount: 0.35 },
-                transition: { duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] },
-              }
-            : { animate: entrada.animate })}
-        >
-          <p className="con-enflora__antetitulo con-enflora__rueda-titulo">{ruedaTitulo}</p>
-          {listo ? (
-            <OptionWheel
-              items={frases}
-              defaultSelected={0}
-              indice={indice}
-              onChange={irAIndice}
-              textColor="rgba(244, 248, 238, 0.38)"
-              activeColor="#F4F8EE"
-              side={compacto ? "center" : "right"}
-              fontSize={compacto ? 1.6 : notebook ? 2.45 : 3.5}
-              spacing={compacto ? 1.55 : notebook ? 1.3 : 1.35}
-              curve={compacto ? 0 : notebook ? 0.65 : 1}
-              tilt={reducido || compacto ? 0 : notebook ? 4 : 6}
-              blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.35 : 2.2}
-              fade={reducido ? 0.35 : compacto ? 0.28 : notebook ? 0.24 : 0.22}
-              smoothing={reducido || compacto ? 40 : 180}
-              inset={compacto ? 0 : notebook ? 8 : 28}
-              loop={false}
-              draggable={!compacto}
-              capturarRueda={false}
-              ariaLabel="Beneficios de ENFLORA"
-            />
-          ) : null}
-        </motion.div>
+        <div className="con-enflora__rueda" ref={ruedaRef}>
+          <motion.div
+            className="con-enflora__rueda-entrada"
+            initial={entrada.initial}
+            {...(animarEntrada
+              ? {
+                  whileInView: entrada.animate,
+                  viewport: { once: true, amount: 0.35 },
+                  transition: { duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] },
+                }
+              : { animate: entrada.animate })}
+          >
+            <p className="con-enflora__antetitulo con-enflora__rueda-titulo">{ruedaTitulo}</p>
+            {listo ? (
+              <OptionWheel
+                items={frases}
+                defaultSelected={0}
+                indice={indice}
+                onChange={irAIndice}
+                textColor="rgba(244, 248, 238, 0.38)"
+                activeColor="#F4F8EE"
+                side={compacto ? "center" : "right"}
+                fontSize={compacto ? 1.6 : notebook ? 2.45 : 3.5}
+                spacing={compacto ? 1.55 : notebook ? 1.3 : 1.35}
+                curve={compacto ? 0 : notebook ? 0.65 : 1}
+                tilt={reducido || compacto ? 0 : notebook ? 4 : 6}
+                blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.35 : 2.2}
+                fade={reducido ? 0.35 : compacto ? 0.28 : notebook ? 0.24 : 0.22}
+                smoothing={reducido || compacto ? 40 : 180}
+                inset={compacto ? 0 : notebook ? 8 : 28}
+                loop={false}
+                draggable={!compacto}
+                capturarRueda={false}
+                ariaLabel="Beneficios de ENFLORA"
+              />
+            ) : null}
+          </motion.div>
+        </div>
       </div>
     </div>
   );

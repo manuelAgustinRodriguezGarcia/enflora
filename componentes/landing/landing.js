@@ -1,24 +1,24 @@
-import Link from "next/link";
 import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
 import { EscenaSolar } from "@/componentes/landing/escena-solar";
 import { Footer } from "@/componentes/landing/footer";
+import { FormularioContacto } from "@/componentes/landing/formulario-contacto";
 import { Hero } from "@/componentes/landing/hero";
-import { Historial } from "@/componentes/landing/historial";
 import { NavegacionFlotante } from "@/componentes/landing/navegacion-flotante";
 import { ParaQueSirve } from "@/componentes/landing/para-que-sirve";
 import { Producto } from "@/componentes/landing/producto";
 import { Revelar } from "@/componentes/landing/revelar";
+import { SeccionInstalacion } from "@/componentes/landing/seccion-instalacion";
+import { SeccionLanzamiento } from "@/componentes/landing/seccion-lanzamiento";
+import { SeccionPrecios } from "@/componentes/landing/seccion-precios";
 import { SeccionRegalo } from "@/componentes/landing/seccion-regalo";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { textos } from "@/lib/landing";
 
-export function Landing() {
+export function Landing({ cotizacion = null }) {
   const {
     flora,
-    planes,
     instalacion,
-    novedades,
     contacto,
   } = textos;
 
@@ -50,78 +50,22 @@ export function Landing() {
               </div>
             </section>
           </Revelar>
-          <Revelar>
-            <section className="novedades" id="novedades" data-logo="dark">
-              <div className="novedades__texto" data-revelar>
-                <h2>{novedades.titulo}</h2>
-                <p>{novedades.bajada}</p>
-              </div>
-              <div className="novedades__placa" data-revelar data-asset="novedades">
-                <span>Próximamente</span>
-              </div>
-            </section>
-          </Revelar>
-          <Historial />
-          <Revelar>
-            <section className="planes" id="planes" data-logo="dark">
-              <div className="planes__texto" data-revelar>
-                <h2>{planes.titulo}</h2>
-                <p>{planes.bajada}</p>
-              </div>
-              <div className="planes__opciones">
-                <article className="planes__gratis" data-revelar>
-                  <h3>{planes.gratis.nombre}</h3>
-                  <p className="planes__precio">{planes.gratis.precio}</p>
-                  <ul>
-                    {planes.gratis.puntos.map((punto) => (
-                      <li key={punto}>{punto}</li>
-                    ))}
-                  </ul>
-                  <Link className="landing__accion landing__accion--linea" href="/registro">Empezar gratis</Link>
-                </article>
-                <article className="planes__premium" data-revelar>
-                  <img src="/logos/enflora-isotipo-light.svg" alt="" />
-                  <h3>{planes.premium.nombre}</h3>
-                  <p className="planes__precio">{planes.premium.precio}</p>
-                  <ul>
-                    {planes.premium.puntos.map((punto) => (
-                      <li key={punto}>
-                        {punto}
-                        {punto.includes("IA") ? <span>{planes.premium.nota}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link className="landing__accion landing__accion--acento" href="/registro">Crear cuenta</Link>
-                </article>
-              </div>
-            </section>
-          </Revelar>
-          <Revelar>
-            <section className="instalacion" id="instalar" data-logo="dark">
-              <div className="instalacion__telefono" data-revelar aria-hidden="true">
-                <img src="/logos/enflora-logo-apaisado.svg" alt="" />
-                <span>ENFLORA</span>
-              </div>
-              <div className="instalacion__texto" data-revelar>
-                <h2>{instalacion.titulo}</h2>
-                <p>{instalacion.bajada}</p>
-                <p className="instalacion__aclaracion">{instalacion.aclaracion}</p>
-                <Link className="landing__accion landing__accion--principal" href="/registro">Crear cuenta</Link>
-              </div>
-            </section>
-          </Revelar>
+          <SeccionPrecios cotizacion={cotizacion} />
+          <SeccionInstalacion textos={instalacion} />
           <Revelar>
             <section className="contacto" id="contacto" data-logo="dark">
-              <div className="contacto__texto" data-revelar>
-                <h2>{contacto.titulo}</h2>
-                <p>{contacto.bajada}</p>
-                <div className="contacto__acciones">
-                  <Link className="landing__accion landing__accion--principal" href="/registro">Crear cuenta</Link>
-                  <Link className="landing__accion landing__accion--linea" href="/ingreso">Ingresar</Link>
+              <div className="contacto__layout">
+                <div className="contacto__texto" data-revelar>
+                  <h2>{contacto.titulo}</h2>
+                  <p>{contacto.bajada}</p>
+                </div>
+                <div className="contacto__form-wrap" data-revelar>
+                  <FormularioContacto />
                 </div>
               </div>
             </section>
           </Revelar>
+          <SeccionLanzamiento />
         </main>
         <Footer />
         <NavegacionFlotante />

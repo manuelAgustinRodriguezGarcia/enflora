@@ -11,7 +11,13 @@ const ITEMS_GOOEY = navegacionLanding.map((item) => ({
   label: item.etiqueta,
   href: `#${item.id}`,
   id: item.id,
+  accent: Boolean(item.acento),
 }));
+
+const COLOR_PILL = "#0B3D2A";
+const COLOR_PILL_ACENTO = "#d4af37";
+const COLORES_PARTICULAS = ["#0B3D2A", "#A4C85B", "#24764F"];
+const COLORES_PARTICULAS_ACENTO = ["#d4af37", "#e0bc45", "#c9a227"];
 
 const SECCIONES_SIN_CTA = new Set(["con-enflora", "regalo"]);
 
@@ -162,6 +168,8 @@ export function EncabezadoPublico() {
 
   const tema = logoClaro ? "dark" : "light";
   const items = useMemo(() => ITEMS_GOOEY, []);
+  const itemActivo = items[activo];
+  const pillAcento = Boolean(itemActivo?.accent);
 
   return (
     <header
@@ -188,9 +196,9 @@ export function EncabezadoPublico() {
             onChange={irA}
             initialActiveIndex={0}
             theme={tema}
-            color="#0B3D2A"
-            activeTextColor="#F4F8EE"
-            colors={["#0B3D2A", "#A4C85B", "#24764F"]}
+            color={pillAcento ? COLOR_PILL_ACENTO : COLOR_PILL}
+            activeTextColor={pillAcento ? COLOR_PILL : "#F4F8EE"}
+            colors={pillAcento ? COLORES_PARTICULAS_ACENTO : COLORES_PARTICULAS}
             size={compacto ? "sm" : "md"}
             frame
             particleCount={10}

@@ -129,9 +129,30 @@ export function Footer() {
 
         <div className="pie__separador" aria-hidden="true" />
 
-        <p className="pie__copy">
-          © {anio} ENFLORA. Todos los derechos reservados.
-        </p>
+        <div className="pie__base">
+          <p className="pie__copy">
+            © {anio} ENFLORA. Todos los derechos reservados.
+          </p>
+          <p className="pie__credito">
+            Un producto de{" "}
+            <a
+              className="pie__credito-enlace"
+              href="https://www.grgsolutions.com.ar"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GRG Solutions"
+            >
+              <img
+                className="pie__credito-logo"
+                src="/logos/logo-grg.svg"
+                alt="GRG"
+                width={998}
+                height={364}
+                decoding="async"
+              />
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

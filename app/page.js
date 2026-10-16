@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { Landing } from "@/componentes/landing/landing";
+import { obtenerCotizacionOficial } from "@/lib/cotizacion";
 
 export const metadata = {
-  title: "ENFLORA",
+  title: "Enflora",
   description:
     "Registrá tus plantas, seguí su evolución y armá un historial para entender cada cultivo.",
 };
@@ -20,5 +21,6 @@ export default async function PaginaInicio({ searchParams }) {
     redirect(`/correo/confirmar?${consulta.toString()}`);
   }
 
-  return <Landing />;
+  const cotizacion = await obtenerCotizacionOficial();
+  return <Landing cotizacion={cotizacion} />;
 }

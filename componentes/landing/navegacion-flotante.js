@@ -200,7 +200,7 @@ export function NavegacionFlotante() {
                 >
                   <button
                     type="button"
-                    className="nav-flotante__opcion"
+                    className={`nav-flotante__opcion${item.acento ? " nav-flotante__opcion--acento" : ""}`}
                     onClick={() => irA(item.id)}
                   >
                     {item.etiqueta}
