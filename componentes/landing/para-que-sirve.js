@@ -20,6 +20,22 @@ function useEsMovil() {
   );
 }
 
+const MARCAS_TITULO = ["Flora", "Registrá", "progreso"];
+
+function TituloFrente({ titulo }) {
+  const partes = titulo.split(new RegExp(`(${MARCAS_TITULO.join("|")})`));
+  if (partes.length === 1) return titulo;
+  return partes.map((parte, indice) =>
+    MARCAS_TITULO.includes(parte) ? (
+      <span className="para-que-sirve__tilt-marca" key={`${parte}-${indice}`}>
+        {parte}
+      </span>
+    ) : (
+      parte
+    ),
+  );
+}
+
 function CaraTarjeta({ tarjeta }) {
   return (
     <div className={`para-que-sirve__tilt-panel para-que-sirve__tilt-panel--ilustrada para-que-sirve__tilt-panel--${tarjeta.id}`}>
@@ -34,7 +50,9 @@ function CaraTarjeta({ tarjeta }) {
         />
       </TiltedCardLayer>
       <TiltedCardLayer depth={36} className="para-que-sirve__tilt-foto-texto">
-        <h3>{tarjeta.titulo}</h3>
+        <h3>
+          <TituloFrente titulo={tarjeta.titulo} />
+        </h3>
       </TiltedCardLayer>
     </div>
   );
@@ -50,8 +68,8 @@ function ItemTarjeta({ tarjeta }) {
         containerHeight="100%"
         imageWidth="100%"
         imageHeight="100%"
-        rotateAmplitude={0}
-        scaleOnHover={1}
+        rotateAmplitude={7}
+        scaleOnHover={1.03}
         glare={0}
         shadow={0}
         parallax={0}
@@ -79,7 +97,10 @@ function ItemTarjeta({ tarjeta }) {
   );
 }
 
-const UMBRAL_ARRASTRE = 10;
+const UMBRAL_DIRECCION = 10;
+const UMBRAL_CAMBIO_PX = 40;
+const UMBRAL_CAMBIO_RATIO = 0.13;
+const UMBRAL_VELOCIDAD = 0.45;
 
 function CarruselTarjetas({ tarjetas }) {
   const viewportRef = useRef(null);
@@ -97,6 +118,7 @@ function CarruselTarjetas({ tarjetas }) {
     paso: 0,
     anchoViewport: 0,
     anchoItem: 0,
+    t0: 0,
   });
 
   const items = useMemo(
@@ -112,7 +134,7 @@ function CarruselTarjetas({ tarjetas }) {
     if (!pista) return;
     arrastreRef.current.x = x;
     pista.style.transition = animar
-      ? "transform 0.38s cubic-bezier(0.22, 1, 0.36, 1)"
+      ? "transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)"
       : "none";
     pista.style.transform = `translate3d(${x}px, 0, 0)`;
   };
@@ -179,6 +201,7 @@ function CarruselTarjetas({ tarjetas }) {
     estado.inicioX = evento.clientX;
     estado.inicioY = evento.clientY;
     estado.origen = estado.x;
+    estado.t0 = evento.timeStamp || performance.now();
   };
 
   const alMover = (evento) => {
@@ -188,7 +211,7 @@ function CarruselTarjetas({ tarjetas }) {
     const deltaY = evento.clientY - estado.inicioY;
 
     if (!estado.movio) {
-      if (Math.abs(deltaX) < UMBRAL_ARRASTRE && Math.abs(deltaY) < UMBRAL_ARRASTRE) {
+      if (Math.abs(deltaX) < UMBRAL_DIRECCION && Math.abs(deltaY) < UMBRAL_DIRECCION) {
         return;
       }
       if (Math.abs(deltaY) > Math.abs(deltaX)) {
@@ -219,14 +242,28 @@ function CarruselTarjetas({ tarjetas }) {
 
     if (!fueArrastre) return;
 
-    const { paso, x, anchoViewport, anchoItem } = estado;
+    const { paso, x, origen, anchoViewport, indice, t0 } = estado;
     const pista = pistaRef.current;
     if (!paso || !pista) {
       estado.movio = false;
       return;
     }
-    const indiceCrudo = Math.round((anchoViewport / 2 - anchoItem / 2 - x) / paso);
-    const indiceClamped = Math.max(0, Math.min(items.length - 1, indiceCrudo));
+
+    const desplazamiento = x - origen;
+    const umbral = Math.max(
+      UMBRAL_CAMBIO_PX,
+      Math.min(paso * UMBRAL_CAMBIO_RATIO, anchoViewport * UMBRAL_CAMBIO_RATIO),
+    );
+    const dt = Math.max(16, (evento.timeStamp || performance.now()) - t0);
+    const velocidad = Math.abs(desplazamiento) / dt;
+    const gestoRapido = velocidad >= UMBRAL_VELOCIDAD && Math.abs(desplazamiento) > UMBRAL_DIRECCION;
+    let destinoIndice = indice;
+
+    if (Math.abs(desplazamiento) >= umbral || gestoRapido) {
+      destinoIndice = desplazamiento < 0 ? indice + 1 : indice - 1;
+    }
+
+    const indiceClamped = Math.max(0, Math.min(items.length - 1, destinoIndice));
     const destino = normalizarIndice(indiceClamped);
     estado.indice = destino;
     aplicar(centroDe(indiceClamped), true);
@@ -314,9 +351,6 @@ export function ParaQueSirve() {
         </div>
 
         <div className="para-que-sirve__contenido">
-          <p className="para-que-sirve__antetitulo" data-revelar>
-            {queEs.antetitulo}
-          </p>
           <h2 data-revelar>{queEs.titulo}</h2>
           <p className="para-que-sirve__bajada" data-revelar>
             {queEs.bajada}

@@ -225,7 +225,7 @@ const TiltedCard = ({
         busy = true;
       }
 
-      const active = lifted > 0 || state.lift > 0.01;
+      const active = lifted > 0 || state.lift > 0.01 || state.shown > 0.01;
       if (active !== figure.hasAttribute('data-active')) figure.toggleAttribute('data-active', active);
       const scale = 1 + (s.scale - 1) * state.lift - 0.02 * state.press;
       const rx = state.rx;

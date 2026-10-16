@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Cierre } from "@/componentes/landing/cierre";
 import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
 import { EscenaSolar } from "@/componentes/landing/escena-solar";
+import { Footer } from "@/componentes/landing/footer";
 import { Hero } from "@/componentes/landing/hero";
 import { Historial } from "@/componentes/landing/historial";
 import { NavegacionFlotante } from "@/componentes/landing/navegacion-flotante";
@@ -15,7 +15,6 @@ import { textos } from "@/lib/landing";
 
 export function Landing() {
   const {
-    beneficios,
     flora,
     planes,
     instalacion,
@@ -36,19 +35,6 @@ export function Landing() {
           </EscenaSolar>
           <Revelar>
             <ConEnflora />
-          </Revelar>
-          <Revelar>
-            <section className="beneficios" id="beneficios" data-logo="dark">
-              <h2 data-revelar>{beneficios.titulo}</h2>
-              <div className="beneficios__grilla">
-                {beneficios.items.map((item) => (
-                  <article data-revelar className={`beneficios__item beneficios__item--${item.tamano}`} key={item.nombre}>
-                    <h3>{item.nombre}</h3>
-                    <p>{item.texto}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
           </Revelar>
           <Producto />
           <SeccionRegalo />
@@ -136,20 +122,8 @@ export function Landing() {
               </div>
             </section>
           </Revelar>
-          <Cierre />
         </main>
-        <footer className="pie" data-logo="light">
-          <Link href="/" aria-label="ENFLORA">
-            <img src="/logos/enflora-logo-apaisado-light.svg" alt="" />
-          </Link>
-          <p>ENFLORA</p>
-          <nav aria-label="Acceso">
-            <Link href="/ingreso">Ingresar</Link>
-            <Link href="/registro">Crear cuenta</Link>
-          </nav>
-          <p>Aviso legal y privacidad, próximamente.</p>
-          <p>{new Date().getFullYear()}</p>
-        </footer>
+        <Footer />
         <NavegacionFlotante />
       </div>
     </ProveedorMotion>

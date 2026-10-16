@@ -10,6 +10,8 @@ const EXPANDIR_HASTA = 0.2;
 const RUEDA_HASTA = 0.72;
 const PIN_PROPS =
   "position,top,left,right,bottom,width,height,maxWidth,maxHeight,margin,padding,transform,inset,zIndex";
+const ESCENA_PROPS = "top,right,bottom,left,inset,padding,paddingLeft,paddingRight";
+const SPREAD_PROPS = "maxWidth,width,flexGrow,flexBasis";
 
 function leerInsets(nodo) {
   const sonda = document.createElement("div");
@@ -23,6 +25,40 @@ function leerInsets(nodo) {
   const left = Number.parseFloat(estilos.left) || 0;
   sonda.remove();
   return { top, right, bottom, left };
+}
+
+function leerPadEscena(escena) {
+  const estilos = getComputedStyle(escena);
+  return {
+    left: Number.parseFloat(estilos.paddingLeft) || 0,
+    right: Number.parseFloat(estilos.paddingRight) || 0,
+  };
+}
+
+function leerPadHeader() {
+  const marca = document.querySelector(".encabezado-publico__marca");
+  const acceso = document.querySelector(".encabezado-publico__acceso");
+  if (!marca || !acceso) {
+    const fallback =
+      window.matchMedia("(min-width: 64rem) and (max-width: 104.99rem)").matches
+        ? window.innerWidth * 0.04
+        : window.innerWidth * 0.07;
+    return { left: fallback, right: fallback };
+  }
+  return {
+    left: marca.getBoundingClientRect().left,
+    right: Math.max(0, window.innerWidth - acceso.getBoundingClientRect().right),
+  };
+}
+
+function leerSpreadBase(spread) {
+  const estilos = getComputedStyle(spread);
+  return (
+    Number.parseFloat(estilos.maxWidth) ||
+    Number.parseFloat(estilos.flexBasis) ||
+    Number.parseFloat(estilos.width) ||
+    72
+  );
 }
 
 function progresoAIndice(progreso, ultimo) {
@@ -43,6 +79,8 @@ export function ConEnflora() {
   const { antetitulo, titulo, tituloLineas, ruedaTitulo, frases } = conEnflora;
   const ref = useRef(null);
   const fondoRef = useRef(null);
+  const escenaRef = useRef(null);
+  const spreadRef = useRef(null);
   const triggerRef = useRef(null);
   const sincronizandoRef = useRef(false);
   const [compacto, setCompacto] = useState(false);
@@ -52,7 +90,7 @@ export function ConEnflora() {
 
   useEffect(() => {
     const movil = window.matchMedia("(max-width: 63.99rem)");
-    const medio = window.matchMedia("(min-width: 64rem) and (max-width: 89.99rem)");
+    const medio = window.matchMedia("(min-width: 64rem) and (max-width: 119.99rem)");
     const actualizar = () => {
       setCompacto(movil.matches);
       setNotebook(medio.matches);
@@ -71,15 +109,20 @@ export function ConEnflora() {
     () => {
       const nodo = ref.current;
       const fondo = fondoRef.current;
-      if (!nodo || !fondo || !listo) return undefined;
+      const escena = escenaRef.current;
+      const spread = spreadRef.current;
+      if (!nodo || !fondo || !escena || !listo) return undefined;
 
       const limpiar = () => {
         gsap.set(fondo, { clearProps: "top,right,bottom,left,inset,borderRadius" });
+        gsap.set(escena, { clearProps: ESCENA_PROPS });
+        if (spread) gsap.set(spread, { clearProps: SPREAD_PROPS });
         gsap.set(nodo, { clearProps: PIN_PROPS });
         triggerRef.current = null;
       };
 
       if (reducido) {
+        const pad = leerPadHeader();
         gsap.set(fondo, {
           top: 0,
           right: 0,
@@ -87,6 +130,15 @@ export function ConEnflora() {
           left: 0,
           borderRadius: 0,
         });
+        gsap.set(escena, {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0,
+          paddingLeft: pad.left,
+          paddingRight: pad.right,
+        });
+        if (spread) gsap.set(spread, { maxWidth: 10000, flexBasis: 0, flexGrow: 1 });
         return limpiar;
       }
 
@@ -97,6 +149,9 @@ export function ConEnflora() {
         ? { top: 0, right: leidos.right, bottom: 0, left: leidos.left }
         : { top: 0, right: 0, bottom: 0, left: 0 };
       const radioInicial = esDesktop ? "40px 40px 0px 0px" : 0;
+      const padInicial = leerPadEscena(escena);
+      const padFinal = esDesktop ? leerPadHeader() : padInicial;
+      const spreadBase = esDesktop && spread ? leerSpreadBase(spread) : 0;
 
       gsap.set(fondo, {
         top: insetsInicial.top,
@@ -105,6 +160,23 @@ export function ConEnflora() {
         left: insetsInicial.left,
         borderRadius: radioInicial,
       });
+
+      gsap.set(escena, {
+        top: insetsInicial.top,
+        right: insetsInicial.right,
+        bottom: insetsInicial.bottom,
+        left: insetsInicial.left,
+        paddingLeft: padInicial.left,
+        paddingRight: padInicial.right,
+      });
+
+      if (spread && esDesktop) {
+        gsap.set(spread, {
+          maxWidth: spreadBase,
+          flexBasis: spreadBase,
+          flexGrow: 0,
+        });
+      }
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -154,6 +226,52 @@ export function ConEnflora() {
         0,
       );
 
+      if (esDesktop) {
+        tl.fromTo(
+          escena,
+          {
+            top: insetsInicial.top,
+            right: insetsInicial.right,
+            bottom: insetsInicial.bottom,
+            left: insetsInicial.left,
+            paddingLeft: padInicial.left,
+            paddingRight: padInicial.right,
+          },
+          {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            paddingLeft: padFinal.left,
+            paddingRight: padFinal.right,
+            duration: EXPANDIR_HASTA,
+            ease: "none",
+            immediateRender: true,
+          },
+          0,
+        );
+
+        if (spread) {
+          tl.fromTo(
+            spread,
+            {
+              maxWidth: spreadBase,
+              flexBasis: spreadBase,
+              flexGrow: 0,
+            },
+            {
+              maxWidth: 10000,
+              flexBasis: 0,
+              flexGrow: 1,
+              duration: EXPANDIR_HASTA,
+              ease: "none",
+              immediateRender: true,
+            },
+            0,
+          );
+        }
+      }
+
       tl.to({}, { duration: 1 - EXPANDIR_HASTA }, EXPANDIR_HASTA);
 
       return () => {
@@ -185,11 +303,11 @@ export function ConEnflora() {
   const curva = [0.22, 1, 0.36, 1];
 
   return (
-    <div className="con-enflora" ref={ref}>
+    <div className="con-enflora" id="con-enflora" data-logo="light" ref={ref}>
       <div className="con-enflora__fondo" ref={fondoRef} aria-hidden="true">
         <div className="con-enflora__media" />
       </div>
-      <div className="con-enflora__escena">
+      <div className="con-enflora__escena" ref={escenaRef}>
         <div className="con-enflora__titulo">
           <motion.p
             className="con-enflora__antetitulo"
@@ -231,6 +349,7 @@ export function ConEnflora() {
             ))}
           </h2>
         </div>
+        <div className="con-enflora__spread" ref={spreadRef} aria-hidden="true" />
         <motion.div
           className="con-enflora__rueda"
           initial={entrada.initial}
@@ -252,14 +371,14 @@ export function ConEnflora() {
               textColor="rgba(244, 248, 238, 0.38)"
               activeColor="#F4F8EE"
               side={compacto ? "center" : "right"}
-              fontSize={compacto ? 1.6 : notebook ? 2.25 : 3.5}
-              spacing={compacto ? 1.55 : notebook ? 1.28 : 1.35}
-              curve={compacto ? 0 : notebook ? 0.7 : 1}
+              fontSize={compacto ? 1.6 : notebook ? 2.45 : 3.5}
+              spacing={compacto ? 1.55 : notebook ? 1.3 : 1.35}
+              curve={compacto ? 0 : notebook ? 0.65 : 1}
               tilt={reducido || compacto ? 0 : notebook ? 4 : 6}
-              blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.4 : 2.2}
+              blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.35 : 2.2}
               fade={reducido ? 0.35 : compacto ? 0.28 : notebook ? 0.24 : 0.22}
               smoothing={reducido || compacto ? 40 : 180}
-              inset={compacto ? 0 : notebook ? 16 : 28}
+              inset={compacto ? 0 : notebook ? 8 : 28}
               loop={false}
               draggable={!compacto}
               capturarRueda={false}

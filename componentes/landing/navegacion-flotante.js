@@ -3,12 +3,13 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 import { navegacionFlotante } from "@/lib/landing";
 
+const UMBRAL_SCROLL = 120;
+
 function desplazarA(id, inmediato) {
-  const destino = document.getElementById(id);
-  if (!destino) return;
-  destino.scrollIntoView({ behavior: inmediato ? "auto" : "smooth", block: "start" });
+  desplazarASeccion(id, { suave: !inmediato });
 }
 
 function IconoMorph({ abierto }) {
@@ -80,22 +81,31 @@ export function NavegacionFlotante() {
   const menuId = useId();
   const raizRef = useRef(null);
   const botonMenuRef = useRef(null);
+  const visibleRef = useRef(false);
 
   useEffect(() => {
-    const hero = document.getElementById("inicio");
-    if (!hero) return undefined;
+    let raf = 0;
 
-    const observer = new IntersectionObserver(
-      ([entrada]) => {
-        const fuera = !entrada.isIntersecting;
-        setVisible(fuera);
-        if (!fuera) setAbierto(false);
-      },
-      { threshold: 0.12 },
-    );
+    const actualizar = () => {
+      raf = 0;
+      const siguiente = window.scrollY > UMBRAL_SCROLL;
+      if (siguiente === visibleRef.current) return;
+      visibleRef.current = siguiente;
+      setVisible(siguiente);
+      if (!siguiente) setAbierto(false);
+    };
 
-    observer.observe(hero);
-    return () => observer.disconnect();
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(actualizar);
+    };
+
+    actualizar();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -129,6 +139,10 @@ export function NavegacionFlotante() {
     });
   };
 
+  const transicionEntrada = reducido
+    ? { duration: 0.01 }
+    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
+
   return (
     <div
       className={`nav-flotante${visible ? " nav-flotante--visible" : ""}`}
@@ -144,11 +158,11 @@ export function NavegacionFlotante() {
         animate={
           visible
             ? { opacity: 1, y: 0, scale: 1 }
-            : { opacity: 0, y: 16, scale: 0.9 }
+            : { opacity: 0, y: 12, scale: 0.9 }
         }
-        transition={{ type: "spring", stiffness: 380, damping: 28 }}
+        transition={transicionEntrada}
         onClick={() => desplazarA("inicio", Boolean(reducido))}
-        whileTap={reducido ? undefined : { scale: 0.94 }}
+        whileTap={reducido || !visible ? undefined : { scale: 0.94 }}
       >
         <ArrowUp size={22} aria-hidden="true" />
       </motion.button>
@@ -209,11 +223,11 @@ export function NavegacionFlotante() {
           animate={
             visible
               ? { opacity: 1, y: 0, scale: 1 }
-              : { opacity: 0, y: 16, scale: 0.9 }
+              : { opacity: 0, y: 12, scale: 0.9 }
           }
-          transition={{ type: "spring", stiffness: 380, damping: 28 }}
+          transition={transicionEntrada}
           onClick={() => setAbierto((valor) => !valor)}
-          whileTap={reducido ? undefined : { scale: 0.94 }}
+          whileTap={reducido || !visible ? undefined : { scale: 0.94 }}
         >
           <IconoMorph abierto={abierto} />
         </motion.button>
