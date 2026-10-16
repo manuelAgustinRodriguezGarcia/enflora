@@ -1956,9 +1956,11 @@ body:has(.landing) {
     }
 
     &__tarjeta-texto {
+      align-items: flex-start;
       justify-content: center;
       min-height: 100%;
       padding: 0;
+      text-align: left;
     }
 
     &__numero {
@@ -1967,6 +1969,7 @@ body:has(.landing) {
 
     &__tarjeta-titulo {
       font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+      text-align: left;
     }
 
     &__tarjeta-descripcion {

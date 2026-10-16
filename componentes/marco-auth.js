@@ -1,6 +1,6 @@
 const imagenesFlora = {
-  entrar: "/images/login-mobile.png",
-  registro: "/images/register-mobile.png",
+  entrar: "/images/flora-login-mobile.png",
+  registro: "/images/flora-register-mobile.png",
 };
 
 export function MarcoAuth({ fondo, children }) {
