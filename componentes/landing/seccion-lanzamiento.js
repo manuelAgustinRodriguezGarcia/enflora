@@ -129,7 +129,9 @@ export function SeccionLanzamiento() {
         </div>
       ) : null}
       <div className="lanzamiento__contenedor">
-        {!listo ? <p className="lanzamiento__faltan">Faltan</p> : null}
+        {!listo ? (
+          <p className="lanzamiento__faltan">{lanzamiento.faltan}</p>
+        ) : null}
 
         {listo ? (
           <p className="lanzamiento__disponible" role="status">

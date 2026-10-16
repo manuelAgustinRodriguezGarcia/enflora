@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 import { navegacionFlotante } from "@/lib/landing";
@@ -12,76 +12,16 @@ function desplazarA(id, inmediato) {
   desplazarASeccion(id, { suave: !inmediato });
 }
 
-function IconoMorph({ abierto }) {
-  const puntos = [
-    { cx: 8, cy: 8 },
-    { cx: 16, cy: 8 },
-    { cx: 8, cy: 16 },
-    { cx: 16, cy: 16 },
-  ];
-
-  return (
-    <svg className="nav-flotante__morph" viewBox="0 0 24 24" aria-hidden="true">
-      {puntos.map((punto, indice) => {
-        const esDiagonalA = indice === 0 || indice === 3;
-        const esDiagonalB = indice === 1 || indice === 2;
-        let destino = punto;
-        if (abierto) {
-          if (esDiagonalA) destino = { cx: 12, cy: 12 };
-          if (esDiagonalB) destino = { cx: 12, cy: 12 };
-        }
-        return (
-          <motion.circle
-            key={indice}
-            r={abierto ? 1.1 : 2.15}
-            fill="currentColor"
-            initial={false}
-            animate={{
-              cx: destino.cx,
-              cy: destino.cy,
-              opacity: abierto ? 0 : 1,
-              scale: abierto ? 0.4 : 1,
-            }}
-            transition={{ type: "spring", stiffness: 420, damping: 28 }}
-          />
-        );
-      })}
-      <motion.line
-        x1="7"
-        y1="7"
-        x2="17"
-        y2="17"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        initial={false}
-        animate={{ pathLength: abierto ? 1 : 0, opacity: abierto ? 1 : 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-      />
-      <motion.line
-        x1="17"
-        y1="7"
-        x2="7"
-        y2="17"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        initial={false}
-        animate={{ pathLength: abierto ? 1 : 0, opacity: abierto ? 1 : 0 }}
-        transition={{ type: "spring", stiffness: 380, damping: 30, delay: abierto ? 0.04 : 0 }}
-      />
-    </svg>
-  );
-}
-
 export function NavegacionFlotante() {
   const [visible, setVisible] = useState(false);
   const [abierto, setAbierto] = useState(false);
+  const [activoId, setActivoId] = useState(navegacionFlotante[0]?.id ?? "");
   const reducido = useReducedMotion();
   const menuId = useId();
   const raizRef = useRef(null);
   const botonMenuRef = useRef(null);
   const visibleRef = useRef(false);
+  const navegandoRef = useRef(false);
 
   useEffect(() => {
     let raf = 0;
@@ -104,6 +44,55 @@ export function NavegacionFlotante() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  useEffect(() => {
+    const medirActivo = () => {
+      if (navegandoRef.current) return;
+
+      const scrollY = window.scrollY;
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      const ultimo = navegacionFlotante[navegacionFlotante.length - 1];
+
+      if (maxScroll > 0 && maxScroll - scrollY <= 140 && ultimo) {
+        setActivoId((actual) => (actual === ultimo.id ? actual : ultimo.id));
+        return;
+      }
+
+      const marca = 88;
+      let mejor = navegacionFlotante[0]?.id ?? "";
+
+      navegacionFlotante.forEach((item) => {
+        const nodo = document.getElementById(item.id);
+        if (!nodo || !nodo.isConnected) return;
+        if (nodo.getBoundingClientRect().top <= marca + 48) {
+          mejor = item.id;
+        }
+      });
+
+      setActivoId((actual) => (actual === mejor ? actual : mejor));
+    };
+
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(() => {
+        raf = 0;
+        medirActivo();
+      });
+    };
+
+    medirActivo();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       if (raf) window.cancelAnimationFrame(raf);
     };
   }, []);
@@ -133,9 +122,14 @@ export function NavegacionFlotante() {
   }, [abierto]);
 
   const irA = (id) => {
+    navegandoRef.current = true;
+    setActivoId(id);
     setAbierto(false);
     window.requestAnimationFrame(() => {
       desplazarA(id, Boolean(reducido));
+      window.setTimeout(() => {
+        navegandoRef.current = false;
+      }, 700);
     });
   };
 
@@ -185,28 +179,32 @@ export function NavegacionFlotante() {
                 },
               }}
             >
-              {navegacionFlotante.map((item) => (
-                <motion.li
-                  key={item.id}
-                  variants={{
-                    cerrado: { opacity: 0, y: 10, scale: 0.92 },
-                    abierto: {
-                      opacity: 1,
-                      y: 0,
-                      scale: 1,
-                      transition: { type: "spring", stiffness: 420, damping: 26 },
-                    },
-                  }}
-                >
-                  <button
-                    type="button"
-                    className={`nav-flotante__opcion${item.acento ? " nav-flotante__opcion--acento" : ""}`}
-                    onClick={() => irA(item.id)}
+              {navegacionFlotante.map((item) => {
+                const activo = item.id === activoId;
+                return (
+                  <motion.li
+                    key={item.id}
+                    variants={{
+                      cerrado: { opacity: 0, y: 10, scale: 0.92 },
+                      abierto: {
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                        transition: { type: "spring", stiffness: 420, damping: 26 },
+                      },
+                    }}
                   >
-                    {item.etiqueta}
-                  </button>
-                </motion.li>
-              ))}
+                    <button
+                      type="button"
+                      className={`nav-flotante__opcion${activo ? " nav-flotante__opcion--activa" : ""}${item.acento ? " nav-flotante__opcion--acento" : ""}`}
+                      aria-current={activo ? "true" : undefined}
+                      onClick={() => irA(item.id)}
+                    >
+                      {item.etiqueta}
+                    </button>
+                  </motion.li>
+                );
+              })}
             </motion.ul>
           ) : null}
         </AnimatePresence>
@@ -229,7 +227,11 @@ export function NavegacionFlotante() {
           onClick={() => setAbierto((valor) => !valor)}
           whileTap={reducido || !visible ? undefined : { scale: 0.94 }}
         >
-          <IconoMorph abierto={abierto} />
+          {abierto ? (
+            <X size={22} strokeWidth={2.25} aria-hidden="true" />
+          ) : (
+            <Menu size={22} strokeWidth={2.25} aria-hidden="true" />
+          )}
         </motion.button>
       </div>
     </div>

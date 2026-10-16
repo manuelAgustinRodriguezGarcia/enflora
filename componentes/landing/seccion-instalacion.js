@@ -109,11 +109,7 @@ export function SeccionInstalacion({ textos }) {
             <h2>
               <span className="instalacion__marca">Enflora</span> va con vos.
             </h2>
-            <div className="instalacion__bajada">
-              {textos.bajada.map((linea) => (
-                <p key={linea}>{linea}</p>
-              ))}
-            </div>
+            <p className="instalacion__bajada">{textos.bajada}</p>
             <div className="instalacion__acciones">
               <motion.button
                 type="button"

@@ -144,7 +144,7 @@ export function FormularioEntrar({ aviso }) {
             ) : (
               <>
                 Entrar
-                <ArrowRight size={20} strokeWidth={2} color="white" aria-hidden="true" />
+                <ArrowRight size={20} strokeWidth={2} color="#FDF1D7" aria-hidden="true" />
               </>
             )}
           </button>

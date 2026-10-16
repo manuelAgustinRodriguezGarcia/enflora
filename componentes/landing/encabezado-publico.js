@@ -101,26 +101,37 @@ export function EncabezadoPublico() {
   }, []);
 
   useEffect(() => {
-    const nodos = ITEMS_GOOEY
-      .map((item) => document.getElementById(item.id))
-      .filter(Boolean);
-    if (!nodos.length) return undefined;
-
     const medirActivo = () => {
       if (navegandoRef.current) return;
+
+      const scrollY = window.scrollY;
+      if (scrollY < 40) {
+        setActivo((actual) => (actual === 0 ? actual : 0));
+        return;
+      }
+
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      const ultimo = ITEMS_GOOEY.length - 1;
+      if (maxScroll > 0 && maxScroll - scrollY <= 140) {
+        setActivo((actual) => (actual === ultimo ? actual : ultimo));
+        return;
+      }
+
       const header = ref.current;
       const marca = (header?.getBoundingClientRect().height || 64) + 12;
       let mejor = 0;
-      let mejorDist = Number.POSITIVE_INFINITY;
-      nodos.forEach((nodo, indice) => {
-        const top = nodo.getBoundingClientRect().top;
-        const dist = Math.abs(top - marca);
-        if (top <= marca + 48 && dist < mejorDist) {
-          mejorDist = dist;
+
+      ITEMS_GOOEY.forEach((item, indice) => {
+        const nodo = document.getElementById(item.id);
+        if (!nodo || !nodo.isConnected) return;
+        if (nodo.getBoundingClientRect().top <= marca + 48) {
           mejor = indice;
         }
       });
-      if (window.scrollY < 40) mejor = 0;
+
       setActivo((actual) => (actual === mejor ? actual : mejor));
     };
 
@@ -154,16 +165,23 @@ export function EncabezadoPublico() {
       window.history.replaceState(null, "", `#${id}`);
     }
 
+    let listo = false;
+    const liberar = () => {
+      if (listo) return;
+      listo = true;
+      navegandoRef.current = false;
+    };
+
     desplazarASeccion(id, {
       offset,
       suave: !reducido,
       onInicio: () => {
         navegandoRef.current = true;
       },
-      onFin: () => {
-        navegandoRef.current = false;
-      },
+      onFin: liberar,
     });
+
+    window.setTimeout(liberar, 3200);
   };
 
   const tema = logoClaro ? "dark" : "light";

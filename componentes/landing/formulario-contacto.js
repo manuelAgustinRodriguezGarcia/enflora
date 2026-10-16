@@ -1,8 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 const CORREO = "enflora.420@gmail.com";
+
+function ajustarAltura(textarea) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
 
 export function FormularioContacto() {
   const [nombre, setNombre] = useState("");
@@ -10,6 +17,11 @@ export function FormularioContacto() {
   const [mensaje, setMensaje] = useState("");
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
+  const mensajeRef = useRef(null);
+
+  useEffect(() => {
+    if (!enviado) ajustarAltura(mensajeRef.current);
+  }, [mensaje, enviado]);
 
   function enviar(evento) {
     evento.preventDefault();
@@ -43,7 +55,7 @@ export function FormularioContacto() {
         <p>¡Listo! Si no se abrió tu correo, escribinos a {CORREO}.</p>
         <button
           type="button"
-          className="landing__accion landing__accion--linea"
+          className="contacto__exito-accion"
           onClick={() => {
             setEnviado(false);
             setMensaje("");
@@ -86,11 +98,15 @@ export function FormularioContacto() {
       <label className="contacto__campo">
         <span>Mensaje</span>
         <textarea
+          ref={mensajeRef}
           name="mensaje"
           rows={4}
           value={mensaje}
-          onChange={(evento) => setMensaje(evento.target.value)}
-          placeholder="Contanos tu consulta"
+          onChange={(evento) => {
+            setMensaje(evento.target.value);
+            ajustarAltura(evento.target);
+          }}
+          placeholder="Contame tu consulta..."
           required
         />
       </label>
@@ -99,8 +115,9 @@ export function FormularioContacto() {
           {error}
         </p>
       ) : null}
-      <button type="submit" className="landing__accion landing__accion--principal">
-        Enviar consulta
+      <button type="submit" className="contacto__enviar">
+        <span>Enviar consulta</span>
+        <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
       </button>
     </form>
   );
