@@ -35,10 +35,6 @@ export const metadata = {
     title: "ENFLORA",
     statusBarStyle: "default",
   },
-  icons: {
-    icon: "/logos/enflora-isotipo-light.svg",
-    apple: "/logos/enflora-isotipo-dark-green.svg",
-  },
 };
 
 export const viewport = {

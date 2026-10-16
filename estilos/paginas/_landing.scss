@@ -5152,10 +5152,21 @@ button.flora-chat__continuar {
     margin: 0;
     flex: 0 0 auto;
 
-    .text-loop,
-    .text-loop-svg {
+    .text-loop {
+      position: relative;
       width: 100%;
       max-width: none;
+      aspect-ratio: 1200 / 230;
+      overflow: visible;
+    }
+
+    .text-loop-svg {
+      position: absolute;
+      inset: 50% 0 auto;
+      width: 100%;
+      max-width: none;
+      height: auto;
+      transform: translateY(-50%);
     }
 
     .text-loop-text {
