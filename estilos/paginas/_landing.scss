@@ -291,7 +291,7 @@ body:has(.landing) {
     position: sticky;
     top: 0;
     width: 100%;
-    height: 100dvh;
+    height: 100svh;
     pointer-events: none;
   }
 
@@ -364,7 +364,7 @@ body:has(.landing) {
     flex-direction: column;
     align-items: center;
     gap: 0.85rem;
-    min-height: 100dvh;
+    min-height: 100svh;
     padding: calc(var(--header) + 0.85rem) 1.25rem 1.15rem;
     box-sizing: border-box;
   }
@@ -762,7 +762,7 @@ body:has(.landing) {
       align-items: center;
       column-gap: 2vw;
       width: 100%;
-      min-height: 100dvh;
+      min-height: 100svh;
       padding: calc(var(--header) + 1.5rem) 0 1.25rem;
     }
 
@@ -1146,7 +1146,6 @@ body:has(.landing) {
   gap: 1.5rem;
   align-items: center;
   min-height: 100svh;
-  min-height: 100dvh;
   padding: 4.5rem 1.25rem;
   background: var(--color-surface-secondary);
   box-sizing: border-box;
@@ -1187,7 +1186,6 @@ body:has(.landing) {
   display: flex;
   align-items: center;
   min-height: 100svh;
-  min-height: 100dvh;
   padding: 4.5rem 1.25rem;
   background: #f4f8ee;
   box-sizing: border-box;
@@ -1541,7 +1539,7 @@ body:has(.landing) {
     flex-direction: column;
     justify-content: center;
     gap: 1.5rem;
-    min-height: 100dvh;
+    min-height: 100svh;
     padding: calc(var(--header) + 1.5rem) 1.25rem 2.5rem;
   }
 
@@ -1911,9 +1909,9 @@ body:has(.landing) {
   @media (min-width: 40rem) {
     --pqs-gap: clamp(0.75rem, 1.5vh, 1.25rem);
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     max-height: 100vh;
-    max-height: 100dvh;
+    max-height: 100svh;
     padding: clamp(1.25rem, 3.5vh, 2.5rem) 1.15rem;
     overflow: hidden;
 
@@ -2037,7 +2035,7 @@ body:has(.landing) {
   overflow: hidden;
   box-sizing: border-box;
   width: 100%;
-  min-height: 100dvh;
+  min-height: 100svh;
   margin-top: 0;
   color: #f4f8ee;
   background: var(--landing-bg);
@@ -2457,7 +2455,7 @@ body:has(.landing) {
   box-sizing: border-box;
   width: 100%;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   background: var(--producto-fondo);
   color: var(--producto-ink);
 
@@ -2469,7 +2467,7 @@ body:has(.landing) {
     gap: 1.35rem;
     width: 100%;
     min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100svh;
     margin: 0;
     padding: 4.5rem 1.15rem 3.5rem;
   }
@@ -4470,9 +4468,9 @@ body:has(.landing) {
   box-sizing: border-box;
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: 100svh;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   padding: 4.5rem 1.25rem;
   overflow: hidden;
   background: #0b3d2a;
@@ -4961,11 +4959,11 @@ body:has(.landing) {
     box-sizing: border-box;
     width: 100%;
     height: 100vh;
-    height: 100dvh;
+    height: 100svh;
     min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100svh;
     max-height: 100vh;
-    max-height: 100dvh;
+    max-height: 100svh;
     margin: 0;
     padding: 0 7vw;
 
@@ -5638,9 +5636,9 @@ button.flora-chat__continuar {
   gap: clamp(1.5rem, 4vw, 2.75rem);
   width: 100%;
   min-height: 100vh;
-  min-height: 100dvh;
+  min-height: 100svh;
   max-height: 100vh;
-  max-height: 100dvh;
+  max-height: 100svh;
   padding: clamp(4rem, 10vw, 6.5rem) 0;
   overflow: hidden;
   background: var(--lanzamiento-fondo);
