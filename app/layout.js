@@ -23,12 +23,16 @@ const fredoka = Fredoka({
 });
 
 export const metadata = {
-  title: "Enflora",
+  metadataBase: new URL("https://enflora.com.ar"),
+  title: {
+    default: "ENFLORA",
+    template: "%s | ENFLORA",
+  },
   description: "Espacios de cultivo y plantas",
-  applicationName: "Enflora",
+  applicationName: "ENFLORA",
   appleWebApp: {
     capable: true,
-    title: "Enflora",
+    title: "ENFLORA",
     statusBarStyle: "default",
   },
   icons: {

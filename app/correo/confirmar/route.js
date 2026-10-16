@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
+function redirigirSinIndexar(destino) {
+  const respuesta = NextResponse.redirect(destino);
+  respuesta.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return respuesta;
+}
+
 export async function GET(request) {
   const url = new URL(request.url);
   const codigo = url.searchParams.get("code");
@@ -11,11 +17,11 @@ export async function GET(request) {
   const ingreso = new URL("/ingreso", url.origin);
 
   if (!codigo && !token) {
-    return NextResponse.redirect(ingreso);
+    return redirigirSinIndexar(ingreso);
   }
 
   if (!configuracionLista()) {
-    return NextResponse.redirect(ingreso);
+    return redirigirSinIndexar(ingreso);
   }
 
   const supabase = await crearClienteServidor();
@@ -24,9 +30,9 @@ export async function GET(request) {
     : await supabase.auth.verifyOtp({ token_hash: token, type: tipo });
 
   if (resultado.error) {
-    return NextResponse.redirect(ingreso);
+    return redirigirSinIndexar(ingreso);
   }
 
   await supabase.auth.signOut();
-  return NextResponse.redirect(exito);
+  return redirigirSinIndexar(exito);
 }

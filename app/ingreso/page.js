@@ -1,6 +1,14 @@
 import { FormularioEntrar } from "@/componentes/formulario-entrar";
 import { MarcoAuth } from "@/componentes/marco-auth";
 
+export const metadata = {
+  title: "Iniciar sesión",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
 export default async function PaginaIngreso({ searchParams }) {
   const parametros = await searchParams;
   const aviso =

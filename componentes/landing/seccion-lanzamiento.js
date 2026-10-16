@@ -99,33 +99,6 @@ export function SeccionLanzamiento() {
       data-logo="light"
       aria-label={lanzamiento.titulo}
     >
-      <div className="lanzamiento__contenedor">
-        {!listo ? <p className="lanzamiento__faltan">Faltan</p> : null}
-
-        {listo ? (
-          <p className="lanzamiento__disponible" role="status">
-            {lanzamiento.disponible}
-          </p>
-        ) : (
-          <>
-            <p className="lanzamiento__sr">{lanzamiento.descripcionAccesible}</p>
-            <div className="lanzamiento__contador" aria-hidden="true">
-              {UNIDADES.map((unidad, indice) => (
-                <div key={unidad.clave} className="lanzamiento__bloque">
-                  <UnidadContador
-                    valor={restante ? restante[unidad.clave] : null}
-                    etiqueta={unidad.etiqueta}
-                    minDigits={unidad.minDigits}
-                  />
-                  {indice < UNIDADES.length - 1 ? (
-                    <span className="lanzamiento__sep" />
-                  ) : null}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
       {!listo ? (
         <div className="lanzamiento__cinta">
           <TextLoop
@@ -155,6 +128,33 @@ export function SeccionLanzamiento() {
           />
         </div>
       ) : null}
+      <div className="lanzamiento__contenedor">
+        {!listo ? <p className="lanzamiento__faltan">Faltan</p> : null}
+
+        {listo ? (
+          <p className="lanzamiento__disponible" role="status">
+            {lanzamiento.disponible}
+          </p>
+        ) : (
+          <>
+            <p className="lanzamiento__sr">{lanzamiento.descripcionAccesible}</p>
+            <div className="lanzamiento__contador" aria-hidden="true">
+              {UNIDADES.map((unidad, indice) => (
+                <div key={unidad.clave} className="lanzamiento__bloque">
+                  <UnidadContador
+                    valor={restante ? restante[unidad.clave] : null}
+                    etiqueta={unidad.etiqueta}
+                    minDigits={unidad.minDigits}
+                  />
+                  {indice < UNIDADES.length - 1 ? (
+                    <span className="lanzamiento__sep" />
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
     </section>
   );
 }

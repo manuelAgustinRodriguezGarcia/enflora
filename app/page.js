@@ -3,9 +3,18 @@ import { Landing } from "@/componentes/landing/landing";
 import { obtenerCotizacionOficial } from "@/lib/cotizacion";
 
 export const metadata = {
-  title: "Enflora",
+  title: {
+    absolute: "ENFLORA | Registro y seguimiento de cultivos",
+  },
   description:
-    "Registrá tus plantas, seguí su evolución y armá un historial para entender cada cultivo.",
+    "Organizá tus plantas, registrá parámetros y consultá el historial de tus cultivos con ENFLORA, tu aplicación de seguimiento de cultivos.",
+  alternates: {
+    canonical: "https://enflora.com.ar/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default async function PaginaInicio({ searchParams }) {
