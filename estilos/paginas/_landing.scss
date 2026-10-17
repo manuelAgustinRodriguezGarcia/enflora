@@ -4040,12 +4040,17 @@ body:has(.landing) {
     width: calc(100% + 2.3rem);
     margin-inline: -1.15rem;
     overflow: hidden;
-    touch-action: none;
+    touch-action: pan-y;
     user-select: none;
     cursor: grab;
     -webkit-user-select: none;
 
     &:active {
+      cursor: grabbing;
+    }
+
+    &--arrastre-x {
+      touch-action: none;
       cursor: grabbing;
     }
   }
@@ -5407,7 +5412,6 @@ body:has(.landing) {
     1rem
     calc(5.5rem + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
-  overscroll-behavior: none;
   scroll-margin-top: 0;
   color: var(--regalo-fondo);
   background: #081910;

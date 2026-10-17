@@ -9,6 +9,8 @@ const SIZES_GALERIA = "(max-width: 47.99rem) 72vw, 28vw";
 const VENTANA_EAGER = 2;
 const LOTE_PRECARGA = 2;
 const MARGEN_PRECARGA = "480px 0px";
+const UMBRAL_EJE = 12;
+const RATIO_HORIZONTAL = 1.35;
 
 function modulo(valor, total) {
   return ((valor % total) + total) % total;
@@ -205,29 +207,68 @@ function CarruselMobile({ items, reducido, activa }) {
     if (evento.pointerType === "mouse" && evento.button !== 0) return;
     arrastre.current = {
       origenX: evento.clientX,
+      origenY: evento.clientY,
       ultimoX: evento.clientX,
       ultimoT: performance.now(),
       velocidad: 0,
+      eje: null,
+      pointerId: evento.pointerId,
+      nodo: evento.currentTarget,
     };
     setDesfase(0);
-    setArrastrando(true);
-    evento.currentTarget.setPointerCapture(evento.pointerId);
   };
 
   const alPointerMove = (evento) => {
     const estado = arrastre.current;
-    if (!estado) return;
+    if (!estado || estado.pointerId !== evento.pointerId) return;
+
+    const dx = evento.clientX - estado.origenX;
+    const dy = evento.clientY - estado.origenY;
+
+    if (estado.eje === null) {
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+      if (absX < UMBRAL_EJE && absY < UMBRAL_EJE) return;
+
+      if (absY >= absX * RATIO_HORIZONTAL || (absY > absX && absY >= UMBRAL_EJE)) {
+        arrastre.current = null;
+        setArrastrando(false);
+        setDesfase(0);
+        return;
+      }
+
+      if (absX < absY * RATIO_HORIZONTAL) return;
+
+      estado.eje = "x";
+      setArrastrando(true);
+      try {
+        estado.nodo?.setPointerCapture(evento.pointerId);
+      } catch {}
+    }
+
+    if (estado.eje !== "x") return;
+
     const ahora = performance.now();
     const dt = Math.max(ahora - estado.ultimoT, 1);
     estado.velocidad = ((evento.clientX - estado.ultimoX) / dt) * 1000;
     estado.ultimoX = evento.clientX;
     estado.ultimoT = ahora;
-    setDesfase(evento.clientX - estado.origenX);
+    setDesfase(dx);
   };
 
-  const alPointerUp = () => {
+  const alPointerUp = (evento) => {
     const estado = arrastre.current;
-    if (!estado || !paso || !total) {
+    if (!estado || (evento?.pointerId != null && estado.pointerId !== evento.pointerId)) {
+      return;
+    }
+
+    if (estado.eje === "x" && estado.nodo) {
+      try {
+        estado.nodo.releasePointerCapture(estado.pointerId);
+      } catch {}
+    }
+
+    if (estado.eje !== "x" || !paso || !total) {
       arrastre.current = null;
       setArrastrando(false);
       setDesfase(0);
@@ -244,7 +285,10 @@ function CarruselMobile({ items, reducido, activa }) {
   };
 
   return (
-    <div className="flora-galeria__carrusel" ref={marcoRef}>
+    <div
+      className={`flora-galeria__carrusel${arrastrando ? " flora-galeria__carrusel--arrastre-x" : ""}`}
+      ref={marcoRef}
+    >
       <ul
         className={`flora-galeria__pista flora-galeria__pista--carrusel${arrastrando || sinTransicion ? " flora-galeria__pista--arrastre" : ""}`}
         ref={pistaRef}
