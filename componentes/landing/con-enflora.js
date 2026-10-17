@@ -76,23 +76,9 @@ function progresoAIndice(progreso, ultimo) {
   return Math.min(ultimo, Math.max(0, Math.round(tramo * ultimo)));
 }
 
-function progresoAPosicion(progreso, ultimo) {
-  if (progreso <= EXPANDIR_HASTA) return 0;
-  if (progreso >= RUEDA_HASTA) return ultimo;
-  const tramo = (progreso - EXPANDIR_HASTA) / (RUEDA_HASTA - EXPANDIR_HASTA);
-  return Math.min(ultimo, Math.max(0, tramo * ultimo));
-}
-
 function indiceAProgreso(indice, ultimo) {
   if (indice <= 0) return EXPANDIR_HASTA;
   return EXPANDIR_HASTA + (indice / ultimo) * (RUEDA_HASTA - EXPANDIR_HASTA);
-}
-
-function posicionAProgreso(posicion, ultimo) {
-  if (ultimo <= 0) return EXPANDIR_HASTA;
-  if (posicion <= 0) return EXPANDIR_HASTA;
-  if (posicion >= ultimo) return RUEDA_HASTA;
-  return EXPANDIR_HASTA + (posicion / ultimo) * (RUEDA_HASTA - EXPANDIR_HASTA);
 }
 
 export function ConEnflora() {
@@ -108,7 +94,6 @@ export function ConEnflora() {
   const ruedaCtrlRef = useRef(null);
   const triggerRef = useRef(null);
   const sincronizandoRef = useRef(false);
-  const interactuandoRuedaRef = useRef(false);
   const [compacto, setCompacto] = useState(false);
   const [notebook, setNotebook] = useState(false);
   const [listo, setListo] = useState(false);
@@ -153,8 +138,8 @@ export function ConEnflora() {
         triggerRef.current = null;
       };
 
-      if (reducido) {
-        const pad = leerPadHeader();
+      if (reducido || compacto) {
+        const pad = compacto ? leerPadEscena(escena) : leerPadHeader();
         gsap.set(fondo, {
           top: 0,
           right: 0,
@@ -179,15 +164,12 @@ export function ConEnflora() {
       }
 
       const ultimo = Math.max(frases.length - 1, 1);
-      const esDesktop = window.matchMedia("(min-width: 64rem)").matches;
       const leidos = leerInsets(nodo);
-      const insetsInicial = esDesktop
-        ? { top: 0, right: leidos.right, bottom: 0, left: leidos.left }
-        : { top: 0, right: 0, bottom: 0, left: 0 };
-      const radioInicial = esDesktop ? 40 : 0;
+      const insetsInicial = { top: 0, right: leidos.right, bottom: 0, left: leidos.left };
+      const radioInicial = 40;
       const padInicial = leerPadEscena(escena);
-      const padFinal = esDesktop ? leerPadHeader() : padInicial;
-      const spreadBase = esDesktop && spread ? leerSpreadBase(spread) : 0;
+      const padFinal = leerPadHeader();
+      const spreadBase = spread ? leerSpreadBase(spread) : 0;
       const clipInicial = clipInset(
         insetsInicial.top,
         insetsInicial.right,
@@ -203,7 +185,7 @@ export function ConEnflora() {
         bottom: 0,
         left: 0,
         borderRadius: 0,
-        clipPath: esDesktop ? clipInicial : "none",
+        clipPath: clipInicial,
         force3D: true,
       });
 
@@ -212,16 +194,16 @@ export function ConEnflora() {
         right: 0,
         bottom: 0,
         left: 0,
-        paddingLeft: esDesktop ? padFinal.left : padInicial.left,
-        paddingRight: esDesktop ? padFinal.right : padInicial.right,
-        clipPath: esDesktop ? clipInicial : "none",
+        paddingLeft: padFinal.left,
+        paddingRight: padFinal.right,
+        clipPath: clipInicial,
         force3D: true,
       });
 
       let tituloX0 = 0;
       let ruedaX0 = 0;
 
-      if (spread && esDesktop && tituloEl && ruedaEl) {
+      if (spread && tituloEl && ruedaEl) {
         gsap.set(spread, {
           maxWidth: 10000,
           flexBasis: 0,
@@ -248,23 +230,15 @@ export function ConEnflora() {
         scrollTrigger: {
           trigger: nodo,
           start: "top top",
-          end: () => `+=${Math.round(window.innerHeight * (compacto ? 2.8 : 3.5))}`,
+          end: () => `+=${Math.round(window.innerHeight * 3.5)}`,
           pin: true,
           pinType: "fixed",
-          scrub: compacto ? 0.55 : 0.7,
+          scrub: 0.7,
           anticipatePin: 1,
           fastScrollEnd: false,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             triggerRef.current = self;
-            if (compacto) {
-              if (interactuandoRuedaRef.current) return;
-              ruedaCtrlRef.current?.setPosicion(progresoAPosicion(self.progress, ultimo), {
-                inmediato: true,
-                silencioso: true,
-              });
-              return;
-            }
             const siguiente = progresoAIndice(self.progress, ultimo);
             setIndice((actual) => {
               if (actual === siguiente) return actual;
@@ -278,76 +252,52 @@ export function ConEnflora() {
         },
       });
 
-      if (esDesktop) {
+      tl.fromTo(
+        fondo,
+        { clipPath: clipInicial },
+        {
+          clipPath: clipFinal,
+          duration: EXPANDIR_HASTA,
+          ease: "none",
+          immediateRender: true,
+        },
+        0,
+      );
+
+      tl.fromTo(
+        escena,
+        { clipPath: clipInicial },
+        {
+          clipPath: clipFinal,
+          duration: EXPANDIR_HASTA,
+          ease: "none",
+          immediateRender: true,
+        },
+        0,
+      );
+
+      if (tituloEl && ruedaEl) {
         tl.fromTo(
-          fondo,
-          { clipPath: clipInicial },
+          tituloEl,
+          { x: tituloX0 },
           {
-            clipPath: clipFinal,
+            x: 0,
             duration: EXPANDIR_HASTA,
             ease: "none",
             immediateRender: true,
+            force3D: true,
           },
           0,
         );
-
         tl.fromTo(
-          escena,
-          { clipPath: clipInicial },
+          ruedaEl,
+          { x: ruedaX0 },
           {
-            clipPath: clipFinal,
+            x: 0,
             duration: EXPANDIR_HASTA,
             ease: "none",
             immediateRender: true,
-          },
-          0,
-        );
-
-        if (tituloEl && ruedaEl) {
-          tl.fromTo(
-            tituloEl,
-            { x: tituloX0 },
-            {
-              x: 0,
-              duration: EXPANDIR_HASTA,
-              ease: "none",
-              immediateRender: true,
-              force3D: true,
-            },
-            0,
-          );
-          tl.fromTo(
-            ruedaEl,
-            { x: ruedaX0 },
-            {
-              x: 0,
-              duration: EXPANDIR_HASTA,
-              ease: "none",
-              immediateRender: true,
-              force3D: true,
-            },
-            0,
-          );
-        }
-      } else {
-        tl.fromTo(
-          fondo,
-          {
-            top: insetsInicial.top,
-            right: insetsInicial.right,
-            bottom: insetsInicial.bottom,
-            left: insetsInicial.left,
-            borderRadius: radioInicial,
-          },
-          {
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            borderRadius: 0,
-            duration: EXPANDIR_HASTA,
-            ease: "none",
-            immediateRender: true,
+            force3D: true,
           },
           0,
         );
@@ -373,25 +323,6 @@ export function ConEnflora() {
     const progreso = indiceAProgreso(idx, ultimo);
     const destino = trigger.start + (trigger.end - trigger.start) * progreso;
     window.scrollTo(0, destino);
-  };
-
-  const sincronizarScrollDesdeRueda = (posicion) => {
-    if (!compacto) return;
-    const trigger = triggerRef.current;
-    if (!trigger || reducido) return;
-    const ultimo = Math.max(frases.length - 1, 1);
-    const progreso = posicionAProgreso(posicion, ultimo);
-    const destino = trigger.start + (trigger.end - trigger.start) * progreso;
-    window.scrollTo(0, destino);
-  };
-
-  const desbordarScrollDesdeRueda = (deltaY) => {
-    if (!compacto || !deltaY) return;
-    window.scrollBy(0, deltaY);
-  };
-
-  const onInteraccionRueda = (activa) => {
-    interactuandoRuedaRef.current = activa;
   };
 
   const animarEntrada = !reducido && !compacto;
@@ -450,50 +381,49 @@ export function ConEnflora() {
           </h2>
         </div>
         <div className="con-enflora__spread" ref={spreadRef} aria-hidden="true" />
-        <div className="con-enflora__rueda" ref={ruedaRef}>
-          <motion.div
-            className="con-enflora__rueda-entrada"
-            initial={entrada.initial}
-            {...(animarEntrada
-              ? {
-                  whileInView: entrada.animate,
-                  viewport: { once: true, amount: 0.35 },
-                  transition: { duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] },
-                }
-              : { animate: entrada.animate })}
-          >
-            <p className="con-enflora__antetitulo con-enflora__rueda-titulo">{ruedaTitulo}</p>
-            {listo ? (
-              <OptionWheel
-                ref={ruedaCtrlRef}
-                items={frases}
-                defaultSelected={0}
-                indice={compacto ? null : indice}
-                onChange={irAIndice}
-                onPosicion={compacto ? sincronizarScrollDesdeRueda : undefined}
-                onInteraccion={compacto ? onInteraccionRueda : undefined}
-                onDesbordamiento={compacto ? desbordarScrollDesdeRueda : undefined}
-                textColor="rgba(244, 248, 238, 0.38)"
-                activeColor="#F4F8EE"
-                side={compacto ? "center" : "right"}
-                fontSize={compacto ? 1.6 : notebook ? 2.45 : 3.5}
-                spacing={compacto ? 1.55 : notebook ? 1.3 : 1.35}
-                curve={compacto ? 0 : notebook ? 0.65 : 1}
-                tilt={reducido || compacto ? 0 : notebook ? 4 : 6}
-                blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.35 : 2.2}
-                fade={reducido ? 0.35 : compacto ? 0.28 : notebook ? 0.24 : 0.22}
-                smoothing={reducido ? 40 : 180}
-                inset={compacto ? 0 : notebook ? 8 : 28}
-                loop={false}
-                draggable
-                snapAlSoltar={!compacto}
-                inercia={compacto}
-                capturarRueda={false}
-                ariaLabel="Beneficios de ENFLORA"
-              />
-            ) : null}
-          </motion.div>
-        </div>
+        {!compacto ? (
+          <div className="con-enflora__rueda" ref={ruedaRef}>
+            <motion.div
+              className="con-enflora__rueda-entrada"
+              initial={entrada.initial}
+              {...(animarEntrada
+                ? {
+                    whileInView: entrada.animate,
+                    viewport: { once: true, amount: 0.35 },
+                    transition: { duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] },
+                  }
+                : { animate: entrada.animate })}
+            >
+              <p className="con-enflora__antetitulo con-enflora__rueda-titulo">{ruedaTitulo}</p>
+              {listo ? (
+                <OptionWheel
+                  ref={ruedaCtrlRef}
+                  items={frases}
+                  defaultSelected={0}
+                  indice={indice}
+                  onChange={irAIndice}
+                  textColor="rgba(244, 248, 238, 0.38)"
+                  activeColor="#F4F8EE"
+                  side="right"
+                  fontSize={notebook ? 2.45 : 3.5}
+                  spacing={notebook ? 1.3 : 1.35}
+                  curve={notebook ? 0.65 : 1}
+                  tilt={reducido ? 0 : notebook ? 4 : 6}
+                  blur={reducido ? 0 : notebook ? 1.35 : 2.2}
+                  fade={reducido ? 0.35 : notebook ? 0.24 : 0.22}
+                  smoothing={reducido ? 40 : 180}
+                  inset={notebook ? 8 : 28}
+                  loop={false}
+                  draggable
+                  snapAlSoltar
+                  inercia={false}
+                  capturarRueda={false}
+                  ariaLabel="Beneficios de ENFLORA"
+                />
+              ) : null}
+            </motion.div>
+          </div>
+        ) : null}
       </div>
     </div>
   );

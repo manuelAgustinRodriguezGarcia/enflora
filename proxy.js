@@ -66,6 +66,10 @@ export async function proxy(request) {
   }
 
   const esRutaPublica = ruta === "/ingreso" || ruta === "/registro";
+  const esRutaAbierta =
+    ruta === "/partners" ||
+    ruta.startsWith("/partners/") ||
+    ruta === "/partners-info";
   const pendiente = user ? await onboardingPendiente(supabase, user.id) : false;
   const destino = pendiente ? "/onboarding" : "/espacios";
 
@@ -75,6 +79,10 @@ export async function proxy(request) {
     if (codigo || token) {
       return redirigir(request, "/correo/confirmar", respuesta);
     }
+    return respuesta;
+  }
+
+  if (esRutaAbierta) {
     return respuesta;
   }
 

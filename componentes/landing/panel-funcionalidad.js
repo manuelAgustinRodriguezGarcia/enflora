@@ -6,23 +6,23 @@ import { BeneficiosFuncionalidad } from "@/componentes/landing/beneficios-funcio
 import { VistaPreviaFuncionalidad } from "@/componentes/landing/vista-previa-funcionalidad";
 
 export const PanelFuncionalidad = forwardRef(function PanelFuncionalidad(
-  { funcionalidad },
+  { funcionalidad, style },
   ref,
 ) {
   const reducido = useReducedMotion();
   const transicion = reducido
     ? { duration: 0 }
-    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
+    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] };
 
   return (
-    <div className="producto-panel" ref={ref}>
+    <div className="producto-panel" ref={ref} style={style}>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={funcionalidad.id}
           className="producto-panel__bloque"
-          initial={reducido ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={reducido ? undefined : { opacity: 0, y: -8 }}
+          initial={reducido ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={reducido ? undefined : { opacity: 0 }}
           transition={transicion}
         >
           <article className="producto-panel__principal">

@@ -12,23 +12,102 @@ import { transicionVista } from "@/lib/animaciones";
 
 const CODIGO_PROMO = "FLORA-VIP";
 const HREF_REGISTRO = "/registro?campana=pase-gratis";
+const PAUSA_ENTRADA_MS = 1000;
+const CONSULTA_DESKTOP = "(min-width: 64rem)";
+const FONDO_DESKTOP = "/images/flora-landing-patova.png";
+const FONDO_MOBILE_CHAT = "/images/flora-register-mobile.png";
+const FONDO_MOBILE_ENTRADA = "/images/flora-login-mobile.png";
+
+function bloquearScroll() {
+  const y = window.scrollY;
+  const impedir = (evento) => {
+    evento.preventDefault();
+  };
+  const fijar = () => {
+    if (Math.abs(window.scrollY - y) > 0.5) {
+      window.scrollTo(0, y);
+    }
+  };
+  window.addEventListener("wheel", impedir, { passive: false });
+  window.addEventListener("touchmove", impedir, { passive: false });
+  window.addEventListener("scroll", fijar, { passive: true });
+  return () => {
+    window.removeEventListener("wheel", impedir);
+    window.removeEventListener("touchmove", impedir);
+    window.removeEventListener("scroll", fijar);
+  };
+}
 
 export function SeccionRegalo() {
   const { regalo } = textos;
   const reducido = useReducedMotion();
   const seccionRef = useRef(null);
   const yaRoto = useRef(false);
+  const yaEntrada = useRef(false);
   const timerRevelado = useRef(0);
   const timerCopiado = useRef(0);
+  const timerEntrada = useRef(0);
+  const liberarScroll = useRef(null);
   const [fase, setFase] = useState("chat");
+  const [chatActivo, setChatActivo] = useState(false);
+  const [avisoChat, setAvisoChat] = useState(false);
   const [copiado, setCopiado] = useState(false);
+  const [esDesktop, setEsDesktop] = useState(false);
+
+  useEffect(() => {
+    const consulta = window.matchMedia(CONSULTA_DESKTOP);
+    const actualizar = () => setEsDesktop(consulta.matches);
+    actualizar();
+    consulta.addEventListener("change", actualizar);
+    return () => consulta.removeEventListener("change", actualizar);
+  }, []);
 
   useEffect(() => {
     return () => {
       window.clearTimeout(timerRevelado.current);
       window.clearTimeout(timerCopiado.current);
+      window.clearTimeout(timerEntrada.current);
+      liberarScroll.current?.();
     };
   }, []);
+
+  useEffect(() => {
+    const seccion = seccionRef.current;
+    if (!seccion || yaEntrada.current) return undefined;
+
+    if (reducido) {
+      yaEntrada.current = true;
+      setChatActivo(true);
+      return undefined;
+    }
+
+    const umbral = window.matchMedia(CONSULTA_DESKTOP).matches ? 0.55 : 0.35;
+    const observador = new IntersectionObserver(
+      ([entrada]) => {
+        if (!entrada?.isIntersecting || yaEntrada.current) return;
+        yaEntrada.current = true;
+        observador.disconnect();
+
+        seccion.scrollIntoView({ behavior: "auto", block: "start" });
+        liberarScroll.current = bloquearScroll();
+
+        timerEntrada.current = window.setTimeout(() => {
+          liberarScroll.current?.();
+          liberarScroll.current = null;
+          setChatActivo(true);
+          setAvisoChat(true);
+        }, PAUSA_ENTRADA_MS);
+      },
+      { threshold: umbral },
+    );
+
+    observador.observe(seccion);
+    return () => {
+      observador.disconnect();
+      window.clearTimeout(timerEntrada.current);
+      liberarScroll.current?.();
+    };
+  }, [reducido]);
 
   const mostrarTicket = useCallback(() => {
     if (fase !== "chat") return;
@@ -60,6 +139,8 @@ export function SeccionRegalo() {
 
   const ticketVisible = fase === "ticket" || fase === "celebrando";
   const oscurecido = fase === "celebrando" || fase === "revelado";
+  const entradaConseguida = fase !== "chat";
+  const fondoMobile = entradaConseguida ? FONDO_MOBILE_ENTRADA : FONDO_MOBILE_CHAT;
 
   return (
     <section
@@ -67,6 +148,7 @@ export function SeccionRegalo() {
         "regalo",
         oscurecido ? "regalo--oscuro" : "",
         ticketVisible ? "regalo--con-ticket" : "",
+        entradaConseguida ? "regalo--entrada" : "",
       ]
         .filter(Boolean)
         .join(" ")}
@@ -76,18 +158,26 @@ export function SeccionRegalo() {
     >
       <div className="regalo__fondo" aria-hidden="true">
         <Image
-          src="/images/flora-landing-patova.png"
+          src={FONDO_DESKTOP}
           alt=""
           fill
           sizes="100vw"
-          className="regalo__fondo-img"
+          className="regalo__fondo-img regalo__fondo-img--desktop"
+          priority={false}
+        />
+        <Image
+          src={fondoMobile}
+          alt=""
+          fill
+          sizes="100vw"
+          className="regalo__fondo-img regalo__fondo-img--mobile"
           priority={false}
         />
         <div className="regalo__velo" />
         <div className="regalo__oscuridad" />
       </div>
 
-      <div className="regalo__desktop">
+      <div className="regalo__contenido">
         <AnimatePresence mode="wait">
           {fase !== "revelado" ? (
             <motion.div
@@ -109,7 +199,22 @@ export function SeccionRegalo() {
                       exit={reducido ? { opacity: 0 } : { opacity: 0, y: -12 }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
-                      <ConversacionFlora onContinuar={mostrarTicket} />
+                      <header className="regalo__pista">
+                        <h2 className="regalo__pista-titulo">{regalo.pistaTitulo}</h2>
+                        <p className="regalo__pista-bajada">{regalo.pistaBajada}</p>
+                      </header>
+                      {chatActivo ? (
+                        <ConversacionFlora
+                          onContinuar={mostrarTicket}
+                          activo
+                          className={avisoChat ? "flora-chat--aviso" : ""}
+                          onAnimationEnd={(evento) => {
+                            if (evento.animationName === "flora-chat-aviso") {
+                              setAvisoChat(false);
+                            }
+                          }}
+                        />
+                      ) : null}
                     </motion.div>
                   ) : null}
 
@@ -127,21 +232,21 @@ export function SeccionRegalo() {
                       }
                     >
                       <TearTicket
-                        orientation="horizontal"
-                        width={680}
-                        height={310}
-                        stubSize={165}
-                        radius={18}
-                        holes={12}
-                        holeSize={7}
+                        orientation={esDesktop ? "horizontal" : "vertical"}
+                        width={esDesktop ? 680 : 268}
+                        height={esDesktop ? 310 : 460}
+                        stubSize={esDesktop ? 165 : 76}
+                        radius={esDesktop ? 18 : 14}
+                        holes={esDesktop ? 12 : 9}
+                        holeSize={esDesktop ? 7 : 5}
                         roughness={1}
                         tearAngle={30}
-                        stretch={30}
+                        stretch={esDesktop ? 30 : 22}
                         resistance={0.45}
-                        rotate={-2}
-                        tilt
+                        rotate={esDesktop ? -2 : 0}
+                        tilt={esDesktop}
                         tiltMax={6}
-                        parallax={6}
+                        parallax={esDesktop ? 6 : 0}
                         recenter
                         background="#F4F8EE"
                         stubBackground="#0B3D2A"
@@ -151,7 +256,7 @@ export function SeccionRegalo() {
                         borderWidth={1.25}
                         ariaLabel="Romper el ticket de ENFLORA"
                         onTear={revelar}
-                        className="regalo__ticket"
+                        className={`regalo__ticket${esDesktop ? "" : " regalo__ticket--vertical"}`}
                         stub={
                           <div className="regalo-ticket__stub">
                             <strong className="regalo-ticket__stub-accion">ROMPÉ ACÁ</strong>
@@ -170,11 +275,10 @@ export function SeccionRegalo() {
                             <span>ENFLORA - INVITADO ESPECIAL</span>
                           </div>
                           <p className="regalo-ticket__serie">ENTRADA N° 000420</p>
-                          <h3 className="regalo-ticket__headline">
-                            Rompé este ticket 
-                          </h3>
+                          <h3 className="regalo-ticket__headline">Rompé este ticket</h3>
                           <p className="regalo-ticket__sub">
-                            Zekiel te habla Flora, te dejo este regalito para que la vaciles con tus cultivos.
+                            Zekiel te habla Flora, te dejo este regalito para que la vaciles con tus
+                            cultivos.
                           </p>
                         </div>
                       </TearTicket>
@@ -236,7 +340,6 @@ export function SeccionRegalo() {
           )}
         </AnimatePresence>
       </div>
-      <div className="regalo__mobile" data-variant="mobile" />
     </section>
   );
 }

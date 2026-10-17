@@ -98,15 +98,24 @@ function BurbujaUsuario({ texto, reducido }) {
   );
 }
 
-export function ConversacionFlora({ onContinuar, className = "" }) {
+export function ConversacionFlora({
+  onContinuar,
+  className = "",
+  activo = true,
+  onAnimationEnd,
+}) {
   const reducido = useReducedMotion();
   const tituloId = useId();
   const listaRef = useRef(null);
-  const [fase, setFase] = useState("intro");
-  const [mensajes, setMensajes] = useState([
-    { id: "flora-intro", rol: "flora", texto: MENSAJE_INICIAL, animar: true },
-  ]);
+  const inicioRef = useRef(activo);
+  const [fase, setFase] = useState(() => (activo ? "intro" : "espera"));
+  const [mensajes, setMensajes] = useState(() =>
+    activo
+      ? [{ id: "flora-intro", rol: "flora", texto: MENSAJE_INICIAL, animar: true }]
+      : [],
+  );
   const [bloqueo, setBloqueo] = useState(false);
+  const [pistaIndice, setPistaIndice] = useState(-1);
 
   const scrollInterno = useCallback(() => {
     const nodo = listaRef.current;
@@ -117,6 +126,52 @@ export function ConversacionFlora({ onContinuar, className = "" }) {
   useEffect(() => {
     scrollInterno();
   }, [mensajes, fase, scrollInterno]);
+
+  useEffect(() => {
+    if (!activo || inicioRef.current) return;
+    inicioRef.current = true;
+    setFase("intro");
+    setMensajes([{ id: "flora-intro", rol: "flora", texto: MENSAJE_INICIAL, animar: true }]);
+  }, [activo]);
+
+  useEffect(() => {
+    if (fase !== "choosing" || reducido || bloqueo) {
+      setPistaIndice(-1);
+      return undefined;
+    }
+
+    const timers = [];
+    const DURACION = 620;
+    const PAUSA = 160;
+    const paso = DURACION + PAUSA;
+
+    const recorrer = () => {
+      OPCIONES.forEach((_, indice) => {
+        timers.push(
+          window.setTimeout(() => {
+            setPistaIndice(indice);
+          }, indice * paso),
+        );
+      });
+      timers.push(
+        window.setTimeout(() => {
+          setPistaIndice(-1);
+        }, OPCIONES.length * paso),
+      );
+      timers.push(
+        window.setTimeout(() => {
+          recorrer();
+        }, OPCIONES.length * paso + 2800),
+      );
+    };
+
+    timers.push(window.setTimeout(recorrer, 5000));
+
+    return () => {
+      timers.forEach((id) => window.clearTimeout(id));
+      setPistaIndice(-1);
+    };
+  }, [fase, reducido, bloqueo]);
 
   const alListoIntro = useCallback(() => {
     setFase((actual) => (actual === "intro" ? "choosing" : actual));
@@ -130,6 +185,7 @@ export function ConversacionFlora({ onContinuar, className = "" }) {
   const elegir = useCallback(
     (opcion) => {
       if (fase !== "choosing" || bloqueo) return;
+      setPistaIndice(-1);
       setBloqueo(true);
       setFase("replying");
       setMensajes((previos) => [
@@ -151,6 +207,7 @@ export function ConversacionFlora({ onContinuar, className = "" }) {
       className={`flora-chat ${className}`.trim()}
       aria-labelledby={tituloId}
       aria-live="polite"
+      onAnimationEnd={onAnimationEnd}
     >
       <header className="flora-chat__cabecera">
         <Image
@@ -202,7 +259,7 @@ export function ConversacionFlora({ onContinuar, className = "" }) {
                 <motion.button
                   key={opcion.id}
                   type="button"
-                  className="flora-chat__opcion"
+                  className={`flora-chat__opcion${pistaIndice === indice ? " flora-chat__opcion--pista" : ""}`}
                   disabled={bloqueo}
                   onClick={() => elegir(opcion)}
                   initial={reducido ? false : { opacity: 0, y: 8 }}

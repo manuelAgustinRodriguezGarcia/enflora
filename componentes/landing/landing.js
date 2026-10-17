@@ -11,6 +11,7 @@ import { SeccionConoceFlora } from "@/componentes/landing/seccion-conoce-flora";
 import { SeccionContacto } from "@/componentes/landing/seccion-contacto";
 import { SeccionInstalacion } from "@/componentes/landing/seccion-instalacion";
 import { SeccionLanzamiento } from "@/componentes/landing/seccion-lanzamiento";
+import { SeccionPartners } from "@/componentes/landing/seccion-partners";
 import { SeccionPrecios } from "@/componentes/landing/seccion-precios";
 import { SeccionRegalo } from "@/componentes/landing/seccion-regalo";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
@@ -36,6 +37,7 @@ export function Landing({ cotizacion = null }) {
           <SeccionRegalo />
           <SeccionPrecios cotizacion={cotizacion} />
           <SeccionInstalacion textos={instalacion} />
+          <SeccionPartners />
           <SeccionContacto />
           <SeccionLanzamiento />
         </main>

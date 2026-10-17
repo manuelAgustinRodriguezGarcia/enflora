@@ -2,7 +2,6 @@
 
 import { Check } from "lucide-react";
 import Link from "next/link";
-import PixelCard from "@/componentes/landing/pixel-card";
 import { convertirUsdAArs, formatearArs } from "@/lib/cotizacion";
 
 function CuerpoPlan({ plan, arsTexto, hrefRegistro, onAbrirEquivalencia }) {
@@ -60,37 +59,16 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
     .filter(Boolean)
     .join(" ");
 
-  const cuerpo = (
-    <CuerpoPlan
-      plan={plan}
-      arsTexto={arsTexto}
-      hrefRegistro={hrefRegistro}
-      onAbrirEquivalencia={onAbrirEquivalencia}
-    />
-  );
-
   return (
     <article className={clase}>
-      {plan.destacado ? (
-        <PixelCard
-          variant="plus"
-          theme="dark"
-          glow={0.55}
-          opacity={0.78}
-          spotlight={0.45}
-          intro
-          introDelay={0}
-          trigger="always"
-          speed={22}
-          radius={26}
-          glowColor="#A4C85B"
-          className="precios__pixel"
-        >
-          {cuerpo}
-        </PixelCard>
-      ) : (
-        <div className="precios__shell">{cuerpo}</div>
-      )}
+      <div className="precios__shell">
+        <CuerpoPlan
+          plan={plan}
+          arsTexto={arsTexto}
+          hrefRegistro={hrefRegistro}
+          onAbrirEquivalencia={onAbrirEquivalencia}
+        />
+      </div>
     </article>
   );
 }

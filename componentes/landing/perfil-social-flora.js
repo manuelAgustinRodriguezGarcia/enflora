@@ -79,11 +79,10 @@ export function PerfilSocialFlora({ instagram }) {
               height={112}
             />
           </div>
-          <p className="flora-ig__usuario">{instagram.usuario}</p>
-          <span className="flora-ig__sep" aria-hidden="true">
-            |
-          </span>
-          <span className="flora-ig__cta-texto">{instagram.cta}</span>
+          <div className="flora-ig__texto">
+            <p className="flora-ig__usuario">{instagram.usuario}</p>
+            <span className="flora-ig__cta-texto">{instagram.cta}</span>
+          </div>
           <span className="flora-ig__cta-boton">
             <IconoInstagram size={28} />
           </span>

@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { BannerPublicitario } from "@/componentes/banner-publicitario";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
+import { cargarCampañasBanner } from "@/lib/publicidad";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
@@ -18,11 +20,13 @@ export default async function PaginaEspacios() {
   }
 
   const supabase = await crearClienteServidor();
-  const [espaciosRespuesta, unidadesRespuesta, plantasRespuesta] = await Promise.all([
-    supabase.from("espacios").select("id, nombre, tipo").order("fecha_creacion", { ascending: true }),
-    supabase.from("unidades_cultivo").select("id, espacio_id"),
-    supabase.from("plantas").select("unidad_cultivo_id"),
-  ]);
+  const [espaciosRespuesta, unidadesRespuesta, plantasRespuesta, banners] =
+    await Promise.all([
+      supabase.from("espacios").select("id, nombre, tipo").order("fecha_creacion", { ascending: true }),
+      supabase.from("unidades_cultivo").select("id, espacio_id"),
+      supabase.from("plantas").select("unidad_cultivo_id"),
+      cargarCampañasBanner(),
+    ]);
 
   if (espaciosRespuesta.error || unidadesRespuesta.error || plantasRespuesta.error) {
     return <p>No se pudieron cargar los espacios.</p>;
@@ -96,6 +100,7 @@ export default async function PaginaEspacios() {
             })}
           </ListaEntrada>
         )}
+        <BannerPublicitario campañas={banners.campañas} />
       </section>
     </TransicionVista>
   );

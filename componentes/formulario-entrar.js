@@ -90,7 +90,10 @@ export function FormularioEntrar({ aviso }) {
   return (
     <>
       <section className="auth">
-        <h1>Iniciar Sesión</h1>
+        <div className="auth__intro">
+          <h1>Iniciar Sesión</h1>
+          <p>Que bueno tenerte por acá!</p>
+        </div>
         <form
           ref={formularioRef}
           key={estado?.error || "inicial"}

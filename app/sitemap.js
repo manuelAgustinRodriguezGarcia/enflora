@@ -3,5 +3,11 @@ export default function sitemap() {
     {
       url: "https://enflora.com.ar/",
     },
+    {
+      url: "https://enflora.com.ar/partners",
+    },
+    {
+      url: "https://enflora.com.ar/partners-info",
+    },
   ];
 }

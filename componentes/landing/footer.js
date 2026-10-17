@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, Store } from "lucide-react";
 
 const ENLACES = [
   {
@@ -22,6 +22,13 @@ const ENLACES = [
     etiqueta: "enflora.420@gmail.com",
     externo: false,
     Icono: Mail,
+  },
+  {
+    id: "partners",
+    href: "/partners",
+    etiqueta: "Comercios asociados",
+    externo: false,
+    Icono: Store,
   },
 ];
 
@@ -110,20 +117,31 @@ export function Footer() {
           </Link>
 
           <nav className="pie__contacto" aria-label="Contacto y redes">
-            {ENLACES.map(({ id, href, etiqueta, externo, Icono }) => (
-              <a
-                key={id}
-                className="pie__enlace"
-                href={href}
-                {...(externo
-                  ? { target: "_blank", rel: "noopener noreferrer" }
-                  : {})}
-                aria-label={etiqueta}
-              >
-                <Icono size={18} />
-                <span>{etiqueta}</span>
-              </a>
-            ))}
+            {ENLACES.map(({ id, href, etiqueta, externo, Icono }) =>
+              externo ? (
+                <a
+                  key={id}
+                  className="pie__enlace"
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={etiqueta}
+                >
+                  <Icono size={18} />
+                  <span>{etiqueta}</span>
+                </a>
+              ) : href.startsWith("/") ? (
+                <Link key={id} className="pie__enlace" href={href} aria-label={etiqueta}>
+                  <Icono size={18} />
+                  <span>{etiqueta}</span>
+                </Link>
+              ) : (
+                <a key={id} className="pie__enlace" href={href} aria-label={etiqueta}>
+                  <Icono size={18} />
+                  <span>{etiqueta}</span>
+                </a>
+              ),
+            )}
           </nav>
         </div>
 

@@ -210,9 +210,26 @@
     position: fixed;
     right: 0;
     left: 0;
+    justify-content: flex-end;
     background: transparent;
     border-bottom: 0;
     box-shadow: none;
+    pointer-events: none;
+
+    .encabezado__marca {
+      pointer-events: auto;
+      padding: 0.45rem 0.85rem;
+      border: 1px solid rgb(213 164 109 / 0.34);
+      border-radius: 999px;
+      background: rgb(41 26 19 / 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
+    }
+
+    .encabezado__logo {
+      height: 28px;
+    }
 
     .encabezado__logo--oscuro {
       display: none;
@@ -223,11 +240,7 @@
     }
 
     .encabezado__notificaciones {
-      color: rgba(244, 248, 238, 0.78);
-
-      &:hover:not(:disabled) {
-        color: #f4f8ee;
-      }
+      display: none;
     }
   }
 }
@@ -386,14 +399,14 @@
     transition: color 200ms ease;
   }
 
-  .auth .formulario__control input:not([type="checkbox"]):not([type="radio"]),
-  .auth .formulario__clave input:not([type="checkbox"]):not([type="radio"]) {
+  .auth .formulario__control input:not([type="checkbox"]):not([type="radio"]) {
     width: 100%;
     padding: 0.45rem 0.7rem 0.45rem 2.9rem;
   }
 
   .auth .formulario__clave input:not([type="checkbox"]):not([type="radio"]) {
-    padding-right: 3rem;
+    width: 100%;
+    padding: 0.45rem 3rem 0.45rem 0.7rem;
   }
 
   .formulario input:not([type="checkbox"]):not([type="radio"]) {
@@ -591,6 +604,14 @@
   &__contenido {
     width: min(100%, 480px);
     margin-inline: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
   }
 
   .formulario {
@@ -749,13 +770,15 @@
     }
 
     .marco-auth__panel {
+      display: flex;
+      flex-direction: column;
       width: 100%;
       max-width: 480px;
       min-height: 0;
-      max-height: none;
+      max-height: calc(100dvh - 6rem);
       margin-top: 0;
       padding: 2rem 1.75rem;
-      overflow: visible;
+      overflow: hidden;
       border: 1px solid rgb(213 164 109 / 0.34);
       border-radius: 24px;
       background: var(--auth-vip-surface);
@@ -765,16 +788,22 @@
     }
 
     &--registro {
-      align-items: flex-start;
-      padding-block: 2rem;
+      align-items: center;
+      padding-block: 1.5rem;
     }
 
     &--registro .marco-auth__panel {
       max-width: 600px;
     }
 
-    &--registro .marco-auth__contenido {
+    &--registro .marco-auth__contenido,
+    &--entrar .marco-auth__contenido {
       width: 100%;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .auth__aviso {

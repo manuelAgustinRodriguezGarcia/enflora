@@ -20,11 +20,12 @@ function medirExceso(pista, contenedor) {
   return exceso;
 }
 
-function ValorDesbordable({ valor, activo }) {
+function ValorDesbordable({ valor, valorCorto, activo }) {
   const pistaRef = useRef(null);
   const activoRef = useRef(false);
   const cancelarRef = useRef(null);
   const reducido = useReducedMotion();
+  const corto = valorCorto || valor.split(" - ")[0]?.trim() || valor;
 
   const detener = useCallback(() => {
     cancelarRef.current?.();
@@ -39,7 +40,7 @@ function ValorDesbordable({ valor, activo }) {
 
   const recorrer = useCallback(() => {
     const pista = pistaRef.current;
-    if (!pista || reducido || activoRef.current) return;
+    if (!pista || reducido || activoRef.current || esModoAuto()) return;
 
     const contenedor = pista.parentElement;
     if (!contenedor) return;
@@ -100,57 +101,25 @@ function ValorDesbordable({ valor, activo }) {
   }, [reducido]);
 
   useEffect(() => {
-    if (reducido || esModoAuto()) return undefined;
+    if (reducido || esModoAuto()) {
+      detener();
+      return undefined;
+    }
     if (activo) {
       detener();
       recorrer();
     } else {
       detener();
     }
-    return undefined;
+    return () => detener();
   }, [activo, reducido, detener, recorrer]);
-
-  useEffect(() => {
-    if (reducido) return undefined;
-
-    const pista = pistaRef.current;
-    if (!pista) return undefined;
-
-    let observer;
-
-    const arrancarSiCorresponde = () => {
-      if (!esModoAuto()) return;
-      recorrer();
-    };
-
-    observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.some((entry) => entry.isIntersecting);
-        if (visible) arrancarSiCorresponde();
-        else detener();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(pista);
-
-    const onResize = () => {
-      detener();
-      if (esModoAuto()) recorrer();
-    };
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      observer?.disconnect();
-      window.removeEventListener("resize", onResize);
-      detener();
-    };
-  }, [reducido, recorrer, detener]);
 
   return (
     <dd className="flora-ficha__valor flora-ficha__valor--desbordar" title={valor}>
-      <span className="flora-ficha__pista" ref={pistaRef} data-fase="reposo">
+      <span className="flora-ficha__pista flora-ficha__pista--completa" ref={pistaRef} data-fase="reposo">
         {valor}
       </span>
+      <span className="flora-ficha__pista flora-ficha__pista--corta">{corto}</span>
     </dd>
   );
 }
@@ -189,7 +158,7 @@ export function FichaFlora({ ficha, protagonista }) {
             width={protagonista.width}
             height={protagonista.height}
             className="flora-ficha__img"
-            sizes="(max-width: 63.99rem) 90vw, 14rem"
+            sizes="(max-width: 63.99rem) 38vw, 14rem"
           />
         </div>
       </div>
@@ -210,9 +179,18 @@ export function FichaFlora({ ficha, protagonista }) {
         <dl className="flora-ficha__lista">
           {ficha.campos.map((campo) => (
             <div className="flora-ficha__fila" key={campo.etiqueta}>
-              <dt>{campo.etiqueta}</dt>
+              <dt>
+                <span className="flora-ficha__etiqueta-completa">{campo.etiqueta}</span>
+                {campo.etiquetaCorta ? (
+                  <span className="flora-ficha__etiqueta-corta">{campo.etiquetaCorta}</span>
+                ) : null}
+              </dt>
               {campo.desbordar ? (
-                <ValorDesbordable valor={campo.valor} activo={hoverFicha} />
+                <ValorDesbordable
+                  valor={campo.valor}
+                  valorCorto={campo.valorCorto}
+                  activo={hoverFicha}
+                />
               ) : (
                 <dd>{campo.valor}</dd>
               )}

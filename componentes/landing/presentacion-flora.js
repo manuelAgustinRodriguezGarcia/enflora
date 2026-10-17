@@ -16,7 +16,6 @@ export function PresentacionFlora({ titulo, tituloDestacado, descripcion }) {
       <h2 className="flora-presentacion__titulo" id="flora-titulo">
         {titulo}{" "}
         <span className="flora-presentacion__destacado">{tituloDestacado}</span>
-        .
       </h2>
       <p className="flora-presentacion__descripcion">{descripcion}</p>
     </motion.div>
