@@ -76,9 +76,23 @@ function progresoAIndice(progreso, ultimo) {
   return Math.min(ultimo, Math.max(0, Math.round(tramo * ultimo)));
 }
 
+function progresoAPosicion(progreso, ultimo) {
+  if (progreso <= EXPANDIR_HASTA) return 0;
+  if (progreso >= RUEDA_HASTA) return ultimo;
+  const tramo = (progreso - EXPANDIR_HASTA) / (RUEDA_HASTA - EXPANDIR_HASTA);
+  return Math.min(ultimo, Math.max(0, tramo * ultimo));
+}
+
 function indiceAProgreso(indice, ultimo) {
   if (indice <= 0) return EXPANDIR_HASTA;
   return EXPANDIR_HASTA + (indice / ultimo) * (RUEDA_HASTA - EXPANDIR_HASTA);
+}
+
+function posicionAProgreso(posicion, ultimo) {
+  if (ultimo <= 0) return EXPANDIR_HASTA;
+  if (posicion <= 0) return EXPANDIR_HASTA;
+  if (posicion >= ultimo) return RUEDA_HASTA;
+  return EXPANDIR_HASTA + (posicion / ultimo) * (RUEDA_HASTA - EXPANDIR_HASTA);
 }
 
 export function ConEnflora() {
@@ -91,8 +105,10 @@ export function ConEnflora() {
   const tituloRef = useRef(null);
   const spreadRef = useRef(null);
   const ruedaRef = useRef(null);
+  const ruedaCtrlRef = useRef(null);
   const triggerRef = useRef(null);
   const sincronizandoRef = useRef(false);
+  const interactuandoRuedaRef = useRef(false);
   const [compacto, setCompacto] = useState(false);
   const [notebook, setNotebook] = useState(false);
   const [listo, setListo] = useState(false);
@@ -235,12 +251,20 @@ export function ConEnflora() {
           end: () => `+=${Math.round(window.innerHeight * (compacto ? 2.8 : 3.5))}`,
           pin: true,
           pinType: "fixed",
-          scrub: compacto ? true : 0.7,
+          scrub: compacto ? 0.55 : 0.7,
           anticipatePin: 1,
           fastScrollEnd: false,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             triggerRef.current = self;
+            if (compacto) {
+              if (interactuandoRuedaRef.current) return;
+              ruedaCtrlRef.current?.setPosicion(progresoAPosicion(self.progress, ultimo), {
+                inmediato: true,
+                silencioso: true,
+              });
+              return;
+            }
             const siguiente = progresoAIndice(self.progress, ultimo);
             setIndice((actual) => {
               if (actual === siguiente) return actual;
@@ -341,14 +365,28 @@ export function ConEnflora() {
   );
 
   const irAIndice = (idx) => {
-    if (sincronizandoRef.current) return;
+    if (sincronizandoRef.current || compacto) return;
     setIndice(idx);
     const trigger = triggerRef.current;
-    if (!trigger || reducido || compacto) return;
+    if (!trigger || reducido) return;
     const ultimo = Math.max(frases.length - 1, 1);
     const progreso = indiceAProgreso(idx, ultimo);
     const destino = trigger.start + (trigger.end - trigger.start) * progreso;
     window.scrollTo(0, destino);
+  };
+
+  const sincronizarScrollDesdeRueda = (posicion) => {
+    if (!compacto) return;
+    const trigger = triggerRef.current;
+    if (!trigger || reducido) return;
+    const ultimo = Math.max(frases.length - 1, 1);
+    const progreso = posicionAProgreso(posicion, ultimo);
+    const destino = trigger.start + (trigger.end - trigger.start) * progreso;
+    window.scrollTo(0, destino);
+  };
+
+  const onInteraccionRueda = (activa) => {
+    interactuandoRuedaRef.current = activa;
   };
 
   const animarEntrada = !reducido && !compacto;
@@ -422,10 +460,13 @@ export function ConEnflora() {
             <p className="con-enflora__antetitulo con-enflora__rueda-titulo">{ruedaTitulo}</p>
             {listo ? (
               <OptionWheel
+                ref={ruedaCtrlRef}
                 items={frases}
                 defaultSelected={0}
-                indice={indice}
+                indice={compacto ? null : indice}
                 onChange={irAIndice}
+                onPosicion={compacto ? sincronizarScrollDesdeRueda : undefined}
+                onInteraccion={compacto ? onInteraccionRueda : undefined}
                 textColor="rgba(244, 248, 238, 0.38)"
                 activeColor="#F4F8EE"
                 side={compacto ? "center" : "right"}
@@ -435,10 +476,12 @@ export function ConEnflora() {
                 tilt={reducido || compacto ? 0 : notebook ? 4 : 6}
                 blur={reducido ? 0 : compacto ? 0.9 : notebook ? 1.35 : 2.2}
                 fade={reducido ? 0.35 : compacto ? 0.28 : notebook ? 0.24 : 0.22}
-                smoothing={reducido || compacto ? 40 : 180}
+                smoothing={reducido ? 40 : 180}
                 inset={compacto ? 0 : notebook ? 8 : 28}
                 loop={false}
-                draggable={!compacto}
+                draggable
+                snapAlSoltar={!compacto}
+                inercia={compacto}
                 capturarRueda={false}
                 ariaLabel="Beneficios de ENFLORA"
               />
