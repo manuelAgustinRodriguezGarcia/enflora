@@ -117,31 +117,44 @@ export function Footer() {
           </Link>
 
           <nav className="pie__contacto" aria-label="Contacto y redes">
-            {ENLACES.map(({ id, href, etiqueta, externo, Icono }) =>
-              externo ? (
-                <a
-                  key={id}
-                  className="pie__enlace"
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={etiqueta}
-                >
+            {ENLACES.map(({ id, href, etiqueta, externo, Icono }) => {
+              const clase = id === "partners" ? "pie__enlace pie__enlace--cta" : "pie__enlace";
+              const contenido = (
+                <>
                   <Icono size={18} />
                   <span>{etiqueta}</span>
+                </>
+              );
+
+              if (externo) {
+                return (
+                  <a
+                    key={id}
+                    className={clase}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={etiqueta}
+                  >
+                    {contenido}
+                  </a>
+                );
+              }
+
+              if (href.startsWith("/")) {
+                return (
+                  <Link key={id} className={clase} href={href} aria-label={etiqueta}>
+                    {contenido}
+                  </Link>
+                );
+              }
+
+              return (
+                <a key={id} className={clase} href={href} aria-label={etiqueta}>
+                  {contenido}
                 </a>
-              ) : href.startsWith("/") ? (
-                <Link key={id} className="pie__enlace" href={href} aria-label={etiqueta}>
-                  <Icono size={18} />
-                  <span>{etiqueta}</span>
-                </Link>
-              ) : (
-                <a key={id} className="pie__enlace" href={href} aria-label={etiqueta}>
-                  <Icono size={18} />
-                  <span>{etiqueta}</span>
-                </a>
-              ),
-            )}
+              );
+            })}
           </nav>
         </div>
 
@@ -151,26 +164,29 @@ export function Footer() {
           <p className="pie__copy">
             © {anio} ENFLORA. Todos los derechos reservados.
           </p>
-          <p className="pie__credito">
-            Un producto de{" "}
-            <a
-              className="pie__credito-enlace"
-              href="https://www.grgsolutions.com.ar"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GRG Solutions"
-            >
-              <img
-                className="pie__credito-logo"
-                src="/logos/logo-grg.svg"
-                alt="GRG"
-                width={998}
-                height={364}
-                decoding="async"
-              />
-            </a>
-          </p>
         </div>
+      </div>
+
+      <div className="pie__credito-tira">
+        <p className="pie__credito">
+          Un producto de{" "}
+          <a
+            className="pie__credito-enlace"
+            href="https://www.grgsolutions.com.ar"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GRG Solutions"
+          >
+            <img
+              className="pie__credito-logo"
+              src="/logos/logo-grg.svg"
+              alt="GRG"
+              width={998}
+              height={364}
+              decoding="async"
+            />
+          </a>
+        </p>
       </div>
     </footer>
   );

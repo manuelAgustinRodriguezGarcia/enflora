@@ -1,26 +1,61 @@
 "use client";
 
-import Image from "next/image";
+import Image, { getImageProps } from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const CONSULTA_MOBILE = "(max-width: 47.99rem)";
+const SIZES_GALERIA = "(max-width: 47.99rem) 72vw, 28vw";
+const VENTANA_EAGER = 2;
+const LOTE_PRECARGA = 2;
+const MARGEN_PRECARGA = "480px 0px";
 
 function modulo(valor, total) {
   return ((valor % total) + total) % total;
 }
 
-function ItemGaleria({ item, reducido, indice, className, itemRef }) {
+function propsImagenGaleria(item) {
+  return getImageProps({
+    src: item.src,
+    alt: item.alt,
+    width: item.width,
+    height: item.height,
+    sizes: SIZES_GALERIA,
+    quality: 75,
+  }).props;
+}
+
+function precalentarSrc(item) {
+  const props = propsImagenGaleria(item);
+  const imagen = new window.Image();
+  imagen.decoding = "async";
+  if (props.srcSet) imagen.srcset = props.srcSet;
+  if (props.sizes) imagen.sizes = props.sizes;
+  imagen.src = props.src;
+  return imagen.decode?.().catch(() => undefined) ?? Promise.resolve();
+}
+
+function ItemGaleria({
+  item,
+  reducido,
+  indice,
+  className,
+  itemRef,
+  eager = false,
+  animarEntrada = true,
+  prioridad = false,
+}) {
   return (
     <motion.li
       ref={itemRef}
       className={className}
-      initial={reducido ? false : { opacity: 0, y: 16 }}
-      whileInView={reducido ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
+      initial={animarEntrada && !reducido ? { opacity: 0, y: 16 } : false}
+      whileInView={animarEntrada && !reducido ? { opacity: 1, y: 0 } : undefined}
+      animate={!animarEntrada ? { opacity: 1, y: 0 } : undefined}
+      viewport={animarEntrada ? { once: true, amount: 0.3 } : undefined}
       transition={{
         duration: 0.4,
-        delay: reducido ? 0 : Math.min(indice, 2) * 0.07,
+        delay: reducido || !animarEntrada ? 0 : Math.min(indice, 2) * 0.07,
         ease: [0.22, 1, 0.36, 1],
       }}
     >
@@ -31,8 +66,12 @@ function ItemGaleria({ item, reducido, indice, className, itemRef }) {
           width={item.width}
           height={item.height}
           className="flora-galeria__img"
-          sizes="(max-width: 47.99rem) 72vw, 28vw"
+          sizes={SIZES_GALERIA}
+          quality={75}
           draggable={false}
+          loading={eager ? "eager" : "lazy"}
+          fetchPriority={prioridad ? "high" : eager ? "auto" : "low"}
+          decoding="async"
         />
       </div>
       <p className="flora-galeria__caption">{item.caption}</p>
@@ -40,7 +79,7 @@ function ItemGaleria({ item, reducido, indice, className, itemRef }) {
   );
 }
 
-function CarruselMobile({ items, reducido }) {
+function CarruselMobile({ items, reducido, activa }) {
   const total = items.length;
   const bucle = useMemo(
     () =>
@@ -85,6 +124,44 @@ function CarruselMobile({ items, reducido }) {
     window.addEventListener("resize", medir);
     return () => window.removeEventListener("resize", medir);
   }, [medir]);
+
+  useEffect(() => {
+    if (!activa || !items.length) return undefined;
+    let cancelado = false;
+    const unicos = [];
+    const vistos = new Set();
+    items.forEach((item) => {
+      if (!item?.src || vistos.has(item.src)) return;
+      vistos.add(item.src);
+      unicos.push(item);
+    });
+
+    const calentar = async () => {
+      for (let i = 0; i < unicos.length; i += LOTE_PRECARGA) {
+        if (cancelado) return;
+        const lote = unicos.slice(i, i + LOTE_PRECARGA);
+        await Promise.all(lote.map((item) => precalentarSrc(item)));
+      }
+    };
+
+    let idleId;
+    const conIdle = typeof window.requestIdleCallback === "function";
+    if (conIdle) {
+      idleId = window.requestIdleCallback(() => {
+        void calentar();
+      }, { timeout: 900 });
+    } else {
+      idleId = window.setTimeout(() => {
+        void calentar();
+      }, 120);
+    }
+
+    return () => {
+      cancelado = true;
+      if (conIdle) window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
+  }, [activa, items]);
 
   const normalizarIndice = useCallback(
     (valor) => {
@@ -177,18 +254,24 @@ function CarruselMobile({ items, reducido }) {
         onPointerUp={alPointerUp}
         onPointerCancel={alPointerUp}
       >
-        {bucle.map((item, i) => (
-          <ItemGaleria
-            key={item.clave}
-            item={item}
-            reducido={reducido}
-            indice={i}
-            itemRef={(nodo) => {
-              itemRefs.current[i] = nodo;
-            }}
-            className={`flora-galeria__item${item.cutout ? " flora-galeria__item--cutout" : ""}${modulo(i, total) === activoLogico ? " flora-galeria__item--activo" : ""}`}
-          />
-        ))}
+        {bucle.map((item, i) => {
+          const enVentana = Math.abs(i - indice) <= VENTANA_EAGER;
+          return (
+            <ItemGaleria
+              key={item.clave}
+              item={item}
+              reducido={reducido}
+              indice={i}
+              eager={enVentana || activa}
+              prioridad={i === indice}
+              animarEntrada={false}
+              itemRef={(nodo) => {
+                itemRefs.current[i] = nodo;
+              }}
+              className={`flora-galeria__item${item.cutout ? " flora-galeria__item--cutout" : ""}${modulo(i, total) === activoLogico ? " flora-galeria__item--activo" : ""}`}
+            />
+          );
+        })}
       </ul>
     </div>
   );
@@ -196,7 +279,9 @@ function CarruselMobile({ items, reducido }) {
 
 export function GaleriaFlora({ galeria }) {
   const reducido = useReducedMotion();
+  const raizRef = useRef(null);
   const [mobile, setMobile] = useState(false);
+  const [cerca, setCerca] = useState(false);
 
   useEffect(() => {
     const consulta = window.matchMedia(CONSULTA_MOBILE);
@@ -206,8 +291,59 @@ export function GaleriaFlora({ galeria }) {
     return () => consulta.removeEventListener("change", sincronizar);
   }, []);
 
+  useEffect(() => {
+    const nodo = raizRef.current;
+    if (!nodo) return undefined;
+    const observador = new IntersectionObserver(
+      ([entrada]) => {
+        if (entrada?.isIntersecting) setCerca(true);
+      },
+      { root: null, rootMargin: MARGEN_PRECARGA, threshold: 0.01 },
+    );
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cerca || mobile || !galeria.items?.length) return undefined;
+    let cancelado = false;
+    const unicos = [];
+    const vistos = new Set();
+    galeria.items.forEach((item) => {
+      if (!item?.src || vistos.has(item.src)) return;
+      vistos.add(item.src);
+      unicos.push(item);
+    });
+
+    const calentar = async () => {
+      for (let i = 0; i < unicos.length; i += LOTE_PRECARGA) {
+        if (cancelado) return;
+        const lote = unicos.slice(i, i + LOTE_PRECARGA);
+        await Promise.all(lote.map((item) => precalentarSrc(item)));
+      }
+    };
+
+    let idleId;
+    const conIdle = typeof window.requestIdleCallback === "function";
+    if (conIdle) {
+      idleId = window.requestIdleCallback(() => {
+        void calentar();
+      }, { timeout: 1200 });
+    } else {
+      idleId = window.setTimeout(() => {
+        void calentar();
+      }, 160);
+    }
+
+    return () => {
+      cancelado = true;
+      if (conIdle) window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
+  }, [cerca, mobile, galeria.items]);
+
   return (
-    <div className="flora-galeria">
+    <div className="flora-galeria" ref={raizRef}>
       <motion.div
         className="flora-galeria__cabecera"
         initial={reducido ? false : { opacity: 0, y: 14 }}
@@ -224,6 +360,7 @@ export function GaleriaFlora({ galeria }) {
           key={galeria.items.map((item) => item.id).join("-")}
           items={galeria.items}
           reducido={reducido}
+          activa={cerca}
         />
       ) : (
         <ul className="flora-galeria__pista">
@@ -233,6 +370,7 @@ export function GaleriaFlora({ galeria }) {
               item={item}
               reducido={reducido}
               indice={indice}
+              eager={cerca}
               className={`flora-galeria__item${item.cutout ? " flora-galeria__item--cutout" : ""}`}
             />
           ))}

@@ -21,7 +21,7 @@ const OPCIONES = [
   },
   {
     id: "famoso",
-    etiqueta: "Dejame entrar no sabes quién soy?",
+    etiqueta: "Dejame entrar, no sabes quién soy!?",
     respuesta: "Aguantaaa, a ver la entrada?",
   },
 ];
@@ -244,44 +244,33 @@ export function ConversacionFlora({
       </div>
 
       <div className="flora-chat__pie">
-        <AnimatePresence mode="wait">
-          {fase === "choosing" ? (
-            <motion.div
-              key="opciones"
-              className="flora-chat__opciones"
-              initial={reducido ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={reducido ? { opacity: 0 } : { opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
+        <div
+          className={`flora-chat__opciones${fase === "choosing" ? " flora-chat__opciones--visibles" : ""}`}
+          aria-hidden={fase !== "choosing"}
+        >
+          <p className="flora-chat__opciones-titulo">Elegí tu respuesta</p>
+          {OPCIONES.map((opcion, indice) => (
+            <button
+              key={opcion.id}
+              type="button"
+              className={`flora-chat__opcion${pistaIndice === indice ? " flora-chat__opcion--pista" : ""}`}
+              disabled={fase !== "choosing" || bloqueo}
+              tabIndex={fase === "choosing" ? 0 : -1}
+              onClick={() => elegir(opcion)}
             >
-              <p className="flora-chat__opciones-titulo">Elegí tu respuesta</p>
-              {OPCIONES.map((opcion, indice) => (
-                <motion.button
-                  key={opcion.id}
-                  type="button"
-                  className={`flora-chat__opcion${pistaIndice === indice ? " flora-chat__opcion--pista" : ""}`}
-                  disabled={bloqueo}
-                  onClick={() => elegir(opcion)}
-                  initial={reducido ? false : { opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.24,
-                    delay: reducido ? 0 : 0.06 + indice * 0.08,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                >
-                  {opcion.etiqueta}
-                </motion.button>
-              ))}
-            </motion.div>
-          ) : null}
+              {opcion.etiqueta}
+            </button>
+          ))}
+        </div>
 
+        <AnimatePresence>
           {fase === "completed" ? (
             <motion.div
               key="continuar"
               className="flora-chat__continuar-wrap"
-              initial={reducido ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={reducido ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={reducido ? { opacity: 0 } : { opacity: 0 }}
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             >
               <button type="button" className="flora-chat__continuar" onClick={onContinuar}>

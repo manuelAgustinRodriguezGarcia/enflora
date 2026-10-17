@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check } from "lucide-react";
+import { Check, ChevronDown, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,33 +10,11 @@ import { TearTicket } from "@/componentes/landing/tear-ticket";
 import { textos } from "@/lib/landing";
 import { transicionVista } from "@/lib/animaciones";
 
-const CODIGO_PROMO = "FLORA-VIP";
-const HREF_REGISTRO = "/registro?campana=pase-gratis";
-const PAUSA_ENTRADA_MS = 1000;
+const HREF_REGISTRO = "/registro";
 const CONSULTA_DESKTOP = "(min-width: 64rem)";
 const FONDO_DESKTOP = "/images/flora-landing-patova.png";
 const FONDO_MOBILE_CHAT = "/images/flora-register-mobile.png";
 const FONDO_MOBILE_ENTRADA = "/images/flora-login-mobile.png";
-
-function bloquearScroll() {
-  const y = window.scrollY;
-  const impedir = (evento) => {
-    evento.preventDefault();
-  };
-  const fijar = () => {
-    if (Math.abs(window.scrollY - y) > 0.5) {
-      window.scrollTo(0, y);
-    }
-  };
-  window.addEventListener("wheel", impedir, { passive: false });
-  window.addEventListener("touchmove", impedir, { passive: false });
-  window.addEventListener("scroll", fijar, { passive: true });
-  return () => {
-    window.removeEventListener("wheel", impedir);
-    window.removeEventListener("touchmove", impedir);
-    window.removeEventListener("scroll", fijar);
-  };
-}
 
 export function SeccionRegalo() {
   const { regalo } = textos;
@@ -45,13 +23,9 @@ export function SeccionRegalo() {
   const yaRoto = useRef(false);
   const yaEntrada = useRef(false);
   const timerRevelado = useRef(0);
-  const timerCopiado = useRef(0);
-  const timerEntrada = useRef(0);
-  const liberarScroll = useRef(null);
   const [fase, setFase] = useState("chat");
   const [chatActivo, setChatActivo] = useState(false);
   const [avisoChat, setAvisoChat] = useState(false);
-  const [copiado, setCopiado] = useState(false);
   const [esDesktop, setEsDesktop] = useState(false);
 
   useEffect(() => {
@@ -65,9 +39,6 @@ export function SeccionRegalo() {
   useEffect(() => {
     return () => {
       window.clearTimeout(timerRevelado.current);
-      window.clearTimeout(timerCopiado.current);
-      window.clearTimeout(timerEntrada.current);
-      liberarScroll.current?.();
     };
   }, []);
 
@@ -81,32 +52,20 @@ export function SeccionRegalo() {
       return undefined;
     }
 
-    const umbral = window.matchMedia(CONSULTA_DESKTOP).matches ? 0.55 : 0.35;
+    const umbral = window.matchMedia(CONSULTA_DESKTOP).matches ? 0.28 : 0.18;
     const observador = new IntersectionObserver(
       ([entrada]) => {
         if (!entrada?.isIntersecting || yaEntrada.current) return;
         yaEntrada.current = true;
         observador.disconnect();
-
-        seccion.scrollIntoView({ behavior: "auto", block: "start" });
-        liberarScroll.current = bloquearScroll();
-
-        timerEntrada.current = window.setTimeout(() => {
-          liberarScroll.current?.();
-          liberarScroll.current = null;
-          setChatActivo(true);
-          setAvisoChat(true);
-        }, PAUSA_ENTRADA_MS);
+        setChatActivo(true);
+        setAvisoChat(true);
       },
-      { threshold: umbral },
+      { threshold: umbral, rootMargin: "0px 0px -8% 0px" },
     );
 
     observador.observe(seccion);
-    return () => {
-      observador.disconnect();
-      window.clearTimeout(timerEntrada.current);
-      liberarScroll.current?.();
-    };
+    return () => observador.disconnect();
   }, [reducido]);
 
   const mostrarTicket = useCallback(() => {
@@ -125,17 +84,6 @@ export function SeccionRegalo() {
     window.clearTimeout(timerRevelado.current);
     timerRevelado.current = window.setTimeout(() => setFase("revelado"), 700);
   }, [reducido]);
-
-  async function copiarCodigo() {
-    try {
-      await navigator.clipboard.writeText(CODIGO_PROMO);
-      setCopiado(true);
-      window.clearTimeout(timerCopiado.current);
-      timerCopiado.current = window.setTimeout(() => setCopiado(false), 1800);
-    } catch {
-      setCopiado(false);
-    }
-  }
 
   const ticketVisible = fase === "ticket" || fase === "celebrando";
   const oscurecido = fase === "celebrando" || fase === "revelado";
@@ -193,20 +141,29 @@ export function SeccionRegalo() {
                   {fase === "chat" ? (
                     <motion.div
                       key="chat"
-                      className="regalo__chat-wrap"
+                      className="regalo__fase-chat"
                       initial={reducido ? false : { opacity: 0, y: 18 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={reducido ? { opacity: 0 } : { opacity: 0, y: -12 }}
                       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <header className="regalo__pista">
-                        <h2 className="regalo__pista-titulo">{regalo.pistaTitulo}</h2>
-                        <p className="regalo__pista-bajada">{regalo.pistaBajada}</p>
+                        <Star
+                          className="regalo__pista-icono"
+                          size={22}
+                          strokeWidth={1.75}
+                          fill="#d4af37"
+                          aria-hidden="true"
+                        />
+                        <div className="regalo__pista-texto">
+                          <h2 className="regalo__pista-titulo">{regalo.pistaTitulo}</h2>
+                          <p className="regalo__pista-bajada">{regalo.pistaBajada}</p>
+                        </div>
                       </header>
-                      {chatActivo ? (
+                      <div className="regalo__chat-wrap">
                         <ConversacionFlora
                           onContinuar={mostrarTicket}
-                          activo
+                          activo={chatActivo}
                           className={avisoChat ? "flora-chat--aviso" : ""}
                           onAnimationEnd={(evento) => {
                             if (evento.animationName === "flora-chat-aviso") {
@@ -214,7 +171,7 @@ export function SeccionRegalo() {
                             }
                           }}
                         />
-                      ) : null}
+                      </div>
                     </motion.div>
                   ) : null}
 
@@ -259,7 +216,21 @@ export function SeccionRegalo() {
                         className={`regalo__ticket${esDesktop ? "" : " regalo__ticket--vertical"}`}
                         stub={
                           <div className="regalo-ticket__stub">
-                            <strong className="regalo-ticket__stub-accion">ROMPÉ ACÁ</strong>
+                            <div className="regalo-ticket__stub-fila">
+                              <ChevronDown
+                                className="regalo-ticket__stub-flecha"
+                                size={20}
+                                strokeWidth={2.5}
+                                aria-hidden="true"
+                              />
+                              <strong className="regalo-ticket__stub-accion">ROMPÉ ACÁ</strong>
+                              <ChevronDown
+                                className="regalo-ticket__stub-flecha"
+                                size={20}
+                                strokeWidth={2.5}
+                                aria-hidden="true"
+                              />
+                            </div>
                           </div>
                         }
                       >
@@ -277,8 +248,8 @@ export function SeccionRegalo() {
                           <p className="regalo-ticket__serie">ENTRADA N° 000420</p>
                           <h3 className="regalo-ticket__headline">Rompé este ticket</h3>
                           <p className="regalo-ticket__sub">
-                            Zekiel te habla Flora, te dejo este regalito para que la vaciles con tus
-                            cultivos.
+                            Zekieeeel te habla Flora, te dejo este regalito para que la vaciles con tus
+                            cultivos. Un abrazo.
                           </p>
                         </div>
                       </TearTicket>
@@ -321,17 +292,6 @@ export function SeccionRegalo() {
                     </li>
                   ))}
                 </ul>
-              </div>
-              <div className="regalo__revelado-acciones">
-                <button
-                  type="button"
-                  className="regalo__codigo"
-                  onClick={copiarCodigo}
-                  aria-label={copiado ? "Pase copiado" : "Copiar pase de entrada"}
-                >
-                  <span>{copiado ? "Copiado" : "Tu pase de entrada"}</span>
-                  <code>{CODIGO_PROMO}</code>
-                </button>
               </div>
               <Link className="landing__accion landing__accion--acento regalo__cta" href={HREF_REGISTRO}>
                 Crear mi cuenta ya!

@@ -63,7 +63,17 @@ function CardPorQueEnflora({ tarjeta }) {
         <ZonaIlustracion ilustracion={tarjeta.ilustracion} />
         <div className="para-que-sirve__tarjeta-texto">
           <span className="para-que-sirve__numero">{tarjeta.numero}</span>
-          <h3 className="para-que-sirve__tarjeta-titulo">{tarjeta.titulo}</h3>
+          <h3 className="para-que-sirve__tarjeta-titulo">
+            {tarjeta.tituloLineas?.length ? (
+              tarjeta.tituloLineas.map((linea) => (
+                <span className="para-que-sirve__titulo-linea" key={linea}>
+                  {linea}
+                </span>
+              ))
+            ) : (
+              tarjeta.titulo
+            )}
+          </h3>
           <p className="para-que-sirve__tarjeta-descripcion">{tarjeta.descripcion}</p>
         </div>
       </div>

@@ -60,6 +60,9 @@
 
 .tear-ticket__piece--stub {
   outline: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
   will-change: transform;
 }
 

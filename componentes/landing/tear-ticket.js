@@ -431,9 +431,35 @@ export function TearTicket({
     setInstant(true);
     finish();
   };
+  useEffect(() => {
+    if (!grabbing) return undefined;
+    const y = window.scrollY;
+    const impedir = evento => {
+      evento.preventDefault();
+    };
+    const fijar = () => {
+      if (Math.abs(window.scrollY - y) > 0.5) {
+        window.scrollTo(0, y);
+      }
+    };
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    window.addEventListener('touchmove', impedir, { passive: false });
+    window.addEventListener('wheel', impedir, { passive: false });
+    window.addEventListener('scroll', fijar, { passive: true });
+    return () => {
+      document.documentElement.style.overscrollBehavior = '';
+      document.body.style.overscrollBehavior = '';
+      window.removeEventListener('touchmove', impedir);
+      window.removeEventListener('wheel', impedir);
+      window.removeEventListener('scroll', fijar);
+    };
+  }, [grabbing]);
+
   const onStubDown = e => {
     const s = sim.current;
     if (disabled || used || e.button !== 0 || s.id !== null || s.phase === 'drop') return;
+    e.preventDefault();
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {}

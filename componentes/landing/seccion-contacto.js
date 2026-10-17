@@ -6,6 +6,7 @@ const TARJETAS = [
     id: "instagram",
     href: "https://www.instagram.com/enflora420/?hl=es-la",
     titulo: "Seguinos en Instagram",
+    etiqueta: "Instagram",
     texto: "@enflora420",
     externo: true,
     Icono: IconoInstagram,
@@ -14,6 +15,7 @@ const TARJETAS = [
     id: "email",
     href: "mailto:enflora.420@gmail.com",
     titulo: "Mandame un mail",
+    etiqueta: "Mail",
     texto: "enflora.420@gmail.com",
     externo: false,
     Icono: Mail,
@@ -22,6 +24,7 @@ const TARJETAS = [
     id: "linkedin",
     href: "https://www.linkedin.com/in/manuel-agustin-rodriguez-garcia/",
     titulo: "LinkedIn del creador",
+    etiqueta: "LinkedIn",
     texto: "Manuel Rodríguez García",
     externo: true,
     Icono: IconoLinkedIn,
@@ -105,34 +108,6 @@ export function SeccionContacto() {
             Si tenés alguna duda, idea de mejora, feedback o simplemente querés
             charlar, escribime y te leo.
           </p>
-
-          <ul className="contacto__tarjetas">
-            {TARJETAS.map(({ id, href, titulo, texto, externo, Icono }) => (
-              <li key={id}>
-                <a
-                  className="contacto__tarjeta"
-                  href={href}
-                  {...(externo
-                    ? { target: "_blank", rel: "noopener noreferrer" }
-                    : {})}
-                >
-                  <span className="contacto__tarjeta-icono" aria-hidden="true">
-                    <Icono size={20} strokeWidth={1.75} />
-                  </span>
-                  <span className="contacto__tarjeta-texto">
-                    <span className="contacto__tarjeta-titulo">{titulo}</span>
-                    <span className="contacto__tarjeta-detalle">{texto}</span>
-                  </span>
-                  <ArrowUpRight
-                    className="contacto__tarjeta-flecha"
-                    size={18}
-                    strokeWidth={1.9}
-                    aria-hidden="true"
-                  />
-                </a>
-              </li>
-            ))}
-          </ul>
         </div>
 
         <div className="contacto__form-wrap">
@@ -148,6 +123,39 @@ export function SeccionContacto() {
             </div>
             <FormularioContacto />
           </div>
+        </div>
+
+        <div className="contacto__canales">
+          <p className="contacto__canales-titulo">También podes escribirnos en</p>
+          <ul className="contacto__tarjetas">
+            {TARJETAS.map(({ id, href, titulo, etiqueta, texto, externo, Icono }) => (
+              <li key={id}>
+                <a
+                  className="contacto__tarjeta"
+                  href={href}
+                  aria-label={`${titulo}: ${texto}`}
+                  {...(externo
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                >
+                  <span className="contacto__tarjeta-icono" aria-hidden="true">
+                    <Icono size={20} strokeWidth={1.75} />
+                  </span>
+                  <span className="contacto__tarjeta-texto">
+                    <span className="contacto__tarjeta-titulo">{titulo}</span>
+                    <span className="contacto__tarjeta-etiqueta">{etiqueta}</span>
+                    <span className="contacto__tarjeta-detalle">{texto}</span>
+                  </span>
+                  <ArrowUpRight
+                    className="contacto__tarjeta-flecha"
+                    size={18}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

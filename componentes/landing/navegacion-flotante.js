@@ -15,6 +15,7 @@ function desplazarA(id, inmediato) {
 export function NavegacionFlotante() {
   const [visible, setVisible] = useState(false);
   const [enProducto, setEnProducto] = useState(false);
+  const [enPie, setEnPie] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const [activoId, setActivoId] = useState(navegacionFlotante[0]?.id ?? "");
   const reducido = useReducedMotion();
@@ -51,19 +52,43 @@ export function NavegacionFlotante() {
 
   useEffect(() => {
     const seccion = document.getElementById("producto");
-    if (!seccion) return undefined;
+    const pie = document.querySelector("footer.pie");
+    if (!seccion && !pie) return undefined;
 
-    const observer = new IntersectionObserver(
-      ([entrada]) => {
-        const dentro = Boolean(entrada?.isIntersecting && entrada.intersectionRatio >= 0.4);
+    let raf = 0;
+
+    const medir = () => {
+      raf = 0;
+      const alto = window.innerHeight || 1;
+
+      if (seccion) {
+        const caja = seccion.getBoundingClientRect();
+        const visible = Math.max(0, Math.min(caja.bottom, alto) - Math.max(caja.top, 0));
+        const ratio = visible / Math.max(caja.height, 1);
+        const dentro = caja.top < alto * 0.55 && caja.bottom > alto * 0.35 && ratio >= 0.45;
         setEnProducto((actual) => (actual === dentro ? actual : dentro));
         if (dentro) setAbierto(false);
-      },
-      { threshold: [0, 0.25, 0.4, 0.6, 0.8, 1] },
-    );
+      }
 
-    observer.observe(seccion);
-    return () => observer.disconnect();
+      if (pie) {
+        const caja = pie.getBoundingClientRect();
+        const dentro = caja.top < alto - 48 && caja.bottom > alto * 0.7;
+        setEnPie((actual) => (actual === dentro ? actual : dentro));
+        if (dentro) setAbierto(false);
+      }
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(medir);
+    };
+
+    medir();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
   }, []);
 
   useEffect(() => {
@@ -154,7 +179,7 @@ export function NavegacionFlotante() {
   const transicionEntrada = reducido
     ? { duration: 0.01 }
     : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
-  const mostrado = visible && !enProducto;
+  const mostrado = visible && !enProducto && !enPie;
 
   return (
     <div
@@ -170,8 +195,8 @@ export function NavegacionFlotante() {
         initial={false}
         animate={
           mostrado
-            ? { opacity: 1, y: 0, scale: 1 }
-            : { opacity: 0, y: 12, scale: 0.9 }
+            ? { opacity: 1, scale: 1 }
+            : { opacity: 0, scale: 0.92 }
         }
         transition={transicionEntrada}
         onClick={() => desplazarA("inicio", Boolean(reducido))}
@@ -239,8 +264,8 @@ export function NavegacionFlotante() {
           initial={false}
           animate={
             mostrado
-              ? { opacity: 1, y: 0, scale: 1 }
-              : { opacity: 0, y: 12, scale: 0.9 }
+              ? { opacity: 1, scale: 1 }
+              : { opacity: 0, scale: 0.92 }
           }
           transition={transicionEntrada}
           onClick={() => setAbierto((valor) => !valor)}

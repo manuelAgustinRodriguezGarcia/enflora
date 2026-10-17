@@ -2,12 +2,15 @@
   position: relative;
   isolation: isolate;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   box-sizing: border-box;
   min-height: 100vh;
   min-height: 100dvh;
   min-height: 100svh;
-  padding: 4.5rem 1.25rem;
+  padding:
+    calc(var(--header, 4.5rem) + 0.75rem)
+    1.25rem
+    calc(5.5rem + env(safe-area-inset-bottom, 0px));
   background-color: #1a2e1f;
   background-image: url("/images/flora-papelera-mobile.png");
   background-position: center center;
@@ -29,6 +32,7 @@
   }
 
   @media (min-width: 64rem) {
+    align-items: center;
     padding: 6.5rem 7vw;
     background-image: url("/images/flora-papelera.png");
     background-position: center center;
@@ -50,13 +54,13 @@
     display: grid;
     gap: 2.5rem;
     width: min(100%, 68rem);
-    margin-inline: auto;
+    margin-inline: 0 auto;
   }
 
   &__intro {
     display: grid;
     gap: 1.75rem;
-    align-items: center;
+    align-items: end;
     max-width: 34rem;
   }
 
@@ -69,6 +73,14 @@
     border: 1.5px solid rgba(232, 196, 71, 0.9);
     border-radius: 1.25rem;
     background: rgba(11, 61, 42, 0.72);
+
+    @media (max-width: 63.99rem) {
+      justify-items: stretch;
+
+      > div {
+        width: 100%;
+      }
+    }
 
     @media (min-width: 64rem) {
       padding: 2rem 1.85rem;
@@ -128,6 +140,14 @@
         background: #e0bc45;
         color: #0b3d2a;
       }
+    }
+
+    @media (max-width: 63.99rem) {
+      display: flex;
+      box-sizing: border-box;
+      width: 100%;
+      justify-content: center;
+      text-align: center;
     }
   }
 
