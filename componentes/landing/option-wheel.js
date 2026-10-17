@@ -13,6 +13,7 @@ export const OptionWheel = forwardRef(function OptionWheel(
     onChange,
     onPosicion,
     onInteraccion,
+    onDesbordamiento,
     textColor = "#7a9a48",
     activeColor = "#A4C85B",
     side = "left",
@@ -45,6 +46,8 @@ export const OptionWheel = forwardRef(function OptionWheel(
   const onChangeRef = useRef(onChange);
   const onPosicionRef = useRef(onPosicion);
   const onInteraccionRef = useRef(onInteraccion);
+  const onDesbordamientoRef = useRef(null);
+  const ultimaPosicionNotificadaRef = useRef(null);
   const selectedRef = useRef(defaultSelected);
   const wheelTimerRef = useRef(null);
   const dragRef = useRef(null);
@@ -67,6 +70,10 @@ export const OptionWheel = forwardRef(function OptionWheel(
   useEffect(() => {
     onInteraccionRef.current = onInteraccion;
   }, [onInteraccion]);
+
+  useEffect(() => {
+    onDesbordamientoRef.current = onDesbordamiento;
+  }, [onDesbordamiento]);
 
   useEffect(() => {
     remPxRef.current = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -179,7 +186,13 @@ export const OptionWheel = forwardRef(function OptionWheel(
         setSelectedIndex(idx);
         if (!silencioso) onChangeRef.current?.(idx, cfg.items[idx]);
       }
-      onPosicionRef.current?.(v);
+      if (
+        ultimaPosicionNotificadaRef.current == null ||
+        Math.abs(ultimaPosicionNotificadaRef.current - v) > 0.0005
+      ) {
+        ultimaPosicionNotificadaRef.current = v;
+        onPosicionRef.current?.(v);
+      }
       if (inmediato) {
         pintarAhora();
         return;
@@ -202,12 +215,28 @@ export const OptionWheel = forwardRef(function OptionWheel(
         const cfg = cfgRef.current;
         let siguiente = posRef.current + vel * dt;
         if (!cfg.loop) {
-          if (siguiente <= 0) {
-            siguiente = 0;
-            vel = 0;
-          } else if (siguiente >= cfg.count - 1) {
-            siguiente = cfg.count - 1;
-            vel = 0;
+          const max = Math.max(cfg.count - 1, 0);
+          if (siguiente <= 0 || siguiente >= max) {
+            const clamped = Math.min(Math.max(siguiente, 0), max);
+            const excessPx = (siguiente - clamped) * cfg.rowH;
+            if (onDesbordamientoRef.current && Math.abs(excessPx) > 0.5) {
+              onDesbordamientoRef.current(excessPx);
+            }
+            siguiente = clamped;
+            posRef.current = siguiente;
+            targetRef.current = siguiente;
+            pintarItems(siguiente);
+            if (
+              ultimaPosicionNotificadaRef.current == null ||
+              Math.abs(ultimaPosicionNotificadaRef.current - siguiente) > 0.0005
+            ) {
+              ultimaPosicionNotificadaRef.current = siguiente;
+              onPosicionRef.current?.(siguiente);
+            }
+            inerciaRafRef.current = null;
+            velocityRef.current = 0;
+            onInteraccionRef.current?.(false);
+            return;
           }
         }
         posRef.current = siguiente;
@@ -219,7 +248,13 @@ export const OptionWheel = forwardRef(function OptionWheel(
           selectedRef.current = idx;
           setSelectedIndex(idx);
         }
-        onPosicionRef.current?.(siguiente);
+        if (
+          ultimaPosicionNotificadaRef.current == null ||
+          Math.abs(ultimaPosicionNotificadaRef.current - siguiente) > 0.0005
+        ) {
+          ultimaPosicionNotificadaRef.current = siguiente;
+          onPosicionRef.current?.(siguiente);
+        }
 
         vel *= Math.pow(INERCIA_FRICTACION, dt * 60);
         velocityRef.current = vel;
@@ -316,8 +351,28 @@ export const OptionWheel = forwardRef(function OptionWheel(
       }
       if (!dragMovedRef.current) return;
 
-      const rowH = cfgRef.current.rowH;
-      const siguiente = drag.start - dy / rowH;
+      const cfg = cfgRef.current;
+      const rowH = cfg.rowH;
+      const max = Math.max(cfg.count - 1, 0);
+      let siguiente = drag.start - dy / rowH;
+
+      if (!cfg.loop && onDesbordamientoRef.current && (siguiente < 0 || siguiente > max)) {
+        const clamped = Math.min(Math.max(siguiente, 0), max);
+        const excessPx = (siguiente - clamped) * rowH;
+        if (Math.abs(excessPx) > 0.5) {
+          onDesbordamientoRef.current(excessPx);
+        }
+        drag.start = clamped;
+        drag.y = evento.clientY;
+        drag.prevY = evento.clientY;
+        drag.t = now;
+        velocityRef.current = 0;
+        if (Math.abs(posRef.current - clamped) > 0.001) {
+          applyTarget(clamped, false, true, true);
+        }
+        return;
+      }
+
       const dt = Math.max((now - drag.t) / 1000, 0.001);
       const desplazamiento = -(evento.clientY - (drag.prevY ?? drag.y)) / rowH;
       velocityRef.current = desplazamiento / dt;

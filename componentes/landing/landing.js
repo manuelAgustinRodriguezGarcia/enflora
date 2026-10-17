@@ -30,9 +30,7 @@ export function Landing({ cotizacion = null }) {
               <ParaQueSirve />
             </Revelar>
           </EscenaSolar>
-          <Revelar>
-            <ConEnflora />
-          </Revelar>
+          <ConEnflora />
           <Producto />
           <SeccionConoceFlora />
           <SeccionRegalo />

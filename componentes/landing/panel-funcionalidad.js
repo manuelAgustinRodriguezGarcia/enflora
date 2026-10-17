@@ -1,17 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { forwardRef } from "react";
 import { BeneficiosFuncionalidad } from "@/componentes/landing/beneficios-funcionalidad";
 import { VistaPreviaFuncionalidad } from "@/componentes/landing/vista-previa-funcionalidad";
 
-export function PanelFuncionalidad({ funcionalidad }) {
+export const PanelFuncionalidad = forwardRef(function PanelFuncionalidad(
+  { funcionalidad },
+  ref,
+) {
   const reducido = useReducedMotion();
   const transicion = reducido
     ? { duration: 0 }
     : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
 
   return (
-    <div className="producto-panel">
+    <div className="producto-panel" ref={ref}>
       <AnimatePresence mode="wait" initial={false}>
         <motion.div
           key={funcionalidad.id}
@@ -50,4 +54,4 @@ export function PanelFuncionalidad({ funcionalidad }) {
       </AnimatePresence>
     </div>
   );
-}
+});

@@ -385,6 +385,11 @@ export function ConEnflora() {
     window.scrollTo(0, destino);
   };
 
+  const desbordarScrollDesdeRueda = (deltaY) => {
+    if (!compacto || !deltaY) return;
+    window.scrollBy(0, deltaY);
+  };
+
   const onInteraccionRueda = (activa) => {
     interactuandoRuedaRef.current = activa;
   };
@@ -467,6 +472,7 @@ export function ConEnflora() {
                 onChange={irAIndice}
                 onPosicion={compacto ? sincronizarScrollDesdeRueda : undefined}
                 onInteraccion={compacto ? onInteraccionRueda : undefined}
+                onDesbordamiento={compacto ? desbordarScrollDesdeRueda : undefined}
                 textColor="rgba(244, 248, 238, 0.38)"
                 activeColor="#F4F8EE"
                 side={compacto ? "center" : "right"}

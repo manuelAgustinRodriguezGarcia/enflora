@@ -14,6 +14,7 @@ function desplazarA(id, inmediato) {
 
 export function NavegacionFlotante() {
   const [visible, setVisible] = useState(false);
+  const [enProducto, setEnProducto] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const [activoId, setActivoId] = useState(navegacionFlotante[0]?.id ?? "");
   const reducido = useReducedMotion();
@@ -46,6 +47,23 @@ export function NavegacionFlotante() {
       window.removeEventListener("scroll", onScroll);
       if (raf) window.cancelAnimationFrame(raf);
     };
+  }, []);
+
+  useEffect(() => {
+    const seccion = document.getElementById("producto");
+    if (!seccion) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entrada]) => {
+        const dentro = Boolean(entrada?.isIntersecting && entrada.intersectionRatio >= 0.4);
+        setEnProducto((actual) => (actual === dentro ? actual : dentro));
+        if (dentro) setAbierto(false);
+      },
+      { threshold: [0, 0.25, 0.4, 0.6, 0.8, 1] },
+    );
+
+    observer.observe(seccion);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -136,34 +154,35 @@ export function NavegacionFlotante() {
   const transicionEntrada = reducido
     ? { duration: 0.01 }
     : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
+  const mostrado = visible && !enProducto;
 
   return (
     <div
-      className={`nav-flotante${visible ? " nav-flotante--visible" : ""}`}
+      className={`nav-flotante${mostrado ? " nav-flotante--visible" : ""}`}
       ref={raizRef}
-      aria-hidden={!visible}
+      aria-hidden={!mostrado}
     >
       <motion.button
         type="button"
         className="nav-flotante__boton nav-flotante__boton--arriba"
         aria-label="Volver arriba"
-        tabIndex={visible ? 0 : -1}
+        tabIndex={mostrado ? 0 : -1}
         initial={false}
         animate={
-          visible
+          mostrado
             ? { opacity: 1, y: 0, scale: 1 }
             : { opacity: 0, y: 12, scale: 0.9 }
         }
         transition={transicionEntrada}
         onClick={() => desplazarA("inicio", Boolean(reducido))}
-        whileTap={reducido || !visible ? undefined : { scale: 0.94 }}
+        whileTap={reducido || !mostrado ? undefined : { scale: 0.94 }}
       >
         <ArrowUp size={22} aria-hidden="true" />
       </motion.button>
 
       <div className="nav-flotante__menu">
         <AnimatePresence>
-          {abierto && visible ? (
+          {abierto && mostrado ? (
             <motion.ul
               className="nav-flotante__opciones"
               id={menuId}
@@ -216,16 +235,16 @@ export function NavegacionFlotante() {
           aria-label={abierto ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={abierto}
           aria-controls={menuId}
-          tabIndex={visible ? 0 : -1}
+          tabIndex={mostrado ? 0 : -1}
           initial={false}
           animate={
-            visible
+            mostrado
               ? { opacity: 1, y: 0, scale: 1 }
               : { opacity: 0, y: 12, scale: 0.9 }
           }
           transition={transicionEntrada}
           onClick={() => setAbierto((valor) => !valor)}
-          whileTap={reducido || !visible ? undefined : { scale: 0.94 }}
+          whileTap={reducido || !mostrado ? undefined : { scale: 0.94 }}
         >
           {abierto ? (
             <X size={22} strokeWidth={2.25} aria-hidden="true" />

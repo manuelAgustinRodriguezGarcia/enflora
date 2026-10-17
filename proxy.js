@@ -28,6 +28,10 @@ export async function proxy(request) {
     return continuar(request);
   }
 
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return continuar(request);
+  }
+
   let respuesta = continuar(request);
 
   const supabase = createServerClient(

@@ -35,11 +35,16 @@ export function EncabezadoPublico() {
   const [mostrarCta, setMostrarCta] = useState(true);
 
   useGSAP(() => {
+    const nodo = ref.current;
+    if (!nodo) return;
+
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      gsap.from(ref.current, { opacity: 0, y: -12, duration: 0.4, ease: "power2.out" });
+      gsap.from(nodo, { opacity: 0, y: -12, duration: 0.4, ease: "power2.out" });
     });
-  });
+
+    return () => mm.revert();
+  }, { scope: ref });
 
   useEffect(() => {
     const consulta = window.matchMedia("(min-width: 64rem) and (max-width: 89.99rem)");

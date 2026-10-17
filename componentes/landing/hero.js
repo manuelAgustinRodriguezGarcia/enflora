@@ -25,6 +25,9 @@ export function Hero() {
   }
 
   useGSAP(() => {
+    const seccion = ref.current;
+    if (!seccion) return;
+
     const mm = gsap.matchMedia();
 
     mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -38,17 +41,21 @@ export function Hero() {
     });
 
     mm.add("(min-width: 64rem) and (prefers-reduced-motion: no-preference)", () => {
+      if (!seccion.querySelector(".hero__visual")) return;
+
       gsap.to(".hero__visual", {
         y: 20,
         ease: "none",
         scrollTrigger: {
-          trigger: ref.current,
+          trigger: seccion,
           start: "top top",
           end: "bottom top",
           scrub: 0.6,
         },
       });
     });
+
+    return () => mm.revert();
   }, { scope: ref });
 
   return (

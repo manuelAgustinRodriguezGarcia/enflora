@@ -82,7 +82,7 @@ function PreviewOrigenHistoria() {
   return (
     <div className="producto-preview__ui producto-preview__ui--adn">
       <div className="producto-preview__ui-top">
-        <strong>Origen e historia</strong>
+        <strong>Historial</strong>
         <Chip tono="arena">Próximamente</Chip>
       </div>
       <p className="producto-preview__nota">

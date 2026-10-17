@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
-
-const CORREO = "enflora.420@gmail.com";
+import { ArrowRight, LoaderCircle } from "lucide-react";
+import { MENSAJES_CONTACTO, validarContacto } from "@/lib/contacto";
 
 function ajustarAltura(textarea) {
   if (!textarea) return;
@@ -13,52 +12,96 @@ function ajustarAltura(textarea) {
 
 export function FormularioContacto() {
   const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
+  const [correo, setCorreo] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
   const mensajeRef = useRef(null);
+  const enviandoRef = useRef(false);
 
   useEffect(() => {
     if (!enviado) ajustarAltura(mensajeRef.current);
   }, [mensaje, enviado]);
 
-  function enviar(evento) {
+  async function enviar(evento) {
     evento.preventDefault();
+    if (enviandoRef.current) return;
+
     setError("");
 
-    const nombreLimpio = nombre.trim();
-    const emailLimpio = email.trim();
-    const mensajeLimpio = mensaje.trim();
+    const resultado = validarContacto({
+      nombre,
+      correo,
+      mensaje,
+      empresa,
+    });
 
-    if (!nombreLimpio || !emailLimpio || !mensajeLimpio) {
-      setError("Completá todos los campos para enviar tu consulta.");
+    if (!resultado.ok) {
+      setError(resultado.error || MENSAJES_CONTACTO.generico);
       return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpio)) {
-      setError("Revisá el correo electrónico.");
+    if (resultado.honeypot) {
+      setNombre("");
+      setCorreo("");
+      setMensaje("");
+      setEmpresa("");
+      setEnviado(true);
       return;
     }
 
-    const asunto = encodeURIComponent(`Consulta ENFLORA · ${nombreLimpio}`);
-    const cuerpo = encodeURIComponent(
-      `Nombre: ${nombreLimpio}\nCorreo: ${emailLimpio}\n\n${mensajeLimpio}`,
-    );
-    window.location.href = `mailto:${CORREO}?subject=${asunto}&body=${cuerpo}`;
-    setEnviado(true);
+    enviandoRef.current = true;
+    setEnviando(true);
+
+    try {
+      const respuesta = await fetch("/api/contacto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: resultado.datos.nombre,
+          correo: resultado.datos.correo,
+          mensaje: resultado.datos.mensaje,
+          empresa,
+        }),
+      });
+
+      let data = null;
+      try {
+        data = await respuesta.json();
+      } catch {
+        data = null;
+      }
+
+      if (!respuesta.ok || !data?.ok) {
+        setError(MENSAJES_CONTACTO.generico);
+        return;
+      }
+
+      setNombre("");
+      setCorreo("");
+      setMensaje("");
+      setEmpresa("");
+      setEnviado(true);
+    } catch {
+      setError(MENSAJES_CONTACTO.generico);
+    } finally {
+      enviandoRef.current = false;
+      setEnviando(false);
+    }
   }
 
   if (enviado) {
     return (
       <div className="contacto__exito" role="status">
-        <p>¡Listo! Si no se abrió tu correo, escribinos a {CORREO}.</p>
+        <p>{MENSAJES_CONTACTO.exito}</p>
         <button
           type="button"
           className="contacto__exito-accion"
           onClick={() => {
             setEnviado(false);
-            setMensaje("");
+            setError("");
           }}
         >
           Enviar otra consulta
@@ -69,6 +112,19 @@ export function FormularioContacto() {
 
   return (
     <form className="contacto__form" onSubmit={enviar} noValidate>
+      <div className="contacto__honeypot" aria-hidden="true">
+        <label>
+          Empresa
+          <input
+            type="text"
+            name="empresa"
+            value={empresa}
+            onChange={(evento) => setEmpresa(evento.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+          />
+        </label>
+      </div>
       <div className="contacto__fila">
         <label className="contacto__campo">
           <span>Nombre</span>
@@ -79,19 +135,23 @@ export function FormularioContacto() {
             value={nombre}
             onChange={(evento) => setNombre(evento.target.value)}
             placeholder="Tu nombre"
+            maxLength={100}
             required
+            disabled={enviando}
           />
         </label>
         <label className="contacto__campo">
           <span>Correo</span>
           <input
             type="email"
-            name="email"
+            name="correo"
             autoComplete="email"
-            value={email}
-            onChange={(evento) => setEmail(evento.target.value)}
+            value={correo}
+            onChange={(evento) => setCorreo(evento.target.value)}
             placeholder="tu@correo.com"
+            maxLength={254}
             required
+            disabled={enviando}
           />
         </label>
       </div>
@@ -107,7 +167,9 @@ export function FormularioContacto() {
             ajustarAltura(evento.target);
           }}
           placeholder="Contame tu consulta..."
+          maxLength={3000}
           required
+          disabled={enviando}
         />
       </label>
       {error ? (
@@ -115,9 +177,18 @@ export function FormularioContacto() {
           {error}
         </p>
       ) : null}
-      <button type="submit" className="contacto__enviar">
-        <span>Enviar consulta</span>
-        <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
+      <button type="submit" className="contacto__enviar" disabled={enviando} aria-busy={enviando}>
+        {enviando ? (
+          <>
+            <LoaderCircle size={18} strokeWidth={2} className="contacto__enviar-spinner" aria-hidden="true" />
+            <span>{MENSAJES_CONTACTO.enviando}</span>
+          </>
+        ) : (
+          <>
+            <span>Enviar consulta</span>
+            <ArrowRight size={18} strokeWidth={2} aria-hidden="true" />
+          </>
+        )}
       </button>
     </form>
   );
