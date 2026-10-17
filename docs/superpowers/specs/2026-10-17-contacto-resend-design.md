@@ -10,7 +10,7 @@ Reemplazar el `mailto:` del formulario de contacto de la landing por envío real
 - Paquete: `resend` (pnpm).
 - Rate limit: honeypot + validaciones ahora; Upstash Redis (tier gratuito) documentado como paso opcional, sin instalar hasta tener keys.
 - No enviar correos reales hasta que existan credenciales y el usuario autorice una prueba.
-- Remitente definitivo solo con dominio verificado: `ENFLORA <contacto@enflorar.com.ar>`.
+- Remitente definitivo solo con dominio verificado: `ENFLORA <contacto@enflora.com.ar>`.
 - No usar `NEXT_PUBLIC_` para credenciales.
 
 ## Arquitectura
@@ -95,7 +95,7 @@ Estados:
 
 ```
 RESEND_API_KEY=
-RESEND_FROM_EMAIL=ENFLORA <contacto@enflorar.com.ar>
+RESEND_FROM_EMAIL=ENFLORA <contacto@enflora.com.ar>
 CONTACT_EMAIL=enflora.420@gmail.com
 ```
 
@@ -123,8 +123,8 @@ Hasta entonces: honeypot + validación + rechazo de métodos inválidos.
 Pasos manuales (no automatizados):
 
 1. Crear API key en Resend → `RESEND_API_KEY`.
-2. Verificar dominio `enflorar.com.ar` en Resend (registros DNS que indique el panel: típicamente SPF, DKIM, y opcional DMARC).
-3. Usar `RESEND_FROM_EMAIL=ENFLORA <contacto@enflorar.com.ar>` solo tras verificación.
+2. Verificar dominio `enflora.com.ar` en Resend (registros DNS que indique el panel: típicamente SPF, DKIM, y opcional DMARC).
+3. Usar `RESEND_FROM_EMAIL=ENFLORA <contacto@enflora.com.ar>` solo tras verificación.
 4. En Vercel → Project → Settings → Environment Variables: las tres variables de arriba.
 5. Redeploy tras guardar env vars.
 6. Autorizar una prueba real de envío antes de usarla en producción.
