@@ -7,6 +7,26 @@ import { entrar } from "@/app/acciones/sesion";
 import { SlideCommit } from "@/componentes/slide-commit";
 import { SpinnerCarga } from "@/componentes/spinner-carga";
 
+function IconoCandado({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="6" y="11" width="12" height="9" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
 function IconoOjo() {
   return (
     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -114,6 +134,7 @@ export function FormularioEntrar({ aviso }) {
           <label className="formulario__campo">
             Contraseña
             <span className="formulario__clave">
+              <IconoCandado className="formulario__icono" />
               <input
                 name="contrasena"
                 type={visible ? "text" : "password"}

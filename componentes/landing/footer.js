@@ -167,27 +167,27 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="pie__credito-tira">
+      <a
+        className="pie__credito-tira"
+        href="https://www.grgsolutions.com.ar"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Un producto de GRG Solutions"
+      >
         <p className="pie__credito">
           Un producto de{" "}
-          <a
-            className="pie__credito-enlace"
-            href="https://www.grgsolutions.com.ar"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GRG Solutions"
-          >
+          <span className="pie__credito-enlace">
             <img
               className="pie__credito-logo"
               src="/logos/logo-grg.svg"
-              alt="GRG"
+              alt=""
               width={998}
               height={364}
               decoding="async"
             />
-          </a>
+          </span>
         </p>
-      </div>
+      </a>
     </footer>
   );
 }

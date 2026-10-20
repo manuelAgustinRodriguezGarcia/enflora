@@ -4379,25 +4379,43 @@ body:has(.landing) {
   &__card {
     min-width: 0;
     height: auto;
+    transition: transform 250ms ease;
+
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+      &:hover {
+        transform: translateY(-4px);
+      }
+    }
   }
 
-  &__shell {
+  &__shell.spotlight-card {
     box-sizing: border-box;
     width: 100%;
     height: 100%;
     min-height: 0;
+    padding: 0;
     overflow: hidden;
     border-radius: 22px;
-    box-shadow: 0 16px 32px -28px rgba(11, 61, 42, 0.22);
+    transition: box-shadow 250ms ease, transform 250ms ease;
   }
 
   &__card-cuerpo {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.85rem;
     box-sizing: border-box;
     height: 100%;
-    padding: 1.15rem 1.15rem 1.05rem;
+    padding: 1.25rem 1.2rem 1.15rem;
+  }
+
+  &__mobile {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.85rem;
+    min-height: 0;
   }
 
   &__acordeon {
@@ -4478,78 +4496,85 @@ body:has(.landing) {
 
   &__badge {
     align-self: flex-start;
-    padding: 0.28rem 0.7rem;
+    padding: 0.28rem 0.65rem;
     border-radius: 999px;
     background: var(--precios-lima);
     color: var(--precios-ink);
     font-family: var(--font-funcional);
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 
   &__card-tope {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 0.2rem 0.85rem;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-start;
 
     h3 {
-      grid-column: 1;
       margin: 0;
       color: inherit;
-      font-size: 1.2rem;
+      font-family: var(--font-funcional);
+      font-size: 1.15rem;
+      font-weight: 600;
     }
   }
 
   &__precio {
     display: flex;
     flex-wrap: wrap;
-    grid-column: 2;
-    grid-row: 1 / span 2;
     align-items: baseline;
-    justify-content: flex-end;
-    gap: 0.35rem;
-    text-align: right;
+    gap: 0.4rem 0.55rem;
 
     strong {
       font-family: var(--font-identidad);
-      font-size: clamp(1.55rem, 6vw, 1.9rem);
+      font-size: clamp(2.35rem, 8vw, 3.1rem);
       font-weight: 600;
-      line-height: 1;
+      line-height: 0.95;
+      letter-spacing: -0.03em;
     }
 
     span {
       color: inherit;
-      font-size: 0.85rem;
-      opacity: 0.78;
+      font-size: 0.95rem;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+  }
+
+  &__modalidad {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.35;
+    opacity: 0.82;
+
+    &--extra {
+      margin-top: -0.15rem;
     }
   }
 
   &__ars {
-    grid-column: 2;
     margin: 0;
     font-size: 0.88rem;
-    text-align: right;
-    opacity: 0.8;
+    opacity: 0.78;
   }
 
-  &__subtitulo {
-    grid-column: 1;
-    grid-row: 2;
-    align-self: start;
+  &__divisor {
+    width: 100%;
+    height: 0;
+    margin: 0.15rem 0;
+    border: 0;
+    border-top: 1px solid rgba(11, 61, 42, 0.16);
+  }
+
+  &__frase {
     margin: 0;
     font-family: var(--font-identidad);
-    font-size: 0.98rem;
-    font-weight: 500;
+    font-size: 1.05rem;
+    font-weight: 600;
     line-height: 1.25;
-  }
-
-  &__card-desc {
-    margin: 0;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    opacity: 0.88;
   }
 
   &__lista {
@@ -4587,7 +4612,7 @@ body:has(.landing) {
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-    margin-top: 0.15rem;
+    margin-top: auto;
   }
 
   &__cta {
@@ -4616,36 +4641,33 @@ body:has(.landing) {
   &__card--gratis {
     color: var(--precios-ink);
 
-    .precios__shell {
-      background: rgba(164, 200, 91, 0.22);
-      box-shadow:
-        inset 0 0 0 1px rgba(11, 61, 42, 0.08),
-        0 16px 32px -28px rgba(11, 61, 42, 0.16);
-    }
-
     .precios__precio strong,
     .precios__lista svg {
       color: var(--precios-ink);
     }
 
-    .precios__aclaracion {
-      background: rgba(11, 61, 42, 0.05);
+    .precios__cta.landing__accion--linea {
+      border-color: var(--precios-ink);
+      background: transparent;
+      color: var(--precios-ink);
+
+      &:hover {
+        background: rgba(11, 61, 42, 0.06);
+        color: var(--precios-ink);
+      }
     }
   }
 
   &__card--cultivo {
     color: var(--precios-ink);
 
-    .precios__shell {
-      background: var(--precios-lima);
-      box-shadow:
-        inset 0 0 0 1px rgba(11, 61, 42, 0.08),
-        0 16px 32px -28px rgba(11, 61, 42, 0.22);
-    }
-
     .precios__precio strong,
     .precios__lista svg {
       color: var(--precios-ink);
+    }
+
+    .precios__divisor {
+      border-top-color: rgba(11, 61, 42, 0.22);
     }
 
     .precios__aclaracion {
@@ -4653,12 +4675,12 @@ body:has(.landing) {
     }
 
     .precios__cta.landing__accion--linea {
-      border-color: var(--precios-ink);
-      background: rgba(253, 241, 215, 0.55);
+      border-color: transparent;
+      background: #f4f8ee;
       color: var(--precios-ink);
 
       &:hover {
-        background: var(--precios-beige);
+        background: #fff;
         color: var(--precios-ink);
       }
     }
@@ -4667,28 +4689,28 @@ body:has(.landing) {
   &__card--plus {
     color: var(--precios-beige);
 
-    .precios__shell {
-      background: var(--precios-ink);
-      box-shadow:
-        0 22px 44px -28px rgba(8, 25, 16, 0.55),
-        0 0 0 1px rgba(164, 200, 91, 0.22);
-    }
-
-    .precios__card-cuerpo {
-      padding-top: 1.65rem;
-      padding-bottom: 1.55rem;
-    }
-
     .precios__card-tope h3,
     .precios__precio strong,
-    .precios__subtitulo {
+    .precios__frase {
       color: var(--precios-beige);
     }
 
-    .precios__precio span,
-    .precios__ars,
-    .precios__card-desc {
-      color: color-mix(in srgb, var(--precios-beige) 88%, white);
+    .precios__precio span {
+      color: var(--precios-lima);
+      opacity: 1;
+    }
+
+    .precios__modalidad,
+    .precios__ars {
+      color: color-mix(in srgb, var(--precios-beige) 82%, white);
+    }
+
+    .precios__frase {
+      color: var(--precios-lima);
+    }
+
+    .precios__divisor {
+      border-top-color: rgba(164, 200, 91, 0.28);
     }
 
     .precios__lista svg {
@@ -4768,54 +4790,33 @@ body:has(.landing) {
       height: 100%;
     }
 
-    &__shell {
+    &__shell.spotlight-card {
       min-height: 100%;
       border-radius: 26px;
     }
 
     &__card-cuerpo {
-      gap: 0.9rem;
+      gap: 1rem;
       padding: 1.45rem 1.35rem 1.35rem;
     }
 
-    &__card-tope {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-
-      h3 {
-        font-size: 1.35rem;
-      }
+    &__card-tope h3 {
+      font-size: 1.25rem;
     }
 
-    &__precio {
-      grid-column: auto;
-      grid-row: auto;
-      justify-content: flex-start;
-      text-align: left;
-
-      strong {
-        font-size: clamp(2rem, 5vw, 2.45rem);
-      }
-
-      span {
-        font-size: 0.95rem;
-      }
+    &__precio strong {
+      font-size: clamp(2.6rem, 4.2vw, 3.6rem);
     }
 
-    &__ars {
-      grid-column: auto;
-      font-size: 0.92rem;
-      text-align: left;
+    &__precio span {
+      font-size: 1rem;
     }
 
-    &__subtitulo {
-      grid-column: auto;
-      grid-row: auto;
-      font-size: 1.02rem;
+    &__frase {
+      font-size: 1.08rem;
     }
 
-    &__acordeon {
+    &__mobile {
       display: none;
     }
 
@@ -4823,7 +4824,7 @@ body:has(.landing) {
       display: flex;
       flex: 1 1 auto;
       flex-direction: column;
-      gap: 0.9rem;
+      gap: 0.95rem;
       min-height: 0;
     }
 
@@ -4832,17 +4833,36 @@ body:has(.landing) {
     }
 
     &__card--plus {
-      transform: translateY(-0.55rem) scale(1.02);
+      transform: translateY(-0.65rem);
+
+      @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+        &:hover {
+          transform: translateY(calc(-0.65rem - 4px));
+        }
+      }
 
       .precios__card-cuerpo {
-        padding-top: 1.65rem;
-        padding-bottom: 1.55rem;
+        padding-top: 1.55rem;
+        padding-bottom: 1.45rem;
       }
     }
 
     &__card--gratis,
     &__card--cultivo {
-      margin-top: 0.85rem;
+      margin-top: 0.75rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__card,
+    &__card--plus,
+    &__shell.spotlight-card {
+      transition: none;
+    }
+
+    &__card:hover,
+    &__card--plus:hover {
+      transform: none;
     }
   }
 }
@@ -6923,10 +6943,24 @@ button.flora-chat__continuar {
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
     width: 100%;
     margin: 0;
+    margin-top: auto;
     padding: 0.7rem 1.25rem;
     background: #0099ff;
+    color: #ffffff;
+    text-decoration: none;
+    transition: filter 0.2s ease;
+
+    &:hover {
+      filter: brightness(1.06);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: -3px;
+    }
   }
 
   &__credito {
@@ -6940,6 +6974,7 @@ button.flora-chat__continuar {
     font-weight: 500;
     line-height: 1.45;
     text-align: center;
+    pointer-events: none;
   }
 
   &__credito-enlace {
@@ -6947,17 +6982,6 @@ button.flora-chat__continuar {
     align-items: center;
     line-height: 0;
     opacity: 0.95;
-    transition: opacity 0.2s ease;
-
-    &:hover {
-      opacity: 1;
-    }
-
-    &:focus-visible {
-      outline: 2px solid #ffffff;
-      outline-offset: 3px;
-      border-radius: 3px;
-    }
   }
 
   &__credito-logo {
@@ -7015,7 +7039,15 @@ button.flora-chat__continuar {
   }
 
   @media (min-width: 64rem) {
-    padding: 3.5rem 7vw 2.75rem;
+    padding: 3.5rem 0 0;
+
+    &__contenedor {
+      padding: 0 7vw 2.75rem;
+    }
+
+    &__credito-tira {
+      padding: 0.85rem 7vw;
+    }
 
     &__marca img {
       height: 2.75rem;

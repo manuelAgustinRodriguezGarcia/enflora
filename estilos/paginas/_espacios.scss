@@ -236,6 +236,11 @@
     inset: 0;
     z-index: 40;
     background: rgb(11 61 42 / 42%);
+
+    &--bloqueo {
+      z-index: 60;
+      background: rgb(11 61 42 / 72%);
+    }
   }
 
   &__vista {
@@ -247,6 +252,10 @@
     justify-content: center;
     padding: 1.5rem;
     pointer-events: none;
+
+    &--bloqueo {
+      z-index: 61;
+    }
   }
 
   &__panel {

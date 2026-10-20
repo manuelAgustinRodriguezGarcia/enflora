@@ -206,3 +206,12 @@ export async function salir() {
 
   redirect("/ingreso");
 }
+
+export async function salirAlInicio() {
+  if (configuracionLista()) {
+    const supabase = await crearClienteServidor();
+    await supabase.auth.signOut();
+  }
+
+  redirect("/");
+}

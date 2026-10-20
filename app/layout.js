@@ -3,7 +3,9 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
 import { BottomNav } from "@/componentes/bottom-nav";
+import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
+import { usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
@@ -55,13 +57,17 @@ export default async function Layout({ children }) {
   }
 
   const usuario = configuracionLista() ? await obtenerUsuario() : null;
+  const bloqueado = usuarioBloqueadoPrelanzamiento(usuario, ruta);
 
   return (
     <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
       <body>
         <ProveedorMotion>
-        <header className="encabezado">
-          <Link className="encabezado__marca" href={usuario ? "/espacios" : "/"}>
+        <header className="encabezado" inert={bloqueado || undefined}>
+          <Link
+            className="encabezado__marca"
+            href={usuario && !bloqueado ? "/espacios" : "/"}
+          >
             <img
               className="encabezado__logo encabezado__logo--oscuro"
               src="/logos/enflora-logo-apaisado.svg"
@@ -73,10 +79,13 @@ export default async function Layout({ children }) {
               alt="ENFLORA"
             />
           </Link>
-          {usuario ? <BotonNotificaciones /> : null}
+          {usuario && !bloqueado ? <BotonNotificaciones /> : null}
         </header>
-        <main className="pagina">{children}</main>
-        {usuario ? <BottomNav /> : null}
+        <main className="pagina" inert={bloqueado || undefined}>
+          {children}
+        </main>
+        {usuario && !bloqueado ? <BottomNav /> : null}
+        <ModalAccesoPrelanzamiento abierto={bloqueado} />
         </ProveedorMotion>
       </body>
     </html>
