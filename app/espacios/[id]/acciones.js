@@ -254,7 +254,25 @@ function mensajeCambio(error) {
   if (texto.includes("Seleccioná una etapa")) return "Seleccioná una etapa.";
   if (texto.includes("La fecha de inicio no es válida")) return "La fecha de inicio no es válida.";
   if (texto.includes("No se encontró la planta")) return "No se encontró la planta.";
+  if (texto.includes("Seleccioná al menos una planta")) return "Seleccioná al menos una planta.";
+  if (texto.includes("Ninguna planta necesita cambio")) return "Ninguna planta necesita cambio.";
   return "No se pudo cambiar la etapa.";
+}
+
+function leerIdsPlantas(formulario) {
+  const multiples = formulario
+    .getAll("planta_id")
+    .map((valor) => String(valor || "").trim())
+    .filter(Boolean);
+  if (multiples.length) return [...new Set(multiples)];
+
+  try {
+    const valor = JSON.parse(String(formulario.get("planta_ids") || ""));
+    if (!Array.isArray(valor)) return [];
+    return [...new Set(valor.map((item) => String(item || "").trim()).filter(Boolean))];
+  } catch {
+    return [];
+  }
 }
 
 export async function cambiarEtapa(_estado, formulario) {
@@ -294,6 +312,53 @@ export async function cambiarEtapa(_estado, formulario) {
   revalidatePath(rutaUnidad(espacioId, unidadId));
   revalidatePath(`/espacios/${espacioId}/unidades/${unidadId}/plantas/${plantaId}`);
   redirect(`/espacios/${espacioId}/unidades/${unidadId}/plantas/${plantaId}`);
+}
+
+export async function cambiarEtapaMasiva(_estado, formulario) {
+  const unidadId = String(formulario.get("unidad_id") || "").trim();
+  const espacioId = String(formulario.get("espacio_id") || "").trim();
+  const etapa = String(formulario.get("etapa") || "").trim();
+  const fecha = String(formulario.get("fecha_inicio") || "").trim();
+  const plantaIds = leerIdsPlantas(formulario);
+  const datos = { etapa, fechaInicio: fecha, plantaIds };
+
+  if (!unidadId || !espacioId) return { error: "No se encontró la unidad.", ...datos };
+  if (!plantaIds.length) return { error: "Seleccioná al menos una planta.", ...datos };
+
+  const errorEtapa = validarEtapaInicial(etapa, fecha);
+  if (errorEtapa) return { error: errorEtapa, ...datos };
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error, ...datos };
+
+  const { data: plantas, error: errorPlantas } = await acceso.supabase
+    .from("plantas")
+    .select("id")
+    .eq("unidad_cultivo_id", unidadId)
+    .in("id", plantaIds);
+
+  if (errorPlantas || !plantas || plantas.length !== plantaIds.length) {
+    return { error: "No se encontró la planta.", ...datos };
+  }
+
+  const { data, error } = await acceso.supabase.rpc("cambiar_etapa_plantas", {
+    p_planta_ids: plantaIds,
+    p_etapa: etapa,
+    p_fecha: fecha,
+  });
+
+  if (error) return { error: mensajeCambio(error), ...datos };
+
+  revalidatePath("/espacios");
+  revalidatePath(`/espacios/${espacioId}`);
+  revalidatePath(rutaUnidad(espacioId, unidadId));
+
+  return {
+    ok: true,
+    actualizadas: data?.actualizadas ?? plantaIds.length,
+    omitidas: data?.omitidas ?? 0,
+    ...datos,
+  };
 }
 
 export async function eliminarPlanta(_estado, formulario) {
