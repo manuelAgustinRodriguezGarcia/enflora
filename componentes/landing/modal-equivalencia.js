@@ -61,7 +61,6 @@ export function ModalEquivalencia({ abierto, onCerrar, hrefRegistro }) {
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="precios-modal__nota">{equivalenciasPlus.aclaracion}</p>
             <p className="precios-modal__cierre">{equivalenciasPlus.cierre}</p>
             <div className="modal__acciones">
               <Boton type="button" variante="ghost" onClick={onCerrar}>

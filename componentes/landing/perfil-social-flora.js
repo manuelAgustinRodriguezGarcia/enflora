@@ -88,8 +88,11 @@ export function PerfilSocialFlora({ instagram }) {
               {instagram.ctaEscritorio.join(" ")}
             </span>
           </div>
-          <span className="flora-ig__cta-boton">
-            <IconoInstagram size={28} />
+          <span className="flora-ig__cta">
+            <span className="flora-ig__cta-etiqueta">Seguinos</span>
+            <span className="flora-ig__cta-boton">
+              <IconoInstagram size={28} />
+            </span>
           </span>
         </a>
       </SpotlightCard>

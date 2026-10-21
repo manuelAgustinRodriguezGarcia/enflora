@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, RefreshCw } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
@@ -169,10 +169,13 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
   const [abierto, setAbierto] = useState(false);
   const [hoverFino, setHoverFino] = useState(false);
   const [sobreTarjeta, setSobreTarjeta] = useState(false);
+  const [enPesos, setEnPesos] = useState(false);
   const ars = plan.mostrarArs ? convertirUsdAArs(plan.precioUsd, cotizacion) : null;
   const arsTexto = ars == null ? null : formatearArs(ars);
-  const puedeFlip = Boolean(arsTexto) && hoverFino;
-  const mostrarArs = puedeFlip && sobreTarjeta;
+  const conPesos = Boolean(arsTexto);
+  const puedeFlip = conPesos && hoverFino;
+  const conBotonFlip = conPesos && !hoverFino;
+  const mostrarArs = puedeFlip ? sobreTarjeta : conBotonFlip && enPesos;
 
   useEffect(() => {
     const consulta = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -229,10 +232,21 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
         >
           {plan.badge ? <span className="precios__badge">{plan.badge}</span> : null}
 
-          <header className="precios__card-tope">
+          <header className={`precios__card-tope${conBotonFlip ? " precios__card-tope--con-flip" : ""}`}>
             <h3>{plan.titulo}</h3>
+            {conBotonFlip ? (
+              <button
+                type="button"
+                className={`precios__flip-boton${enPesos ? " precios__flip-boton--girado" : ""}`}
+                aria-label={enPesos ? "Ver precio en dólares" : "Ver precio en pesos"}
+                aria-pressed={enPesos}
+                onClick={() => setEnPesos((valor) => !valor)}
+              >
+                <RefreshCw size={18} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            ) : null}
             <div className="precios__precio">
-              {puedeFlip ? (
+              {conPesos ? (
                 <PrecioFlip
                   usd={plan.precioEtiqueta}
                   ars={arsTexto}
@@ -274,22 +288,6 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
             <ListaBeneficios items={destacados} />
 
             <div className="precios__acordeon">
-              <button
-                type="button"
-                className="precios__detalles-toggle"
-                aria-expanded={abierto}
-                aria-controls={panelId}
-                onClick={() => setAbierto((valor) => !valor)}
-              >
-                <span>{abierto ? "Ver menos" : "Ver todos los beneficios"}</span>
-                <ChevronDown
-                  className="precios__detalles-chevron"
-                  size={18}
-                  strokeWidth={2.4}
-                  aria-hidden="true"
-                />
-              </button>
-
               <motion.div
                 id={panelId}
                 className="precios__detalles precios__detalles--mobile"
@@ -319,6 +317,22 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
                   ) : null}
                 </div>
               </motion.div>
+
+              <button
+                type="button"
+                className="precios__detalles-toggle"
+                aria-expanded={abierto}
+                aria-controls={panelId}
+                onClick={() => setAbierto((valor) => !valor)}
+              >
+                <span>{abierto ? "Ver menos" : "Ver todos los beneficios"}</span>
+                <ChevronDown
+                  className="precios__detalles-chevron"
+                  size={18}
+                  strokeWidth={2.4}
+                  aria-hidden="true"
+                />
+              </button>
             </div>
 
             <AccionesPlan

@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 const CONSULTA_MOBILE = "(max-width: 47.99rem)";
-const SIZES_GALERIA = "(max-width: 47.99rem) 72vw, 28vw";
+const SIZES_GALERIA = "(max-width: 47.99rem) 72vw, 17rem";
 const VENTANA_EAGER = 2;
 const LOTE_PRECARGA = 2;
 const MARGEN_PRECARGA = "480px 0px";
@@ -61,6 +61,19 @@ function ItemGaleria({
         ease: [0.22, 1, 0.36, 1],
       }}
     >
+      <div className="flora-galeria__post-cabecera">
+        <span className="flora-galeria__avatar">
+          <Image
+            src="/images/flora-landingl-selfie.png"
+            alt=""
+            width={64}
+            height={64}
+            sizes="2rem"
+            draggable={false}
+          />
+        </span>
+        <span className="flora-galeria__usuario">@enflora420</span>
+      </div>
       <div className="flora-galeria__marco">
         <div className="flora-galeria__zoom">
           <Image
