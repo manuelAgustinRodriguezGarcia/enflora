@@ -3,7 +3,8 @@
 import { Check, ChevronDown } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { gsap } from "@/componentes/landing/gsap";
 import SpotlightCard from "@/componentes/landing/spotlight-card";
 import { convertirUsdAArs, formatearArs } from "@/lib/cotizacion";
 
@@ -56,6 +57,68 @@ const SPOTLIGHT = {
   },
 };
 
+function PrecioFlip({ usd, ars, mostrarArs, reducido }) {
+  const cara = useRef(null);
+  const mostrado = useRef(usd);
+  const pedido = useRef(usd);
+  const token = useRef(null);
+  const [texto, setTexto] = useState(usd);
+  const objetivo = mostrarArs ? ars : usd;
+
+  useEffect(() => {
+    pedido.current = objetivo;
+    const nodo = cara.current;
+    if (!nodo) return;
+    if (mostrado.current === objetivo) return;
+
+    if (reducido) {
+      gsap.killTweensOf(nodo);
+      gsap.set(nodo, { rotateX: 0 });
+      mostrado.current = objetivo;
+      setTexto(objetivo);
+      return;
+    }
+
+    const turno = {};
+    token.current = turno;
+    gsap.killTweensOf(nodo);
+    gsap.to(nodo, {
+      rotateX: -90,
+      duration: 0.16,
+      ease: "power2.in",
+      transformOrigin: "center center",
+      onComplete() {
+        if (token.current !== turno) return;
+        const destino = pedido.current;
+        mostrado.current = destino;
+        setTexto(destino);
+        requestAnimationFrame(() => {
+          const el = cara.current;
+          if (!el || token.current !== turno) return;
+          gsap.fromTo(
+            el,
+            { rotateX: 90 },
+            {
+              rotateX: 0,
+              duration: 0.22,
+              ease: "power2.out",
+              transformOrigin: "center center",
+            },
+          );
+        });
+      },
+    });
+  }, [objetivo, reducido]);
+
+  return (
+    <span className="precios__precio-flip">
+      <strong ref={cara} className="precios__precio-cara">
+        {texto}
+      </strong>
+    </span>
+  );
+}
+
 function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia }) {
   return (
     <div className="precios__acciones">
@@ -104,8 +167,20 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
   const reducido = useReducedMotion();
   const panelId = useId();
   const [abierto, setAbierto] = useState(false);
+  const [hoverFino, setHoverFino] = useState(false);
+  const [sobreTarjeta, setSobreTarjeta] = useState(false);
   const ars = plan.mostrarArs ? convertirUsdAArs(plan.precioUsd, cotizacion) : null;
   const arsTexto = ars == null ? null : formatearArs(ars);
+  const puedeFlip = Boolean(arsTexto) && hoverFino;
+  const mostrarArs = puedeFlip && sobreTarjeta;
+
+  useEffect(() => {
+    const consulta = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const sincronizar = () => setHoverFino(consulta.matches);
+    sincronizar();
+    consulta.addEventListener("change", sincronizar);
+    return () => consulta.removeEventListener("change", sincronizar);
+  }, []);
   const destacados = plan.beneficios.slice(0, 3);
   const resto = plan.beneficios.slice(3);
   const spotlight = SPOTLIGHT[plan.variante] ?? SPOTLIGHT.gratis;
@@ -135,20 +210,51 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
         grain={0}
         style={spotlight.style}
       >
-        <div className="precios__card-cuerpo">
+        <div
+          className="precios__card-cuerpo"
+          onMouseEnter={puedeFlip ? () => setSobreTarjeta(true) : undefined}
+          onMouseLeave={
+            puedeFlip
+              ? (evento) => {
+                  const nodo = evento.currentTarget;
+                  const destino = evento.relatedTarget;
+                  if (destino instanceof Node && nodo.contains(destino)) return;
+                  requestAnimationFrame(() => {
+                    if (nodo.isConnected && nodo.matches(":hover")) return;
+                    setSobreTarjeta(false);
+                  });
+                }
+              : undefined
+          }
+        >
           {plan.badge ? <span className="precios__badge">{plan.badge}</span> : null}
 
           <header className="precios__card-tope">
             <h3>{plan.titulo}</h3>
             <div className="precios__precio">
-              <strong>{plan.precioEtiqueta}</strong>
-              {plan.periodicidad ? <span>{plan.periodicidad}</span> : null}
+              {puedeFlip ? (
+                <PrecioFlip
+                  usd={plan.precioEtiqueta}
+                  ars={arsTexto}
+                  mostrarArs={mostrarArs}
+                  reducido={reducido}
+                />
+              ) : (
+                <strong>{plan.precioEtiqueta}</strong>
+              )}
+              {plan.periodicidad ? (
+                <span className="precios__periodo">{plan.periodicidad}</span>
+              ) : null}
             </div>
             {plan.modalidad ? <p className="precios__modalidad">{plan.modalidad}</p> : null}
             {plan.modalidadExtra ? (
               <p className="precios__modalidad precios__modalidad--extra">{plan.modalidadExtra}</p>
             ) : null}
-            {arsTexto ? <p className="precios__ars">≈ {arsTexto}</p> : null}
+            {arsTexto ? (
+              <p className={`precios__ars${mostrarArs ? " precios__ars--reserva" : ""}`} aria-hidden={mostrarArs || undefined}>
+                ≈ {arsTexto}
+              </p>
+            ) : null}
           </header>
 
           <hr className="precios__divisor" />

@@ -1,3 +1,6 @@
+import { PillExpo } from "@/componentes/expo-cannabis/pill-expo";
+import { ProveedorExpo } from "@/componentes/expo-cannabis/proveedor-expo";
+import { SeccionExpo } from "@/componentes/expo-cannabis/seccion-expo";
 import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
 import { EscenaSolar } from "@/componentes/landing/escena-solar";
@@ -15,35 +18,41 @@ import { SeccionPartners } from "@/componentes/landing/seccion-partners";
 import { SeccionPrecios } from "@/componentes/landing/seccion-precios";
 import { SeccionRegalo } from "@/componentes/landing/seccion-regalo";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
+import { instanteExpo } from "@/lib/expo-cannabis/tiempo";
 import { textos } from "@/lib/landing";
 
 export function Landing({ cotizacion = null }) {
   const { instalacion } = textos;
+  const expo = instanteExpo();
 
   return (
     <ProveedorMotion>
-      <div className="landing">
-        <EncabezadoPublico />
-        <main>
-          <EscenaSolar>
-            <Hero />
-            <Revelar>
-              <ParaQueSirve />
-            </Revelar>
-          </EscenaSolar>
-          <ConEnflora />
-          <Producto />
-          <SeccionConoceFlora />
-          <SeccionRegalo />
-          <SeccionPrecios cotizacion={cotizacion} />
-          <SeccionInstalacion textos={instalacion} />
-          <SeccionPartners />
-          <SeccionContacto />
-          <SeccionLanzamiento />
-        </main>
-        <Footer />
-        <NavegacionFlotante />
-      </div>
+      <ProveedorExpo inicial={expo}>
+        <div className="landing">
+          <EncabezadoPublico />
+          <main>
+            <EscenaSolar>
+              <Hero />
+              <Revelar>
+                <ParaQueSirve />
+              </Revelar>
+            </EscenaSolar>
+            <ConEnflora />
+            <Producto />
+            <SeccionConoceFlora />
+            <SeccionRegalo />
+            <SeccionPrecios cotizacion={cotizacion} />
+            <SeccionInstalacion textos={instalacion} />
+            <SeccionPartners />
+            <SeccionExpo />
+            <SeccionContacto />
+            <SeccionLanzamiento />
+          </main>
+          <Footer />
+          <NavegacionFlotante />
+          <PillExpo />
+        </div>
+      </ProveedorExpo>
     </ProveedorMotion>
   );
 }

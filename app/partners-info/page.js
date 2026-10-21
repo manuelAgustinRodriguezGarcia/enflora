@@ -12,11 +12,11 @@ export const metadata = {
 export default function PaginaPartnersInfoRuta() {
   return (
     <ProveedorMotion>
-      <div className="landing">
+      <div className="landing landing--papelera">
         <header className="directorio__top">
           <Link className="directorio__marca" href="/" aria-label="ENFLORA">
             <img
-              src="/logos/enflora-logo-apaisado.svg"
+              src="/logos/enflora-logo-apaisado-light.svg"
               alt=""
               width={1000}
               height={300}

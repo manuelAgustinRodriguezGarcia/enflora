@@ -159,6 +159,35 @@ export function EncabezadoPublico() {
     };
   }, []);
 
+  useEffect(() => {
+    let vigente = true;
+    const alinear = () => {
+      if (!vigente) return;
+      const id = window.location.hash.slice(1);
+      const destino = id ? document.getElementById(id) : null;
+      if (!destino) return;
+      const offset = (ref.current?.getBoundingClientRect().height || 64) + 12;
+      const y = Math.max(0, window.scrollY + destino.getBoundingClientRect().top - offset);
+      if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, behavior: "auto" });
+    };
+    const observador = new ResizeObserver(alinear);
+    const soltar = () => {
+      vigente = false;
+      observador.disconnect();
+    };
+    const eventos = ["wheel", "touchstart", "pointerdown", "keydown"];
+
+    observador.observe(document.body);
+    eventos.forEach((evento) => window.addEventListener(evento, soltar, { passive: true }));
+    const limite = window.setTimeout(soltar, 4000);
+
+    return () => {
+      window.clearTimeout(limite);
+      observador.disconnect();
+      eventos.forEach((evento) => window.removeEventListener(evento, soltar));
+    };
+  }, []);
+
   const irA = (indice, item) => {
     const id = item?.id || ITEMS_GOOEY[indice]?.id;
     if (!id || !document.getElementById(id)) return;

@@ -1361,7 +1361,7 @@ body:has(.landing) {
     flex: 0 0 auto;
 
     @media (min-width: 64rem) {
-      align-items: flex-start;
+    align-items: flex-start;
       flex: 1;
     }
   }
@@ -1767,8 +1767,8 @@ body:has(.landing) {
   position: relative;
   z-index: 3;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
   box-sizing: border-box;
   height: auto;
   max-height: none;
@@ -1975,8 +1975,8 @@ body:has(.landing) {
   }
 
   &__placeholder-deco {
-    position: absolute;
-    pointer-events: none;
+      position: absolute;
+      pointer-events: none;
   }
 
   &__placeholder-deco--oval {
@@ -3488,8 +3488,8 @@ body:has(.landing) {
   }
 
   &__bloque--presentacion {
-    display: grid;
-    gap: 1.5rem;
+  display: grid;
+  gap: 1.5rem;
 
     .flora-beneficios {
       order: 3;
@@ -3637,7 +3637,7 @@ body:has(.landing) {
     margin: 0;
     font-family: var(--font-identidad);
     font-size: clamp(1.05rem, 4.2vw, 1.35rem);
-    font-weight: 600;
+      font-weight: 600;
     line-height: 1.15;
     letter-spacing: -0.02em;
     color: var(--flora-ink);
@@ -3886,7 +3886,7 @@ body:has(.landing) {
 
       &--escritorio {
         display: block;
-        font-size: clamp(0.95rem, 1.35vw, 1.1rem);
+        font-size: clamp(0.9rem, 1vw, 1.05rem);
         font-weight: 600;
         line-height: 1.35;
       }
@@ -3917,8 +3917,8 @@ body:has(.landing) {
 }
 
 .flora-beneficios {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
   gap: 1.25rem;
   width: 100%;
   min-width: 0;
@@ -3934,7 +3934,7 @@ body:has(.landing) {
 
     @media (min-width: 48rem) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1rem;
+    gap: 1rem;
       align-items: stretch;
     }
   }
@@ -4063,7 +4063,19 @@ body:has(.landing) {
     list-style: none;
 
     @media (min-width: 48rem) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+
+      > .flora-galeria__item {
+        grid-column: span 2;
+      }
+
+      > .flora-galeria__item:nth-child(3n + 1):nth-last-child(2) {
+        grid-column: 2 / span 2;
+      }
+
+      > .flora-galeria__item:nth-child(3n + 1):last-child {
+        grid-column: 3 / span 2;
+      }
     }
 
     &--carrusel {
@@ -4105,6 +4117,7 @@ body:has(.landing) {
   }
 
   &__marco {
+    position: relative;
     overflow: hidden;
     aspect-ratio: 4 / 5;
     border-radius: 1.25rem;
@@ -4112,19 +4125,32 @@ body:has(.landing) {
     pointer-events: none;
   }
 
+  &__zoom {
+    position: absolute;
+    inset: 0;
+    transform: scale(1);
+    transform-origin: center center;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+
   &__item--cutout .flora-galeria__marco {
-    display: grid;
-    place-items: center;
     background:
       radial-gradient(circle at 50% 70%, rgba(164, 200, 91, 0.35), transparent 65%),
       #e8f2d8;
   }
 
+  &__item--cutout .flora-galeria__zoom {
+    display: grid;
+    place-items: center;
+  }
+
   &__img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.45s ease;
+    object-position: center center;
     pointer-events: none;
   }
 
@@ -4135,7 +4161,7 @@ body:has(.landing) {
     object-fit: contain;
   }
 
-  &__item:hover .flora-galeria__img {
+  &__item:hover .flora-galeria__zoom {
     @media (hover: hover) and (prefers-reduced-motion: no-preference) {
       transform: scale(1.04);
     }
@@ -4156,6 +4182,10 @@ body:has(.landing) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .flora-galeria__zoom {
+    transition: none;
+  }
+
   .flora-galeria__img {
     transition: none;
   }
@@ -4371,7 +4401,7 @@ body:has(.landing) {
   }
 
   &__grid {
-    display: grid;
+  display: grid;
     gap: 0.85rem;
     align-items: stretch;
   }
@@ -4423,7 +4453,7 @@ body:has(.landing) {
     flex-direction: column;
     align-items: center;
     gap: 0;
-    width: 100%;
+      width: 100%;
   }
 
   &__detalles-toggle {
@@ -4523,9 +4553,9 @@ body:has(.landing) {
 
   &__precio {
     display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.4rem 0.55rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
 
     strong {
       font-family: var(--font-identidad);
@@ -4533,14 +4563,27 @@ body:has(.landing) {
       font-weight: 600;
       line-height: 0.95;
       letter-spacing: -0.03em;
+      white-space: nowrap;
     }
 
-    span {
+    > span:not(.precios__precio-flip) {
       color: inherit;
       font-size: 0.95rem;
       font-weight: 500;
+      line-height: 1;
       opacity: 0.85;
     }
+  }
+
+  &__precio-flip {
+    display: inline-block;
+    perspective: 700px;
+  }
+
+  &__precio-cara {
+    display: inline-block;
+    transform-origin: center center;
+    backface-visibility: hidden;
   }
 
   &__modalidad {
@@ -4559,6 +4602,10 @@ body:has(.landing) {
     margin: 0;
     font-size: 0.88rem;
     opacity: 0.78;
+
+    &--reserva {
+      visibility: hidden;
+    }
   }
 
   &__divisor {
@@ -4695,7 +4742,7 @@ body:has(.landing) {
       color: var(--precios-beige);
     }
 
-    .precios__precio span {
+    .precios__periodo {
       color: var(--precios-lima);
       opacity: 1;
     }
@@ -4979,7 +5026,7 @@ body:has(.landing) {
 
   &__cierre {
     margin: 0.65rem 0 0;
-    color: var(--color-primary);
+      color: var(--color-primary);
     font-family: var(--font-identidad);
     font-size: 1.05rem;
     font-weight: 500;
@@ -5031,8 +5078,8 @@ body:has(.landing) {
   }
 
   &__marca {
-    font-family: var(--font-identidad);
-    font-weight: 600;
+      font-family: var(--font-identidad);
+      font-weight: 600;
     letter-spacing: -0.045em;
   }
 
@@ -5522,20 +5569,20 @@ body:has(.landing) {
   }
 
   &__contenido {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    align-items: stretch;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      align-items: stretch;
     justify-content: flex-end;
     width: 100%;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
-    margin-inline: auto;
-    overflow: hidden;
-  }
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+      margin-inline: auto;
+      overflow: hidden;
+    }
 
   @media (min-width: 64rem) {
     padding: 0 7vw;
@@ -5761,19 +5808,19 @@ body:has(.landing) {
     &__chat-wrap {
       grid-column: 2;
       grid-row: 1 / -1;
-      justify-self: end;
-      align-self: center;
-      width: min(100%, 26rem);
+    justify-self: end;
+    align-self: center;
+    width: min(100%, 26rem);
       max-width: 26rem;
       margin-inline: 0;
-      margin-right: clamp(0.5rem, 4vw, 3.5rem);
-    }
+    margin-right: clamp(0.5rem, 4vw, 3.5rem);
+  }
 
-    &__ticket-wrap {
-      gap: 1rem;
+  &__ticket-wrap {
+    gap: 1rem;
       align-self: center;
-      justify-self: center;
-      width: min(100%, 42rem);
+    justify-self: center;
+    width: min(100%, 42rem);
     }
   }
 
@@ -6137,12 +6184,12 @@ body:has(.landing) {
   overflow: hidden;
 
   @media (min-width: 64rem) {
-    height: min(72dvh, 34rem);
-    min-height: 22rem;
-    max-height: min(78dvh, 36rem);
-    padding: 1.05rem 1.1rem 1.15rem;
-    border-radius: 22px;
-    background: rgba(11, 61, 42, 0.75);
+  height: min(72dvh, 34rem);
+  min-height: 22rem;
+  max-height: min(78dvh, 36rem);
+  padding: 1.05rem 1.1rem 1.15rem;
+  border-radius: 22px;
+  background: rgba(11, 61, 42, 0.75);
   }
 }
 
@@ -6154,7 +6201,7 @@ body:has(.landing) {
   0%,
   100% {
     border-color: rgba(244, 248, 238, 0.16);
-    box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 22px 50px -28px rgba(0, 0, 0, 0.55);
   }
 
   35%,
@@ -6587,7 +6634,7 @@ button.flora-chat__continuar {
     @media (min-width: 64rem) {
       --lanzamiento-digit-w: 0.92em;
       --lanzamiento-num-size: clamp(5.5rem, 7.2vw, 7.5rem);
-      width: 100%;
+    width: 100%;
       max-width: none;
       justify-content: center;
       gap: clamp(1.1rem, 1.8vw, 1.85rem);

@@ -62,19 +62,21 @@ function ItemGaleria({
       }}
     >
       <div className="flora-galeria__marco">
-        <Image
-          src={item.src}
-          alt={item.alt}
-          width={item.width}
-          height={item.height}
-          className="flora-galeria__img"
-          sizes={SIZES_GALERIA}
-          quality={75}
-          draggable={false}
-          loading={eager ? "eager" : "lazy"}
-          fetchPriority={prioridad ? "high" : eager ? "auto" : "low"}
-          decoding="async"
-        />
+        <div className="flora-galeria__zoom">
+          <Image
+            src={item.src}
+            alt={item.alt}
+            width={item.width}
+            height={item.height}
+            className="flora-galeria__img"
+            sizes={SIZES_GALERIA}
+            quality={75}
+            draggable={false}
+            loading={eager ? "eager" : "lazy"}
+            fetchPriority={prioridad ? "high" : eager ? "auto" : "low"}
+            decoding="async"
+          />
+        </div>
       </div>
       <p className="flora-galeria__caption">{item.caption}</p>
     </motion.li>

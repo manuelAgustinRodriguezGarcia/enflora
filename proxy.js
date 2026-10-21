@@ -69,7 +69,8 @@ export async function proxy(request) {
   const esRutaAbierta =
     ruta === "/partners" ||
     ruta.startsWith("/partners/") ||
-    ruta === "/partners-info";
+    ruta === "/partners-info" ||
+    ruta.startsWith("/expo-cannabis/");
   const pendiente = user ? await onboardingPendiente(supabase, user.id) : false;
   const destino = pendiente ? "/onboarding" : "/espacios";
 

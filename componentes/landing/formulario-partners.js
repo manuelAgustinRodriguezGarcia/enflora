@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Select } from "@base-ui/react/select";
+import { ArrowRight, ChevronDown, LoaderCircle } from "lucide-react";
 import {
   MENSAJES_PARTNERS,
   OPCIONES_PLAN_FORMULARIO,
@@ -29,6 +30,7 @@ export function FormularioPartners({ planInicial = PLAN_INDEFINIDO }) {
   const [error, setError] = useState("");
   const mensajeRef = useRef(null);
   const enviandoRef = useRef(false);
+  const planEtiquetaId = useId();
 
   useEffect(() => {
     if (!enviado) ajustarAltura(mensajeRef.current);
@@ -219,22 +221,56 @@ export function FormularioPartners({ planInicial = PLAN_INDEFINIDO }) {
         </label>
       </div>
 
-      <label className="partners__campo">
-        <span>Plan publicitario de interés</span>
-        <select
-          name="plan"
+      <div className="partners__campo">
+        <span id={planEtiquetaId}>Plan publicitario de interés</span>
+        <Select.Root
           value={plan}
-          onChange={(evento) => setPlan(evento.target.value)}
-          required
+          onValueChange={(siguiente) => {
+            if (typeof siguiente === "string" && siguiente) setPlan(siguiente);
+          }}
+          name="plan"
           disabled={enviando}
         >
-          {OPCIONES_PLAN_FORMULARIO.map((opcion) => (
-            <option key={opcion.id} value={opcion.id}>
-              {opcion.etiqueta}
-            </option>
-          ))}
-        </select>
-      </label>
+          <Select.Trigger className="partners__plan-trigger" aria-labelledby={planEtiquetaId}>
+            <span className="partners__plan-valor">
+              <Select.Value>
+                {(seleccionado) =>
+                  OPCIONES_PLAN_FORMULARIO.find((opcion) => opcion.id === seleccionado)?.etiqueta ||
+                  ""
+                }
+              </Select.Value>
+            </span>
+            <Select.Icon className="partners__plan-icono">
+              <ChevronDown size={18} strokeWidth={2} aria-hidden="true" />
+            </Select.Icon>
+          </Select.Trigger>
+          <Select.Portal>
+            <Select.Positioner
+              className="partners__plan-positioner"
+              side="bottom"
+              align="start"
+              sideOffset={6}
+              alignItemWithTrigger={false}
+              collisionAvoidance={{ side: "none", align: "shift", fallbackAxisSide: "none" }}
+            >
+              <Select.Popup className="partners__plan-popup">
+                <Select.List className="partners__plan-lista-opciones">
+                  {OPCIONES_PLAN_FORMULARIO.map((opcion) => (
+                    <Select.Item
+                      key={opcion.id}
+                      value={opcion.id}
+                      label={opcion.etiqueta}
+                      className="partners__plan-opcion"
+                    >
+                      <Select.ItemText>{opcion.etiqueta}</Select.ItemText>
+                    </Select.Item>
+                  ))}
+                </Select.List>
+              </Select.Popup>
+            </Select.Positioner>
+          </Select.Portal>
+        </Select.Root>
+      </div>
 
       <label className="partners__campo">
         <span>Mensaje o propuesta comercial</span>

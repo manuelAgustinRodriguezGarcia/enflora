@@ -48,10 +48,10 @@ export const viewport = {
 export default async function Layout({ children }) {
   const ruta = (await headers()).get("x-enflora-ruta");
 
-  if (ruta === "/") {
+  if (ruta === "/" || ruta?.startsWith("/expo-cannabis/")) {
     return (
       <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
-        <body className="landing-cuerpo">{children}</body>
+        <body className={ruta === "/" ? "landing-cuerpo" : "ruleta-cuerpo"}>{children}</body>
       </html>
     );
   }

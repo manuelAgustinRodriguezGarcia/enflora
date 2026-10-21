@@ -85,9 +85,7 @@ export function PerfilSocialFlora({ instagram }) {
               {instagram.cta}
             </span>
             <span className="flora-ig__cta-texto flora-ig__cta-texto--escritorio">
-              {instagram.ctaEscritorio[0]}
-              <br />
-              {instagram.ctaEscritorio[1]}
+              {instagram.ctaEscritorio.join(" ")}
             </span>
           </div>
           <span className="flora-ig__cta-boton">

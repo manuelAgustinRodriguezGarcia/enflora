@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Check, Info } from "lucide-react";
+import { Check } from "lucide-react";
 import { FormularioPartners } from "@/componentes/landing/formulario-partners";
 import { PLAN_INDEFINIDO, PLANES_PARTNERS, textosPartners } from "@/lib/partners";
 
@@ -10,7 +10,7 @@ function scrollAlFormulario() {
   const destino = document.getElementById("partners-formulario");
   if (!destino) return;
   destino.scrollIntoView({ behavior: "smooth", block: "start" });
-  const primerCampo = destino.querySelector("input, select, textarea");
+  const primerCampo = destino.querySelector('input[name="comercio"]');
   if (primerCampo instanceof HTMLElement) {
     window.setTimeout(() => primerCampo.focus({ preventScroll: true }), 350);
   }
@@ -27,13 +27,14 @@ function TarjetaPlanPartners({ plan, onElegir }) {
 
   return (
     <article className={clase}>
-      {plan.badge ? <span className="partners__plan-badge">{plan.badge}</span> : null}
       <header className="partners__plan-tope">
         <h3>{plan.titulo}</h3>
-        <div className="partners__plan-precio">
-          <strong>{plan.precioEtiqueta}</strong>
-          {plan.periodicidad ? <span>{plan.periodicidad}</span> : null}
-        </div>
+        {plan.precioEtiqueta ? (
+          <div className="partners__plan-precio">
+            <strong>{plan.precioEtiqueta}</strong>
+            {plan.periodicidad ? <span>{plan.periodicidad}</span> : null}
+          </div>
+        ) : null}
         <p className="partners__plan-desc">{plan.descripcion}</p>
       </header>
       <ul className="partners__plan-lista">
@@ -82,11 +83,6 @@ export function PaginaPartnersInfo() {
           {PLANES_PARTNERS.map((plan) => (
             <TarjetaPlanPartners key={plan.id} plan={plan} onElegir={elegirPlan} />
           ))}
-        </div>
-
-        <div className="partners__leyenda" role="note">
-          <Info className="partners__leyenda-icono" size={18} strokeWidth={1.9} aria-hidden="true" />
-          <p>{textosPartners.leyendaPrecios}</p>
         </div>
 
         <div className="partners__form-bloque">
