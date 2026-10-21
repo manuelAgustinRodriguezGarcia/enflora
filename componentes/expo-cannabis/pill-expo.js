@@ -1,11 +1,9 @@
 "use client";
 
-import { Dialog } from "@base-ui/react/dialog";
 import { ArrowUpRight } from "lucide-react";
 import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { irASeccionExpo } from "@/componentes/expo-cannabis/enlace-desplazar";
-import { ContenidoModalExpo } from "@/componentes/expo-cannabis/modal-expo";
 import { useExpo } from "@/componentes/expo-cannabis/proveedor-expo";
 import { expoCannabis, ESTADOS_EXPO } from "@/lib/expo-cannabis/configuracion";
 import { describirRestante, formatearRestante } from "@/lib/expo-cannabis/tiempo";
@@ -26,7 +24,7 @@ function etiquetaAccesible(estado, restante) {
         ? describirRestante(restante)
         : ""
       : textoEstado(estado, restante);
-  return [expoCannabis.nombre, detalle, textos.pill.abrir]
+  return [expoCannabis.nombre, detalle, textos.pill.ir]
     .filter(Boolean)
     .map((frase) => (/[.!?]$/.test(frase) ? frase : `${frase}.`))
     .join(" ");
@@ -34,12 +32,9 @@ function etiquetaAccesible(estado, restante) {
 
 export function PillExpo() {
   const { estado, pill, restante, listo } = useExpo();
-  const [abierto, setAbierto] = useState(false);
   const [retraida, setRetraida] = useState(false);
   const interactuo = useRef(false);
   const temporizador = useRef(0);
-  const desplazamiento = useRef(0);
-  const acciones = useRef(null);
 
   useEffect(() => {
     if (!pill) return undefined;
@@ -61,8 +56,6 @@ export function PillExpo() {
     };
   }, [pill]);
 
-  useEffect(() => () => window.clearTimeout(desplazamiento.current), []);
-
   if (!pill) return null;
 
   const marcarInteraccion = () => {
@@ -70,68 +63,58 @@ export function PillExpo() {
     window.clearTimeout(temporizador.current);
   };
 
-  const cambiar = (siguiente, detalles) => {
-    if (siguiente) {
-      marcarInteraccion();
-      setAbierto(true);
-      return;
-    }
-    detalles?.preventUnmountOnClose?.();
-    setAbierto(false);
+  const irASeccion = (evento) => {
+    if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) return;
+    evento.preventDefault();
+    marcarInteraccion();
     if (window.matchMedia(CONSULTA_MOBILE).matches) setRetraida(true);
-  };
-
-  const irARegalos = () => {
-    cambiar(false);
-    window.clearTimeout(desplazamiento.current);
-    desplazamiento.current = window.setTimeout(() => irASeccionExpo(ids.premios), 90);
+    irASeccionExpo(ids.seccion, { bajoEncabezado: true });
   };
 
   const mensaje = textoEstado(estado, restante);
   const conContador = estado === ESTADOS_EXPO.proximo;
 
   return (
-    <Dialog.Root open={abierto} onOpenChange={cambiar} actionsRef={acciones}>
-      <motion.div
-        className="expo-pill"
-        initial={{ x: "115%", opacity: 0 }}
-        animate={listo ? { x: 0, opacity: 1 } : { x: "115%", opacity: 0 }}
-        transition={{
-          type: "spring",
-          stiffness: 210,
-          damping: 26,
-          delay: configuracionPill.retrasoEntradaMs / 1000,
-        }}
+    <motion.div
+      className="expo-pill"
+      initial={{ x: "115%", opacity: 0 }}
+      animate={listo ? { x: 0, opacity: 1 } : { x: "115%", opacity: 0 }}
+      transition={{
+        type: "spring",
+        stiffness: 210,
+        damping: 26,
+        delay: configuracionPill.retrasoEntradaMs / 1000,
+      }}
+    >
+      <a
+        href={`#${ids.seccion}`}
+        className={`expo-pill__boton${retraida ? " expo-pill__boton--retraida" : ""}`}
+        aria-label={etiquetaAccesible(estado, restante)}
+        onPointerEnter={marcarInteraccion}
+        onPointerDown={marcarInteraccion}
+        onFocus={marcarInteraccion}
+        onClick={irASeccion}
       >
-        <Dialog.Trigger
-          className={`expo-pill__boton${retraida ? " expo-pill__boton--retraida" : ""}`}
-          aria-label={etiquetaAccesible(estado, restante)}
-          onPointerEnter={marcarInteraccion}
-          onPointerDown={marcarInteraccion}
-          onFocus={marcarInteraccion}
-        >
-          <span className="expo-pill__insignia" aria-hidden="true">
-            <span className="expo-pill__punto" />
-            {textos.pill.insignia}
+        <span className="expo-pill__insignia" aria-hidden="true">
+          <span className="expo-pill__punto" />
+          {textos.pill.insignia}
+        </span>
+        <span className="expo-pill__cuerpo" aria-hidden="true">
+          <span className="expo-pill__nombre">
+            <span className="expo-pill__punto expo-pill__punto--escritorio" />
+            {textos.pill.nombre}
           </span>
-          <span className="expo-pill__cuerpo" aria-hidden="true">
-            <span className="expo-pill__nombre">
-              <span className="expo-pill__punto expo-pill__punto--escritorio" />
-              {textos.pill.nombre}
-            </span>
-            <span className="expo-pill__separador" />
-            <span
-              className={`expo-pill__tiempo${conContador ? " expo-pill__tiempo--contador" : ""}${
-                conContador && !restante ? " expo-pill__tiempo--pendiente" : ""
-              }`}
-            >
-              {mensaje}
-            </span>
+          <span className="expo-pill__separador" />
+          <span
+            className={`expo-pill__tiempo${conContador ? " expo-pill__tiempo--contador" : ""}${
+              conContador && !restante ? " expo-pill__tiempo--pendiente" : ""
+            }`}
+          >
+            {mensaje}
           </span>
-          <ArrowUpRight className="expo-pill__flecha" size={18} strokeWidth={2.4} aria-hidden="true" />
-        </Dialog.Trigger>
-      </motion.div>
-      <ContenidoModalExpo abierto={abierto} acciones={acciones} onIrARegalos={irARegalos} />
-    </Dialog.Root>
+        </span>
+        <ArrowUpRight className="expo-pill__flecha" size={18} strokeWidth={2.4} aria-hidden="true" />
+      </a>
+    </motion.div>
   );
 }

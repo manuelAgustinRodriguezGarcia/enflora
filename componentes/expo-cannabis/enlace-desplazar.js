@@ -2,11 +2,11 @@
 
 import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 
-export function irASeccionExpo(id) {
+export function irASeccionExpo(id, { bajoEncabezado = false } = {}) {
   if (!document.getElementById(id)) return;
   const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const encabezado = document.querySelector(".encabezado-publico");
-  const offset = (encabezado?.getBoundingClientRect().height || 64) + 12;
+  const offset = bajoEncabezado ? 0 : (encabezado?.getBoundingClientRect().height || 64) + 12;
   desplazarASeccion(id, { offset, suave: !reducido });
 }
 
