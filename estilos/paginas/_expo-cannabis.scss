@@ -140,280 +140,6 @@ $desktop: 64rem;
   }
 }
 
-.expo .expo-hero {
-  position: relative;
-  isolation: isolate;
-  overflow: clip;
-  padding: calc(var(--header) + 5.5rem) 1.25rem 4.5rem;
-  color: $crema;
-  background:
-    radial-gradient(circle at 10% 16%, rgb(164 200 91 / 22%) 0, transparent 38%),
-    radial-gradient(circle at 92% 86%, rgb(240 180 180 / 16%) 0, transparent 34%),
-    linear-gradient(180deg, $verde 0%, $verde-profundo 100%);
-
-  @media (min-width: $desktop) {
-    display: flex;
-    align-items: center;
-    min-height: 100svh;
-    padding: calc(var(--header) + 3rem) 7vw 5.5rem;
-  }
-
-  .expo-hero__fondo {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  .expo-hero__aro {
-    position: absolute;
-    aspect-ratio: 1;
-    border: 1.5px solid rgb(164 200 91 / 18%);
-    border-radius: 50%;
-
-    &--grande {
-      top: -12rem;
-      right: -18rem;
-      width: 44rem;
-    }
-
-    &--chico {
-      bottom: -7rem;
-      left: -8rem;
-      width: 20rem;
-      border-color: rgb(240 180 180 / 22%);
-      border-style: dashed;
-    }
-  }
-
-  .expo-hero__brillo {
-    position: absolute;
-    right: -10%;
-    bottom: 12%;
-    width: 34rem;
-    aspect-ratio: 1;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgb(164 200 91 / 24%) 0, transparent 64%);
-
-    @media (min-width: $desktop) {
-      top: 50%;
-      right: 4%;
-      bottom: auto;
-      translate: 0 -50%;
-    }
-  }
-
-  .expo-hero__contenedor {
-    position: relative;
-    display: grid;
-    gap: 3rem;
-    width: min(100%, 72rem);
-    margin-inline: auto;
-
-    @media (min-width: $desktop) {
-      grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
-      align-items: center;
-      gap: 4rem;
-    }
-  }
-
-  .expo-hero__texto {
-    display: grid;
-    justify-items: start;
-    gap: 1.2rem;
-    min-width: 0;
-  }
-
-  .expo-hero__titulo {
-    color: $crema;
-    font-size: clamp(2.45rem, 10vw, 4.9rem);
-    line-height: 0.98;
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-  }
-
-  .expo-hero__acento {
-    color: $lima;
-  }
-
-  .expo-hero__descripcion {
-    max-width: 34rem;
-    color: rgb(253 241 215 / 86%);
-    font-size: clamp(1rem, 1.4vw, 1.15rem);
-    line-height: 1.6;
-  }
-
-  .expo-hero__acciones {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    width: 100%;
-    margin-top: 0.4rem;
-
-    @media (max-width: 39.99rem) {
-      .expo-boton {
-        flex: 1 1 100%;
-      }
-    }
-  }
-
-  .expo-hero__datos {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
-    width: 100%;
-    margin: 0.9rem 0 0;
-    padding: 1.25rem 0 0;
-    border-top: 1px solid rgb(253 241 215 / 14%);
-    list-style: none;
-
-    @media (min-width: 40rem) {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem 1.75rem;
-    }
-  }
-
-  .expo-hero__dato {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.4rem;
-    min-width: 0;
-
-    @media (min-width: 40rem) {
-      flex-direction: row;
-      align-items: center;
-      gap: 0.6rem;
-    }
-  }
-
-  .expo-hero__dato-valor {
-    color: $lima;
-    font-family: var(--font-identidad);
-    font-size: 1.9rem;
-    font-weight: 600;
-    line-height: 1;
-  }
-
-  .expo-hero__dato-texto {
-    display: grid;
-    gap: 0.1rem;
-  }
-
-  .expo-hero__dato-etiqueta {
-    color: $crema;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-  }
-
-  .expo-hero__dato-detalle {
-    color: rgb(253 241 215 / 66%);
-    font-size: 0.78rem;
-  }
-
-  .expo-hero__ilustracion {
-    position: relative;
-    justify-self: center;
-    width: min(100%, 21rem);
-    padding: 1.25rem 0.75rem 0.5rem;
-
-    @media (min-width: 40rem) {
-      width: 24rem;
-    }
-
-    @media (min-width: $desktop) {
-      justify-self: end;
-      width: min(100%, 28rem);
-    }
-  }
-
-  .expo-hero__marco {
-    overflow: hidden;
-    aspect-ratio: 4 / 5;
-    border: 6px solid $crema;
-    border-radius: 14rem 14rem 2rem 2rem;
-    background: $crema;
-    box-shadow:
-      0 30px 60px rgb(0 0 0 / 34%),
-      0 0 0 12px rgb(164 200 91 / 18%);
-    rotate: 2deg;
-  }
-
-  .expo-hero__imagen {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 58%;
-  }
-
-  .expo-hero__chip {
-    position: absolute;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.55rem 0.95rem;
-    border-radius: 999px;
-    color: $verde;
-    font-family: var(--font-identidad);
-    font-size: 0.88rem;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 12px 24px rgb(0 0 0 / 24%);
-
-    &--1 {
-      top: 14%;
-      left: -0.25rem;
-      background: $lima;
-      rotate: -6deg;
-    }
-
-    &--2 {
-      bottom: 18%;
-      left: -0.5rem;
-      background: $rosa;
-      rotate: 4deg;
-    }
-
-    &--3 {
-      top: 3%;
-      right: 0;
-      background: $crema;
-      rotate: 5deg;
-    }
-
-    @media (min-width: $desktop) {
-      font-size: 0.95rem;
-
-      &--1 {
-        left: -1.5rem;
-      }
-
-      &--2 {
-        left: -2rem;
-      }
-
-      &--3 {
-        right: -1rem;
-      }
-    }
-
-    @media (prefers-reduced-motion: no-preference) {
-      animation: expo-flotar 7s ease-in-out infinite;
-
-      &--2 {
-        animation-delay: -2.4s;
-      }
-
-      &--3 {
-        animation-delay: -4.6s;
-      }
-    }
-  }
-}
-
 .expo .expo-regalos {
   padding: 4.5rem 1.25rem 4rem;
   background:
@@ -566,12 +292,12 @@ $desktop: 64rem;
   position: relative;
   isolation: isolate;
   overflow: clip;
-  padding: 4.5rem 1.25rem 5rem;
+  padding: calc(var(--header) + 2.25rem) 1.25rem 5rem;
   color: $crema;
   background: $verde;
 
   @media (min-width: $desktop) {
-    padding: 6.5rem 7vw;
+    padding: calc(var(--header) + 2.75rem) 7vw 6.5rem;
   }
 
   .expo-desafio__fondo {
@@ -579,10 +305,20 @@ $desktop: 64rem;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(circle at 80% 55%, rgb(164 200 91 / 20%) 0, transparent 42%),
-      radial-gradient(circle at 0% 100%, rgb(240 180 180 / 14%) 0, transparent 38%),
-      linear-gradient(160deg, $verde 0%, $verde-profundo 100%);
+    background-color: $verde;
+    background-image:
+      linear-gradient(180deg, rgb(8 46 34 / 92%) 0%, rgb(8 46 34 / 86%) 62%, rgb(8 46 34 / 74%) 100%),
+      url("/images/expo-flora-mobile.png");
+    background-position: center, center top;
+    background-repeat: no-repeat;
+    background-size: cover, cover;
+
+    @media (min-width: $desktop) {
+      background-image:
+        linear-gradient(90deg, rgb(8 46 34 / 94%) 0%, rgb(8 46 34 / 84%) 42%, rgb(8 46 34 / 52%) 100%),
+        url("/images/expo-flora-desktop.png");
+      background-position: center, center;
+    }
   }
 
   .expo-desafio__contenedor {
@@ -601,27 +337,14 @@ $desktop: 64rem;
     justify-items: start;
     gap: 1.1rem;
     min-width: 0;
-  }
 
-  .expo-desafio__categorias {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin: 0.25rem 0 0;
-    padding: 0;
-    list-style: none;
-  }
+    .expo-bajada {
+      display: none;
 
-  .expo-desafio__categoria {
-    padding: 0.45rem 0.9rem;
-    border: 1.5px solid rgb(253 241 215 / 40%);
-    border-radius: 999px;
-    background: var(--chip-fondo);
-    color: var(--chip-texto);
-    font-family: var(--font-identidad);
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
+      @media (min-width: $desktop) {
+        display: block;
+      }
+    }
   }
 
   .expo-desafio__reglas {
@@ -658,16 +381,13 @@ $desktop: 64rem;
     }
   }
 
-  .expo-desafio__cta {
-    margin-top: 0.5rem;
-  }
-
   .expo-desafio__visual {
     position: relative;
     display: grid;
     place-items: center;
     min-width: 0;
-    padding: 0.5rem 0;
+    padding: 1.25rem 0 0.5rem;
+    overflow: visible;
   }
 
   .expo-desafio__halo {
@@ -679,9 +399,25 @@ $desktop: 64rem;
     background: radial-gradient(circle, rgb(164 200 91 / 26%) 0, transparent 66%);
   }
 
+  .expo-desafio__juego {
+    position: relative;
+    display: block;
+    width: 100%;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid $lima;
+      outline-offset: 0.4rem;
+      border-radius: 50%;
+    }
+  }
+
   .expo-desafio__ruleta {
     position: relative;
     width: 100%;
+    overflow: visible;
 
     .ruleta {
       width: min(74vw, 22rem);
@@ -696,11 +432,11 @@ $desktop: 64rem;
 }
 
 .expo .expo-donde {
-  padding: 4rem 1.25rem 1.5rem;
+  padding: 4rem 1.25rem 4.5rem;
   background: $crema;
 
   @media (min-width: $desktop) {
-    padding: 5.5rem 7vw 2rem;
+    padding: 5.5rem 7vw 6rem;
   }
 
   .expo-donde__tarjeta {
@@ -814,86 +550,6 @@ $desktop: 64rem;
   }
 }
 
-.expo .expo-cierre {
-  padding: 1.5rem 1.25rem 4.5rem;
-  background: $crema;
-
-  @media (min-width: $desktop) {
-    padding: 2rem 7vw 6rem;
-  }
-
-  .expo-cierre__contenedor {
-    position: relative;
-    display: grid;
-    gap: 1.75rem;
-    overflow: hidden;
-    padding: 2.25rem 1.5rem 0;
-    border-radius: 2rem;
-    background:
-      radial-gradient(circle at 100% 0%, rgb(253 241 215 / 45%) 0, transparent 40%),
-      $lima;
-
-    @media (min-width: 48rem) {
-      grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
-      align-items: end;
-      gap: 2rem;
-      padding: 3rem 3rem 0;
-    }
-
-    @media (min-width: $desktop) {
-      padding: 3.25rem 4rem 0;
-    }
-  }
-
-  .expo-cierre__texto {
-    display: grid;
-    justify-items: start;
-    gap: 1rem;
-    min-width: 0;
-
-    @media (min-width: 48rem) {
-      align-self: center;
-      padding-bottom: 3rem;
-    }
-  }
-
-  .expo-cierre__titulo {
-    color: $verde;
-    font-size: clamp(2rem, 5vw, 3.1rem);
-    line-height: 1.05;
-    text-wrap: balance;
-  }
-
-  .expo-cierre__bajada {
-    max-width: 30rem;
-    color: rgb(11 61 42 / 84%);
-    font-size: 1.05rem;
-    line-height: 1.55;
-  }
-
-  .expo-cierre__ilustracion {
-    justify-self: center;
-    width: min(72%, 16rem);
-
-    @media (min-width: 48rem) {
-      justify-self: end;
-      width: min(100%, 19rem);
-    }
-  }
-
-  .expo-cierre__imagen {
-    display: block;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1 / 1.1;
-    border: 5px solid $crema;
-    border-bottom: 0;
-    border-radius: 1.6rem 1.6rem 0 0;
-    object-fit: cover;
-    object-position: 30% 92%;
-  }
-}
-
 .expo-pill {
   $boton-flotante: 3.4rem;
   $margen-flotante: 1.15rem;
@@ -912,20 +568,6 @@ $desktop: 64rem;
 
   &--oculta .expo-pill__boton {
     pointer-events: none;
-  }
-
-  @media (min-width: $desktop) {
-    display: block;
-    bottom: auto;
-    left: auto;
-    min-height: 0;
-    padding-inline: 0;
-    top: calc(var(--header) + 0.75rem);
-    right: 7vw;
-  }
-
-  @media (min-width: $desktop) and (max-width: 104.99rem) {
-    right: 4vw;
   }
 
   .expo-pill__boton {
@@ -964,35 +606,6 @@ $desktop: 64rem;
         expo-fondo-mobile 40s ease-in-out infinite,
         expo-latido 2.4s ease-out 1.5s infinite;
     }
-
-    @media (min-width: $desktop) {
-      gap: 0.75rem;
-      min-height: 2.9rem;
-      padding: 0.55rem 1rem 0.55rem 1.15rem;
-      border: 1.5px solid rgb(11 61 42 / 12%);
-      background: $crema;
-      box-shadow: 0 10px 26px rgb(8 46 34 / 22%);
-
-      &:focus-visible {
-        outline-color: $lima;
-      }
-
-      @media (prefers-reduced-motion: no-preference) {
-        animation: expo-fondo-escritorio 40s ease-in-out infinite;
-      }
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow:
-          0 14px 30px rgb(8 46 34 / 24%),
-          0 0 0 4px rgb(164 200 91 / 30%),
-          0 0 28px rgb(164 200 91 / 45%);
-      }
-
-      &:hover .expo-pill__flecha {
-        transform: translate(2px, -2px);
-      }
-    }
   }
 
   .expo-pill__llamado {
@@ -1001,68 +614,268 @@ $desktop: 64rem;
     font-weight: 700;
     line-height: 1.15;
     text-wrap: balance;
-
-    @media (min-width: $desktop) {
-      display: none;
-    }
-  }
-
-  .expo-pill__punto {
-    flex: none;
-    width: 0.6rem;
-    height: 0.6rem;
-    border-radius: 50%;
-    background: $lima;
-    box-shadow: 0 0 0 3px rgb(164 200 91 / 30%);
-  }
-
-  .expo-pill__cuerpo {
-    display: none;
-
-    @media (min-width: $desktop) {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      line-height: 1.1;
-    }
-  }
-
-  .expo-pill__nombre {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    white-space: nowrap;
-  }
-
-  .expo-pill__separador {
-    display: block;
-    width: 1px;
-    height: 1rem;
-    background: rgb(11 61 42 / 24%);
-  }
-
-  .expo-pill__tiempo {
-    font-family: var(--font-identidad);
-    font-size: 0.85rem;
-    font-weight: 600;
-    white-space: nowrap;
-
-    &--contador {
-      font-size: 1rem;
-      font-variant-numeric: tabular-nums;
-    }
-
-    &--pendiente {
-      opacity: 0;
-    }
   }
 
   .expo-pill__flecha {
     flex: none;
-    transition: transform 0.25s ease;
+  }
+}
+
+.expo-bienvenida__fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(8 46 34 / 62%);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+  }
+}
+
+.expo-bienvenida__vista {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.expo-bienvenida {
+  position: relative;
+  display: grid;
+  grid-template-columns: 17rem minmax(0, 1fr);
+  width: min(100%, 52rem);
+  overflow: hidden;
+  border-radius: 2rem;
+  background: $crema;
+  color: $verde;
+  font-family: var(--font-funcional);
+  box-shadow: 0 30px 80px rgb(0 0 0 / 35%);
+  outline: none;
+  transition:
+    opacity 0.35s ease,
+    transform 0.45s $curva;
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    opacity: 0;
+    transform: translateY(1.25rem) scale(0.96);
+  }
+}
+
+.expo-bienvenida__arte {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 35%, rgb(164 200 91 / 55%), rgb(164 200 91 / 0%) 65%),
+    linear-gradient(160deg, $verde-medio, $verde);
+}
+
+.expo-bienvenida__imagen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 30%;
+}
+
+.expo-bienvenida__contenido {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 1rem;
+  padding: 3rem 2.75rem 2.5rem;
+}
+
+.expo-bienvenida__cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(11 61 42 / 9%);
+  color: $verde;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background: rgb(11 61 42 / 16%);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $lima;
+    outline-offset: 2px;
+  }
+}
+
+.expo-bienvenida__titulo {
+  margin: 0;
+  color: $verde;
+  font-family: var(--font-identidad);
+  font-size: 2.6rem;
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.expo-bienvenida__texto {
+  margin: 0;
+  color: rgb(11 61 42 / 80%);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.expo-bienvenida__estado {
+  display: inline-flex;
+  margin: 0.25rem 0 0;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  background: $verde;
+  color: $crema;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.expo-bienvenida__contador {
+  color: $lima;
+  font-family: var(--font-identidad);
+  font-variant-numeric: tabular-nums;
+}
+
+.expo-bienvenida__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.expo-bienvenida__cta {
+  min-height: 3.25rem;
+  padding-inline: 1.6rem;
+  border: 0;
+  font-size: 1.05rem;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 3px solid $lima;
+    outline-offset: 3px;
+  }
+}
+
+.expo-bienvenida__descartar {
+  margin: 0;
+  padding: 0.5rem 0.25rem;
+  border: 0;
+  background: none;
+  color: $verde;
+  font-family: var(--font-funcional);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+
+  &:hover {
+    color: $verde-medio;
+  }
+
+  &:focus-visible {
+    outline: 3px solid $lima;
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .expo-bienvenida__vista {
+    align-items: safe center;
+    padding: 0.75rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .expo-bienvenida {
+    display: block;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 1.5rem;
+  }
+
+  .expo-bienvenida__arte {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    height: auto;
+    aspect-ratio: auto;
+  }
+
+  .expo-bienvenida__imagen {
+    object-fit: cover;
+    object-position: center 42%;
+  }
+
+  .expo-bienvenida__contenido {
+    position: relative;
+    z-index: 1;
+    min-height: min(40rem, calc(100dvh - 1.5rem - env(safe-area-inset-bottom, 0px)));
+    align-content: end;
+    gap: 0.75rem;
+    padding: 1.25rem 1.15rem 1.35rem;
+    background: linear-gradient(
+      180deg,
+      rgb(253 241 215 / 0%) 0%,
+      rgb(253 241 215 / 0%) 46%,
+      rgb(253 241 215 / 96%) 64%,
+      $crema 78%
+    );
+  }
+
+  .expo-bienvenida__estado {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    z-index: 2;
+    max-width: calc(100% - 5.5rem);
+    margin: 0;
+    translate: -50% 0;
+    text-align: center;
+  }
+
+  .expo-bienvenida__titulo {
+    font-size: clamp(1.65rem, 8vw, 2.15rem);
+  }
+
+  .expo-bienvenida__acciones {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  .expo-bienvenida__cta {
+    width: 100%;
+  }
+
+  .expo-bienvenida__cerrar {
+    z-index: 3;
+    background: rgb(253 241 215 / 92%);
   }
 }
 
@@ -1107,47 +920,19 @@ $desktop: 64rem;
   }
 }
 
-@keyframes expo-fondo-escritorio {
-  0%,
-  23% {
-    background-color: $crema;
-  }
-
-  25%,
-  48% {
-    background-color: $lima;
-  }
-
-  50%,
-  73% {
-    background-color: $pastel-amarillo;
-  }
-
-  75%,
-  98% {
-    background-color: $rosa;
-  }
-
-  100% {
-    background-color: $crema;
-  }
-}
-
-@keyframes expo-flotar {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-
-  50% {
-    translate: 0 -6px;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .expo-pill .expo-pill__boton,
   .expo .expo-regalo,
   .expo .expo-boton svg {
     transition-duration: 0.01ms;
+  }
+
+  .expo-bienvenida {
+    transition: opacity 0.2s ease;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      transform: none;
+    }
   }
 }

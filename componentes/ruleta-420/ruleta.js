@@ -103,7 +103,7 @@ export function Ruleta({
       aria-label={etiqueta}
     >
       <div className="ruleta__puntero" aria-hidden="true">
-        <svg viewBox="0 0 40 48">
+        <svg viewBox="0 -10 40 58">
           <path d="M20 46 L4 12 A16 16 0 1 1 36 12 Z" />
           <circle cx="20" cy="16" r="6" />
         </svg>

@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 
-function redirigir(request, pathname, respuesta) {
+function redirigir(request, pathname, respuesta, search) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
+  if (typeof search === "string") url.search = search;
   const redireccion = NextResponse.redirect(url);
 
   respuesta.cookies.getAll().forEach((cookie) => {
@@ -70,6 +71,7 @@ export async function proxy(request) {
     ruta === "/partners" ||
     ruta.startsWith("/partners/") ||
     ruta === "/partners-info" ||
+    ruta === "/expo-cannabis" ||
     ruta.startsWith("/expo-cannabis/");
   const pendiente = user ? await onboardingPendiente(supabase, user.id) : false;
   const destino = pendiente ? "/onboarding" : "/espacios";
@@ -80,6 +82,11 @@ export async function proxy(request) {
     if (codigo || token) {
       return redirigir(request, "/correo/confirmar", respuesta);
     }
+    return respuesta;
+  }
+
+  if (ruta === "/expo-cannabis/admin") {
+    if (!user) return redirigir(request, "/ingreso", respuesta, "?siguiente=/expo-cannabis/admin");
     return respuesta;
   }
 

@@ -12,12 +12,29 @@ const ITEMS_GOOEY = navegacionLanding.map((item) => ({
   href: `#${item.id}`,
   id: item.id,
   accent: Boolean(item.acento),
+  tono: item.acento,
 }));
 
 const COLOR_PILL = "#0B3D2A";
-const COLOR_PILL_ACENTO = "#d4af37";
-const COLORES_PARTICULAS = ["#0B3D2A", "#A4C85B", "#24764F"];
-const COLORES_PARTICULAS_ACENTO = ["#d4af37", "#e0bc45", "#c9a227"];
+
+const PILL_BASE = {
+  color: COLOR_PILL,
+  texto: "#F4F8EE",
+  particulas: ["#0B3D2A", "#A4C85B", "#24764F"],
+};
+
+const PILLS_ACENTO = {
+  dorado: {
+    color: "#d4af37",
+    texto: COLOR_PILL,
+    particulas: ["#d4af37", "#e0bc45", "#c9a227"],
+  },
+  rosa: {
+    color: "#F0B4B4",
+    texto: COLOR_PILL,
+    particulas: ["#F0B4B4", "#F6CACA", "#E89C9C"],
+  },
+};
 
 const SECCIONES_SIN_CTA = new Set(["con-enflora", "regalo"]);
 
@@ -221,7 +238,7 @@ export function EncabezadoPublico() {
   const tema = logoClaro ? "dark" : "light";
   const items = useMemo(() => ITEMS_GOOEY, []);
   const itemActivo = items[activo];
-  const pillAcento = Boolean(itemActivo?.accent);
+  const pill = PILLS_ACENTO[itemActivo?.tono] ?? PILL_BASE;
 
   return (
     <header
@@ -248,9 +265,9 @@ export function EncabezadoPublico() {
             onChange={irA}
             initialActiveIndex={0}
             theme={tema}
-            color={pillAcento ? COLOR_PILL_ACENTO : COLOR_PILL}
-            activeTextColor={pillAcento ? COLOR_PILL : "#F4F8EE"}
-            colors={pillAcento ? COLORES_PARTICULAS_ACENTO : COLORES_PARTICULAS}
+            color={pill.color}
+            activeTextColor={pill.texto}
+            colors={pill.particulas}
             size={compacto ? "sm" : "md"}
             frame
             particleCount={10}

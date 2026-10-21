@@ -11,6 +11,7 @@ export const metadata = {
 
 export default async function PaginaIngreso({ searchParams }) {
   const parametros = await searchParams;
+  const siguiente = parametros.siguiente === "/expo-cannabis/admin" ? parametros.siguiente : "";
   const aviso =
     parametros.correo === "pendiente"
       ? "Revisá tu bandeja de entrada o spam de tu correo para validar el mail."
@@ -18,7 +19,7 @@ export default async function PaginaIngreso({ searchParams }) {
 
   return (
     <MarcoAuth fondo="entrar">
-      <FormularioEntrar aviso={aviso} />
+      <FormularioEntrar aviso={aviso} siguiente={siguiente} />
     </MarcoAuth>
   );
 }

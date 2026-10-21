@@ -56,7 +56,7 @@ function IconoOjoTachado() {
   );
 }
 
-export function FormularioEntrar({ aviso }) {
+export function FormularioEntrar({ aviso, siguiente = "" }) {
   const [estado, accion, pendiente] = useActionState(entrar, null);
   const [, startTransition] = useTransition();
   const [visible, setVisible] = useState(false);
@@ -120,6 +120,7 @@ export function FormularioEntrar({ aviso }) {
           className="formulario"
           action={accion}
         >
+          {siguiente ? <input type="hidden" name="siguiente" value={siguiente} /> : null}
           <label className="formulario__campo">
             Email
             <input

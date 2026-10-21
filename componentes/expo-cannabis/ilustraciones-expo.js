@@ -94,6 +94,23 @@ function Tuqueros() {
   );
 }
 
+function Folletos() {
+  return (
+    <svg viewBox="0 0 160 120">
+      <g transform="rotate(7 112 64)">
+        <rect x="78" y="24" width="62" height="82" rx="8" fill={BLANCO} />
+      </g>
+      <g transform="rotate(-6 58 62)">
+        <rect x="28" y="22" width="64" height="84" rx="8" fill={CREMA} stroke={VERDE} strokeWidth="3" />
+        <rect x="38" y="34" width="34" height="8" rx="4" fill={LIMA} />
+        <path d="M38 52 h40 M38 62 h34 M38 72 h38" stroke={VERDE} strokeWidth="3" strokeLinecap="round" opacity="0.35" />
+        <image href="/logos/enflora-isotipo-dark-green.svg" x="58" y="78" width="22" height="22" />
+      </g>
+      <circle cx="126" cy="28" r="6" fill={ROSA} />
+    </svg>
+  );
+}
+
 function Picadores() {
   return (
     <svg viewBox="0 0 160 120">
@@ -115,6 +132,7 @@ function Picadores() {
 const ILUSTRACIONES = {
   stickers: Stickers,
   filtros: Filtros,
+  folletos: Folletos,
   tuqueros: Tuqueros,
   picadores: Picadores,
 };

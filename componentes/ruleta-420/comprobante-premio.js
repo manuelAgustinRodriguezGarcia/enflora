@@ -16,9 +16,9 @@ export function ComprobantePremio({ premioId, emision = null }) {
   return (
     <div className="ruleta-comprobante">
       <Info aria-hidden="true" />
-      <p className="ruleta-comprobante__texto">
-        Resultado demostrativo. Esta versión de prueba no emite códigos ni acredita premios reales.
-      </p>
+        <p className="ruleta-comprobante__texto">
+          Este premio quedó reservado para retirarlo en la Expo.
+        </p>
     </div>
   );
 }

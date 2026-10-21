@@ -98,7 +98,8 @@ export async function entrar(_estado, formulario) {
     return estadoCredenciales("No se pudo iniciar sesión.", email);
   }
 
-  redirect("/espacios");
+  const siguiente = String(formulario.get("siguiente") || "");
+  redirect(siguiente === "/expo-cannabis/admin" ? siguiente : "/espacios");
 }
 
 export async function registrar(_estado, formulario) {

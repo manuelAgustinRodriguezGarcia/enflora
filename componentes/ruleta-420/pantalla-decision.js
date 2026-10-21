@@ -2,20 +2,33 @@
 
 import { motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
+import { Confeti } from "@/componentes/ruleta-420/confeti";
 import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 
-export function PantallaDecision({ fase, onAsegurar, onArriesgar, onConfirmar, onCancelar }) {
+export function PantallaDecision({
+  fase,
+  seguroDisponible,
+  onAsegurar,
+  onArriesgar,
+  onConfirmar,
+  onCancelar,
+}) {
   const bloqueada = fase !== "prize-decision";
 
   return (
     <div className="ruleta-decision">
+      <Confeti />
       <div className="ruleta-decision__encabezado">
-        <h1 className="ruleta-titulo">¿TE PLANTÁS O TE LA JUGÁS?</h1>
-        <p className="ruleta-decision__texto">
-          Flora tiene una tuquera asegurada para vos. Podés llevártela ahora mismo o arriesgar todo para intentar
-          ganar un picador.
-        </p>
+        <h1 className="ruleta-titulo">¡SOBREVIVISTE A LA RULETA!</h1>
+        <p className="ruleta-decision__texto">Conseguiste 3 aciertos. Flora tiene un premio para vos.</p>
+        <ImagenRuleta
+          clave="floraArriesga"
+          alt="Flora lista para arriesgar el premio"
+          icono="festejo"
+          className="ruleta-decision__hero"
+        />
+        <h2 className="ruleta-decision__apuesta">Apostá todo, hacelo por la Tota.</h2>
       </div>
 
       <div className="ruleta-decision__opciones">
@@ -25,12 +38,14 @@ export function PantallaDecision({ fase, onAsegurar, onArriesgar, onConfirmar, o
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.35 }}
         >
-          <ImagenRuleta clave="tuquera" alt="Tuquera" icono="tuquera" etiqueta="Tuquera" tono="tuquera" />
-          <h2 className="ruleta-decision__titulo">TUQUERA ASEGURADA</h2>
-          <p className="ruleta-decision__descripcion">Ya ganaste. No necesitás tentar a la suerte.</p>
-          <BotonRuleta variante="claro" onClick={onAsegurar} disabled={bloqueada}>
-            ¡ME QUEDO CON LA TUQUERA!
+          <h2 className="ruleta-decision__titulo">¡ME PLANTO!</h2>
+          <p className="ruleta-decision__descripcion">Te llevás 2 stickers a elección y 2 filtros.</p>
+          <BotonRuleta variante="claro" onClick={onAsegurar} disabled={bloqueada || !seguroDisponible}>
+            ME QUEDO CON MI PREMIO
           </BotonRuleta>
+          {!seguroDisponible ? (
+            <p className="ruleta-decision__aviso">Ahora no hay stock para el premio seguro.</p>
+          ) : null}
         </motion.section>
 
         <span className="ruleta-decision__separador" aria-hidden="true">
@@ -43,11 +58,12 @@ export function PantallaDecision({ fase, onAsegurar, onArriesgar, onConfirmar, o
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.18, duration: 0.35 }}
         >
-          <ImagenRuleta clave="picador" alt="Picador" icono="picador" etiqueta="Picador" tono="picador" />
-          <h2 className="ruleta-decision__titulo">¿Y SI TE LLEVÁS UN PICADOR?</h2>
-          <p className="ruleta-decision__descripcion">Podés ganar un picador, una tuquera o quedarte sin nada.</p>
+          <h2 className="ruleta-decision__titulo">¡ME LA JUEGO!</h2>
+          <p className="ruleta-decision__descripcion">
+            Podés ganar un picador, un tuquero, un pack especial de stickers y filtros... o quedarte sin nada.
+          </p>
           <BotonRuleta variante="rosa" onClick={onArriesgar} disabled={bloqueada}>
-            ¡ME LA JUEGO!
+            QUIERO ARRIESGAR
           </BotonRuleta>
         </motion.section>
       </div>
@@ -56,15 +72,15 @@ export function PantallaDecision({ fase, onAsegurar, onArriesgar, onConfirmar, o
         abierto={fase === "prize-confirmation"}
         onCerrar={onCancelar}
         titulo="¿ESTÁS SEGURO?"
-        descripcion="Si girás esta ruleta, renunciás a tu premio asegurado."
+        descripcion="Si girás esta ruleta, renunciás al premio seguro."
         className="ruleta-modal__panel--alerta"
       >
         <div className="ruleta-acciones">
           <BotonRuleta variante="rosa" onClick={onConfirmar}>
-            SÍ, QUIERO ARRIESGAR
+            QUIERO ARRIESGAR
           </BotonRuleta>
-          <BotonRuleta variante="secundario" onClick={onAsegurar}>
-            MEJOR MI TUQUERA
+          <BotonRuleta variante="secundario" onClick={onAsegurar} disabled={!seguroDisponible}>
+            ME QUEDO CON MI PREMIO
           </BotonRuleta>
         </div>
       </ModalRuleta>

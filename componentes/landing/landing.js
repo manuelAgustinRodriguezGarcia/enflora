@@ -1,5 +1,7 @@
+import { BienvenidaExpo } from "@/componentes/expo-cannabis/bienvenida-expo";
 import { PillExpo } from "@/componentes/expo-cannabis/pill-expo";
 import { ProveedorExpo } from "@/componentes/expo-cannabis/proveedor-expo";
+import { RedirigirAdminExpo } from "@/componentes/expo-cannabis/redirigir-admin";
 import { SeccionExpo } from "@/componentes/expo-cannabis/seccion-expo";
 import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
@@ -37,6 +39,7 @@ export function Landing({ cotizacion = null }) {
                 <ParaQueSirve />
               </Revelar>
             </EscenaSolar>
+            <SeccionExpo />
             <ConEnflora />
             <Producto />
             <SeccionConoceFlora />
@@ -44,13 +47,14 @@ export function Landing({ cotizacion = null }) {
             <SeccionPrecios cotizacion={cotizacion} />
             <SeccionInstalacion textos={instalacion} />
             <SeccionPartners />
-            <SeccionExpo />
             <SeccionContacto />
             <SeccionLanzamiento />
           </main>
           <Footer />
           <NavegacionFlotante />
           <PillExpo />
+          <BienvenidaExpo />
+          <RedirigirAdminExpo />
         </div>
       </ProveedorExpo>
     </ProveedorMotion>

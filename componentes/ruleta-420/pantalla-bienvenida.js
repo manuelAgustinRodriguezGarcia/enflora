@@ -12,7 +12,7 @@ const REGLAS = [
   "Respondé correctamente las preguntas.",
   "Tenés 2 vidas; cada error te cuesta una.",
   "Conseguí 3 aciertos para ganar.",
-  "Elegí una tuquera asegurada o arriesgá todo por un picador.",
+  "Elegí el premio seguro o arriesgá todo en la ruleta final.",
 ];
 
 export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onCerrarReglas }) {

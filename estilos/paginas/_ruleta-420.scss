@@ -52,6 +52,18 @@ $rojo: #C2413B;
     min-height: 3rem;
   }
 
+  &__marca {
+    display: inline-flex;
+    line-height: 0;
+    color: inherit;
+
+    &:focus-visible {
+      outline: 3px solid $verde-claro;
+      outline-offset: 4px;
+      border-radius: 0.4rem;
+    }
+  }
+
   &__logo {
     display: block;
     width: auto;
@@ -285,7 +297,8 @@ $rojo: #C2413B;
   position: relative;
   width: min(84vw, 21rem, 50svh);
   margin: 0 auto;
-  padding-top: 1.1rem;
+  padding-top: 1.85rem;
+  overflow: visible;
 
   &__disco {
     width: 100%;
@@ -355,6 +368,7 @@ $rojo: #C2413B;
       display: block;
       width: 100%;
       height: auto;
+      overflow: visible;
     }
 
     path {
@@ -979,6 +993,32 @@ $rojo: #C2413B;
   }
 }
 
+.ruleta-leyenda {
+  max-width: 36rem;
+  margin: 0;
+  color: rgb(11 61 42 / 78%);
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+
+  &--nota {
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+}
+
+.ruleta-aviso {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.9rem;
+  background: $rosa;
+  color: $verde-oscuro;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: center;
+}
+
 .ruleta-decision {
   display: flex;
   flex-direction: column;
@@ -994,6 +1034,27 @@ $rojo: #C2413B;
   &__texto {
     font-size: 1rem;
     line-height: 1.45;
+  }
+
+  &__apuesta {
+    margin: 0;
+    color: $verde-oscuro;
+    font-family: var(--font-identidad);
+    font-size: clamp(1.7rem, 6vw, 2.4rem);
+    font-weight: 600;
+    line-height: 1.05;
+  }
+
+  &__hero {
+    width: min(16rem, 72vw);
+    margin: 0.2rem auto 0;
+  }
+
+  &__aviso {
+    margin: 0;
+    color: $rosa;
+    font-size: 0.82rem;
+    font-weight: 600;
   }
 
   &__opciones {

@@ -240,7 +240,7 @@ export function NavegacionFlotante() {
                   >
                     <button
                       type="button"
-                      className={`nav-flotante__opcion${activo ? " nav-flotante__opcion--activa" : ""}${item.acento ? " nav-flotante__opcion--acento" : ""}`}
+                      className={`nav-flotante__opcion${activo ? " nav-flotante__opcion--activa" : ""}${item.acento ? ` nav-flotante__opcion--${item.acento}` : ""}`}
                       aria-current={activo ? "true" : undefined}
                       onClick={() => irA(item.id)}
                     >

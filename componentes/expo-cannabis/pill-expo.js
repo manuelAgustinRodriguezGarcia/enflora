@@ -5,31 +5,11 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { irASeccionExpo } from "@/componentes/expo-cannabis/enlace-desplazar";
 import { useExpo } from "@/componentes/expo-cannabis/proveedor-expo";
-import { expoCannabis, ESTADOS_EXPO } from "@/lib/expo-cannabis/configuracion";
-import { describirRestante, formatearRestante } from "@/lib/expo-cannabis/tiempo";
+import { expoCannabis } from "@/lib/expo-cannabis/configuracion";
 
 const CONSULTA_MOBILE = "(max-width: 63.99rem)";
 const { pill: configuracionPill, textos, ids } = expoCannabis;
-
-function textoEstado(estado, restante) {
-  if (estado === ESTADOS_EXPO.enCurso) return textos.pill.enCurso;
-  if (estado === ESTADOS_EXPO.finalizado) return textos.pill.finalizado;
-  return restante ? formatearRestante(restante) : "00d 00h 00m";
-}
-
-function etiquetaAccesible(estado, restante, mobile) {
-  if (mobile) return `${textos.pill.llamado}. ${textos.pill.ir}.`;
-  const detalle =
-    estado === ESTADOS_EXPO.proximo
-      ? restante
-        ? describirRestante(restante)
-        : ""
-      : textoEstado(estado, restante);
-  return [expoCannabis.nombre, detalle, textos.pill.ir]
-    .filter(Boolean)
-    .map((frase) => (/[.!?]$/.test(frase) ? frase : `${frase}.`))
-    .join(" ");
-}
+const FUERA = { y: "160%", opacity: 0 };
 
 function useZonaOcultaMobile(activo) {
   const [oculta, setOculta] = useState(false);
@@ -80,7 +60,7 @@ function useZonaOcultaMobile(activo) {
 }
 
 export function PillExpo() {
-  const { estado, pill, restante, listo } = useExpo();
+  const { pill, listo } = useExpo();
   const [mobile, setMobile] = useState(false);
   const [entro, setEntro] = useState(false);
   const oculta = useZonaOcultaMobile(Boolean(pill) && mobile);
@@ -93,7 +73,7 @@ export function PillExpo() {
     return () => consulta.removeEventListener("change", sincronizar);
   }, []);
 
-  if (!pill) return null;
+  if (!pill || !mobile) return null;
 
   const irASeccion = (evento) => {
     if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) return;
@@ -101,16 +81,13 @@ export function PillExpo() {
     irASeccionExpo(ids.seccion, { bajoEncabezado: true });
   };
 
-  const mensaje = textoEstado(estado, restante);
-  const conContador = estado === ESTADOS_EXPO.proximo;
   const mostrada = listo && !oculta;
-  const fuera = mobile ? { x: 0, y: "160%", opacity: 0 } : { x: "115%", y: 0, opacity: 0 };
 
   return (
     <motion.div
       className={`expo-pill${mostrada ? "" : " expo-pill--oculta"}`}
-      initial={fuera}
-      animate={mostrada ? { x: 0, y: 0, opacity: 1 } : fuera}
+      initial={FUERA}
+      animate={mostrada ? { y: 0, opacity: 1 } : FUERA}
       transition={{
         type: "spring",
         stiffness: 210,
@@ -124,27 +101,13 @@ export function PillExpo() {
       <a
         href={`#${ids.seccion}`}
         className="expo-pill__boton"
-        aria-label={etiquetaAccesible(estado, restante, mobile)}
+        aria-label={`${textos.pill.llamado}. ${textos.pill.ir}.`}
         aria-hidden={!mostrada || undefined}
         tabIndex={mostrada ? undefined : -1}
         onClick={irASeccion}
       >
         <span className="expo-pill__llamado" aria-hidden="true">
           {textos.pill.llamado}
-        </span>
-        <span className="expo-pill__cuerpo" aria-hidden="true">
-          <span className="expo-pill__nombre">
-            <span className="expo-pill__punto" />
-            {textos.pill.nombre}
-          </span>
-          <span className="expo-pill__separador" />
-          <span
-            className={`expo-pill__tiempo${conContador ? " expo-pill__tiempo--contador" : ""}${
-              conContador && !restante ? " expo-pill__tiempo--pendiente" : ""
-            }`}
-          >
-            {mensaje}
-          </span>
         </span>
         <ArrowUpRight className="expo-pill__flecha" size={18} strokeWidth={2.4} aria-hidden="true" />
       </a>

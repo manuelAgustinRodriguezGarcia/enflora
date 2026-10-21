@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useReducer, useRef } from "react";
+import Link from "next/link";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Marcador } from "@/componentes/ruleta-420/marcador";
 import { PantallaBienvenida } from "@/componentes/ruleta-420/pantalla-bienvenida";
@@ -9,25 +10,65 @@ import { PantallaPregunta } from "@/componentes/ruleta-420/pantalla-pregunta";
 import { PantallaResultadoPremio } from "@/componentes/ruleta-420/pantalla-resultado-premio";
 import { PantallaRuletaCategorias } from "@/componentes/ruleta-420/pantalla-ruleta-categorias";
 import { PantallaRuletaPremios } from "@/componentes/ruleta-420/pantalla-ruleta-premios";
-import { PantallaDerrota, PantallaVictoria } from "@/componentes/ruleta-420/pantallas-cierre";
+import { PantallaDerrota } from "@/componentes/ruleta-420/pantallas-cierre";
 import {
   ACIERTOS_PARA_GANAR,
   DURACION_GIRO_MS,
   DURACION_GIRO_REDUCIDO_MS,
   LOGO_ENFLORA,
   PAUSA_RESULTADO_RULETA_MS,
+  PREMIO_ASEGURADO,
 } from "@/lib/ruleta-420/configuracion";
 import {
   FASES_PARTIDA,
   buscarCategoria,
-  buscarPregunta,
   crearPartida,
   estadoInicial,
   pantallaDeFase,
-  planificarPremio,
-  planificarRonda,
   reducirRuleta,
+  rotacionHasta,
+  SECTORES_CATEGORIAS,
+  sectoresDePremios,
 } from "@/lib/ruleta-420/logica";
+
+const CLAVE_PARTIDA = "enflora-ruleta-partida";
+
+async function pedirRuleta(accion, extra = {}) {
+  const respuesta = await fetch("/api/expo-cannabis/ruleta", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ accion, ...extra }),
+    cache: "no-store",
+  });
+  const datos = await respuesta.json().catch(() => null);
+  if (!respuesta.ok || !datos?.ok) {
+    throw new Error(datos?.error || "No se pudo continuar la partida.");
+  }
+  return datos;
+}
+
+function estadoDesdePartida(partida) {
+  const base = crearPartida(() => 0);
+  base.partidaId = partida.id;
+  base.vidas = partida.vidas;
+  base.aciertos = partida.aciertos;
+  base.ronda = partida.ronda;
+  base.rondaEspecial = partida.rondaEspecial;
+  base.usadas = Array.isArray(partida.usadas) ? partida.usadas : [];
+  base.categoriaId = partida.categoriaId || partida.pregunta?.category || null;
+  base.pregunta = partida.pregunta || null;
+  base.preguntaId = partida.pregunta?.id || null;
+  base.premioId = partida.resultado || null;
+  base.elegibles = partida.elegibles || null;
+  base.sectoresPremio = Array.isArray(partida.elegibles) ? sectoresDePremios(partida.elegibles) : null;
+  base.modoPremio = partida.resultado === PREMIO_ASEGURADO ? "asegurado" : partida.resultado ? "arriesgado" : null;
+  if (partida.estado === "resuelta") base.fase = "prize-result";
+  else if (partida.estado === "ganada") base.fase = "prize-decision";
+  else if (partida.estado === "perdida") base.fase = "defeat";
+  else if (partida.pregunta && partida.respondida === false) base.fase = "question";
+  else base.fase = "category-wheel";
+  return base;
+}
 
 export function JuegoRuleta() {
   const [estado, despachar] = useReducer(reducirRuleta, undefined, estadoInicial);
@@ -36,6 +77,11 @@ export function JuegoRuleta() {
   const pausa = reducido ? 700 : PAUSA_RESULTADO_RULETA_MS;
   const pantalla = pantallaDeFase(estado.fase);
   const contenedor = useRef(null);
+  const registroEnCurso = useRef(false);
+  const ocupado = useRef(false);
+  const ignorarRestauracion = useRef(false);
+  const [aviso, setAviso] = useState("");
+  const [seguroDisponible, setSeguroDisponible] = useState(true);
 
   useEffect(() => {
     const pasos = {
@@ -58,15 +104,183 @@ export function JuegoRuleta() {
     }
   }, [pantalla, reducido]);
 
-  const empezar = () => despachar({ type: "empezar", partida: crearPartida() });
-  const reiniciar = () => despachar({ type: "reiniciar", partida: crearPartida() });
-  const girarCategoria = () => {
-    if (estado.fase !== "category-wheel") return;
-    despachar({ type: "girar-categoria", plan: planificarRonda(estado) });
+  useEffect(() => {
+    const id = window.sessionStorage.getItem(CLAVE_PARTIDA);
+    if (!id) return undefined;
+    let vigente = true;
+    pedirRuleta("estado", { partidaId: id })
+      .then((datos) => {
+        if (!vigente || ignorarRestauracion.current || !datos.partida) return;
+        despachar({ type: "restaurar", estado: estadoDesdePartida(datos.partida) });
+      })
+      .catch((error) => {
+        if (String(error?.message || "").includes("No se encontró")) {
+          window.sessionStorage.removeItem(CLAVE_PARTIDA);
+        }
+      });
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (estado.fase !== "prize-decision" || !estado.partidaId) return undefined;
+    let vigente = true;
+    pedirRuleta("disponibilidad", { partidaId: estado.partidaId })
+      .then((datos) => {
+        if (vigente) setSeguroDisponible(Boolean(datos.seguro));
+      })
+      .catch(() => {
+        if (vigente) setSeguroDisponible(true);
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [estado.fase, estado.partidaId]);
+
+  const registrarParticipacion = () => {
+    if (registroEnCurso.current) return;
+    registroEnCurso.current = true;
+    fetch("/api/expo-cannabis/participar", { method: "POST", keepalive: true, cache: "no-store" })
+      .catch(() => {})
+      .finally(() => {
+        registroEnCurso.current = false;
+      });
   };
-  const girarPremio = () => {
-    if (estado.fase !== "prize-wheel" || estado.premioId) return;
-    despachar({ type: "girar-premio", plan: planificarPremio(estado) });
+
+  const empezar = async () => {
+    if (ocupado.current) return;
+    ocupado.current = true;
+    ignorarRestauracion.current = true;
+    setAviso("");
+    try {
+      const datos = await pedirRuleta("empezar");
+      window.sessionStorage.setItem(CLAVE_PARTIDA, datos.partidaId);
+      const partida = crearPartida();
+      partida.partidaId = datos.partidaId;
+      partida.rondaEspecial = datos.rondaEspecial;
+      despachar({ type: "empezar", partida });
+      registrarParticipacion();
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  const reiniciar = () => {
+    window.sessionStorage.removeItem(CLAVE_PARTIDA);
+    empezar();
+  };
+
+  const volverInicio = () => {
+    window.sessionStorage.removeItem(CLAVE_PARTIDA);
+    setAviso("");
+    despachar({ type: "volver-inicio" });
+  };
+
+  const girarCategoria = async () => {
+    if (ocupado.current || estado.fase !== "category-wheel" || !estado.partidaId) return;
+    ocupado.current = true;
+    setAviso("");
+    try {
+      const plan = await pedirRuleta("planificar", { partidaId: estado.partidaId });
+      const rotacion = rotacionHasta(estado.rotacionCategoria, SECTORES_CATEGORIAS, plan.categoriaId);
+      despachar({
+        type: "girar-categoria",
+        plan: { ...plan, rotacion },
+      });
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  const responder = async (indice) => {
+    if (ocupado.current || estado.fase !== "question" || !estado.partidaId) return;
+    ocupado.current = true;
+    setAviso("");
+    try {
+      const datos = await pedirRuleta("responder", { partidaId: estado.partidaId, indice });
+      despachar({
+        type: "responder",
+        indice,
+        acerto: datos.acerto,
+        correcta: datos.correcta,
+        aciertos: datos.aciertos,
+        vidas: datos.vidas,
+        explanation: datos.explanation,
+      });
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  const asegurar = async () => {
+    if (ocupado.current || !estado.partidaId || !seguroDisponible) return;
+    if (estado.fase !== "prize-decision" && estado.fase !== "prize-confirmation") return;
+    ocupado.current = true;
+    setAviso("");
+    try {
+      const datos = await pedirRuleta("asegurar", { partidaId: estado.partidaId });
+      despachar({ type: "mostrar-premio", premioId: datos.premioId, elegibles: datos.elegibles });
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  const confirmarRiesgo = async () => {
+    if (ocupado.current || estado.fase !== "prize-confirmation") return;
+    ocupado.current = true;
+    setAviso("");
+    try {
+      const datos = await pedirRuleta("preview", { partidaId: estado.partidaId });
+      const sectores = sectoresDePremios(datos.elegibles);
+      const hayPremio = (datos.elegibles || []).some((item) => Number(item.peso) > 0);
+      if (!hayPremio) {
+        setAviso("No hay premios disponibles para arriesgar.");
+        return;
+      }
+      despachar({ type: "confirmar-riesgo", sectores, elegibles: datos.elegibles });
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
+  };
+
+  const girarPremio = async () => {
+    if (ocupado.current || estado.fase !== "prize-wheel" || estado.premioId || !estado.partidaId) return;
+    ocupado.current = true;
+    setAviso("");
+    try {
+      const datos = await pedirRuleta("arriesgar", { partidaId: estado.partidaId });
+      const sectores = sectoresDePremios(datos.elegibles);
+      const sector = sectores.find((item) => item.id === datos.premioId);
+      if (!sector) {
+        despachar({ type: "mostrar-premio", premioId: datos.premioId, elegibles: datos.elegibles });
+        return;
+      }
+      const base = estado.sectoresPremio?.length === sectores.length ? estado.rotacionPremio : -sectores[0].centro;
+      despachar({
+        type: "girar-premio",
+        plan: {
+          premioId: datos.premioId,
+          rotacion: rotacionHasta(base, sectores, datos.premioId),
+          sectores,
+          elegibles: datos.elegibles,
+        },
+      });
+    } catch (error) {
+      setAviso(error.message);
+    } finally {
+      ocupado.current = false;
+    }
   };
 
   let contenido = null;
@@ -94,26 +308,22 @@ export function JuegoRuleta() {
       );
       break;
     case "pregunta": {
-      const pregunta = buscarPregunta(estado.preguntaId);
       const categoria = buscarCategoria(estado.categoriaId);
       contenido =
-        pregunta && categoria ? (
+        estado.pregunta && categoria ? (
           <PantallaPregunta
-            pregunta={pregunta}
+            pregunta={estado.pregunta}
             categoria={categoria}
             fase={estado.fase}
             respuesta={estado.respuesta}
             acerto={estado.acerto}
             terminada={estado.aciertos >= ACIERTOS_PARA_GANAR || estado.vidas <= 0}
-            onResponder={(indice) => despachar({ type: "responder", indice })}
+            onResponder={responder}
             onSiguiente={() => despachar({ type: "siguiente" })}
           />
         ) : null;
       break;
     }
-    case "victory":
-      contenido = <PantallaVictoria onContinuar={() => despachar({ type: "ver-premios" })} />;
-      break;
     case "defeat":
       contenido = <PantallaDerrota aciertos={estado.aciertos} onReintentar={reiniciar} />;
       break;
@@ -121,9 +331,10 @@ export function JuegoRuleta() {
       contenido = (
         <PantallaDecision
           fase={estado.fase}
-          onAsegurar={() => despachar({ type: "asegurar" })}
+          seguroDisponible={seguroDisponible}
+          onAsegurar={asegurar}
           onArriesgar={() => despachar({ type: "arriesgar" })}
-          onConfirmar={() => despachar({ type: "confirmar-riesgo" })}
+          onConfirmar={confirmarRiesgo}
           onCancelar={() => despachar({ type: "cancelar-riesgo" })}
         />
       );
@@ -135,18 +346,14 @@ export function JuegoRuleta() {
           premioId={estado.premioId}
           rotacion={estado.rotacionPremio}
           duracion={duracionGiro}
+          sectores={estado.sectoresPremio}
+          elegibles={estado.elegibles}
           onGirar={girarPremio}
         />
       );
       break;
     case "prize-result":
-      contenido = (
-        <PantallaResultadoPremio
-          premioId={estado.premioId}
-          modoPremio={estado.modoPremio}
-          onVolver={() => despachar({ type: "volver-inicio" })}
-        />
-      );
+      contenido = <PantallaResultadoPremio premioId={estado.premioId} onVolver={volverInicio} />;
       break;
     default:
       contenido = null;
@@ -158,14 +365,16 @@ export function JuegoRuleta() {
     <div className="ruleta-juego" ref={contenedor}>
       <div className="ruleta-juego__contenedor">
         <header className="ruleta-juego__cabecera">
-          <img
-            className="ruleta-juego__logo"
-            src={LOGO_ENFLORA}
-            alt="ENFLORA"
-            width={1000}
-            height={300}
-            decoding="async"
-          />
+          <Link href="/" className="ruleta-juego__marca" aria-label="Ir al inicio">
+            <img
+              className="ruleta-juego__logo"
+              src={LOGO_ENFLORA}
+              alt=""
+              width={1000}
+              height={300}
+              decoding="async"
+            />
+          </Link>
           <AnimatePresence initial={false}>
             {enPartida ? (
               <motion.div
@@ -179,6 +388,12 @@ export function JuegoRuleta() {
             ) : null}
           </AnimatePresence>
         </header>
+
+        {aviso ? (
+          <p className="ruleta-aviso" role="alert">
+            {aviso}
+          </p>
+        ) : null}
 
         <AnimatePresence mode="wait" initial={false}>
           <motion.section
