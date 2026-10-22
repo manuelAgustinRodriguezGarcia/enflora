@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { ComprobantePremio } from "@/componentes/ruleta-420/comprobante-premio";
@@ -8,64 +7,40 @@ import { Confeti } from "@/componentes/ruleta-420/confeti";
 import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { RESULTADOS_PREMIO } from "@/lib/ruleta-420/configuracion";
 
+const PIEZAS_RESTA = [
+  { src: "/images/premios/enflora_stickers_web_1280.webp", alt: "Sticker" },
+  { src: "/images/premios/enflora_filtros_web_1280.webp", alt: "Filtro" },
+];
+
+function RestaPremio() {
+  return (
+    <div className="ruleta-resta">
+      {PIEZAS_RESTA.map((pieza) => (
+        <span className="ruleta-resta__premio" key={pieza.src}>
+          <img src={pieza.src} alt={pieza.alt} width="96" height="96" />
+          <span className="ruleta-resta__marca">-1</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export function PantallaResultadoPremio({ premioId, onVolver }) {
   const consuelo = premioId === "CONSOLATION";
-  const [revelado, setRevelado] = useState(false);
   const resultado = RESULTADOS_PREMIO[premioId];
   if (!resultado) return null;
 
-  if (consuelo && !revelado) {
-    return (
-      <div className={`ruleta-cierre ruleta-cierre--${resultado.tono}`}>
-        <motion.div
-          className="ruleta-cierre__flora"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", stiffness: 240, damping: 16 }}
-        >
-          <ImagenRuleta
-            clave={resultado.imagen}
-            alt="Flora triste"
-            icono={resultado.icono}
-            etiqueta="Flora"
-            tono={resultado.tono}
-          />
-        </motion.div>
-        <h1 className="ruleta-titulo">{resultado.titulo}</h1>
-        <p className="ruleta-cierre__texto">{resultado.descripcion}</p>
-        <div className="ruleta-acciones">
-          <BotonRuleta variante="secundario" onClick={() => setRevelado(true)}>
-            OK
-          </BotonRuleta>
-        </div>
-      </div>
-    );
-  }
-
   if (consuelo) {
     return (
-      <div className="ruleta-cierre ruleta-cierre--tuquera">
-        <Confeti />
-        <motion.div
-          className="ruleta-cierre__flora"
-          initial={{ opacity: 0, scale: 0.4, rotate: -12 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 240, damping: 14 }}
-        >
-          <ImagenRuleta
-            clave="floraFestejando"
-            alt="Flora contenta"
-            icono="festejo"
-            etiqueta="Flora"
-            tono="festejo"
-          />
-        </motion.div>
-        <h1 className="ruleta-titulo">¡PERO FLORA NO TE DEJA IR ASÍ!</h1>
-        <p className="ruleta-cierre__texto">Te regalo igual un filtro y un sticker que te guste por participar.</p>
-        <p className="ruleta-cierre__destacado">1 STICKER + 1 FILTRO</p>
-        <ComprobantePremio premioId={premioId} />
+      <div className="ruleta-cierre ruleta-cierre--nada">
+        <RestaPremio />
+        <h1 className="ruleta-titulo">{resultado.titulo}</h1>
+        <p className="ruleta-cierre__destacado">{resultado.descripcion}</p>
+        <p className="ruleta-cierre__texto">{resultado.secundario}</p>
         <div className="ruleta-acciones">
-          <BotonRuleta onClick={onVolver}>¡GRACIAS, FLORA!</BotonRuleta>
+          <BotonRuleta variante="secundario" onClick={onVolver}>
+            VOLVER AL INICIO
+          </BotonRuleta>
         </div>
       </div>
     );

@@ -48,14 +48,43 @@ export function PantallaPregunta({ pregunta, categoria, fase, respuesta, acerto,
         <h2 className="ruleta-tarjeta__pregunta">{pregunta.question}</h2>
 
         {pregunta.image ? (
-          <ImagenRuleta
-            clave={pregunta.image}
-            alt="Imagen ampliada para la pregunta"
-            icono="tricomas"
-            etiqueta="Imagen ampliada · Mirá de cerca"
-            className="ruleta-tarjeta__imagen"
-            tono="macro"
-          />
+          <div className="ruleta-tarjeta__marco">
+            <ImagenRuleta
+              clave={pregunta.image}
+              alt="Imagen ampliada para la pregunta"
+              icono="tricomas"
+              etiqueta="Imagen ampliada · Mirá de cerca"
+              className="ruleta-tarjeta__imagen"
+              tono="macro"
+            />
+            <AnimatePresence>
+              {especialAcertada ? (
+                <motion.div
+                  key="especial"
+                  className="ruleta-devolucion__especial"
+                  initial={{ scale: 0.6, rotate: -6, opacity: 0 }}
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 14 }}
+                >
+                  <img src={LOGO_ENFLORA} alt="ENFLORA" width={1000} height={300} decoding="async" />
+                  <strong className="ruleta-devolucion__titulo ruleta-devolucion__titulo--enflora">
+                    ¡ESA ES MI ESPECIALIDAD!
+                  </strong>
+                </motion.div>
+              ) : conRespuesta ? (
+                <motion.strong
+                  className={`ruleta-devolucion__titulo ruleta-devolucion__titulo--${acerto ? "bien" : "mal"}`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.22 }}
+                >
+                  {acerto ? "¡BIEN AHÍ!" : "¡UUUH, CASI!"}
+                </motion.strong>
+              ) : null}
+            </AnimatePresence>
+          </div>
         ) : null}
 
         <div className="ruleta-opciones" role="group" aria-label="Opciones de respuesta">
@@ -94,7 +123,7 @@ export function PantallaPregunta({ pregunta, categoria, fase, respuesta, acerto,
               transition={{ duration: 0.3 }}
               aria-live="assertive"
             >
-              {especialAcertada ? (
+              {especialAcertada && !pregunta.image ? (
                 <motion.div
                   className="ruleta-devolucion__especial"
                   initial={{ scale: 0.6, rotate: -6, opacity: 0 }}
@@ -106,7 +135,7 @@ export function PantallaPregunta({ pregunta, categoria, fase, respuesta, acerto,
                     ¡ESA ES MI ESPECIALIDAD!
                   </strong>
                 </motion.div>
-              ) : (
+              ) : pregunta.image ? null : (
                 <motion.strong
                   className={`ruleta-devolucion__titulo ruleta-devolucion__titulo--${acerto ? "bien" : "mal"}`}
                   initial={{ scale: 0.6, opacity: 0 }}

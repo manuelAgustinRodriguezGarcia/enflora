@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { siguientePermitido } from "@/lib/pagos/rutas";
 
 async function urlConfirmarCorreo() {
   const encabezados = await headers();
@@ -98,8 +99,8 @@ export async function entrar(_estado, formulario) {
     return estadoCredenciales("No se pudo iniciar sesión.", email);
   }
 
-  const siguiente = String(formulario.get("siguiente") || "");
-  redirect(siguiente === "/expo-cannabis/admin" ? siguiente : "/espacios");
+  const siguiente = siguientePermitido(String(formulario.get("siguiente") || ""));
+  redirect(siguiente || "/espacios");
 }
 
 export async function registrar(_estado, formulario) {

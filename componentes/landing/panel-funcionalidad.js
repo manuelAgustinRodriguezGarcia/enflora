@@ -29,20 +29,9 @@ export const PanelFuncionalidad = forwardRef(function PanelFuncionalidad(
             <div className="producto-panel__texto">
               <div className="producto-panel__meta">
                 <span className="producto-panel__etiqueta">{funcionalidad.etiqueta}</span>
-                <span
-                  className="producto-panel__estado"
-                  data-estado={funcionalidad.disponibilidad}
-                >
-                  {funcionalidad.disponibilidad === "disponible" ? "Disponible" : "Próximamente"}
-                </span>
               </div>
               <h3 className="producto-panel__titulo">{funcionalidad.titulo}</h3>
               <p className="producto-panel__descripcion">{funcionalidad.descripcion}</p>
-              {funcionalidad.demo ? (
-                <p className="producto-panel__demo">
-                  Vista conceptual · el parentesco no es secuenciación genética de laboratorio.
-                </p>
-              ) : null}
             </div>
             <VistaPreviaFuncionalidad
               preview={funcionalidad.preview}

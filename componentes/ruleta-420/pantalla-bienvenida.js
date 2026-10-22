@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
-import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { Ruleta } from "@/componentes/ruleta-420/ruleta";
 import { SECTORES_CATEGORIAS } from "@/lib/ruleta-420/logica";
@@ -28,14 +27,6 @@ export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onC
 
       <div className="ruleta-bienvenida__escena">
         <Ruleta sectores={SECTORES_CATEGORIAS} decorativa soloTexto etiqueta="Ruleta de categorías decorativa" />
-        <motion.div
-          className="ruleta-bienvenida__flora"
-          initial={{ opacity: 0, x: 24, rotate: 8 }}
-          animate={{ opacity: 1, x: 0, rotate: 0 }}
-          transition={{ type: "spring", stiffness: 220, damping: 18, delay: 0.2 }}
-        >
-          <ImagenRuleta clave="floraBienvenida" alt="Flora te da la bienvenida" icono="bienvenida" etiqueta="Flora" />
-        </motion.div>
       </div>
 
       <div className="ruleta-acciones">

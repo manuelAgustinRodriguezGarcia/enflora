@@ -1,5 +1,6 @@
 import { FormularioEntrar } from "@/componentes/formulario-entrar";
 import { MarcoAuth } from "@/componentes/marco-auth";
+import { siguientePermitido } from "@/lib/pagos/rutas";
 
 export const metadata = {
   title: "Iniciar sesión",
@@ -11,7 +12,9 @@ export const metadata = {
 
 export default async function PaginaIngreso({ searchParams }) {
   const parametros = await searchParams;
-  const siguiente = parametros.siguiente === "/expo-cannabis/admin" ? parametros.siguiente : "";
+  const siguiente = siguientePermitido(
+    typeof parametros.siguiente === "string" ? parametros.siguiente : "",
+  );
   const aviso =
     parametros.correo === "pendiente"
       ? "Revisá tu bandeja de entrada o spam de tu correo para validar el mail."

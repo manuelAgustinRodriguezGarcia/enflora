@@ -94,6 +94,11 @@ export async function proxy(request) {
     return respuesta;
   }
 
+  if (!user && ruta.startsWith("/pagos")) {
+    const destino = `${ruta}${request.nextUrl.search}`;
+    return redirigir(request, "/ingreso", respuesta, `?siguiente=${encodeURIComponent(destino)}`);
+  }
+
   if (!user && !esRutaPublica) {
     return redirigir(request, "/ingreso", respuesta);
   }
@@ -102,7 +107,7 @@ export async function proxy(request) {
     return redirigir(request, destino, respuesta);
   }
 
-  if (user && pendiente && ruta !== "/onboarding") {
+  if (user && pendiente && ruta !== "/onboarding" && !ruta.startsWith("/pagos")) {
     return redirigir(request, "/onboarding", respuesta);
   }
 

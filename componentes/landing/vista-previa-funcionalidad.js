@@ -7,7 +7,6 @@ function PreviewMisCultivos() {
     <div className="producto-preview__ui">
       <div className="producto-preview__ui-top">
         <strong>Mis cultivos</strong>
-        <Chip tono="lima">Disponible</Chip>
       </div>
       <div className="producto-preview__ruta" aria-hidden="true">
         <span>Espacio</span>
@@ -70,7 +69,7 @@ function PreviewMiSeguimiento() {
         </div>
         <div className="producto-preview__foto-mini" aria-hidden="true">
           <span />
-          <em>Foto · Próximamente</em>
+          <em>Foto</em>
         </div>
       </div>
       <p className="producto-preview__nota">Ambiente: temperatura, humedad y VPD por unidad.</p>
@@ -83,7 +82,6 @@ function PreviewOrigenHistoria() {
     <div className="producto-preview__ui producto-preview__ui--adn">
       <div className="producto-preview__ui-top">
         <strong>Historial</strong>
-        <Chip tono="arena">Próximamente</Chip>
       </div>
       <p className="producto-preview__nota">
         Parentesco registrado por esquejes. No es secuenciación genética de laboratorio.

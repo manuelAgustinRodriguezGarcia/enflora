@@ -2,15 +2,14 @@
 
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowUpRight, X } from "lucide-react";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { irASeccionExpo } from "@/componentes/expo-cannabis/enlace-desplazar";
+import { RuletaVitrina } from "@/componentes/expo-cannabis/entrada-expo";
 import { useExpo } from "@/componentes/expo-cannabis/proveedor-expo";
 import { ESTADOS_EXPO, expoCannabis } from "@/lib/expo-cannabis/configuracion";
-import { describirRestante, formatearRestante } from "@/lib/expo-cannabis/tiempo";
 
 const CLAVE_SESION = "enflora-expo-bienvenida";
-const { bienvenida: configuracion, textos, assets, ids } = expoCannabis;
+const { bienvenida: configuracion, textos, ids } = expoCannabis;
 const texto = textos.bienvenida;
 
 function yaSeMostro() {
@@ -31,24 +30,8 @@ function recordarMostrada() {
   }
 }
 
-function EstadoBienvenida({ estado, restante }) {
-  if (estado === ESTADOS_EXPO.enCurso) {
-    return <p className="expo-bienvenida__estado">{texto.enCurso}</p>;
-  }
-  if (!restante) return null;
-  return (
-    <p className="expo-bienvenida__estado">
-      <span className="expo-sr">{describirRestante(restante)}</span>
-      <span aria-hidden="true">
-        {texto.faltan}{" "}
-        <span className="expo-bienvenida__contador">{formatearRestante(restante)}</span>
-      </span>
-    </p>
-  );
-}
-
 export function BienvenidaExpo() {
-  const { estado, restante, listo } = useExpo();
+  const { estado, listo } = useExpo();
   const [abierto, setAbierto] = useState(false);
   const irAlCerrar = useRef(false);
   const disponible =
@@ -84,20 +67,12 @@ export function BienvenidaExpo() {
             <Dialog.Close className="expo-bienvenida__cerrar" aria-label={texto.cerrar}>
               <X size={20} strokeWidth={2.4} aria-hidden="true" />
             </Dialog.Close>
-            <div className="expo-bienvenida__arte" aria-hidden="true">
-              <Image
-                src={assets.hero.src}
-                alt=""
-                width={assets.hero.width}
-                height={assets.hero.height}
-                sizes="(max-width: 64rem) 92vw, 20rem"
-                className="expo-bienvenida__imagen"
-              />
+            <div className="expo-bienvenida__arte">
+              <RuletaVitrina etiqueta={textos.desafio.etiquetaRuleta} />
             </div>
             <div className="expo-bienvenida__contenido">
               <Dialog.Title className="expo-bienvenida__titulo">{texto.titulo}</Dialog.Title>
               <Dialog.Description className="expo-bienvenida__texto">{texto.descripcion}</Dialog.Description>
-              <EstadoBienvenida estado={estado} restante={restante} />
               <div className="expo-bienvenida__acciones">
                 <a
                   className="landing__accion landing__accion--principal expo-bienvenida__cta"

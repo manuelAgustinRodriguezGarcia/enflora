@@ -259,6 +259,7 @@ create table if not exists public.expo_ruleta_partidas (
   ronda integer not null default 0,
   ronda_especial integer not null,
   usadas text[] not null default '{}',
+  excluidas text[] not null default '{}',
   pregunta_id text,
   categoria_id text,
   correct_index integer,
@@ -270,7 +271,7 @@ create table if not exists public.expo_ruleta_partidas (
   elegibles jsonb,
   giro integer,
   constraint expo_ruleta_partidas_estado_valido check (estado in ('jugando', 'ganada', 'perdida', 'resuelta')),
-  constraint expo_ruleta_partidas_ronda_especial check (ronda_especial in (1, 2)),
+  constraint expo_ruleta_partidas_ronda_especial check (ronda_especial between 1 and 5),
   constraint expo_ruleta_partidas_vidas check (vidas >= 0 and vidas <= 2),
   constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5),
   constraint expo_ruleta_partidas_resultado check (
@@ -280,6 +281,11 @@ create table if not exists public.expo_ruleta_partidas (
 
 alter table public.expo_ruleta_partidas drop constraint if exists expo_ruleta_partidas_aciertos;
 alter table public.expo_ruleta_partidas add constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5);
+
+alter table public.expo_ruleta_partidas add column if not exists excluidas text[] not null default '{}';
+
+alter table public.expo_ruleta_partidas drop constraint if exists expo_ruleta_partidas_ronda_especial;
+alter table public.expo_ruleta_partidas add constraint expo_ruleta_partidas_ronda_especial check (ronda_especial between 1 and 5);
 
 alter table public.expo_ruleta_estado enable row level security;
 alter table public.expo_ruleta_partidas enable row level security;
@@ -387,7 +393,7 @@ begin
       motivo := 'peso';
     elsif premio = 'GRINDER' and p_giro < 11 then
       motivo := 'giro';
-    elsif premio = 'TUBE' and p_giro < 6 then
+    elsif premio = 'TUBE' and p_giro < 11 then
       motivo := 'giro';
     elsif premio = 'GRINDER' and p_ultimo = 'TUBE' then
       motivo := 'consecutivo';
@@ -474,13 +480,44 @@ set search_path = public
 as $$
 declare
   fila public.expo_ruleta_partidas%rowtype;
+  previa public.expo_ruleta_partidas%rowtype;
+  opciones integer[];
+  ronda integer;
+  bloqueadas text[];
 begin
-  if p_visitor is null or p_ronda not in (1, 2) then
+  if p_visitor is null then
     raise exception 'La partida no es válida.';
   end if;
 
-  insert into public.expo_ruleta_partidas (visitor_id, ronda_especial)
-  values (p_visitor, p_ronda)
+  select *
+  into previa
+  from public.expo_ruleta_partidas
+  where visitor_id = p_visitor
+  order by created_at desc
+  limit 1;
+
+  if found and previa.ronda_especial in (3, 4, 5) then
+    select coalesce(array_agg(valor order by valor), array[3, 4, 5])
+    into opciones
+    from unnest(array[3, 4, 5]) as valor
+    where valor <> previa.ronda_especial;
+    bloqueadas := coalesce(previa.usadas, '{}'::text[]);
+  elsif found then
+    opciones := array[3, 4, 5];
+    bloqueadas := coalesce(previa.usadas, '{}'::text[]);
+  else
+    opciones := array[3, 4, 5];
+    bloqueadas := '{}'::text[];
+  end if;
+
+  ronda := opciones[1 + floor(random() * cardinality(opciones))::integer];
+
+  if ronda is null or ronda not in (3, 4, 5) then
+    raise exception 'La partida no es válida.';
+  end if;
+
+  insert into public.expo_ruleta_partidas (visitor_id, ronda_especial, excluidas)
+  values (p_visitor, ronda, bloqueadas)
   returning * into fila;
 
   return jsonb_build_object(
@@ -518,6 +555,7 @@ begin
     'ronda', fila.ronda,
     'rondaEspecial', fila.ronda_especial,
     'usadas', to_jsonb(fila.usadas),
+    'excluidas', to_jsonb(coalesce(fila.excluidas, '{}'::text[])),
     'preguntaId', fila.pregunta_id,
     'categoriaId', fila.categoria_id,
     'respondida', fila.pregunta_respondida,

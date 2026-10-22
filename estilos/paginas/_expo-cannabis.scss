@@ -93,13 +93,15 @@ $desktop: 64rem;
 
   .expo-encabezado {
     display: grid;
-    justify-items: center;
+    justify-items: start;
     gap: 0.9rem;
     margin-bottom: 2.5rem;
-    text-align: center;
+    text-align: start;
 
     .expo-bajada {
-      margin-inline: auto;
+      width: 100%;
+      max-width: none;
+      margin-inline: 0;
     }
 
     @media (min-width: $desktop) {
@@ -141,13 +143,11 @@ $desktop: 64rem;
 }
 
 .expo .expo-regalos {
-  padding: 4.5rem 1.25rem 4rem;
-  background:
-    radial-gradient(circle at 0% 0%, rgb(164 200 91 / 16%) 0, transparent 30%),
-    $crema;
+  padding: 4.5rem 1.25rem;
+  background: #FFAFB0;
 
   @media (min-width: $desktop) {
-    padding: 6.5rem 7vw 5.5rem;
+    padding: 6.5rem 7vw 6rem;
   }
 
   .expo-regalos__grilla {
@@ -364,23 +364,12 @@ $desktop: 64rem;
     display: grid;
     place-items: center;
     min-width: 0;
-    padding-block: calc((min(94vw, 30rem) - min(74vw, 22rem)) / 2);
     overflow: visible;
 
     @media (min-width: $desktop) {
       grid-area: visual;
       align-self: center;
-      padding: 1.25rem 0 0.5rem;
     }
-  }
-
-  .expo-desafio__halo {
-    position: absolute;
-    width: min(94vw, 30rem);
-    aspect-ratio: 1;
-    border: 1.5px dashed rgb(253 241 215 / 16%);
-    border-radius: 50%;
-    background: radial-gradient(circle, rgb(164 200 91 / 26%) 0, transparent 66%);
   }
 
   .expo-desafio__juego {
@@ -416,14 +405,15 @@ $desktop: 64rem;
 }
 
 .expo .expo-donde {
-  padding: 1.5rem 1.25rem 4.5rem;
-  background: $crema;
+  margin-top: 2.5rem;
+  padding: 0;
 
   @media (min-width: $desktop) {
-    padding: 5.5rem 7vw 6rem;
+    margin-top: 2.75rem;
   }
 
   .expo-donde__tarjeta {
+    width: 100%;
     padding: 1.6rem 1.35rem;
     border: 1.5px solid rgb(11 61 42 / 10%);
     border-radius: 1.75rem;
@@ -632,7 +622,7 @@ $desktop: 64rem;
 .expo-bienvenida {
   position: relative;
   display: grid;
-  grid-template-columns: 17rem minmax(0, 1fr);
+  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
   width: min(100%, 52rem);
   overflow: hidden;
   border-radius: 2rem;
@@ -654,21 +644,29 @@ $desktop: 64rem;
 
 .expo-bienvenida__arte {
   position: relative;
+  isolation: isolate;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 35%, rgb(164 200 91 / 55%), rgb(164 200 91 / 0%) 65%),
-    linear-gradient(160deg, $verde-medio, $verde);
-}
+  padding: 1.75rem 1.15rem;
+  background: $verde;
 
-.expo-bienvenida__imagen {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 30%;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1.5rem;
+    z-index: 0;
+    background: url("/images/juego420/flora-casino-dekstop.png") center / cover no-repeat;
+    filter: blur(14px);
+    transform: scale(1.08);
+  }
+
+  .ruleta {
+    position: relative;
+    z-index: 1;
+    width: min(100%, 18rem);
+  }
 }
 
 .expo-bienvenida__contenido {
@@ -708,6 +706,7 @@ $desktop: 64rem;
 }
 
 .expo-bienvenida__titulo {
+  justify-self: stretch;
   margin: 0;
   color: $verde;
   font-family: var(--font-identidad);
@@ -715,6 +714,7 @@ $desktop: 64rem;
   font-weight: 600;
   line-height: 1.02;
   letter-spacing: -0.02em;
+  text-align: center;
   text-wrap: balance;
 }
 
@@ -723,23 +723,6 @@ $desktop: 64rem;
   color: rgb(11 61 42 / 80%);
   font-size: 1.05rem;
   line-height: 1.55;
-}
-
-.expo-bienvenida__estado {
-  display: inline-flex;
-  margin: 0.25rem 0 0;
-  padding: 0.5rem 0.95rem;
-  border-radius: 999px;
-  background: $verde;
-  color: $crema;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.expo-bienvenida__contador {
-  color: $lima;
-  font-family: var(--font-identidad);
-  font-variant-numeric: tabular-nums;
 }
 
 .expo-bienvenida__acciones {
@@ -796,50 +779,28 @@ $desktop: 64rem;
   }
 
   .expo-bienvenida {
-    display: block;
+    display: flex;
+    flex-direction: column;
     width: 100%;
     overflow: hidden;
     border-radius: 1.5rem;
   }
 
   .expo-bienvenida__arte {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    height: auto;
-    aspect-ratio: auto;
-  }
+    position: relative;
+    flex: none;
+    padding: 2.4rem 1rem 0.85rem;
 
-  .expo-bienvenida__imagen {
-    object-fit: cover;
-    object-position: center 42%;
+    .ruleta {
+      width: min(72vw, 16.5rem);
+    }
   }
 
   .expo-bienvenida__contenido {
-    position: relative;
-    z-index: 1;
-    min-height: min(40rem, calc(100dvh - 1.5rem - env(safe-area-inset-bottom, 0px)));
-    align-content: end;
+    align-content: start;
     gap: 0.75rem;
-    padding: 1.25rem 1.15rem 1.35rem;
-    background: linear-gradient(
-      180deg,
-      rgb(253 241 215 / 0%) 0%,
-      rgb(253 241 215 / 0%) 46%,
-      rgb(253 241 215 / 96%) 64%,
-      $crema 78%
-    );
-  }
-
-  .expo-bienvenida__estado {
-    position: absolute;
-    top: 1rem;
-    left: 50%;
-    z-index: 2;
-    max-width: calc(100% - 5.5rem);
-    margin: 0;
-    translate: -50% 0;
-    text-align: center;
+    padding: 1.15rem 1.15rem 1.35rem;
+    background: $crema;
   }
 
   .expo-bienvenida__titulo {

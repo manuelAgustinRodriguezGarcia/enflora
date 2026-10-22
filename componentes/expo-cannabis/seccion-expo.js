@@ -21,6 +21,7 @@ function completarRegla(regla) {
 
 function ExpoRegalos() {
   const premios = textos.premios;
+  const donde = textos.donde;
 
   return (
     <section
@@ -64,62 +65,9 @@ function ExpoRegalos() {
             </EntradaExpo>
           ))}
         </ul>
-
       </div>
-    </section>
-  );
-}
 
-function ExpoDesafio() {
-  const desafio = textos.desafio;
-
-  return (
-    <section
-      className="expo-desafio"
-      id={ids.desafio}
-      data-logo="light"
-      aria-labelledby={`${ids.desafio}-titulo`}
-    >
-      <div className="expo-desafio__fondo" aria-hidden="true" />
-      <div className="expo-contenedor expo-desafio__contenedor">
-        <EntradaExpo className="expo-desafio__texto">
-          <p className="expo-eyebrow expo-eyebrow--lima">{desafio.eyebrow}</p>
-          <h3 className="expo-titulo expo-titulo--claro" id={`${ids.desafio}-titulo`}>
-            {desafio.titulo}
-          </h3>
-          <p className="expo-bajada expo-bajada--claro">
-            <TextoExpo textos={desafio.descripcion} />
-          </p>
-        </EntradaExpo>
-
-        <div className="expo-desafio__visual">
-          <span className="expo-desafio__halo" aria-hidden="true" />
-          <Link className="expo-desafio__juego" href={`${expoCannabis.rutaJuego}?bienvenida=1`} aria-label={desafio.cta}>
-            <RuletaVitrina className="expo-desafio__ruleta" etiqueta={desafio.etiquetaRuleta} />
-          </Link>
-        </div>
-
-        <ol className="expo-desafio__reglas">
-          {desafio.reglas.map((regla) => (
-            <li key={regla}>{completarRegla(regla)}</li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-function ExpoDonde() {
-  const donde = textos.donde;
-
-  return (
-    <section
-      className="expo-donde"
-      id={ids.donde}
-      data-logo="dark"
-      aria-labelledby={`${ids.donde}-titulo`}
-    >
-      <div className="expo-contenedor">
+      <div className="expo-contenedor expo-donde" id={ids.donde}>
         <EntradaExpo className="expo-donde__tarjeta">
           <h3 className="expo-donde__titulo" id={`${ids.donde}-titulo`}>
             <TextoExpo textos={donde.titulo} />
@@ -164,6 +112,44 @@ function ExpoDonde() {
   );
 }
 
+function ExpoDesafio() {
+  const desafio = textos.desafio;
+
+  return (
+    <section
+      className="expo-desafio"
+      id={ids.desafio}
+      data-logo="light"
+      aria-labelledby={`${ids.desafio}-titulo`}
+    >
+      <div className="expo-desafio__fondo" aria-hidden="true" />
+      <div className="expo-contenedor expo-desafio__contenedor">
+        <EntradaExpo className="expo-desafio__texto">
+          <p className="expo-eyebrow expo-eyebrow--lima">{desafio.eyebrow}</p>
+          <h3 className="expo-titulo expo-titulo--claro" id={`${ids.desafio}-titulo`}>
+            {desafio.titulo}
+          </h3>
+          <p className="expo-bajada expo-bajada--claro">
+            <TextoExpo textos={desafio.descripcion} />
+          </p>
+        </EntradaExpo>
+
+        <div className="expo-desafio__visual">
+          <Link className="expo-desafio__juego" href={`${expoCannabis.rutaJuego}?bienvenida=1`} aria-label={desafio.cta}>
+            <RuletaVitrina className="expo-desafio__ruleta" etiqueta={desafio.etiquetaRuleta} />
+          </Link>
+        </div>
+
+        <ol className="expo-desafio__reglas">
+          {desafio.reglas.map((regla) => (
+            <li key={regla}>{completarRegla(regla)}</li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
 export function SeccionExpo() {
   if (!expoCannabis.publicada) return null;
 
@@ -171,7 +157,6 @@ export function SeccionExpo() {
     <section className="expo" id={ids.seccion} aria-labelledby={`${ids.desafio}-titulo`}>
       <ExpoDesafio />
       <ExpoRegalos />
-      <ExpoDonde />
     </section>
   );
 }

@@ -3,25 +3,22 @@
 import { AnimatePresence, motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { Ruleta } from "@/componentes/ruleta-420/ruleta";
-import { AVISO_PESOS_PROVISIONALES, PESOS_PROVISIONALES, describirLeyenda } from "@/lib/ruleta-420/premios";
 import { PREMIOS } from "@/lib/ruleta-420/configuracion";
 import { SECTORES_PREMIOS } from "@/lib/ruleta-420/logica";
 
-export function PantallaRuletaPremios({ fase, premioId, rotacion, duracion, sectores, elegibles, onGirar }) {
+export function PantallaRuletaPremios({ fase, premioId, rotacion, duracion, sectores, onGirar }) {
   const girando = fase === "spinning-prize";
   const detenida = fase === "prize-reveal";
   const visibles = sectores?.length ? sectores : SECTORES_PREMIOS;
   const premio = detenida ? PREMIOS.find((item) => item.id === premioId) : null;
-  const leyenda = describirLeyenda(elegibles);
 
-  let mensaje = { clave: "listo", texto: "Picador, tuquero, pack especial o nada. ¿Qué decide la suerte?" };
+  let mensaje = { clave: "listo", texto: "Picador, tuquero, 3 stickers y 3 filtros, o perdés 1 de cada uno." };
   if (girando) mensaje = { clave: "girando", texto: "¡QUE LA SUERTE TE ACOMPAÑE!" };
   if (premio) mensaje = { clave: "resultado", texto: `¡Salió ${premio.nombre}!` };
 
   return (
     <div className="ruleta-ronda ruleta-ronda--premios">
-      <span className="ruleta-chip ruleta-chip--rosa">Ruleta de premios</span>
-      <h1 className="ruleta-titulo">TODO O NADA</h1>
+      <h1 className="ruleta-titulo">POR LA TOTA TODO</h1>
 
       <Ruleta
         sectores={visibles}
@@ -47,9 +44,6 @@ export function PantallaRuletaPremios({ fase, premioId, rotacion, duracion, sect
           </motion.p>
         </AnimatePresence>
       </div>
-
-      {leyenda ? <p className="ruleta-leyenda">{leyenda}</p> : null}
-      {PESOS_PROVISIONALES ? <p className="ruleta-leyenda ruleta-leyenda--nota">{AVISO_PESOS_PROVISIONALES}</p> : null}
 
       <BotonRuleta variante="rosa" onClick={onGirar} disabled={fase !== "prize-wheel" || Boolean(premioId)}>
         ¡GIRAR!

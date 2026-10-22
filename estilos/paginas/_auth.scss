@@ -292,9 +292,9 @@
 
 .marco-auth {
   --auth-fondo: #e8f2dc;
-  --auth-vip-surface: rgb(41 26 19 / 0.96);
-  --auth-vip-input: #503628;
-  --auth-vip-input-hover: #5a3e2e;
+  --auth-vip-surface: rgb(2 18 12 / 0.72);
+  --auth-vip-input: #083024;
+  --auth-vip-input-hover: #0b3d2a;
   --auth-vip-gold: #d5a46d;
   --auth-vip-cream: #fdf1d7;
   --auth-vip-muted: #c6aa87;
@@ -395,7 +395,7 @@
     top: 50%;
     left: 0.85rem;
     z-index: 1;
-    color: var(--auth-vip-gold);
+    color: var(--auth-vip-cream);
     pointer-events: none;
     transform: translateY(-50%);
     transition: color 200ms ease;
@@ -414,33 +414,33 @@
   .formulario input:not([type="checkbox"]):not([type="radio"]) {
     background: var(--auth-vip-input);
     background-color: var(--auth-vip-input);
-    border-color: rgb(213 164 109 / 0.32);
+    border-color: rgb(232 220 190 / 0.28);
     color: var(--auth-vip-cream);
     caret-color: var(--auth-vip-cream);
 
     &::placeholder {
-      color: var(--auth-vip-muted);
-      opacity: 0.85;
+      color: var(--auth-vip-cream);
+      opacity: 0.62;
     }
 
     &:hover:not(:focus) {
       background: var(--auth-vip-input-hover);
       background-color: var(--auth-vip-input-hover);
-      border-color: rgb(213 164 109 / 0.48);
+      border-color: rgb(232 220 190 / 0.45);
     }
 
     &:focus {
       background: var(--auth-vip-input-hover);
       background-color: var(--auth-vip-input-hover);
       border-color: var(--auth-vip-gold);
-      box-shadow: 0 0 0 3px rgb(213 164 109 / 0.18);
+      box-shadow: 0 0 0 3px rgb(213 164 109 / 0.22);
     }
 
     &:-webkit-autofill,
     &:-webkit-autofill:hover,
     &:-webkit-autofill:active,
     &:autofill {
-      border-color: rgb(213 164 109 / 0.32);
+      border-color: rgb(232 220 190 / 0.28);
       -webkit-text-fill-color: var(--auth-vip-cream);
       caret-color: var(--auth-vip-cream);
       box-shadow: 0 0 0 1000px var(--auth-vip-input) inset;
@@ -448,7 +448,7 @@
     }
 
     &:-webkit-autofill:hover:not(:focus) {
-      border-color: rgb(213 164 109 / 0.48);
+      border-color: rgb(232 220 190 / 0.45);
       box-shadow: 0 0 0 1000px var(--auth-vip-input-hover) inset;
     }
 
@@ -459,7 +459,7 @@
       caret-color: var(--auth-vip-cream);
       box-shadow:
         0 0 0 1000px var(--auth-vip-input-hover) inset,
-        0 0 0 3px rgb(213 164 109 / 0.18);
+        0 0 0 3px rgb(213 164 109 / 0.22);
     }
   }
 
@@ -468,19 +468,13 @@
     box-shadow: 0 0 0 2px rgb(224 122 106 / 0.18);
   }
 
-  .formulario__control:focus-within .formulario__icono,
-  .formulario__clave:focus-within .formulario__icono,
-  .formulario__clave:focus-within .formulario__revelar {
-    color: var(--auth-vip-cream);
-  }
-
   .formulario__revelar {
-    color: var(--auth-vip-gold);
+    color: var(--auth-vip-cream);
     transition: color 200ms ease;
 
     &:hover:not(:disabled) {
       background: transparent;
-      color: var(--auth-vip-cream);
+      color: var(--auth-vip-gold);
     }
   }
 

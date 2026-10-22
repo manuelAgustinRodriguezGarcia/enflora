@@ -3,6 +3,10 @@
     {
       "path": "/api/cotizacion/actualizar",
       "schedule": "20 7,19 * * *"
+    },
+    {
+      "path": "/api/pagos/reconciliar",
+      "schedule": "15 * * * *"
     }
   ]
 }

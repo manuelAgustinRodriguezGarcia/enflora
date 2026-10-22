@@ -15,7 +15,6 @@ import {
   ACIERTOS_PARA_GANAR,
   DURACION_GIRO_MS,
   DURACION_GIRO_REDUCIDO_MS,
-  LOGO_ENFLORA,
   PAUSA_RESULTADO_RULETA_MS,
   PREMIO_ASEGURADO,
 } from "@/lib/ruleta-420/configuracion";
@@ -62,7 +61,7 @@ function estadoDesdePartida(partida) {
   base.preguntaId = partida.pregunta?.id || null;
   base.premioId = partida.resultado || null;
   base.elegibles = partida.elegibles || null;
-  base.sectoresPremio = Array.isArray(partida.elegibles) ? sectoresDePremios(partida.elegibles) : null;
+  base.sectoresPremio = Array.isArray(partida.elegibles) ? sectoresDePremios() : null;
   base.modoPremio = partida.resultado === PREMIO_ASEGURADO ? "asegurado" : partida.resultado ? "arriesgado" : null;
   if (partida.estado === "resuelta") base.fase = "prize-result";
   else if (partida.estado === "ganada") base.fase = "prize-decision";
@@ -162,7 +161,7 @@ export function JuegoRuleta() {
       });
   };
 
-  const empezar = async () => {
+  const comenzarPartida = async (tipo) => {
     if (ocupado.current) return;
     ocupado.current = true;
     ignorarRestauracion.current = true;
@@ -173,7 +172,7 @@ export function JuegoRuleta() {
       const partida = crearPartida();
       partida.partidaId = datos.partidaId;
       partida.rondaEspecial = datos.rondaEspecial;
-      despachar({ type: "empezar", partida });
+      despachar({ type: tipo, partida });
       registrarParticipacion();
     } catch (error) {
       setAviso(error.message);
@@ -182,9 +181,11 @@ export function JuegoRuleta() {
     }
   };
 
+  const empezar = () => comenzarPartida("empezar");
+
   const reiniciar = () => {
     window.sessionStorage.removeItem(CLAVE_PARTIDA);
-    empezar();
+    comenzarPartida("reiniciar");
   };
 
   const volverInicio = () => {
@@ -271,7 +272,7 @@ export function JuegoRuleta() {
     setAviso("");
     try {
       const datos = await pedirRuleta("preview", { partidaId: estado.partidaId });
-      const sectores = sectoresDePremios(datos.elegibles);
+      const sectores = sectoresDePremios();
       const hayPremio = (datos.elegibles || []).some((item) => Number(item.peso) > 0);
       if (!hayPremio) {
         setAviso("No hay premios disponibles para arriesgar.");
@@ -291,7 +292,7 @@ export function JuegoRuleta() {
     setAviso("");
     try {
       const datos = await pedirRuleta("arriesgar", { partidaId: estado.partidaId });
-      const sectores = sectoresDePremios(datos.elegibles);
+      const sectores = sectoresDePremios();
       const sector = sectores.find((item) => item.id === datos.premioId);
       if (!sector) {
         despachar({ type: "mostrar-premio", premioId: datos.premioId, elegibles: datos.elegibles });
@@ -382,7 +383,6 @@ export function JuegoRuleta() {
           rotacion={estado.rotacionPremio}
           duracion={duracionGiro}
           sectores={estado.sectoresPremio}
-          elegibles={estado.elegibles}
           onGirar={girarPremio}
         />
       );
@@ -397,13 +397,16 @@ export function JuegoRuleta() {
   const enPartida = FASES_PARTIDA.has(estado.fase);
 
   return (
-    <div className="ruleta-juego" ref={contenedor}>
+    <div
+      className={`ruleta-juego${pantalla === "decision" ? " ruleta-juego--decision" : ""}${pantalla === "ruleta-premios" ? " ruleta-juego--premios" : ""}`}
+      ref={contenedor}
+    >
       <div className="ruleta-juego__contenedor">
         <header className="ruleta-juego__cabecera">
           <Link href="/" className="ruleta-juego__marca" aria-label="Ir al inicio">
             <img
               className="ruleta-juego__logo"
-              src={LOGO_ENFLORA}
+              src="/logos/enflora-logo-apaisado-light.svg"
               alt=""
               width={1000}
               height={300}

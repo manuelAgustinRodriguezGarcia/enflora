@@ -5,6 +5,7 @@ import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { Confeti } from "@/componentes/ruleta-420/confeti";
 import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
+import { toque, transicionToque } from "@/lib/animaciones";
 
 export function PantallaDecision({
   fase,
@@ -27,55 +28,74 @@ export function PantallaDecision({
           icono="festejo"
           className="ruleta-decision__hero"
         />
-        <h2 className="ruleta-decision__apuesta">Apostá todo, hacelo por la Tota.</h2>
+        <h2 className="ruleta-decision__apuesta">
+          Apostá todo
+          <br />
+          hacelo por la Tota
+        </h2>
       </div>
 
       <div className="ruleta-decision__opciones">
-        <motion.section
+        <motion.button
+          type="button"
           className="ruleta-decision__opcion ruleta-decision__opcion--segura"
+          onClick={onAsegurar}
+          disabled={bloqueada || !seguroDisponible}
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1, duration: 0.35 }}
+          whileTap={bloqueada || !seguroDisponible ? undefined : toque}
+          transition={{
+            opacity: { delay: 0.1, duration: 0.35 },
+            x: { delay: 0.1, duration: 0.35 },
+            scale: transicionToque,
+          }}
         >
-          <h2 className="ruleta-decision__titulo">Fuerte al medio</h2>
-          <p className="ruleta-decision__lema">Por la Tota todo</p>
           <div className="ruleta-decision__dotacion">
-            <div className="ruleta-decision__pieza">
-              <img src="/images/premios/enflora_stickers_web_1280.webp" alt="Stickers" width="96" height="96" />
-              <span>×2</span>
-            </div>
-            <div className="ruleta-decision__pieza">
-              <img src="/images/premios/enflora_filtros_web_1280.webp" alt="Filtros" width="96" height="96" />
-              <span>×2</span>
-            </div>
+            <span className="ruleta-decision__premio">
+              <img src="/images/premios/enflora_stickers_web_1280.webp" alt="" width="96" height="96" />
+              <span className="ruleta-decision__multiplicador">x2</span>
+            </span>
+            <span className="ruleta-decision__premio">
+              <img src="/images/premios/enflora_filtros_web_1280.webp" alt="" width="96" height="96" />
+              <span className="ruleta-decision__multiplicador">x2</span>
+            </span>
           </div>
+          <h2 className="ruleta-decision__titulo">Fuerte al medio</h2>
           <p className="ruleta-decision__descripcion">Te llevás 2 stickers a elección y 2 filtros.</p>
-          <BotonRuleta variante="claro" onClick={onAsegurar} disabled={bloqueada || !seguroDisponible}>
-            ME QUEDO CON MI PREMIO
-          </BotonRuleta>
           {!seguroDisponible ? (
             <p className="ruleta-decision__aviso">Ahora no hay stock para el premio seguro.</p>
           ) : null}
-        </motion.section>
+        </motion.button>
 
         <span className="ruleta-decision__separador" aria-hidden="true">
           O
         </span>
 
-        <motion.section
+        <motion.button
+          type="button"
           className="ruleta-decision__opcion ruleta-decision__opcion--riesgo"
+          onClick={onArriesgar}
+          disabled={bloqueada}
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.18, duration: 0.35 }}
+          whileTap={bloqueada ? undefined : toque}
+          transition={{
+            opacity: { delay: 0.18, duration: 0.35 },
+            x: { delay: 0.18, duration: 0.35 },
+            scale: transicionToque,
+          }}
         >
-          <h2 className="ruleta-decision__titulo">¡ME LA JUEGO!</h2>
+          <ImagenRuleta
+            clave="floraBienvenida"
+            alt=""
+            icono="bienvenida"
+            className="ruleta-decision__flora"
+          />
+          <h2 className="ruleta-decision__titulo">Por la Tota todo</h2>
           <p className="ruleta-decision__descripcion">
-            Podés ganar un picador, un tuquero, un pack especial de stickers y filtros... o quedarte sin nada.
+            Jugá por un picador, un tuquero o por menos stickers.
           </p>
-          <BotonRuleta variante="rosa" onClick={onArriesgar} disabled={bloqueada}>
-            QUIERO ARRIESGAR
-          </BotonRuleta>
-        </motion.section>
+        </motion.button>
       </div>
 
       <ModalRuleta

@@ -128,7 +128,7 @@ function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia }) {
             ? "landing__accion--acento"
             : "landing__accion--linea"
         } precios__cta`}
-        href={hrefRegistro}
+        href={plan.id === "por-cultivo" ? "/pagos/licencia" : hrefRegistro}
       >
         {plan.cta}
       </Link>

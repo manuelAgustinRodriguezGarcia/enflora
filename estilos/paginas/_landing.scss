@@ -2903,6 +2903,10 @@ body:has(.landing) {
     &__bloque {
       position: relative;
     }
+
+    .producto-preview {
+      order: -1;
+    }
   }
 
   &__principal {
@@ -2935,36 +2939,16 @@ body:has(.landing) {
     letter-spacing: 0.08em;
   }
 
-  &__estado {
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
-    background: rgba(164, 200, 91, 0.22);
-    color: var(--producto-ink);
-    font-size: 0.7rem;
-    font-weight: 600;
-  }
-
-  &__estado[data-estado="proximamente"] {
-    background: rgba(216, 195, 165, 0.45);
-    color: var(--producto-tierra);
-  }
-
   &__titulo {
-    max-width: 16ch;
+    width: 100%;
     font-size: clamp(1.35rem, 2.4vw, 1.85rem);
   }
 
   &__descripcion {
-    max-width: 38ch;
+    width: 100%;
     color: rgba(11, 61, 42, 0.72);
     font-size: 0.95rem;
     line-height: 1.55;
-  }
-
-  &__demo {
-    color: var(--producto-tierra);
-    font-size: 0.8rem;
-    font-style: italic;
   }
 
   @media (min-width: 64rem) {
@@ -2977,6 +2961,14 @@ body:has(.landing) {
       gap: 1.35rem;
       align-items: stretch;
       padding: 1.35rem;
+    }
+
+    &__titulo {
+      max-width: 16ch;
+    }
+
+    &__descripcion {
+      max-width: 38ch;
     }
   }
 }
@@ -3056,7 +3048,7 @@ body:has(.landing) {
     }
 
     .magic-bento__text {
-      margin-top: auto;
+      margin-top: 0;
     }
   }
 }

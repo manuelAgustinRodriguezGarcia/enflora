@@ -7,7 +7,6 @@ export function BeneficiosFuncionalidad({ beneficios }) {
   const items = beneficios.map((beneficio) => ({
     id: beneficio.id,
     icon: <IconoFuncionalidad nombre={beneficio.icono} size={16} />,
-    label: beneficio.estado === "proximamente" ? "Próximamente" : undefined,
     title: beneficio.titulo,
     description: beneficio.descripcion,
   }));

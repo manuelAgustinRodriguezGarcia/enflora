@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "motion/react";
-import { IMAGENES_RULETA, ISOTIPO_ENFLORA } from "@/lib/ruleta-420/configuracion";
+import { IMAGENES_RULETA, ISOTIPO_ENFLORA, PREMIOS } from "@/lib/ruleta-420/configuracion";
 import { IconoRuleta } from "@/componentes/ruleta-420/iconos-ruleta";
 
 const RADIO = 90;
@@ -25,21 +25,72 @@ function trazoSector(inicio, fin, radio) {
   return `M0 0 L${x1} ${y1} A${radio} ${radio} 0 ${grande} 1 ${x2} ${y2} Z`;
 }
 
-function ImagenSector({ sector }) {
-  const src = sector.imagen ? IMAGENES_RULETA[sector.imagen] : "";
-  const [fallida, setFallida] = useState("");
+const PIEZAS_RESTA = [
+  { src: "/images/premios/enflora_stickers_web_1280.webp", x: -30 },
+  { src: "/images/premios/enflora_filtros_web_1280.webp", x: 2 },
+];
 
-  if (src && fallida !== src) {
+function RestaSector() {
+  return (
+    <g>
+      {PIEZAS_RESTA.map((pieza) => (
+        <g key={pieza.src}>
+          <image href={pieza.src} x={pieza.x} y={-68} width={28} height={28} preserveAspectRatio="xMidYMid meet" />
+          <circle cx={pieza.x + 23} cy={-44} r={7} fill="#C2413B" />
+          <text className="ruleta__resta" x={pieza.x + 23} y={-44} textAnchor="middle" dominantBaseline="central">
+            -1
+          </text>
+        </g>
+      ))}
+    </g>
+  );
+}
+function fuentesSector(sector) {
+  const base = PREMIOS.find((item) => item.id === sector.id) ?? sector;
+  const claves = base.imagenes?.length ? base.imagenes : base.imagen ? [base.imagen] : [];
+  return claves.map((clave) => IMAGENES_RULETA[clave]).filter(Boolean);
+}
+
+function ImagenSector({ sector }) {
+  const fuentes = fuentesSector(sector);
+  const [fallidas, setFallidas] = useState([]);
+  const visibles = fuentes.filter((src) => !fallidas.includes(src));
+
+  if (visibles.length === 1) {
     return (
       <image
-        href={src}
-        x={-21}
-        y={-57}
-        width={42}
-        height={42}
+        href={visibles[0]}
+        x={-17}
+        y={-58}
+        width={34}
+        height={34}
         preserveAspectRatio="xMidYMid meet"
-        onError={() => setFallida(src)}
+        onError={() => setFallidas((actual) => [...actual, visibles[0]])}
       />
+    );
+  }
+
+  if (visibles.length > 1) {
+    const tamano = 24;
+    const separacion = 2;
+    const ancho = visibles.length * tamano + (visibles.length - 1) * separacion;
+    const inicio = -ancho / 2;
+
+    return (
+      <g>
+        {visibles.map((src, indice) => (
+          <image
+            key={src}
+            href={src}
+            x={inicio + indice * (tamano + separacion)}
+            y={-54}
+            width={tamano}
+            height={tamano}
+            preserveAspectRatio="xMidYMid meet"
+            onError={() => setFallidas((actual) => (actual.includes(src) ? actual : [...actual, src]))}
+          />
+        ))}
+      </g>
     );
   }
 
@@ -66,22 +117,31 @@ function Sector({ sector, estadoSector, soloTexto }) {
   const inicioTexto = soloTexto ? (lineas.length > 1 ? -54 : -42) : lineas.length > 1 ? -73 : -66;
   const paso = soloTexto ? 16 : 11;
 
+  const recorte = `sector-${sector.id}`;
+
   return (
     <g className={`ruleta__sector${estadoSector ? ` ruleta__sector--${estadoSector}` : ""}`}>
-      <path d={trazoSector(sector.inicio, sector.fin, RADIO)} fill={sector.color} />
-      <g transform={`rotate(${redondear(sector.centro)})`}>
-        {soloTexto ? null : <ImagenSector sector={sector} />}
-        <text
-          className={`ruleta__texto${soloTexto ? " ruleta__texto--grande" : ""}`}
-          textAnchor="middle"
-          fill={sector.colorTexto}
-        >
-          {lineas.map((linea, indice) => (
-            <tspan key={linea} x={0} y={inicioTexto + indice * paso}>
-              {linea}
-            </tspan>
-          ))}
-        </text>
+      <defs>
+        <clipPath id={recorte}>
+          <path d={trazoSector(sector.inicio, sector.fin, RADIO)} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${recorte})`}>
+        <path d={trazoSector(sector.inicio, sector.fin, RADIO)} fill={sector.color} />
+        <g transform={`rotate(${redondear(sector.centro)})`}>
+          {sector.id === "CONSOLATION" ? <RestaSector /> : soloTexto ? null : <ImagenSector sector={sector} />}
+          <text
+            className={`ruleta__texto${soloTexto ? " ruleta__texto--grande" : ""}`}
+            textAnchor="middle"
+            fill={sector.colorTexto}
+          >
+            {lineas.map((linea, indice) => (
+              <tspan key={linea} x={0} y={inicioTexto + indice * paso}>
+                {linea}
+              </tspan>
+            ))}
+          </text>
+        </g>
       </g>
     </g>
   );
