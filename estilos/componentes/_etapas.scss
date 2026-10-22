@@ -264,6 +264,77 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
   }
 }
 
+.opciones-etapa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+}
+
+.etapa-opcion {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--etapa-opcion-borde, var(--color-border));
+  border-radius: 0.75rem;
+  background: var(--etapa-opcion-fondo, #eaf2dc);
+  color: var(--etapa-opcion-texto, var(--color-text));
+  font-size: var(--font-size-body-small);
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+
+  input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .icono-etapa {
+    width: 1.7rem;
+    height: 1.7rem;
+    color: var(--etapa-opcion-icono, currentColor);
+  }
+
+  &:hover {
+    filter: brightness(0.98);
+  }
+
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  &--activa {
+    box-shadow: inset 0 0 0 1.5px var(--etapa-opcion-icono, var(--color-primary));
+  }
+}
+
+@each $etapa in $etapas {
+  .etapa-opcion--#{$etapa} {
+    --etapa-opcion-fondo: var(--etapa-#{$etapa}-fondo);
+    --etapa-opcion-texto: var(--etapa-#{$etapa}-texto);
+    --etapa-opcion-borde: var(--etapa-#{$etapa}-borde);
+    --etapa-opcion-icono: var(--etapa-#{$etapa});
+  }
+}
+
 .selector-etapa {
   .selector__opcion {
     gap: 0.55rem;

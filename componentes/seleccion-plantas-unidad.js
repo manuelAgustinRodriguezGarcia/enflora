@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { cambiarEtapaMasiva } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
@@ -9,7 +10,7 @@ import { Boton } from "@/componentes/boton";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
-import { SelectorEtapa } from "@/componentes/selector-etapa";
+import { OpcionesEtapa } from "@/componentes/opciones-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import {
   datosEtapaActual,
@@ -19,6 +20,7 @@ import {
   fechaInicioPlanta,
   formatearFecha,
 } from "@/lib/etapas";
+import { transicionVista } from "@/lib/animaciones";
 import { agruparPlantasPorGenetica } from "@/lib/registros";
 
 function etiquetaEstado(estado) {
@@ -79,6 +81,7 @@ export function SeleccionPlantasUnidad({
   hoy = fechaHoy(),
 }) {
   const router = useRouter();
+  const reducido = useReducedMotion();
   const [seleccionando, setSeleccionando] = useState(false);
   const [modo, setModo] = useState("manual");
   const [ids, setIds] = useState(() => new Set());
@@ -156,8 +159,8 @@ export function SeleccionPlantasUnidad({
   }
 
   function abrirCambioEtapa() {
-    if (!cantidad) return;
-    setFormAbierto(true);
+    if (!cantidad || pendiente) return;
+    setFormAbierto((actual) => !actual);
   }
 
   function pedirConfirmacion(evento) {
@@ -293,39 +296,47 @@ export function SeleccionPlantasUnidad({
             })}
           </ListaEntrada>
 
-          <Aparecer visible={seleccionando && formAbierto}>
-            <form className="formulario seleccion-plantas__form" onSubmit={pedirConfirmacion}>
-              {errorForm && !modalAbierto ? <p className="formulario__error">{errorForm}</p> : null}
-              <p className="seleccion-plantas__resumen">{textoSeleccion(cantidad)}</p>
-              <div className="cambiar-etapa__campos">
-                <SelectorEtapa
-                  leyenda="Nueva etapa"
-                  nombre="etapa_ui"
-                  valor={etapa}
-                  onChange={setEtapa}
-                />
-                <SelectorFecha
-                  etiqueta="Fecha efectiva"
-                  nombre="fecha_ui"
-                  valor={fecha}
-                  onChange={setFecha}
-                />
-              </div>
-              <div className="seleccion-plantas__form-acciones">
-                <Boton type="button" variante="ghost" onClick={() => setFormAbierto(false)} disabled={pendiente}>
-                  Cancelar
-                </Boton>
-                <Boton type="submit" disabled={pendiente || !etapa || !fecha || cantidad === 0}>
-                  Continuar
-                </Boton>
-              </div>
-            </form>
-          </Aparecer>
         </>
       )}
 
       {seleccionando ? (
-        <div className="seleccion-plantas__barra" role="region" aria-label="Acciones de selección">
+        <div
+          className={`seleccion-plantas__barra${formAbierto ? " seleccion-plantas__barra--abierta" : ""}`}
+          role="region"
+          aria-label="Acciones de selección"
+        >
+          <AnimatePresence initial={false}>
+            {formAbierto ? (
+              <motion.div
+                key="cambio-etapa"
+                className="seleccion-plantas__revelar"
+                initial={reducido ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                animate={reducido ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                exit={reducido ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                transition={transicionVista}
+              >
+                <form className="seleccion-plantas__panel" onSubmit={pedirConfirmacion}>
+                  {errorForm && !modalAbierto ? <p className="formulario__error">{errorForm}</p> : null}
+                  <p className="seleccion-plantas__resumen">{textoSeleccion(cantidad)}</p>
+                  <OpcionesEtapa nombre="etapa_ui" valor={etapa} onChange={setEtapa} />
+                  <SelectorFecha
+                    etiqueta="Fecha efectiva"
+                    nombre="fecha_ui"
+                    valor={fecha}
+                    onChange={setFecha}
+                  />
+                  <div className="seleccion-plantas__form-acciones">
+                    <Boton type="button" variante="ghost" onClick={() => setFormAbierto(false)} disabled={pendiente}>
+                      Cancelar
+                    </Boton>
+                    <Boton type="submit" disabled={pendiente || !etapa || !fecha || cantidad === 0}>
+                      Continuar
+                    </Boton>
+                  </div>
+                </form>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
           <p className="seleccion-plantas__conteo">{textoSeleccion(cantidad)}</p>
           <div className="seleccion-plantas__barra-acciones">
             <Boton type="button" variante="ghost" onClick={salirSeleccion} disabled={pendiente}>
@@ -335,6 +346,7 @@ export function SeleccionPlantasUnidad({
               type="button"
               onClick={abrirCambioEtapa}
               disabled={pendiente || cantidad === 0}
+              aria-expanded={formAbierto}
             >
               Cambiar etapa
             </Boton>

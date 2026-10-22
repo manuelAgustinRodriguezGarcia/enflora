@@ -6,7 +6,7 @@ import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { IconoChevron } from "@/componentes/iconos-ui";
-import { SelectorEtapa } from "@/componentes/selector-etapa";
+import { OpcionesEtapa } from "@/componentes/opciones-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { fechaHoy } from "@/lib/etapas";
 import { transicionRapida } from "@/lib/animaciones";
@@ -44,13 +44,8 @@ export function CambiarEtapa({ plantaId, unidadId, espacioId, children }) {
           <input type="hidden" name="planta_id" value={plantaId} />
           <input type="hidden" name="unidad_id" value={unidadId} />
           <input type="hidden" name="espacio_id" value={espacioId} />
-          <div className="cambiar-etapa__campos">
-            <SelectorEtapa
-              leyenda="Nueva etapa"
-              nombre="etapa"
-              valor={etapa}
-              onChange={setEtapa}
-            />
+          <div className="cambiar-etapa__panel">
+            <OpcionesEtapa nombre="etapa" valor={etapa} onChange={setEtapa} />
             <SelectorFecha
               etiqueta="Fecha de inicio"
               nombre="fecha_inicio"
