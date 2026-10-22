@@ -36,7 +36,7 @@ export function ModalCotizacion({ abierto, onCerrar, titulo, texto }) {
           <Dialog.Popup
             render={
               <motion.div
-                className="modal__panel precios-modal"
+                className="modal__panel precios-modal precios-modal--cotizacion"
                 layout
                 initial={panelCerrado}
                 animate={abierto ? panelAbierto : panelCerrado}

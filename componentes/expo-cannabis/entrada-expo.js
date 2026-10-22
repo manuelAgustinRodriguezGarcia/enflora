@@ -44,6 +44,7 @@ export function RuletaVitrina({ etiqueta, className }) {
         rotacion={enVista ? 420 : 0}
         duracion={2600}
         variante="categorias"
+        soloTexto
         etiqueta={etiqueta}
       />
     </motion.div>

@@ -11,7 +11,7 @@ const REGLAS = [
   "Girá la ruleta para descubrir tu categoría.",
   "Respondé correctamente las preguntas.",
   "Tenés 2 vidas; cada error te cuesta una.",
-  "Conseguí 3 aciertos para ganar.",
+  "Conseguí 5 aciertos para ganar.",
   "Elegí el premio seguro o arriesgá todo en la ruleta final.",
 ];
 
@@ -23,11 +23,11 @@ export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onC
         <h1 className="ruleta-titulo ruleta-titulo--grande">
           LA RULETA <span className="ruleta-titulo__acento">420</span> DE FLORA
         </h1>
-        <p className="ruleta-bienvenida__subtitulo">3 categorías. 2 vidas. 1 oportunidad de ganar.</p>
+        <p className="ruleta-bienvenida__subtitulo">2 vidas - 3 categorías - Muchos premios</p>
       </div>
 
       <div className="ruleta-bienvenida__escena">
-        <Ruleta sectores={SECTORES_CATEGORIAS} decorativa etiqueta="Ruleta de categorías decorativa" />
+        <Ruleta sectores={SECTORES_CATEGORIAS} decorativa soloTexto etiqueta="Ruleta de categorías decorativa" />
         <motion.div
           className="ruleta-bienvenida__flora"
           initial={{ opacity: 0, x: 24, rotate: 8 }}
@@ -37,10 +37,6 @@ export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onC
           <ImagenRuleta clave="floraBienvenida" alt="Flora te da la bienvenida" icono="bienvenida" etiqueta="Flora" />
         </motion.div>
       </div>
-
-      <p className="ruleta-bienvenida__descripcion">
-        Demostrá cuánto sabés del mundo 420 y llevate un premio de ENFLORA.
-      </p>
 
       <div className="ruleta-acciones">
         <BotonRuleta onClick={onJugar}>¡QUIERO JUGAR!</BotonRuleta>

@@ -20,8 +20,7 @@ export function PantallaDecision({
     <div className="ruleta-decision">
       <Confeti />
       <div className="ruleta-decision__encabezado">
-        <h1 className="ruleta-titulo">¡SOBREVIVISTE A LA RULETA!</h1>
-        <p className="ruleta-decision__texto">Conseguiste 3 aciertos. Flora tiene un premio para vos.</p>
+        <h1 className="ruleta-titulo">GANASTE LA RULETA 420!</h1>
         <ImagenRuleta
           clave="floraArriesga"
           alt="Flora lista para arriesgar el premio"
@@ -38,7 +37,18 @@ export function PantallaDecision({
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.1, duration: 0.35 }}
         >
-          <h2 className="ruleta-decision__titulo">¡ME PLANTO!</h2>
+          <h2 className="ruleta-decision__titulo">Fuerte al medio</h2>
+          <p className="ruleta-decision__lema">Por la Tota todo</p>
+          <div className="ruleta-decision__dotacion">
+            <div className="ruleta-decision__pieza">
+              <img src="/images/premios/enflora_stickers_web_1280.webp" alt="Stickers" width="96" height="96" />
+              <span>×2</span>
+            </div>
+            <div className="ruleta-decision__pieza">
+              <img src="/images/premios/enflora_filtros_web_1280.webp" alt="Filtros" width="96" height="96" />
+              <span>×2</span>
+            </div>
+          </div>
           <p className="ruleta-decision__descripcion">Te llevás 2 stickers a elección y 2 filtros.</p>
           <BotonRuleta variante="claro" onClick={onAsegurar} disabled={bloqueada || !seguroDisponible}>
             ME QUEDO CON MI PREMIO

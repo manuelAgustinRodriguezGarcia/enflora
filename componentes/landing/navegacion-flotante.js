@@ -183,10 +183,22 @@ export function NavegacionFlotante() {
 
   return (
     <div
-      className={`nav-flotante${mostrado ? " nav-flotante--visible" : ""}`}
+      className={`nav-flotante${mostrado ? " nav-flotante--visible" : ""}${abierto && mostrado ? " nav-flotante--abierto" : ""}`}
       ref={raizRef}
       aria-hidden={!mostrado}
     >
+      <AnimatePresence>
+        {abierto && mostrado ? (
+          <motion.div
+            className="nav-flotante__velo"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transicionEntrada}
+            onClick={() => setAbierto(false)}
+          />
+        ) : null}
+      </AnimatePresence>
       <motion.button
         type="button"
         className="nav-flotante__boton nav-flotante__boton--arriba"

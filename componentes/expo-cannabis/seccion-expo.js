@@ -46,7 +46,7 @@ function ExpoRegalos() {
           {regalos.map((regalo, indice) => (
             <EntradaExpo key={regalo.id} as="li" retraso={indice * 0.08} className="expo-regalos__item">
               <article className={`expo-regalo expo-regalo--${regalo.tono}`}>
-                <div className="expo-regalo__ilustracion" aria-hidden={regalo.imagen ? undefined : "true"}>
+                <div className="expo-regalo__ilustracion">
                   {regalo.imagen ? (
                     <Image
                       src={regalo.imagen.src}
@@ -59,17 +59,12 @@ function ExpoRegalos() {
                     <IlustracionRegalo nombre={regalo.ilustracion} />
                   )}
                 </div>
-                <div className="expo-regalo__texto">
-                  <p className="expo-regalo__etiqueta">{regalo.etiqueta}</p>
-                  <h4 className="expo-regalo__titulo">{regalo.titulo}</h4>
-                  <p className="expo-regalo__descripcion">{regalo.descripcion}</p>
-                </div>
+                <p className="expo-regalo__titulo">{regalo.titulo}</p>
               </article>
             </EntradaExpo>
           ))}
         </ul>
 
-        <p className="expo-regalos__aclaracion">{premios.aclaracion}</p>
       </div>
     </section>
   );
@@ -95,19 +90,20 @@ function ExpoDesafio() {
           <p className="expo-bajada expo-bajada--claro">
             <TextoExpo textos={desafio.descripcion} />
           </p>
-          <ol className="expo-desafio__reglas">
-            {desafio.reglas.map((regla) => (
-              <li key={regla}>{completarRegla(regla)}</li>
-            ))}
-          </ol>
         </EntradaExpo>
 
         <div className="expo-desafio__visual">
           <span className="expo-desafio__halo" aria-hidden="true" />
-          <Link className="expo-desafio__juego" href={expoCannabis.rutaJuego} aria-label={desafio.cta}>
+          <Link className="expo-desafio__juego" href={`${expoCannabis.rutaJuego}?bienvenida=1`} aria-label={desafio.cta}>
             <RuletaVitrina className="expo-desafio__ruleta" etiqueta={desafio.etiquetaRuleta} />
           </Link>
         </div>
+
+        <ol className="expo-desafio__reglas">
+          {desafio.reglas.map((regla) => (
+            <li key={regla}>{completarRegla(regla)}</li>
+          ))}
+        </ol>
       </div>
     </section>
   );

@@ -10,6 +10,19 @@ $crema: #FDF1D7;
   color: $verde;
 }
 
+body:has(.expo-admin) {
+  .encabezado,
+  .bottom-nav {
+    display: none;
+  }
+
+  .pagina {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
 .expo-admin {
   width: min(100%, 76rem);
   min-height: 100vh;

@@ -61,18 +61,23 @@ function ImagenSector({ sector }) {
   );
 }
 
-function Sector({ sector, estadoSector }) {
+function Sector({ sector, estadoSector, soloTexto }) {
   const lineas = sector.lineas;
-  const inicioTexto = lineas.length > 1 ? -73 : -66;
+  const inicioTexto = soloTexto ? (lineas.length > 1 ? -54 : -42) : lineas.length > 1 ? -73 : -66;
+  const paso = soloTexto ? 16 : 11;
 
   return (
     <g className={`ruleta__sector${estadoSector ? ` ruleta__sector--${estadoSector}` : ""}`}>
       <path d={trazoSector(sector.inicio, sector.fin, RADIO)} fill={sector.color} />
       <g transform={`rotate(${redondear(sector.centro)})`}>
-        <ImagenSector sector={sector} />
-        <text className="ruleta__texto" textAnchor="middle" fill={sector.colorTexto}>
+        {soloTexto ? null : <ImagenSector sector={sector} />}
+        <text
+          className={`ruleta__texto${soloTexto ? " ruleta__texto--grande" : ""}`}
+          textAnchor="middle"
+          fill={sector.colorTexto}
+        >
           {lineas.map((linea, indice) => (
-            <tspan key={linea} x={0} y={inicioTexto + indice * 11}>
+            <tspan key={linea} x={0} y={inicioTexto + indice * paso}>
               {linea}
             </tspan>
           ))}
@@ -90,6 +95,7 @@ export function Ruleta({
   ganador = null,
   variante = "categorias",
   decorativa = false,
+  soloTexto = false,
   etiqueta,
 }) {
   const animacion = decorativa
@@ -116,6 +122,7 @@ export function Ruleta({
               key={sector.id}
               sector={sector}
               estadoSector={ganador ? (ganador === sector.id ? "ganador" : "apagado") : ""}
+              soloTexto={soloTexto}
             />
           ))}
           {sectores.map((sector) => {

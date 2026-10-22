@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
 import { BottomNav } from "@/componentes/bottom-nav";
+import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
@@ -45,49 +46,48 @@ export const viewport = {
   viewportFit: "cover",
 };
 
+function claseInicial(ruta) {
+  if (ruta === "/") return "landing-cuerpo";
+  if (ruta === "/expo-cannabis/admin") return "expo-admin-cuerpo";
+  if (ruta.startsWith("/expo-cannabis/")) return "ruleta-cuerpo";
+  return "";
+}
+
 export default async function Layout({ children }) {
-  const ruta = (await headers()).get("x-enflora-ruta");
-
-  if (ruta === "/" || ruta?.startsWith("/expo-cannabis/")) {
-    const claseCuerpo =
-      ruta === "/" ? "landing-cuerpo" : ruta === "/expo-cannabis/admin" ? "expo-admin-cuerpo" : "ruleta-cuerpo";
-    return (
-      <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
-        <body className={claseCuerpo}>{children}</body>
-      </html>
-    );
-  }
-
-  const usuario = configuracionLista() ? await obtenerUsuario() : null;
+  const ruta = (await headers()).get("x-enflora-ruta") || "";
+  const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/");
+  const usuario = !esShellPublico && configuracionLista() ? await obtenerUsuario() : null;
   const bloqueado = usuarioBloqueadoPrelanzamiento(usuario, ruta);
+  const claseCuerpo = claseInicial(ruta);
 
   return (
     <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
-      <body>
+      <body className={claseCuerpo || undefined}>
+        <ClaseCuerpo />
         <ProveedorMotion>
-        <header className="encabezado" inert={bloqueado || undefined}>
-          <Link
-            className="encabezado__marca"
-            href={usuario && !bloqueado ? "/espacios" : "/"}
-          >
-            <img
-              className="encabezado__logo encabezado__logo--oscuro"
-              src="/logos/enflora-logo-apaisado.svg"
-              alt="ENFLORA"
-            />
-            <img
-              className="encabezado__logo encabezado__logo--claro"
-              src="/logos/enflora-logo-apaisado-light.svg"
-              alt="ENFLORA"
-            />
-          </Link>
-          {usuario && !bloqueado ? <BotonNotificaciones /> : null}
-        </header>
-        <main className="pagina" inert={bloqueado || undefined}>
-          {children}
-        </main>
-        {usuario && !bloqueado ? <BottomNav /> : null}
-        <ModalAccesoPrelanzamiento abierto={bloqueado} />
+          <header className="encabezado" inert={bloqueado || undefined}>
+            <Link
+              className="encabezado__marca"
+              href={usuario && !bloqueado ? "/espacios" : "/"}
+            >
+              <img
+                className="encabezado__logo encabezado__logo--oscuro"
+                src="/logos/enflora-logo-apaisado.svg"
+                alt="ENFLORA"
+              />
+              <img
+                className="encabezado__logo encabezado__logo--claro"
+                src="/logos/enflora-logo-apaisado-light.svg"
+                alt="ENFLORA"
+              />
+            </Link>
+            {usuario && !bloqueado ? <BotonNotificaciones /> : null}
+          </header>
+          <main className="pagina" inert={bloqueado || undefined}>
+            {children}
+          </main>
+          {usuario && !bloqueado ? <BottomNav /> : null}
+          <ModalAccesoPrelanzamiento abierto={bloqueado} />
         </ProveedorMotion>
       </body>
     </html>

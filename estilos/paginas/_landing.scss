@@ -1034,11 +1034,26 @@ body:has(.landing) {
     }
   }
 
+  &--abierto {
+    inset: 0;
+    height: auto;
+  }
+
+  &__velo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgb(8 46 34 / 72%);
+    pointer-events: auto;
+  }
+
   &:not(.nav-flotante--visible) .nav-flotante__boton {
     pointer-events: none;
   }
 
   &__boton {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     flex: none;
     align-items: center;
@@ -1074,6 +1089,7 @@ body:has(.landing) {
 
   &__menu {
     position: absolute;
+    z-index: 1;
     right: max(1.15rem, env(safe-area-inset-right, 0px));
     bottom: calc(1.15rem + env(safe-area-inset-bottom, 0px));
     display: flex;
@@ -2984,6 +3000,47 @@ body:has(.landing) {
   .magic-bento__description {
     font-size: 12.5px;
     line-height: 1.4;
+  }
+
+  @media (max-width: 47.99rem) {
+    .magic-bento {
+      grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .magic-bento__card {
+      height: auto;
+    }
+
+    .magic-bento__content {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      column-gap: 0.85rem;
+      row-gap: 0.15rem;
+      padding: 0.9rem 1rem;
+    }
+
+    .magic-bento__header {
+      display: contents;
+    }
+
+    .magic-bento__icon {
+      grid-column: 1;
+      grid-row: 1 / -1;
+      align-self: center;
+      width: 2.25rem;
+      height: 2.25rem;
+    }
+
+    .magic-bento__label,
+    .magic-bento__text {
+      grid-column: 2;
+      min-width: 0;
+    }
+
+    .magic-bento__text {
+      margin-top: 0;
+    }
   }
 
   @media (min-width: 64rem) {
@@ -5114,6 +5171,15 @@ body:has(.landing) {
 
 .precios-modal {
   max-width: min(100%, 28rem);
+
+  &--cotizacion {
+    text-align: left;
+
+    .modal__titulo,
+    .modal__texto {
+      text-align: left;
+    }
+  }
 
   &__lista {
     display: grid;

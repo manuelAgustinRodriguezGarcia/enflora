@@ -272,11 +272,14 @@ create table if not exists public.expo_ruleta_partidas (
   constraint expo_ruleta_partidas_estado_valido check (estado in ('jugando', 'ganada', 'perdida', 'resuelta')),
   constraint expo_ruleta_partidas_ronda_especial check (ronda_especial in (1, 2)),
   constraint expo_ruleta_partidas_vidas check (vidas >= 0 and vidas <= 2),
-  constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 3),
+  constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5),
   constraint expo_ruleta_partidas_resultado check (
     resultado is null or resultado in ('SAFE_PACK', 'GRINDER', 'TUBE', 'BONUS_PACK', 'CONSOLATION')
   )
 );
+
+alter table public.expo_ruleta_partidas drop constraint if exists expo_ruleta_partidas_aciertos;
+alter table public.expo_ruleta_partidas add constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5);
 
 alter table public.expo_ruleta_estado enable row level security;
 alter table public.expo_ruleta_partidas enable row level security;
@@ -570,7 +573,7 @@ begin
     );
   end if;
 
-  if fila.aciertos >= 3 or fila.vidas <= 0 then
+  if fila.aciertos >= 5 or fila.vidas <= 0 then
     raise exception 'La partida ya no acepta preguntas.';
   end if;
 
@@ -682,7 +685,7 @@ begin
   nuevas_vidas := case when fue_acierto then fila.vidas else greatest(0, fila.vidas - 1) end;
   nuevo_estado := 'jugando';
 
-  if nuevos_aciertos >= 3 then
+  if nuevos_aciertos >= 5 then
     nuevo_estado := 'ganada';
   elsif nuevas_vidas <= 0 then
     nuevo_estado := 'perdida';
@@ -764,7 +767,7 @@ begin
   habilitada := found
     and fila.estado = 'ganada'
     and fila.resultado is null
-    and fila.aciertos >= 3
+    and fila.aciertos >= 5
     and p_especial = any(fila.usadas);
 
   return jsonb_build_object(
@@ -831,7 +834,7 @@ begin
     );
   end if;
 
-  if fila.estado <> 'ganada' or fila.aciertos < 3 or p_especial is null or not (p_especial = any(fila.usadas)) then
+  if fila.estado <> 'ganada' or fila.aciertos < 5 or p_especial is null or not (p_especial = any(fila.usadas)) then
     raise exception 'La partida no está habilitada para un premio.';
   end if;
 

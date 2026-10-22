@@ -8,15 +8,16 @@ import { useExpo } from "@/componentes/expo-cannabis/proveedor-expo";
 import { expoCannabis } from "@/lib/expo-cannabis/configuracion";
 
 const CONSULTA_MOBILE = "(max-width: 63.99rem)";
-const { pill: configuracionPill, textos, ids } = expoCannabis;
+const { textos, ids } = expoCannabis;
 const FUERA = { y: "160%", opacity: 0 };
 
 function useZonaOcultaMobile(activo) {
-  const [oculta, setOculta] = useState(false);
+  const [oculta, setOculta] = useState(true);
 
   useEffect(() => {
     if (!activo) return undefined;
 
+    const pantalla = document.querySelector(".hero__pantalla");
     const seccion = document.getElementById("producto");
     const pie = document.querySelector("footer.pie");
     let raf = 0;
@@ -26,11 +27,22 @@ function useZonaOcultaMobile(activo) {
       const alto = window.innerHeight || 1;
       let dentro = false;
 
-      if (seccion) {
+      if (pantalla) {
+        const caja = pantalla.getBoundingClientRect();
+        dentro = caja.bottom > alto * 0.12;
+      }
+
+      if (!dentro && seccion) {
         const caja = seccion.getBoundingClientRect();
         const visible = Math.max(0, Math.min(caja.bottom, alto) - Math.max(caja.top, 0));
         const ratio = visible / Math.max(caja.height, 1);
         dentro = caja.top < alto * 0.55 && caja.bottom > alto * 0.35 && ratio >= 0.45;
+      }
+
+      const desafio = document.getElementById(ids.desafio);
+      if (!dentro && desafio) {
+        const caja = desafio.getBoundingClientRect();
+        dentro = caja.top < alto * 0.45 && caja.bottom > alto * 0.55;
       }
 
       if (!dentro && pie) {
@@ -46,10 +58,18 @@ function useZonaOcultaMobile(activo) {
       raf = window.requestAnimationFrame(medir);
     };
 
+    const desafio = document.getElementById(ids.desafio);
+    const objetivos = [pantalla, desafio].filter(Boolean);
+    const observador = objetivos.length
+      ? new IntersectionObserver(onScroll, { threshold: [0, 0.2, 0.5, 0.8, 1] })
+      : null;
+
     medir();
+    objetivos.forEach((nodo) => observador.observe(nodo));
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
     return () => {
+      observador?.disconnect();
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       if (raf) window.cancelAnimationFrame(raf);
@@ -62,7 +82,6 @@ function useZonaOcultaMobile(activo) {
 export function PillExpo() {
   const { pill, listo } = useExpo();
   const [mobile, setMobile] = useState(false);
-  const [entro, setEntro] = useState(false);
   const oculta = useZonaOcultaMobile(Boolean(pill) && mobile);
 
   useEffect(() => {
@@ -92,10 +111,6 @@ export function PillExpo() {
         type: "spring",
         stiffness: 210,
         damping: 26,
-        delay: entro ? 0 : configuracionPill.retrasoEntradaMs / 1000,
-      }}
-      onAnimationComplete={() => {
-        if (mostrada && !entro) setEntro(true);
       }}
     >
       <a

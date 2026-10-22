@@ -208,6 +208,8 @@
 
   body:has(.marco-auth) .encabezado {
     position: fixed;
+    z-index: 50;
+    top: 0;
     right: 0;
     left: 0;
     justify-content: flex-end;

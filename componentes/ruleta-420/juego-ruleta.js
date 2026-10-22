@@ -22,6 +22,7 @@ import {
 import {
   FASES_PARTIDA,
   buscarCategoria,
+  buscarPregunta,
   crearPartida,
   estadoInicial,
   pantallaDeFase,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/ruleta-420/logica";
 
 const CLAVE_PARTIDA = "enflora-ruleta-partida";
+const CLAVE_PORTADA = "enflora-ruleta-portada";
 
 async function pedirRuleta(accion, extra = {}) {
   const respuesta = await fetch("/api/expo-cannabis/ruleta", {
@@ -86,7 +88,6 @@ export function JuegoRuleta() {
   useEffect(() => {
     const pasos = {
       "spinning-category": ["detener-categoria", duracionGiro],
-      "category-result": ["mostrar-pregunta", pausa],
       "spinning-prize": ["detener-premio", duracionGiro],
       "prize-reveal": ["mostrar-resultado", pausa],
     };
@@ -105,6 +106,19 @@ export function JuegoRuleta() {
   }, [pantalla, reducido]);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const desdePortada = params.get("bienvenida") === "1" || window.sessionStorage.getItem(CLAVE_PORTADA) === "1";
+    if (params.get("bienvenida") === "1") {
+      window.sessionStorage.setItem(CLAVE_PORTADA, "1");
+      params.delete("bienvenida");
+      const consulta = params.toString();
+      window.history.replaceState(null, "", `${window.location.pathname}${consulta ? `?${consulta}` : ""}`);
+    }
+    if (desdePortada) {
+      window.setTimeout(() => window.sessionStorage.removeItem(CLAVE_PORTADA), 0);
+      return undefined;
+    }
+
     const id = window.sessionStorage.getItem(CLAVE_PARTIDA);
     if (!id) return undefined;
     let vigente = true;
@@ -201,6 +215,20 @@ export function JuegoRuleta() {
     if (ocupado.current || estado.fase !== "question" || !estado.partidaId) return;
     ocupado.current = true;
     setAviso("");
+    const previa = { aciertos: estado.aciertos, vidas: estado.vidas };
+    const local = buscarPregunta(estado.pregunta?.id);
+    if (local && Number.isInteger(local.correctAnswer)) {
+      const acerto = indice === local.correctAnswer;
+      despachar({
+        type: "responder",
+        indice,
+        acerto,
+        correcta: local.correctAnswer,
+        aciertos: acerto ? previa.aciertos + 1 : previa.aciertos,
+        vidas: acerto ? previa.vidas : Math.max(0, previa.vidas - 1),
+        explanation: local.explanation || "",
+      });
+    }
     try {
       const datos = await pedirRuleta("responder", { partidaId: estado.partidaId, indice });
       despachar({
@@ -213,6 +241,9 @@ export function JuegoRuleta() {
         explanation: datos.explanation,
       });
     } catch (error) {
+      if (local && Number.isInteger(local.correctAnswer)) {
+        despachar({ type: "revertir-respuesta", ...previa });
+      }
       setAviso(error.message);
     } finally {
       ocupado.current = false;
@@ -300,10 +331,14 @@ export function JuegoRuleta() {
         <PantallaRuletaCategorias
           fase={estado.fase}
           ronda={estado.ronda}
+          aciertos={estado.aciertos}
+          vidas={estado.vidas}
           categoriaId={estado.categoriaId}
           rotacion={estado.rotacionCategoria}
           duracion={duracionGiro}
           onGirar={girarCategoria}
+          onResponder={() => despachar({ type: "mostrar-pregunta" })}
+          onReiniciar={reiniciar}
         />
       );
       break;
