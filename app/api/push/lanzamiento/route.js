@@ -9,6 +9,7 @@ import {
   limpiarLimitesViejos,
   marcarCompletada,
   marcarEnCurso,
+  marcarEnvioOk,
   quedanPendientes,
   reclamarEnvio,
 } from "@/lib/push/datos";
@@ -40,6 +41,7 @@ export async function GET(request) {
         reclamar: (campanaId, suscripcionId, clave) =>
           reclamarEnvio(supabase, campanaId, suscripcionId, clave),
         guardarResultado: (resultadoEnvio) => guardarResultado(supabase, resultadoEnvio),
+        marcarEnvioOk: (id) => marcarEnvioOk(supabase, id),
         desactivar: (id, motivo) => desactivarSuscripcion(supabase, id, motivo),
         despachar: (suscripcion, payload, opciones) => despacharPush(suscripcion, payload, opciones),
       },

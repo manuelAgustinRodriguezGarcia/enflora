@@ -7,16 +7,16 @@ import { motion } from "motion/react";
 import { ControlNotificaciones } from "@/componentes/control-notificaciones";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
-import { esRutaPublica } from "@/lib/navegacion";
+import { esRutaApp } from "@/lib/navegacion";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
 
-export function BotonNotificaciones() {
+export function BotonNotificaciones({ oculto = false }) {
   const ruta = usePathname();
   const [abierto, setAbierto] = useState(false);
 
-  if (esRutaPublica(ruta)) return null;
+  if (oculto || !esRutaApp(ruta)) return null;
 
   function cambiar(siguiente) {
     setAbierto(Boolean(siguiente));

@@ -471,6 +471,15 @@ a.boton {
     gap: 0.45rem;
     min-width: 0;
     flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+
+    > span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__placeholder {

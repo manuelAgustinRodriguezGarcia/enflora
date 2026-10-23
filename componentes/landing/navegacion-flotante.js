@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
@@ -197,6 +198,19 @@ export function NavegacionFlotante() {
             transition={transicionEntrada}
             onClick={() => setAbierto(false)}
           />
+        ) : null}
+      </AnimatePresence>
+      <AnimatePresence>
+        {abierto && mostrado ? (
+          <motion.div
+            className="nav-flotante__ingreso"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={transicionEntrada}
+          >
+            <Link href="/ingreso">Iniciar sesión</Link>
+          </motion.div>
         ) : null}
       </AnimatePresence>
       <motion.button

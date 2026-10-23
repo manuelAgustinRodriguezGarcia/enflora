@@ -6,6 +6,21 @@ const TRAZOS = {
       <path d="M12 6V4" />
     </>
   ),
+  cultivos: (
+    <>
+      <path d="M14 8.536V6a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V4a4 4 0 0 1-4 4 4 4 0 0 0-4 4 5 5 0 0 1-8-4 5 5 0 0 1 8 4c0 2 1 3 1 5" />
+      <path d="m18 17-1.085 3.58A2 2 0 0 1 15 22H9.002a2 2 0 0 1-1.913-1.418L6 17" />
+      <path d="M5 17h14" />
+    </>
+  ),
+  historial: (
+    <>
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+      <path d="M7 8h8" />
+      <path d="M7 12h10" />
+      <path d="M7 16h6" />
+    </>
+  ),
   registro: (
     <>
       <path d="M7 4.5h7.5L17 7v12.5H7z" />

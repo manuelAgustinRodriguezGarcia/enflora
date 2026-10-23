@@ -20,6 +20,7 @@ export function ContadorCantidad({
   contexto = "",
   ariaLabel = "Cantidad",
   deshabilitado = false,
+  icono: Icono = IconoPlanta,
 }) {
   function aplicar(siguiente) {
     if (siguiente < minimo || siguiente > maximo) return;
@@ -42,7 +43,7 @@ export function ContadorCantidad({
           −
         </motion.button>
         <div className="contador-cantidad__centro">
-          <IconoPlanta className="contador-cantidad__icono" />
+          <Icono className="contador-cantidad__icono" />
           <span className="contador-cantidad__multiplicador" aria-hidden="true">
             ×
           </span>

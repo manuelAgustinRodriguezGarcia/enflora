@@ -124,6 +124,44 @@ export function IconoPlanta({ className }) {
   );
 }
 
+export function IconoInstagram({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="2.5" y="2.5" width="19" height="19" rx="5" />
+      <circle cx="12" cy="12" r="4.25" />
+      <circle cx="17.3" cy="6.7" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+export function IconoCaja({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+      <path d="m3.3 7 8.7 5 8.7-5" />
+      <path d="M12 22V12" />
+    </svg>
+  );
+}
+
 export function IconoAmbiente({ className }) {
   return (
     <svg
@@ -141,6 +179,41 @@ export function IconoAmbiente({ className }) {
       <path d="M13 18v-5.2a2.3 2.3 0 0 1 4.6 0V18" />
       <path d="M8.5 6.2c.4-1.4 1.4-2.4 2.7-2.7" />
       <path d="M15.2 8.1c.5-1.1 1.4-1.9 2.5-2.2" />
+    </svg>
+  );
+}
+
+export function IconoVideo({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="6" width="13" height="12" rx="2" />
+      <path d="m16 10 5-2.5v9L16 14" />
+    </svg>
+  );
+}
+
+export function IconoReproducir({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.4-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5Z" />
+    </svg>
+  );
+}
+
+export function IconoPausa({ className }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="6" y="5" width="4.5" height="14" rx="1" />
+      <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
     </svg>
   );
 }

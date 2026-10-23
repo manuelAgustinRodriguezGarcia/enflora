@@ -7,7 +7,7 @@ import { BottomNav } from "@/componentes/bottom-nav";
 import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
-import { usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
+import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
 import { NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
@@ -75,8 +75,10 @@ function claseInicial(ruta) {
 
 export default async function Layout({ children }) {
   const ruta = (await headers()).get("x-enflora-ruta") || "";
-  const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/");
-  const usuario = !esShellPublico && configuracionLista() ? await obtenerUsuario() : null;
+  const esDemo = esRutaDemo(ruta);
+  const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/") || esDemo;
+  const conSupabase = configuracionLista();
+  const usuario = !esShellPublico && conSupabase ? await obtenerUsuario() : null;
   const bloqueado = usuarioBloqueadoPrelanzamiento(usuario, ruta);
   const claseCuerpo = claseInicial(ruta);
 
@@ -89,14 +91,14 @@ export default async function Layout({ children }) {
           <header className="encabezado" inert={bloqueado || undefined}>
             <MarcaEncabezado
               alt={NOMBRE_MARCA}
-              confirmarSalida={Boolean(usuario && !bloqueado)}
+              confirmarSalida={Boolean(usuario && !bloqueado && !esDemo)}
             />
-            {usuario && !bloqueado ? <BotonNotificaciones /> : null}
+            {conSupabase ? <BotonNotificaciones oculto={bloqueado} /> : null}
           </header>
           <main className="pagina" inert={bloqueado || undefined}>
             {children}
           </main>
-          {usuario && !bloqueado ? <BottomNav /> : null}
+          {conSupabase ? <BottomNav oculto={bloqueado} /> : null}
           <ModalAccesoPrelanzamiento abierto={bloqueado} />
         </ProveedorMotion>
       </body>

@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { AvisoDisponibilidad } from "@/componentes/aviso-disponibilidad";
 import Counter from "@/componentes/landing/counter";
-import TextLoop from "@/componentes/landing/text-loop";
+import Particles from "@/componentes/landing/particles";
 import { textos } from "@/lib/landing";
+import { LANZAMIENTO_MS } from "@/lib/lanzamiento";
 import { TextoConMarca } from "@/componentes/marca-enflora";
 
-const OBJETIVO_MS = Date.parse("2026-11-01T00:00:00-03:00");
+const OBJETIVO_MS = LANZAMIENTO_MS;
 const TEXTO_CLARO = "#FDF1D7";
+const COLORES_PARTICULAS = ["#fdf1d7", "#ffffff", "#a4c85b"];
 
 const UNIDADES = [
   { clave: "dias", etiqueta: "Días", minDigits: 2 },
@@ -101,38 +104,36 @@ export function SeccionLanzamiento() {
       data-logo="light"
       aria-label={lanzamiento.titulo}
     >
-      {!listo ? (
-        <div className="lanzamiento__cinta">
-          <TextLoop
-            text={lanzamiento.cinta}
-            shape="line"
-            speed={120}
-            direction="forward"
-            separator=""
-            curviness={90}
-            tilt={0}
-            fontSize={40}
-            fontWeight={800}
-            letterSpacing={1}
-            uppercase
-            ribbon
-            ribbonColor="#0B3D2A"
-            ribbonWidth={76}
-            edgeFade={0}
-            cross
-            crossAngle={14}
-            crossColor="#e98a3d"
-            color="#FDF1D7"
-            draggable
-            scrollBoost={0}
-            outline={false}
-            pauseOnHover
-          />
-        </div>
-      ) : null}
+      <Particles
+        className="lanzamiento__particulas"
+        particleColors={COLORES_PARTICULAS}
+        particleCount={220}
+        particleSpread={10}
+        speed={0.1}
+        particleBaseSize={90}
+        glow={0.5}
+        twinkle={0.35}
+        alphaParticles
+        moveParticlesOnHover
+        hoverEffect="parallax"
+        particleHoverFactor={0.6}
+      />
+      <div className="lanzamiento__flora">
+        <Image
+          src="/images/flora-astronauta.png"
+          alt="Flora, la mascota de Enflora, flotando en el espacio vestida de astronauta"
+          width={1024}
+          height={1024}
+          draggable={false}
+          sizes="(min-width: 64rem) 38rem, 16rem"
+        />
+      </div>
       <div className="lanzamiento__contenedor">
         {!listo ? (
-          <p className="lanzamiento__faltan">{lanzamiento.faltan}</p>
+          <>
+            <h2 className="lanzamiento__titulo">{lanzamiento.titulo}</h2>
+            <p className="lanzamiento__faltan">{lanzamiento.faltan}</p>
+          </>
         ) : null}
 
         {listo ? (

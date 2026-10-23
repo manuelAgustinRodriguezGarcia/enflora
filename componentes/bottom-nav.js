@@ -5,14 +5,14 @@ import { usePathname } from "next/navigation";
 import { LayoutGroup, motion } from "motion/react";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { toque, transicionRapida, transicionToque } from "@/lib/animaciones";
-import { DESTINOS_NAVEGACION, destinoActivo, esRutaPublica } from "@/lib/navegacion";
+import { DESTINOS_NAVEGACION, destinoActivo, esRutaApp } from "@/lib/navegacion";
 
 const Enlace = motion.create(Link);
 
-export function BottomNav() {
+export function BottomNav({ oculto = false }) {
   const ruta = usePathname();
 
-  if (esRutaPublica(ruta)) return null;
+  if (oculto || !esRutaApp(ruta)) return null;
 
   return (
     <LayoutGroup id="bottom-nav">

@@ -1,40 +1,53 @@
-import { clientePush, guardarSuscripcion, permiteAlta, registrarIntento, revocarSuscripcion } from "@/lib/push/datos";
-import { endpointPushValido, normalizarSuscripcion } from "@/lib/push/reglas";
+import {
+  clientePush,
+  consultarCupo,
+  guardarSuscripcion,
+  reemplazarSuscripcion,
+  registrarIntento,
+  revocarSuscripcion,
+} from "@/lib/push/datos";
+import { leerJsonAcotado, respuestaPush } from "@/lib/push/http";
+import { LIMITE_ALTAS, endpointPushValido, normalizarSuscripcion } from "@/lib/push/reglas";
 import { claveLimiteIp, ipCliente, salLimite } from "@/lib/push/secreto";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function leerCuerpo(request) {
-  const texto = await request.text();
-  if (texto.length > 8000) return null;
-  try {
-    return JSON.parse(texto);
-  } catch {
-    return null;
-  }
-}
-
 async function cupo(request, supabase) {
   const clave = claveLimiteIp(ipCliente(request.headers.get("x-forwarded-for")), salLimite());
-  const permitido = await permiteAlta(supabase, clave);
-  if (permitido == null) return "error";
-  if (!permitido) return "limite";
+  const resultado = await consultarCupo(supabase, clave, LIMITE_ALTAS);
+  if (!resultado) return { estado: "error" };
+  if (!resultado.permitido) return { estado: "limite", reintentarEnSeg: resultado.reintentarEnSeg };
   const registrado = await registrarIntento(supabase, clave);
-  return registrado ? "ok" : "error";
+  return { estado: registrado ? "ok" : "error" };
+}
+
+function respuestaCupo(limite) {
+  if (limite.estado === "limite") {
+    return respuestaPush(
+      429,
+      { ok: false, error: "Demasiados intentos", reintentarEn: limite.reintentarEnSeg },
+      limite.reintentarEnSeg,
+    );
+  }
+  return respuestaPush(503, { ok: false, error: "No disponible" });
 }
 
 export async function POST(request) {
   const supabase = clientePush();
-  if (!supabase) return Response.json({ ok: false, error: "No disponible" }, { status: 503 });
+  if (!supabase) return respuestaPush(503, { ok: false, error: "No disponible" });
 
-  const cuerpo = await leerCuerpo(request);
+  const cuerpo = await leerJsonAcotado(request, 8000);
   const entrada = normalizarSuscripcion(cuerpo);
-  if (!entrada) return Response.json({ ok: false, error: "Suscripción inválida" }, { status: 400 });
+  if (!entrada) return respuestaPush(400, { ok: false, error: "Suscripción inválida" });
+  const reemplaza = cuerpo.reemplaza == null ? null : endpointPushValido(cuerpo.reemplaza);
+  if (cuerpo.reemplaza != null && !reemplaza) {
+    return respuestaPush(400, { ok: false, error: "Suscripción inválida" });
+  }
+
   const limite = await cupo(request, supabase);
-  if (limite === "limite") return Response.json({ ok: false, error: "Demasiados intentos" }, { status: 429 });
-  if (limite !== "ok") return Response.json({ ok: false, error: "No disponible" }, { status: 503 });
+  if (limite.estado !== "ok") return respuestaCupo(limite);
 
   const usuario = await obtenerUsuario();
   const guardada = await guardarSuscripcion(
@@ -43,22 +56,24 @@ export async function POST(request) {
     usuario?.id || null,
     request.headers.get("user-agent"),
   );
-  if (!guardada.ok) return Response.json({ ok: false, error: "No se pudo guardar" }, { status: 503 });
-  return Response.json({ ok: true, id: guardada.id });
+  if (!guardada.ok) return respuestaPush(503, { ok: false, error: "No se pudo guardar" });
+  if (reemplaza && !(await reemplazarSuscripcion(supabase, reemplaza, entrada.endpoint))) {
+    console.error("[push] reemplazo_no_registrado");
+  }
+  return respuestaPush(200, { ok: true, id: guardada.id });
 }
 
 export async function DELETE(request) {
   const supabase = clientePush();
-  if (!supabase) return Response.json({ ok: false, error: "No disponible" }, { status: 503 });
+  if (!supabase) return respuestaPush(503, { ok: false, error: "No disponible" });
 
-  const cuerpo = await leerCuerpo(request);
+  const cuerpo = await leerJsonAcotado(request, 8000);
   const endpoint = endpointPushValido(cuerpo?.endpoint);
-  if (!endpoint) return Response.json({ ok: false, error: "Suscripción inválida" }, { status: 400 });
+  if (!endpoint) return respuestaPush(400, { ok: false, error: "Suscripción inválida" });
   const limite = await cupo(request, supabase);
-  if (limite === "limite") return Response.json({ ok: false, error: "Demasiados intentos" }, { status: 429 });
-  if (limite !== "ok") return Response.json({ ok: false, error: "No disponible" }, { status: 503 });
+  if (limite.estado !== "ok") return respuestaCupo(limite);
 
   const revocada = await revocarSuscripcion(supabase, endpoint);
-  if (!revocada) return Response.json({ ok: false, error: "No se pudo cancelar" }, { status: 503 });
-  return Response.json({ ok: true });
+  if (!revocada) return respuestaPush(503, { ok: false, error: "No se pudo cancelar" });
+  return respuestaPush(200, { ok: true });
 }

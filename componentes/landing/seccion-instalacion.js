@@ -14,11 +14,19 @@ import {
 } from "@/componentes/landing/ilustraciones-instalacion";
 import { ModalInstalacionAndroid } from "@/componentes/landing/modal-instalacion-android";
 import { ModalInstalacionIOS } from "@/componentes/landing/modal-instalacion-ios";
-import Silk from "@/componentes/landing/silk";
 import { toque, transicionToque } from "@/lib/animaciones";
 import { usePWAInstall } from "@/lib/use-pwa-install";
 
-function ImagenPerspectiva() {
+function ImagenPerspectiva({
+  className,
+  src,
+  alt,
+  width,
+  height,
+  onActivar,
+  onDesactivar,
+  onSeleccionar,
+}) {
   const reducir = useReducedMotion();
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -28,36 +36,41 @@ function ImagenPerspectiva() {
   const escala = useSpring(1, resorte);
 
   function mover(evento) {
-    if (reducir) return;
+    if (reducir || evento.pointerType !== "mouse") return;
     const caja = evento.currentTarget.getBoundingClientRect();
     x.set((evento.clientX - caja.left) / caja.width - 0.5);
     y.set((evento.clientY - caja.top) / caja.height - 0.5);
   }
 
-  function entrar() {
+  function entrar(evento) {
+    if (evento.pointerType !== "mouse") return;
     if (!reducir) escala.set(1.03);
+    onActivar();
   }
 
   function salir() {
     x.set(0);
     y.set(0);
     escala.set(1);
+    onDesactivar();
   }
 
   return (
-    <div
-      className="instalacion__visual"
-      data-revelar
-      onMouseEnter={entrar}
-      onMouseMove={mover}
-      onMouseLeave={salir}
+    <motion.div
+      className={className}
+      whileTap={toque}
+      transition={transicionToque}
+      onClick={onSeleccionar}
+      onPointerEnter={entrar}
+      onPointerMove={mover}
+      onPointerLeave={salir}
     >
       <motion.img
         className="instalacion__imagen"
-        src="/images/landing-descargas.png"
-        alt="Enflora instalada en un Samsung y un iPhone"
-        width={720}
-        height={720}
+        src={src}
+        alt={alt}
+        width={width}
+        height={height}
         loading="lazy"
         decoding="async"
         style={
@@ -71,14 +84,20 @@ function ImagenPerspectiva() {
               }
         }
       />
-    </div>
+    </motion.div>
   );
 }
 
 export function SeccionInstalacion({ textos }) {
   const [modal, setModal] = useState(null);
   const [reinicio, setReinicio] = useState(0);
+  const [resaltado, setResaltado] = useState(null);
   const pwa = usePWAInstall();
+
+  function claseBoton(tipo) {
+    const base = `instalacion__btn instalacion__btn--${tipo === "ios" ? "apple" : "android"}`;
+    return resaltado === tipo ? `${base} instalacion__btn--resaltado` : base;
+  }
 
   function abrir(tipo) {
     setReinicio((valor) => valor + 1);
@@ -87,35 +106,41 @@ export function SeccionInstalacion({ textos }) {
 
   return (
     <>
-      <section className="instalacion" id="instalar" data-logo="light">
-        <div className="instalacion__fondo" aria-hidden="true">
-          <Silk
-            color="#0B3D2A"
-            sheenColor="#A4C85B"
-            speed={3.5}
-            scale={1}
-            rotation={0}
-            sheen={0.28}
-            depth={0.4}
-            glow={0.18}
-            noiseIntensity={1.1}
-            fade={0}
-            mouseInteraction={false}
-            clickRipple={false}
-            intro
-          />
-        </div>
+      <section className="instalacion" id="instalar" data-logo="dark">
         <div className="instalacion__contenedor">
-          <ImagenPerspectiva />
-          <div className="instalacion__texto" data-revelar>
+          <div className="instalacion__encabezado" data-revelar>
             <h2>
               <span className="instalacion__marca marca-enflora">Enflora</span> va con vos.
             </h2>
             <p className="instalacion__bajada">{textos.bajada}</p>
+          </div>
+          <div className="instalacion__visual" data-revelar>
+            <ImagenPerspectiva
+              className="instalacion__telefono instalacion__telefono--android"
+              src="/images/landing-samsung.png"
+              alt="Enflora instalada en un Samsung"
+              width={1086}
+              height={1448}
+              onActivar={() => setResaltado("android")}
+              onDesactivar={() => setResaltado(null)}
+              onSeleccionar={() => abrir("android")}
+            />
+            <ImagenPerspectiva
+              className="instalacion__telefono instalacion__telefono--ios"
+              src="/images/landing%20iphone.png"
+              alt="Enflora instalada en un iPhone"
+              width={1086}
+              height={1448}
+              onActivar={() => setResaltado("ios")}
+              onDesactivar={() => setResaltado(null)}
+              onSeleccionar={() => abrir("ios")}
+            />
+          </div>
+          <div className="instalacion__descarga" data-revelar>
             <div className="instalacion__acciones">
               <motion.button
                 type="button"
-                className="instalacion__btn instalacion__btn--android"
+                className={claseBoton("android")}
                 whileTap={toque}
                 transition={transicionToque}
                 onClick={() => abrir("android")}
@@ -125,7 +150,7 @@ export function SeccionInstalacion({ textos }) {
               </motion.button>
               <motion.button
                 type="button"
-                className="instalacion__btn instalacion__btn--apple"
+                className={claseBoton("ios")}
                 whileTap={toque}
                 transition={transicionToque}
                 onClick={() => abrir("ios")}

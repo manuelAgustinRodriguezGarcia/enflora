@@ -7,7 +7,7 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import { cambiarEtapaMasiva } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
-import { IndicadorEtapa } from "@/componentes/indicador-etapa";
+import { ContenidoTarjetaPlanta as ContenidoTarjeta } from "@/componentes/contenido-tarjeta-planta";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { TextoConMarca } from "@/componentes/marca-enflora";
@@ -18,60 +18,14 @@ import {
   esEtapa,
   etiquetaEtapa,
   fechaHoy,
-  fechaInicioPlanta,
   formatearFecha,
 } from "@/lib/etapas";
 import { transicionVista } from "@/lib/animaciones";
 import { agruparPlantasPorGenetica } from "@/lib/registros";
 
-function etiquetaEstado(estado) {
-  if (estado === "activa") return "Activa";
-  if (estado === "finalizada") return "Finalizada";
-  return estado;
-}
-
 function textoSeleccion(cantidad) {
   if (cantidad === 1) return "1 planta seleccionada";
   return `${cantidad} plantas seleccionadas`;
-}
-
-function ContenidoTarjeta({ planta, datos }) {
-  return (
-    <>
-      <div className="tarjeta__cabecera">
-        <span className="tarjeta__nombre">{planta.nombre}</span>
-        <span className="tarjeta__estado">
-          <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />
-        </span>
-      </div>
-      <div className="tarjeta__metricas">
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">Genética</span>
-          <span className="tarjeta__valor">{planta.genetica || "—"}</span>
-        </span>
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">Método</span>
-          <span className="tarjeta__valor">{planta.metodo || "—"}</span>
-        </span>
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">{datos.dia === null ? "Inicio" : "Día"}</span>
-          <span className="tarjeta__valor">
-            {datos.dia === null ? formatearFecha(fechaInicioPlanta(planta)) : datos.dia}
-          </span>
-        </span>
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">Estado</span>
-          <span className="tarjeta__valor">{etiquetaEstado(planta.estado)}</span>
-        </span>
-        {planta.sustrato ? (
-          <span className="tarjeta__dato">
-            <span className="tarjeta__etiqueta">Sustrato</span>
-            <span className="tarjeta__valor">{planta.sustrato}</span>
-          </span>
-        ) : null}
-      </div>
-    </>
-  );
 }
 
 export function SeleccionPlantasUnidad({

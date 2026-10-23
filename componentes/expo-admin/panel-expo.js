@@ -1,7 +1,8 @@
 "use client";
 
+import { AlertDialog } from "@base-ui/react/alert-dialog";
 import { Dialog } from "@base-ui/react/dialog";
-import { X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -9,7 +10,9 @@ import {
   guardarInventarioExpo,
   leerPanelExpo,
   registrarEntregaExpo,
+  reiniciarParticipantesExpo,
 } from "@/app/expo-cannabis/admin/acciones";
+import { SalirExpo } from "@/componentes/expo-admin/salir-expo";
 import { IlustracionRegalo } from "@/componentes/expo-cannabis/ilustraciones-expo";
 import { deltasEntregaExpo } from "@/lib/expo-cannabis/productos";
 
@@ -37,10 +40,6 @@ function leerEntero(valor) {
   return Number(texto);
 }
 
-function totalEntregados(productos) {
-  return productos.reduce((suma, producto) => suma + (producto.configurado ? producto.entregados : 0), 0);
-}
-
 function DibujoProducto({ producto }) {
   if (producto.imagen?.src) {
     return (
@@ -56,7 +55,7 @@ function DibujoProducto({ producto }) {
   return <IlustracionRegalo nombre={producto.ilustracion} />;
 }
 
-export function PanelExpo({ productos, participantes, partidas, aviso: avisoInicial }) {
+export function PanelExpo({ productos, participantes, partidas, aviso: avisoInicial, children }) {
   const reducido = useReducedMotion();
   const [datos, setDatos] = useState({ productos, participantes, partidas });
   const [aviso, setAviso] = useState(avisoInicial || "");
@@ -66,9 +65,12 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
   const [pendiente, setPendiente] = useState(false);
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
+  const [confirmandoReinicio, setConfirmandoReinicio] = useState(false);
+  const [errorReinicio, setErrorReinicio] = useState("");
   const pendienteRef = useRef(false);
   const versionRef = useRef(0);
   const accionesDialogo = useRef(null);
+  const accionesReinicio = useRef(null);
   const activo = datos.productos.find((producto) => producto.slug === slugActivo) ?? null;
   const sinStock = Boolean(activo?.configurado && activo.restante === 0);
   const fecha = formatearFecha(activo?.updatedAt);
@@ -182,6 +184,53 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
     }
   }
 
+  function abrirReinicio() {
+    if (pendienteRef.current) return;
+    setErrorReinicio("");
+    setMensaje("");
+    setConfirmandoReinicio(true);
+  }
+
+  function cambiarReinicio(siguiente, detalles) {
+    if (!siguiente && pendienteRef.current) {
+      detalles?.cancel();
+      return;
+    }
+    if (!siguiente) {
+      detalles?.preventUnmountOnClose?.();
+      setConfirmandoReinicio(false);
+      setErrorReinicio("");
+    }
+  }
+
+  async function reiniciarParticipantes() {
+    if (pendienteRef.current) return;
+    const version = versionRef.current + 1;
+    versionRef.current = version;
+    marcarPendiente(true);
+    setErrorReinicio("");
+    try {
+      const resultado = await reiniciarParticipantesExpo();
+      if (version !== versionRef.current) return;
+      if (!resultado.ok) {
+        setErrorReinicio(resultado.error);
+        return;
+      }
+      setDatos((actual) => ({
+        ...actual,
+        participantes: resultado.participantes,
+        partidas: resultado.partidas,
+      }));
+      setConfirmandoReinicio(false);
+      setError("");
+      setMensaje("Participantes reiniciados");
+    } catch {
+      if (version === versionRef.current) setErrorReinicio("No se pudo reiniciar el conteo.");
+    } finally {
+      if (version === versionRef.current) marcarPendiente(false);
+    }
+  }
+
   function cambiarDialogo(siguiente, detalles) {
     if (!siguiente && pendienteRef.current) {
       detalles?.cancel();
@@ -206,7 +255,7 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
   return (
     <motion.div className="expo-admin" initial={entrada} animate={{ opacity: 1, y: 0 }}>
       <header className="expo-admin__cabecera">
-        <p className="expo-admin__marca marca-enflora">Enflora</p>
+        <SalirExpo />
         <h1>Expo Cannabis</h1>
         <p className="expo-admin__subtitulo">Panel de administración</p>
       </header>
@@ -218,16 +267,21 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
       ) : null}
 
       <section className="expo-admin__metricas" aria-label="Resumen">
-        <article className="expo-admin__metrica">
+        <article className="expo-admin__metrica expo-admin__metrica--reiniciable">
+          <button
+            type="button"
+            className="expo-admin__reiniciar"
+            aria-haspopup="dialog"
+            aria-label="Reiniciar conteo de participantes"
+            disabled={pendiente}
+            onClick={abrirReinicio}
+          >
+            <RotateCcw size={16} strokeWidth={2.4} aria-hidden="true" />
+          </button>
           <p>Participantes únicos</p>
           <strong>{formatearNumero(datos.participantes)}</strong>
           <span>Partidas iniciadas: {formatearNumero(datos.partidas)}</span>
           <small>El conteo es por navegador. Una misma persona puede sumar otra vez si usa otro dispositivo.</small>
-        </article>
-        <article className="expo-admin__metrica">
-          <p>Productos entregados</p>
-          <strong>{formatearNumero(totalEntregados(datos.productos))}</strong>
-          <span>Suma de los cinco productos</span>
         </article>
       </section>
 
@@ -295,6 +349,8 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
           );
         })}
       </div>
+
+      {children}
 
       <Dialog.Root open={Boolean(activo)} onOpenChange={cambiarDialogo} actionsRef={accionesDialogo}>
         <Dialog.Portal>
@@ -422,6 +478,78 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
           </Dialog.Viewport>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <AlertDialog.Root open={confirmandoReinicio} onOpenChange={cambiarReinicio} actionsRef={accionesReinicio}>
+        <AlertDialog.Portal>
+          <AlertDialog.Backdrop
+            render={
+              <motion.div
+                className="expo-admin__fondo"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: confirmandoReinicio ? 1 : 0 }}
+                transition={{ duration: reducido ? 0 : 0.18 }}
+              />
+            }
+          />
+          <AlertDialog.Viewport className="expo-admin__vista">
+            <AlertDialog.Popup
+              render={
+                <motion.div
+                  className="expo-admin__panel"
+                  initial={reducido ? false : { opacity: 0, y: 28 }}
+                  animate={confirmandoReinicio ? { opacity: 1, y: 0 } : { opacity: 0, y: 28 }}
+                  transition={reducido ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
+                  onAnimationComplete={() => {
+                    if (!confirmandoReinicio) accionesReinicio.current?.unmount();
+                  }}
+                />
+              }
+            >
+              <div className="expo-admin__panel-cabecera">
+                <AlertDialog.Title className="expo-admin__panel-titulo">Reiniciar conteo</AlertDialog.Title>
+                <button
+                  type="button"
+                  className="expo-admin__cerrar"
+                  aria-label="Cerrar"
+                  disabled={pendiente}
+                  onClick={() => cambiarReinicio(false)}
+                >
+                  <X size={20} strokeWidth={2.4} aria-hidden="true" />
+                </button>
+              </div>
+
+              <AlertDialog.Description className="expo-admin__confirmacion">
+                Se van a borrar los {formatearNumero(datos.participantes)} participantes y las{" "}
+                {formatearNumero(datos.partidas)} partidas iniciadas. El inventario y las entregas no cambian. Esta
+                acción no se puede deshacer.
+              </AlertDialog.Description>
+
+              <div className="expo-admin__aviso-accion" aria-live="polite">
+                {errorReinicio ? <p role="alert">{errorReinicio}</p> : null}
+              </div>
+
+              <div className="expo-admin__formulario-acciones">
+                <button
+                  type="button"
+                  className="expo-admin__accion expo-admin__accion--corregir"
+                  disabled={pendiente}
+                  onClick={reiniciarParticipantes}
+                >
+                  SÍ, REINICIAR
+                </button>
+                <button
+                  type="button"
+                  className="expo-admin__accion expo-admin__accion--secundaria"
+                  disabled={pendiente}
+                  onClick={() => cambiarReinicio(false)}
+                >
+                  CANCELAR
+                </button>
+              </div>
+            </AlertDialog.Popup>
+          </AlertDialog.Viewport>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
     </motion.div>
   );
 }

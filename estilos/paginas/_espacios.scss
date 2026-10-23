@@ -337,6 +337,18 @@
     text-align: center;
   }
 
+  &__flora {
+    width: 10rem;
+    max-width: 60%;
+    margin: -0.25rem auto 0;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+  }
+
   &--opcion-seguimiento {
     align-items: stretch;
     text-align: left;

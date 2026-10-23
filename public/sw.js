@@ -36,21 +36,57 @@ function leerAviso(event) {
     ? datos.etiqueta
     : "enflora";
 
-  return { titulo, mensaje, url: rutaSegura(datos.url), etiqueta };
+  const prueba = typeof datos.prueba === "string" && /^[0-9a-f-]{36}$/i.test(datos.prueba)
+    ? datos.prueba
+    : null;
+  const recibo = typeof datos.recibo === "string" && /^[A-Za-z0-9_-]{43}$/.test(datos.recibo)
+    ? datos.recibo
+    : null;
+
+  return { titulo, mensaje, url: rutaSegura(datos.url), etiqueta, prueba, recibo };
+}
+
+async function avisarPestanas(prueba) {
+  try {
+    const clientes = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const cliente of clientes) {
+      cliente.postMessage({ tipo: "enflora-push-recibido", prueba });
+    }
+  } catch {
+    return;
+  }
+}
+
+async function confirmarPrueba(prueba, recibo) {
+  await avisarPestanas(prueba);
+  if (!recibo) return;
+  try {
+    await fetch(new URL("/api/push/recibido", self.location.origin).href, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prueba, recibo }),
+      credentials: "omit",
+      cache: "no-store",
+    });
+  } catch {
+    return;
+  }
+}
+
+async function mostrarAviso(aviso) {
+  await self.registration.showNotification(aviso.titulo, {
+    body: aviso.mensaje,
+    icon: "/icons/enflora-isotipo-192.png",
+    badge: "/icons/enflora-isotipo-192.png",
+    lang: "es-AR",
+    tag: aviso.etiqueta,
+    data: { url: aviso.url },
+  });
+  if (aviso.prueba) await confirmarPrueba(aviso.prueba, aviso.recibo);
 }
 
 self.addEventListener("push", (event) => {
-  const aviso = leerAviso(event);
-  event.waitUntil(
-    self.registration.showNotification(aviso.titulo, {
-      body: aviso.mensaje,
-      icon: "/icons/enflora-isotipo-192.png",
-      badge: "/icons/enflora-isotipo-192.png",
-      lang: "es-AR",
-      tag: aviso.etiqueta,
-      data: { url: aviso.url },
-    }),
-  );
+  event.waitUntil(mostrarAviso(leerAviso(event)));
 });
 
 self.addEventListener("notificationclick", (event) => {

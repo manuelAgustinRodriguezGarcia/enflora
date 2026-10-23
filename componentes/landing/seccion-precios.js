@@ -5,6 +5,7 @@ import { useState } from "react";
 import { FaqPrecios } from "@/componentes/landing/faq-precios";
 import { ModalCotizacion } from "@/componentes/landing/modal-cotizacion";
 import { ModalEquivalencia } from "@/componentes/landing/modal-equivalencia";
+import { ModalContacto } from "@/componentes/landing/modal-contacto";
 import { TarjetaPlan } from "@/componentes/landing/tarjeta-plan";
 import { formatearArs, formatearFechaCotizacion } from "@/lib/cotizacion";
 import { planesEnflora } from "@/lib/planes";
@@ -13,6 +14,13 @@ import { TextoConMarca } from "@/componentes/marca-enflora";
 export function SeccionPrecios({ cotizacion = null }) {
   const [modalEquivalencia, setModalEquivalencia] = useState(false);
   const [modalCotizacion, setModalCotizacion] = useState(false);
+  const [modalContacto, setModalContacto] = useState(false);
+  const [contactoMontado, setContactoMontado] = useState(false);
+
+  function abrirContacto() {
+    setContactoMontado(true);
+    setModalContacto(true);
+  }
   const fecha = formatearFechaCotizacion(cotizacion?.fecha);
   const valor = cotizacion?.valor;
   const valorTexto = Number.isFinite(valor) ? formatearArs(valor) : null;
@@ -39,6 +47,7 @@ export function SeccionPrecios({ cotizacion = null }) {
               cotizacion={cotizacion}
               hrefRegistro={planesEnflora.hrefRegistro}
               onAbrirEquivalencia={() => setModalEquivalencia(true)}
+              onPrelanzamiento={abrirContacto}
             />
           ))}
         </div>
@@ -69,6 +78,8 @@ export function SeccionPrecios({ cotizacion = null }) {
         titulo="Qué cotización de dólar?"
         texto={leyenda}
       />
+
+      {contactoMontado ? <ModalContacto abierto={modalContacto} onCerrar={() => setModalContacto(false)} /> : null}
     </section>
   );
 }

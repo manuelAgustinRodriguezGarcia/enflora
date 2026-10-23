@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
+import { esRutaDemo } from "@/lib/acceso-prelanzamiento";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 
@@ -72,7 +73,8 @@ export async function proxy(request) {
     ruta.startsWith("/partners/") ||
     ruta === "/partners-info" ||
     ruta === "/expo-cannabis" ||
-    ruta.startsWith("/expo-cannabis/");
+    ruta.startsWith("/expo-cannabis/") ||
+    esRutaDemo(ruta);
   const pendiente = user ? await onboardingPendiente(supabase, user.id) : false;
   const destino = pendiente ? "/onboarding" : "/espacios";
 
@@ -107,7 +109,13 @@ export async function proxy(request) {
     return redirigir(request, destino, respuesta);
   }
 
-  if (user && pendiente && ruta !== "/onboarding" && !ruta.startsWith("/pagos")) {
+  if (
+    user &&
+    pendiente &&
+    ruta !== "/onboarding" &&
+    !ruta.startsWith("/pagos") &&
+    !esRutaDemo(ruta)
+  ) {
     return redirigir(request, "/onboarding", respuesta);
   }
 

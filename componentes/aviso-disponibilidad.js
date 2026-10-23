@@ -5,7 +5,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
 import { Boton } from "@/componentes/boton";
 import { ModalInstalacionIOS } from "@/componentes/landing/modal-instalacion-ios";
-import { TEXTOS_PUSH, useNotificacionesPush } from "@/componentes/usar-notificaciones-push";
+import { TEXTOS_PUSH, textoLimite, useNotificacionesPush } from "@/componentes/usar-notificaciones-push";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 import { usePWAInstall } from "@/lib/use-pwa-install";
 
@@ -24,7 +24,8 @@ export function AvisoDisponibilidad() {
   const { plataforma } = usePWAInstall();
   const [abierto, setAbierto] = useState(false);
   const [guia, setGuia] = useState(false);
-  const texto = TEXTOS_PUSH[push.estado] || TEXTOS_PUSH.error;
+  const texto =
+    push.estado === "limite" ? textoLimite(push.espera) : TEXTOS_PUSH[push.estado] || TEXTOS_PUSH.error;
 
   async function confirmar() {
     if (push.ocupado) return;
@@ -45,6 +46,7 @@ export function AvisoDisponibilidad() {
     push.estado === "desactivado" ||
     push.estado === "activado" ||
     push.estado === "requiere-instalacion" ||
+    push.estado === "limite" ||
     push.estado === "error";
 
   return (
@@ -72,7 +74,11 @@ export function AvisoDisponibilidad() {
         </p>
       )}
       {push.resultadoPrueba ? (
-        <p className="lanzamiento__estado" role="status">
+        <p
+          className="lanzamiento__estado"
+          role={push.fasePrueba === "error" || push.fasePrueba === "limite" ? "alert" : "status"}
+          data-fase={push.fasePrueba || undefined}
+        >
           {push.resultadoPrueba}
         </p>
       ) : null}
@@ -117,7 +123,7 @@ export function AvisoDisponibilidad() {
                       ? "Desactivar avisos"
                       : push.estado === "requiere-instalacion"
                         ? "Ver cómo instalarlo"
-                        : push.estado === "error"
+                        : push.estado === "error" || push.estado === "limite"
                           ? "Reintentar"
                           : "Activar avisos"}
                   </Boton>

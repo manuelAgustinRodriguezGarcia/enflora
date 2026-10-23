@@ -7,6 +7,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { gsap } from "@/componentes/landing/gsap";
 import SpotlightCard from "@/componentes/landing/spotlight-card";
 import { convertirUsdAArs, formatearArs } from "@/lib/cotizacion";
+import { lanzamientoPendiente } from "@/lib/lanzamiento";
 
 const SPOTLIGHT = {
   gratis: {
@@ -119,7 +120,7 @@ function PrecioFlip({ usd, ars, mostrarArs, reducido }) {
   );
 }
 
-function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia }) {
+function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia, onPrelanzamiento }) {
   return (
     <div className="precios__acciones">
       <Link
@@ -129,6 +130,11 @@ function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia }) {
             : "landing__accion--linea"
         } precios__cta`}
         href={plan.id === "por-cultivo" ? "/pagos/licencia" : hrefRegistro}
+        onClick={(evento) => {
+          if (!onPrelanzamiento || !lanzamientoPendiente()) return;
+          evento.preventDefault();
+          onPrelanzamiento(plan.id);
+        }}
       >
         {plan.cta}
       </Link>
@@ -163,7 +169,7 @@ function DetallesPlan({ plan, beneficios }) {
   );
 }
 
-export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalencia }) {
+export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalencia, onPrelanzamiento }) {
   const reducido = useReducedMotion();
   const panelId = useId();
   const [abierto, setAbierto] = useState(false);
@@ -281,6 +287,7 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
               plan={plan}
               hrefRegistro={hrefRegistro}
               onAbrirEquivalencia={onAbrirEquivalencia}
+              onPrelanzamiento={onPrelanzamiento}
             />
           </div>
 
@@ -339,6 +346,7 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
               plan={plan}
               hrefRegistro={hrefRegistro}
               onAbrirEquivalencia={onAbrirEquivalencia}
+              onPrelanzamiento={onPrelanzamiento}
             />
           </div>
         </div>

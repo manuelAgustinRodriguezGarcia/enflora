@@ -9,5 +9,8 @@ export default function sitemap() {
     {
       url: "https://enflora.com.ar/partners-info",
     },
+    {
+      url: "https://enflora.com.ar/privacidad",
+    },
   ];
 }

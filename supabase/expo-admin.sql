@@ -222,15 +222,30 @@ as $$
   from public.expo_participantes;
 $$;
 
+create or replace function public.reiniciar_participantes_expo()
+returns jsonb
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+begin
+  delete from public.expo_participantes;
+  return jsonb_build_object('participantes', 0, 'partidas', 0);
+end;
+$$;
+
 revoke all on function public.registrar_entrega_expo(text, integer) from public, anon, authenticated;
 revoke all on function public.guardar_inventario_expo(text, integer, integer) from public, anon, authenticated;
 revoke all on function public.registrar_partida_expo(uuid) from public, anon, authenticated;
 revoke all on function public.resumen_participantes_expo() from public, anon, authenticated;
+revoke all on function public.reiniciar_participantes_expo() from public, anon, authenticated;
 
 grant execute on function public.registrar_entrega_expo(text, integer) to service_role;
 grant execute on function public.guardar_inventario_expo(text, integer, integer) to service_role;
 grant execute on function public.registrar_partida_expo(uuid) to service_role;
 grant execute on function public.resumen_participantes_expo() to service_role;
+grant execute on function public.reiniciar_participantes_expo() to service_role;
 
 create table if not exists public.expo_ruleta_estado (
   id integer primary key,

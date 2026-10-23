@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { siguientePermitido } from "@/lib/pagos/rutas";
+import { clienteContactos, registrarContacto } from "@/lib/contactos/datos";
+import { normalizarEmail, normalizarNombre, normalizarTelefono } from "@/lib/contactos/reglas";
 
 async function urlConfirmarCorreo() {
   const encabezados = await headers();
@@ -72,6 +74,30 @@ function mensajeCamposFaltantes(faltantes) {
 
 function estadoCredenciales(error, email, datos = {}) {
   return { error, email, ...datos };
+}
+
+async function sumarContactoRegistro({ email, nombre, apellido, telefono }) {
+  const supabase = clienteContactos();
+  if (!supabase) return;
+
+  const emailLimpio = normalizarEmail(email);
+  if (!emailLimpio) return;
+
+  const nombreLimpio = normalizarNombre(`${nombre} ${apellido}`.trim());
+  const telefonoLimpio = normalizarTelefono(telefono);
+
+  try {
+    await registrarContacto(supabase, {
+      nombre: nombreLimpio ?? null,
+      email: emailLimpio,
+      telefono: telefonoLimpio ?? null,
+      origen: "registro",
+      detalle: null,
+      consentimiento: false,
+    });
+  } catch (error) {
+    console.error("[contactos] registro_alta_fallida", error?.message || "sin_detalle");
+  }
 }
 
 export async function entrar(_estado, formulario) {
@@ -192,6 +218,8 @@ export async function registrar(_estado, formulario) {
   if (error) {
     return estadoCredenciales("No se pudo crear la cuenta.", email, datos);
   }
+
+  await sumarContactoRegistro({ email, nombre, apellido, telefono });
 
   if (!data.session) {
     redirect("/ingreso?correo=pendiente");

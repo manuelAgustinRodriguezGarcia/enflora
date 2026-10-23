@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Store } from "lucide-react";
+import { Lock, Mail, Store } from "lucide-react";
 import { MarcaEnflora } from "@/componentes/marca-enflora";
 import { CORREO_PUBLICO, INSTAGRAM_URL, NOMBRE_MARCA } from "@/lib/seo";
 
@@ -31,6 +31,16 @@ const ENLACES = [
     etiqueta: "Comercios asociados",
     externo: false,
     Icono: Store,
+    clase: "pie__enlace pie__enlace--cta",
+  },
+  {
+    id: "admin",
+    href: "/expo-cannabis/admin",
+    etiqueta: "Administración",
+    externo: false,
+    Icono: Lock,
+    clase: "pie__enlace pie__enlace--cta pie__enlace--admin",
+    prefetch: false,
   },
 ];
 
@@ -120,8 +130,7 @@ export function Footer() {
           </Link>
 
           <nav className="pie__contacto" aria-label="Contacto y redes">
-            {ENLACES.map(({ id, href, etiqueta, externo, Icono }) => {
-              const clase = id === "partners" ? "pie__enlace pie__enlace--cta" : "pie__enlace";
+            {ENLACES.map(({ id, href, etiqueta, externo, Icono, clase = "pie__enlace", prefetch }) => {
               const contenido = (
                 <>
                   <Icono size={18} />
@@ -146,7 +155,7 @@ export function Footer() {
 
               if (href.startsWith("/")) {
                 return (
-                  <Link key={id} className={clase} href={href} aria-label={etiqueta}>
+                  <Link key={id} className={clase} href={href} aria-label={etiqueta} prefetch={prefetch}>
                     {contenido}
                   </Link>
                 );
@@ -167,6 +176,9 @@ export function Footer() {
           <p className="pie__copy">
             © {anio} <MarcaEnflora />. Todos los derechos reservados.
           </p>
+          <Link className="pie__copy pie__legal" href="/privacidad">
+            Política de privacidad
+          </Link>
         </div>
       </div>
 

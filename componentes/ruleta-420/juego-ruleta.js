@@ -5,6 +5,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { Marcador } from "@/componentes/ruleta-420/marcador";
+import { ModalPresentacion, leerPresentacionRuleta } from "@/componentes/ruleta-420/modal-presentacion";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { PantallaBienvenida } from "@/componentes/ruleta-420/pantalla-bienvenida";
 import { PantallaDecision } from "@/componentes/ruleta-420/pantalla-decision";
@@ -77,6 +78,7 @@ function estadoDesdePartida(partida) {
 export function JuegoRuleta() {
   const [estado, despachar] = useReducer(reducirRuleta, undefined, estadoInicial);
   const [confirmarReinicio, setConfirmarReinicio] = useState(false);
+  const [presentacionAbierta, setPresentacionAbierta] = useState(false);
   const reducido = useReducedMotion();
   const duracionGiro = reducido ? DURACION_GIRO_REDUCIDO_MS : DURACION_GIRO_MS;
   const pausa = reducido ? 700 : PAUSA_RESULTADO_RULETA_MS;
@@ -185,7 +187,21 @@ export function JuegoRuleta() {
     }
   };
 
-  const empezar = () => comenzarPartida("empezar");
+  const empezar = () => {
+    if (ocupado.current) return;
+    if (leerPresentacionRuleta()) {
+      comenzarPartida("empezar");
+      return;
+    }
+    if (estado.fase === "rules") despachar({ type: "cerrar-reglas" });
+    setAviso("");
+    setPresentacionAbierta(true);
+  };
+
+  const presentacionLista = () => {
+    setPresentacionAbierta(false);
+    comenzarPartida("empezar");
+  };
 
   const reiniciar = () => {
     window.sessionStorage.removeItem(CLAVE_PARTIDA);
@@ -459,6 +475,11 @@ export function JuegoRuleta() {
             </motion.div>
           ) : null}
         </AnimatePresence>
+        <ModalPresentacion
+          abierto={presentacionAbierta}
+          onCerrar={() => setPresentacionAbierta(false)}
+          onListo={presentacionLista}
+        />
         <ModalRuleta
           abierto={confirmarReinicio}
           onCerrar={() => setConfirmarReinicio(false)}

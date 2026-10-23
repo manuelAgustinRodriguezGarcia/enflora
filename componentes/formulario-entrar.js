@@ -2,7 +2,7 @@
 
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { entrar } from "@/app/acciones/sesion";
 import { SlideCommit } from "@/componentes/slide-commit";
 import { SpinnerCarga } from "@/componentes/spinner-carga";
@@ -64,7 +64,7 @@ export function FormularioEntrar({ aviso, siguiente = "" }) {
   const [contrasena, setContrasena] = useState("");
   const [anchoDeslizar, setAnchoDeslizar] = useState(280);
   const formularioRef = useRef(null);
-  const deslizarRef = useRef(null);
+  const observadorRef = useRef(null);
   const esperaRef = useRef(null);
   const pendientePrevio = useRef(false);
 
@@ -74,14 +74,18 @@ export function FormularioEntrar({ aviso, siguiente = "" }) {
     if (estado?.email) setEmail(estado.email);
   }, [estado?.email]);
 
-  useEffect(() => {
-    const nodo = deslizarRef.current;
-    if (!nodo) return undefined;
-    const medir = () => setAnchoDeslizar(Math.max(200, Math.round(nodo.getBoundingClientRect().width)));
+  const deslizarRef = useCallback((nodo) => {
+    observadorRef.current?.disconnect();
+    observadorRef.current = null;
+    if (!nodo) return;
+    const medir = () => {
+      const ancho = Math.round(nodo.getBoundingClientRect().width);
+      if (ancho > 0) setAnchoDeslizar(Math.max(200, ancho));
+    };
     medir();
     const observador = new ResizeObserver(medir);
     observador.observe(nodo);
-    return () => observador.disconnect();
+    observadorRef.current = observador;
   }, []);
 
   useEffect(() => {
@@ -154,9 +158,6 @@ export function FormularioEntrar({ aviso, siguiente = "" }) {
               </button>
             </span>
           </label>
-          <button className="formulario__olvido" type="button">
-            Olvidaste tu contraseña?
-          </button>
           <button
             className="formulario__enviar formulario__enviar--escritorio"
             type="submit"

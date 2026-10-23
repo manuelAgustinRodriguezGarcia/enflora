@@ -1,6 +1,7 @@
 "use client";
 
 import { Dialog } from "@base-ui/react/dialog";
+import Image from "next/image";
 import { motion } from "motion/react";
 import { salirAlInicio } from "@/app/acciones/sesion";
 import { Boton } from "@/componentes/boton";
@@ -45,9 +46,21 @@ export function ModalAccesoPrelanzamiento({ abierto }) {
             }
           >
             <form action={salirAlInicio}>
-              <Dialog.Title className="modal__titulo">Volver a inicio</Dialog.Title>
+              <div className="modal__flora">
+                <Image
+                  src="/images/flora-casco.png"
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  draggable={false}
+                  sizes="10rem"
+                  priority
+                />
+              </div>
+              <Dialog.Title className="modal__titulo">Estamos trabajando duro</Dialog.Title>
               <Dialog.Description className="modal__texto">
-                Todavía no podés entrar a la app.
+                Estamos trabajando duro para darte la mejor experiencia. Tus cultivos están en
+                buenas manos.
               </Dialog.Description>
               <div className="modal__acciones">
                 <Boton type="submit">Volver a inicio</Boton>
