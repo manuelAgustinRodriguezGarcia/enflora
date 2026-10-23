@@ -62,20 +62,6 @@ function etiquetaHora(fechaIso) {
   return fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function etiquetaResumenRegistro(item) {
-  const acciones = (item.registro_acciones || []).map((fila) => fila.nombre);
-  const parametros = (item.registro_parametros || []).map((fila) => {
-    if (fila.tipo_valor === "numero") {
-      const unidad = fila.unidad ? ` ${fila.unidad}` : "";
-      return `${fila.nombre} ${fila.valor_numero}${unidad}`;
-    }
-    return `${fila.nombre}: ${fila.valor_texto}`;
-  });
-  const partes = [...acciones, ...parametros];
-  if (!partes.length) return item.observacion ? "Observación" : "Registro";
-  return partes.join(" · ");
-}
-
 function resumenAlcance({ aplicaA, plantasSeleccionadas, plantasUnidad, unidadNombre }) {
   if (aplicaA === "ambiente") {
     return {
@@ -625,6 +611,15 @@ export function FormularioRegistroCultivo({
         ...exitosLocales,
         ...registrosHoy.filter((item) => !exitosLocales.some((local) => local.id === item.id)),
       ];
+  const numeroRegistroHoy = new Map(
+    [...listaHoy]
+      .sort((a, b) => {
+        const diferencia = new Date(a.fecha_evento).getTime() - new Date(b.fecha_evento).getTime();
+        if (diferencia) return diferencia;
+        return String(a.fecha_creacion || a.id).localeCompare(String(b.fecha_creacion || b.id));
+      })
+      .map((item, indice) => [item.id, indice + 1])
+  );
 
   const opcionesUnidad = unidades.map((item) => ({
     valor: item.id,
@@ -995,32 +990,23 @@ export function FormularioRegistroCultivo({
                   item.aplica_a === "ambiente" ? "Ambiente" : "Plantas";
                 return (
                   <li key={item.id}>
-                    <span className="registro-crear__lista-hora">{hora || "—"}</span>
-                    <span className="registro-crear__lista-texto">
+                    <span className="registro-crear__lista-lado">
+                      <span className="registro-crear__lista-hora">{hora || "—"}</span>
                       <span className="registro-crear__lista-tipo">{etiquetaTipo}</span>
-                      {" · "}
-                      {etiquetaResumenRegistro(item)}
-                      {item.observacion &&
-                      !(item.registro_acciones || []).length &&
-                      !(item.registro_parametros || []).length
-                        ? ""
-                        : item.observacion
-                          ? ` · ${item.observacion}`
-                          : ""}
-                      {cargarRegistro ? (
-                        <>
-                          {" "}
-                          <button
-                            type="button"
-                            className="registro-crear__enlace"
-                            onClick={() => cargarEdicion(item)}
-                            disabled={bloqueado}
-                          >
-                            Editar
-                          </button>
-                        </>
-                      ) : null}
                     </span>
+                    <span className="registro-crear__lista-texto">
+                      Registro #{numeroRegistroHoy.get(item.id)}
+                    </span>
+                    {cargarRegistro ? (
+                      <button
+                        type="button"
+                        className="registro-crear__enlace registro-crear__lista-editar"
+                        onClick={() => cargarEdicion(item)}
+                        disabled={bloqueado}
+                      >
+                        Editar
+                      </button>
+                    ) : null}
                   </li>
                 );
               })}

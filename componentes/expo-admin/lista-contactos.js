@@ -77,14 +77,6 @@ function Origenes({ contacto }) {
   );
 }
 
-function Consentimiento({ valor }) {
-  return (
-    <span className={`expo-contactos__consentimiento${valor ? " expo-contactos__consentimiento--si" : ""}`}>
-      {valor ? "Aceptó" : "No aceptó"}
-    </span>
-  );
-}
-
 function FormularioContacto({ idBase, valores, setValores, errores, pendiente, onSubmit, onCancelar, textoGuardar }) {
   return (
     <form className="expo-admin__formulario" onSubmit={onSubmit} noValidate>
@@ -95,6 +87,7 @@ function FormularioContacto({ idBase, valores, setValores, errores, pendiente, o
           type="text"
           autoComplete="off"
           maxLength={80}
+          placeholder="Flora Tricoma"
           value={valores.nombre}
           disabled={pendiente}
           aria-invalid={errores.nombre ? true : undefined}
@@ -110,6 +103,7 @@ function FormularioContacto({ idBase, valores, setValores, errores, pendiente, o
           inputMode="email"
           autoComplete="off"
           maxLength={254}
+          placeholder="flora.trico420@gmail.com"
           value={valores.email}
           disabled={pendiente}
           aria-invalid={errores.email ? true : undefined}
@@ -416,7 +410,6 @@ export function ListaContactos({ inicial }) {
               <th scope="col">Email</th>
               <th scope="col">Teléfono</th>
               <th scope="col">Origen</th>
-              <th scope="col">Publicidad</th>
               <th scope="col">Fecha</th>
               <th scope="col">
                 <span className="expo-contactos__oculto">Acciones</span>
@@ -426,7 +419,7 @@ export function ListaContactos({ inicial }) {
           <tbody>
             {filas.length === 0 ? (
               <tr>
-                <td colSpan={7} className="expo-contactos__vacio">
+                <td colSpan={6} className="expo-contactos__vacio">
                   {datos
                     ? "No hay contactos que coincidan con la búsqueda."
                     : error
@@ -444,9 +437,6 @@ export function ListaContactos({ inicial }) {
                   <td data-columna="Teléfono">{valorOGuion(contacto.telefono)}</td>
                   <td data-columna="Origen">
                     <Origenes contacto={contacto} />
-                  </td>
-                  <td data-columna="Publicidad">
-                    <Consentimiento valor={contacto.consentimiento_marketing} />
                   </td>
                   <td data-columna="Fecha">{formatearFecha(contacto.created_at, false)}</td>
                   <td data-columna="Acciones">
@@ -651,11 +641,11 @@ export function ListaContactos({ inicial }) {
 
                   {modal.tipo === "nuevo" || modal.tipo === "editar" ? (
                     <>
-                      <Dialog.Description className="expo-admin__fecha">
-                        {modal.tipo === "nuevo"
-                          ? "Alta manual. El contacto se guarda sin consentimiento publicitario."
-                          : "Corregí los datos de contacto. El consentimiento no se modifica desde acá."}
-                      </Dialog.Description>
+                      {modal.tipo === "editar" ? (
+                        <Dialog.Description className="expo-admin__fecha">
+                          Corregí los datos de contacto. El consentimiento no se modifica desde acá.
+                        </Dialog.Description>
+                      ) : null}
                       <FormularioContacto
                         idBase={`${idBase}-${modal.tipo}`}
                         valores={valores}

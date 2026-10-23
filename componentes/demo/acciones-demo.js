@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Boton, EnlaceBoton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
-import { AVISO_DATOS_DEMO } from "@/componentes/demo/conversion";
 import { useDemo } from "@/componentes/demo/proveedor-demo";
 
 export function AccionesDemo() {
@@ -33,7 +32,6 @@ export function AccionesDemo() {
           Volver a Enflora
         </EnlaceBoton>
       </div>
-      <p className="demo__pie-aviso">{AVISO_DATOS_DEMO}</p>
       <ModalConfirmacion
         abierto={confirmando}
         onCerrar={() => setConfirmando(false)}

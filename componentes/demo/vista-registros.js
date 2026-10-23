@@ -8,7 +8,6 @@ import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { AccionesDemo } from "@/componentes/demo/acciones-demo";
 import { ActividadDemo } from "@/componentes/demo/actividad-demo";
-import { Conversion } from "@/componentes/demo/conversion";
 import { GuiaDemo } from "@/componentes/demo/guia-demo";
 import { useDemo } from "@/componentes/demo/proveedor-demo";
 import { VolverDemo } from "@/componentes/demo/volver-demo";
@@ -62,7 +61,7 @@ function LimiteRegistros() {
 }
 
 export function VistaRegistros() {
-  const { estado, guardarRegistroLocal, cargarRegistroLocal, irACrear, atras, descartarConversion } = useDemo();
+  const { estado, guardarRegistroLocal, cargarRegistroLocal, irACrear, atras } = useDemo();
   const [guardado, setGuardado] = useState(null);
   const confirmacionRef = useRef(null);
   const seleccion = estado.navegacion.registro;
@@ -149,7 +148,6 @@ export function VistaRegistros() {
                   </Boton>
                 ) : null}
               </div>
-              {!estado.conversion.descartada ? <Conversion onSeguir={descartarConversion} /> : null}
             </div>
           </Aparecer>
         </div>

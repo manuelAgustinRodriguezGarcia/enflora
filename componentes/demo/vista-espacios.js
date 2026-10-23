@@ -60,6 +60,9 @@ export function VistaEspacios() {
             );
           })}
         </ListaEntrada>
+        <div className="demo-cupo">
+          <p className="demo-cupo__card">Podés tener los espacios de cultivo que quieras.</p>
+        </div>
         <AccionesDemo />
       </section>
     </TransicionVista>

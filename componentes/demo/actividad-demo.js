@@ -9,55 +9,81 @@ import {
   fechaHoraRegistro,
   resumenRegistroDemo,
   textoAlcanceRegistro,
-  textoParametro,
 } from "@/lib/demo/registros-demo";
 
 const LIMITE_VISIBLE = 5;
 
-function DetalleRegistro({ registro, ubicacion }) {
+function valorParametro(fila) {
+  if (fila.tipo_valor === "numero") return fila.valor_numero;
+  return fila.valor_texto;
+}
+
+function DetalleRegistro({ registro }) {
   const acciones = registro.registro_acciones || [];
   const parametros = registro.registro_parametros || [];
   const plantas = registro.registro_plantas || [];
 
   return (
-    <dl className="demo-actividad__detalle">
-      <div>
-        <dt>Fecha del evento</dt>
-        <dd>{fechaHoraRegistro(registro.fecha_evento)}</dd>
-      </div>
-      <div>
-        <dt>Ubicación</dt>
-        <dd>{ubicacion}</dd>
-      </div>
-      {plantas.length ? (
+    <div className="demo-actividad__detalle">
+      <dl>
         <div>
-          <dt>Plantas</dt>
-          <dd>{plantas.map((fila) => fila.nombre_planta).join(", ")}</dd>
+          <dt>Fecha del evento</dt>
+          <dd>{fechaHoraRegistro(registro.fecha_evento)}</dd>
         </div>
-      ) : null}
-      {acciones.length ? (
-        <div>
-          <dt>Acciones</dt>
-          <dd>{acciones.map((fila) => fila.nombre).join(", ")}</dd>
-        </div>
-      ) : null}
-      {parametros.length ? (
-        <div>
-          <dt>Parámetros</dt>
-          <dd>{parametros.map(textoParametro).join(" · ")}</dd>
-        </div>
-      ) : null}
-      {registro.observacion ? (
-        <div>
-          <dt>Observación</dt>
-          <dd>{registro.observacion}</dd>
-        </div>
-      ) : null}
-      <div>
-        <dt>{registro.fecha_actualizacion ? "Editado en la demo" : "Cargado en la demo"}</dt>
-        <dd>{fechaHoraRegistro(registro.fecha_actualizacion || registro.fecha_creacion)}</dd>
-      </div>
-    </dl>
+        {plantas.length ? (
+          <div>
+            <dt>Plantas</dt>
+            <dd>
+              <ul className="demo-actividad__chips">
+                {plantas.map((fila, indice) => (
+                  <li key={fila.planta_id || `${fila.nombre_planta}-${indice}`} className="demo-actividad__chip">
+                    {fila.nombre_planta}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : null}
+        {acciones.length ? (
+          <div>
+            <dt>Acciones</dt>
+            <dd>
+              <ul className="demo-actividad__chips">
+                {acciones.map((fila, indice) => (
+                  <li key={fila.clave_nativa || `${fila.nombre}-${indice}`} className="demo-actividad__chip">
+                    {fila.nombre}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : null}
+        {parametros.length ? (
+          <div>
+            <dt>Parámetros</dt>
+            <dd>
+              <ul className="demo-actividad__mediciones">
+                {parametros.map((fila, indice) => (
+                  <li key={fila.clave_nativa || `${fila.nombre}-${indice}`} className="demo-actividad__medicion">
+                    <span className="demo-actividad__medicion-nombre">{fila.nombre}</span>
+                    <span className="demo-actividad__medicion-valor">
+                      {valorParametro(fila)}
+                      {fila.unidad ? <span className="demo-actividad__medicion-unidad"> {fila.unidad}</span> : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </div>
+        ) : null}
+        {registro.observacion ? (
+          <div>
+            <dt>Observación</dt>
+            <dd className="demo-actividad__nota">{registro.observacion}</dd>
+          </div>
+        ) : null}
+      </dl>
+    </div>
   );
 }
 
@@ -99,8 +125,8 @@ export function ActividadDemo({ registros, titulo = "Actividad reciente", vacio,
                   </span>
                   <span className="demo-actividad__texto">{resumenRegistroDemo(registro)}</span>
                   <span className="demo-actividad__pie">
-                    <span className="tarjeta__meta">
-                      {ubicacion(registro)} · {textoAlcanceRegistro(registro)}
+                    <span className="demo-actividad__lugar">
+                      {[ubicacion(registro), textoAlcanceRegistro(registro)].filter(Boolean).join(" · ")}
                     </span>
                     <span
                       className={`demo-actividad__chevron${expandido ? " demo-actividad__chevron--abierto" : ""}`}
@@ -112,7 +138,7 @@ export function ActividadDemo({ registros, titulo = "Actividad reciente", vacio,
                 </button>
                 <div id={`${id}-${registro.id}`}>
                   <Aparecer visible={expandido}>
-                    <DetalleRegistro registro={registro} ubicacion={ubicacion(registro)} />
+                    <DetalleRegistro registro={registro} />
                   </Aparecer>
                 </div>
               </li>

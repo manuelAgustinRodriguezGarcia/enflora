@@ -1,4 +1,5 @@
 import { ProveedorDemo } from "@/componentes/demo/proveedor-demo";
+import { SalidaDemo } from "@/componentes/demo/salida-demo";
 
 export const metadata = {
   title: "Demo",
@@ -9,5 +10,10 @@ export const metadata = {
 };
 
 export default function LayoutDemo({ children }) {
-  return <ProveedorDemo>{children}</ProveedorDemo>;
+  return (
+    <ProveedorDemo>
+      <SalidaDemo />
+      {children}
+    </ProveedorDemo>
+  );
 }
