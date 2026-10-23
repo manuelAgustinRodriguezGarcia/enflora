@@ -201,7 +201,7 @@ test("el payload cobra el total del ítem y no restringe el medio de pago", () =
   assert.notEqual(claveIdempotenciaOrden(pagoId, "comprador@testuser.com"), pagoId);
 });
 
-test("el correo de prueba no se usa en producción ni reemplaza al dueño de ENFLORA", () => {
+test("el correo de prueba no se usa en producción ni reemplaza al dueño de Enflora", () => {
   const env = { MERCADOPAGO_TEST_BUYER_EMAIL: "comprador@testuser.com" };
   assert.deepEqual(
     correoPayerOrden({ ambiente: "produccion", emailUsuario: "dueno@enflora.com", env }),

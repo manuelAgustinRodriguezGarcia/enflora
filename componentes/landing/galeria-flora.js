@@ -3,6 +3,7 @@
 import Image, { getImageProps } from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { INSTAGRAM_USUARIO } from "@/lib/seo";
 
 const CONSULTA_MOBILE = "(max-width: 47.99rem)";
 const SIZES_GALERIA = "(max-width: 47.99rem) 72vw, 17rem";
@@ -72,7 +73,7 @@ function ItemGaleria({
             draggable={false}
           />
         </span>
-        <span className="flora-galeria__usuario">@enflora420</span>
+        <span className="flora-galeria__usuario">{INSTAGRAM_USUARIO}</span>
       </div>
       <div className="flora-galeria__marco">
         <div className="flora-galeria__zoom">

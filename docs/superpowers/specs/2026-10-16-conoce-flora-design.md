@@ -65,12 +65,12 @@ Reemplazar el placeholder de `#flora` por un primer prototipo donde el visitante
 Nombre, Ocupación, Edad, Cumpleaños (20 de abril), Genética, Lugar de nacimiento, Especialidad, Frase favorita.
 
 ### Instagram
-- Nombre: Flora · Usuario: @enflora.420
+- Nombre: Flora · Usuario: @enflora420
 - Descripción: La cara de ENFLORA.
 - Tags: ENFLORA · Cultivos · Buena onda
 - Bio corta sin números.
 - Micro-tags: Mis aventuras · Novedades · Detrás de escena
-- CTA: Seguime en Instagram → `https://www.instagram.com/enflora.420/` (`target="_blank"`, `rel="noopener noreferrer"`)
+- CTA: Seguime en Instagram → `https://www.instagram.com/enflora420/` (`target="_blank"`, `rel="noopener noreferrer"`)
 
 ### Beneficios
 Textos del brief. Sin “Próximamente”.

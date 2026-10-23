@@ -1,22 +1,23 @@
 import { ArrowUpRight, Mail, MessageCircle } from "lucide-react";
 import { FormularioContacto } from "@/componentes/landing/formulario-contacto";
+import { CORREO_PUBLICO, INSTAGRAM_URL, INSTAGRAM_USUARIO } from "@/lib/seo";
 
 const TARJETAS = [
   {
     id: "instagram",
-    href: "https://www.instagram.com/enflora420/?hl=es-la",
+    href: INSTAGRAM_URL,
     titulo: "Seguinos en Instagram",
     etiqueta: "Instagram",
-    texto: "@enflora420",
+    texto: INSTAGRAM_USUARIO,
     externo: true,
     Icono: IconoInstagram,
   },
   {
     id: "email",
-    href: "mailto:enflora.420@gmail.com",
+    href: `mailto:${CORREO_PUBLICO}`,
     titulo: "Mandame un mail",
     etiqueta: "Mail",
-    texto: "enflora.420@gmail.com",
+    texto: CORREO_PUBLICO,
     externo: false,
     Icono: Mail,
   },

@@ -5,6 +5,7 @@ import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { Ruleta } from "@/componentes/ruleta-420/ruleta";
 import { SECTORES_CATEGORIAS } from "@/lib/ruleta-420/logica";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 
 const REGLAS = [
   "Girá la ruleta para descubrir tu categoría.",
@@ -18,7 +19,9 @@ export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onC
   return (
     <div className="ruleta-bienvenida">
       <div className="ruleta-bienvenida__textos">
-        <span className="ruleta-chip ruleta-chip--rosa">Expo Cannabis · ENFLORA</span>
+        <span className="ruleta-chip ruleta-chip--rosa">
+          Expo Cannabis · <MarcaEnflora />
+        </span>
         <h1 className="ruleta-titulo ruleta-titulo--grande">
           LA RULETA <span className="ruleta-titulo__acento">420</span> DE FLORA
         </h1>

@@ -55,9 +55,11 @@ function ImagenPerspectiva() {
       <motion.img
         className="instalacion__imagen"
         src="/images/landing-descargas.png"
-        alt="ENFLORA instalada en un Samsung y un iPhone"
+        alt="Enflora instalada en un Samsung y un iPhone"
         width={720}
         height={720}
+        loading="lazy"
+        decoding="async"
         style={
           reducir
             ? undefined
@@ -107,7 +109,7 @@ export function SeccionInstalacion({ textos }) {
           <ImagenPerspectiva />
           <div className="instalacion__texto" data-revelar>
             <h2>
-              <span className="instalacion__marca">Enflora</span> va con vos.
+              <span className="instalacion__marca marca-enflora">Enflora</span> va con vos.
             </h2>
             <p className="instalacion__bajada">{textos.bajada}</p>
             <div className="instalacion__acciones">

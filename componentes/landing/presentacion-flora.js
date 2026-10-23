@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function PresentacionFlora({ titulo, tituloDestacado, descripcion }) {
   const reducido = useReducedMotion();
@@ -17,7 +18,9 @@ export function PresentacionFlora({ titulo, tituloDestacado, descripcion }) {
         {titulo}{" "}
         <span className="flora-presentacion__destacado">{tituloDestacado}</span>
       </h2>
-      <p className="flora-presentacion__descripcion">{descripcion}</p>
+      <p className="flora-presentacion__descripcion">
+        <TextoConMarca texto={descripcion} />
+      </p>
     </motion.div>
   );
 }

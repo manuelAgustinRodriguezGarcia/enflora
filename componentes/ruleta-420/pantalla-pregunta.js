@@ -67,7 +67,7 @@ export function PantallaPregunta({ pregunta, categoria, fase, respuesta, acerto,
                   exit={{ opacity: 0 }}
                   transition={{ type: "spring", stiffness: 320, damping: 14 }}
                 >
-                  <img src={LOGO_ENFLORA} alt="ENFLORA" width={1000} height={300} decoding="async" />
+                  <img src={LOGO_ENFLORA} alt="Enflora" width={1000} height={300} decoding="async" />
                   <strong className="ruleta-devolucion__titulo ruleta-devolucion__titulo--enflora">
                     ¡ESA ES MI ESPECIALIDAD!
                   </strong>
@@ -130,7 +130,7 @@ export function PantallaPregunta({ pregunta, categoria, fase, respuesta, acerto,
                   animate={{ scale: 1, rotate: 0, opacity: 1 }}
                   transition={{ type: "spring", stiffness: 320, damping: 14 }}
                 >
-                  <img src={LOGO_ENFLORA} alt="ENFLORA" width={1000} height={300} decoding="async" />
+                  <img src={LOGO_ENFLORA} alt="Enflora" width={1000} height={300} decoding="async" />
                   <strong className="ruleta-devolucion__titulo ruleta-devolucion__titulo--enflora">
                     ¡ESA ES MI ESPECIALIDAD!
                   </strong>

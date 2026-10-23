@@ -3,12 +3,15 @@
 import { IconoEtapa } from "@/componentes/icono-etapa";
 import { Selector } from "@/componentes/selector";
 import { ETAPAS } from "@/lib/etapas";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 function FilaEtapa({ valor, etiqueta }) {
   return (
     <span className={`fila-etapa fila-etapa--${valor}`}>
       <IconoEtapa etapa={valor} />
-      <span className="fila-etapa__texto">{etiqueta}</span>
+      <span className="fila-etapa__texto">
+        <TextoConMarca texto={etiqueta} />
+      </span>
     </span>
   );
 }

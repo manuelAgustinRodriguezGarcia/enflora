@@ -1,3 +1,5 @@
+import { MarcaEnflora } from "@/componentes/marca-enflora";
+
 function Chip({ children, tono = "verde" }) {
   return <span className={`producto-preview__chip producto-preview__chip--${tono}`}>{children}</span>;
 }
@@ -36,7 +38,9 @@ function PreviewMisCultivos() {
         <li data-done>Germinación</li>
         <li data-done>Plántula</li>
         <li data-active>Vegetativo</li>
-        <li data-next>Enflora</li>
+        <li data-next>
+          <MarcaEnflora />
+        </li>
       </ul>
     </div>
   );
@@ -103,7 +107,9 @@ function PreviewOrigenHistoria() {
         </div>
         <div>
           <em>18 SEP</em>
-          <span>Cambio a Enflora</span>
+          <span>
+            Cambio a <MarcaEnflora />
+          </span>
         </div>
       </div>
     </div>

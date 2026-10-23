@@ -6,6 +6,7 @@ import { ComprobantePremio } from "@/componentes/ruleta-420/comprobante-premio";
 import { Confeti } from "@/componentes/ruleta-420/confeti";
 import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { RESULTADOS_PREMIO } from "@/lib/ruleta-420/configuracion";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 const PIEZAS_RESTA = [
   { src: "/images/premios/enflora_stickers_web_1280.webp", alt: "Sticker" },
@@ -35,7 +36,9 @@ export function PantallaResultadoPremio({ premioId, onVolver }) {
       <div className="ruleta-cierre ruleta-cierre--nada">
         <RestaPremio />
         <h1 className="ruleta-titulo">{resultado.titulo}</h1>
-        <p className="ruleta-cierre__destacado">{resultado.descripcion}</p>
+        <p className="ruleta-cierre__destacado">
+          <TextoConMarca texto={resultado.descripcion} />
+        </p>
         <p className="ruleta-cierre__texto">{resultado.secundario}</p>
         <div className="ruleta-acciones">
           <BotonRuleta variante="secundario" onClick={onVolver}>
@@ -77,7 +80,7 @@ export function PantallaResultadoPremio({ premioId, onVolver }) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.4, duration: 0.3 }}
       >
-        {resultado.descripcion}
+        <TextoConMarca texto={resultado.descripcion} />
       </motion.p>
       {resultado.secundario ? <p className="ruleta-cierre__texto">{resultado.secundario}</p> : null}
       <ComprobantePremio premioId={premioId} />

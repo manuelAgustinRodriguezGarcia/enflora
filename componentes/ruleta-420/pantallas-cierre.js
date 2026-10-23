@@ -27,10 +27,10 @@ export function PantallaVictoria({ onContinuar }) {
       >
         ¡SOBREVIVISTE A LA RULETA!
       </motion.h1>
-      <p className="ruleta-cierre__texto">¡3 respuestas correctas! Flora está impresionada.</p>
-      <p className="ruleta-cierre__subtitulo">Pero ahora viene la decisión más difícil...</p>
+      <p className="ruleta-cierre__texto">¡5 respuestas correctas! Flora está impresionada.</p>
+      <p className="ruleta-cierre__subtitulo">Pero ahora tenés que elegir...</p>
       <div className="ruleta-acciones">
-        <BotonRuleta onClick={onContinuar}>DESCUBRIR MI PREMIO</BotonRuleta>
+        <BotonRuleta onClick={onContinuar}>A VER</BotonRuleta>
       </div>
     </div>
   );
@@ -47,10 +47,10 @@ export function PantallaDerrota({ aciertos, onReintentar }) {
       >
         <ImagenRuleta clave="floraDerrotada" alt="Flora derrotada" icono="derrota" etiqueta="Flora derrotada" tono="derrota" />
       </motion.div>
-      <h1 className="ruleta-titulo">¡TE QUEDASTE SIN VIDAS!</h1>
-      <p className="ruleta-cierre__texto">Flora te tenía fe, pero hoy no fue tu día.</p>
+      <h1 className="ruleta-titulo">¡TE CORTARON LAS PIERNAS!</h1>
+      <p className="ruleta-cierre__texto">El dopping te dejo en offside.</p>
       <div className="ruleta-cierre__resumen">
-        <span>Aciertos conseguidos</span>
+        <span>Respuestas correctas</span>
         <strong>
           {aciertos}/{ACIERTOS_PARA_GANAR}
         </strong>

@@ -7,8 +7,8 @@ export function PantallaCorreoValidado() {
   return (
     <section className="exito">
       <div className="exito__marca">
-        <img src="/enflorar-logo.svg" alt="logo" />
-        <h1>ENFLORA</h1>
+        <img src="/enflorar-logo.svg" alt="" />
+        <h1 className="marca-enflora">Enflora</h1>
       </div>
       <CircleCheck className="exito__check" size={88} strokeWidth={1.75} aria-hidden="true" />
       <div className="exito__mensaje">

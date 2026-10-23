@@ -6,6 +6,7 @@ import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import GooeyNav from "@/componentes/landing/gooey-nav";
 import { navegacionLanding } from "@/lib/landing";
+import { NOMBRE_MARCA } from "@/lib/seo";
 
 const ITEMS_GOOEY = navegacionLanding.map((item) => ({
   label: item.etiqueta,
@@ -246,16 +247,20 @@ export function EncabezadoPublico() {
       ref={ref}
     >
       <div className="encabezado-publico__barra">
-        <Link className="encabezado-publico__marca" href="#inicio" aria-label="ENFLORA">
+        <Link className="encabezado-publico__marca" href="#inicio" aria-label={NOMBRE_MARCA}>
           <img
             className="encabezado-publico__logo encabezado-publico__logo--oscuro"
             src="/logos/enflora-logo-apaisado.svg"
             alt=""
+            width={1000}
+            height={300}
           />
           <img
             className="encabezado-publico__logo encabezado-publico__logo--claro"
             src="/logos/enflora-logo-apaisado-light.svg"
             alt=""
+            width={1000}
+            height={300}
           />
         </Link>
         <div className="encabezado-publico__nav">

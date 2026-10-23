@@ -11,6 +11,7 @@ import {
   IlustracionSafari,
 } from "@/componentes/landing/ilustraciones-instalacion";
 import { PasoTutorialInstalacion } from "@/componentes/landing/paso-tutorial-instalacion";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
@@ -18,7 +19,11 @@ const panelCerrado = { opacity: 0, scale: 0.96, y: 10 };
 
 const PASOS = [
   {
-    titulo: "Abrí ENFLORA en Safari",
+    titulo: (
+      <>
+        Abrí <MarcaEnflora /> en Safari
+      </>
+    ),
     descripcion: "Desde tu iPhone, abrí Safari y entrá a enflora.com.ar.",
     nota: "Si estás en Chrome, Instagram u otro navegador, continuá esta guía desde Safari.",
     ilustracion: <IlustracionSafari />,
@@ -55,9 +60,18 @@ function ContenidoIOS({ onCerrar, plataforma }) {
   const esUltimo = indice === PASOS.length - 1;
   const avisoNavegador =
     plataforma?.esIos && !plataforma?.esSafari
-      ? "Para seguir esta guía, abrí ENFLORA en Safari."
+      ? (
+          <>
+            Para seguir esta guía, abrí <MarcaEnflora /> en Safari.
+          </>
+        )
       : plataforma?.esDesktop
-        ? "Para instalar ENFLORA en tu iPhone, abrí enflora.com.ar desde Safari en el celular."
+        ? (
+            <>
+              Para instalar <MarcaEnflora /> en tu iPhone, abrí enflora.com.ar desde Safari en el
+              celular.
+            </>
+          )
         : null;
 
   return (
@@ -71,10 +85,10 @@ function ContenidoIOS({ onCerrar, plataforma }) {
           height={40}
         />
         <Dialog.Title className="modal__titulo instalacion-modal__titulo">
-          Instalá ENFLORA en tu iPhone
+          Instalá <MarcaEnflora /> en tu iPhone
         </Dialog.Title>
         <Dialog.Description className="modal__texto instalacion-modal__descripcion">
-          En unos pasos podés agregar ENFLORA a tu pantalla de inicio y usarla como una app.
+          En unos pasos podés agregar <MarcaEnflora /> a tu pantalla de inicio y usarla como una app.
         </Dialog.Description>
       </div>
 
@@ -98,10 +112,10 @@ function ContenidoIOS({ onCerrar, plataforma }) {
       {esUltimo ? (
         <div className="instalacion-modal__cierre">
           <p className="instalacion-modal__cierre-titulo">
-            ¡Listo! ENFLORA ya puede estar en tu inicio.
+            ¡Listo! <MarcaEnflora /> ya puede estar en tu inicio.
           </p>
           <p className="instalacion-modal__paso-texto">
-            Buscá el ícono de ENFLORA en tu pantalla de inicio y abrila desde ahí.
+            Buscá el ícono de <MarcaEnflora /> en tu pantalla de inicio y abrila desde ahí.
           </p>
         </div>
       ) : null}

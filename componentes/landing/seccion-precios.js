@@ -8,6 +8,7 @@ import { ModalEquivalencia } from "@/componentes/landing/modal-equivalencia";
 import { TarjetaPlan } from "@/componentes/landing/tarjeta-plan";
 import { formatearArs, formatearFechaCotizacion } from "@/lib/cotizacion";
 import { planesEnflora } from "@/lib/planes";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function SeccionPrecios({ cotizacion = null }) {
   const [modalEquivalencia, setModalEquivalencia] = useState(false);
@@ -24,7 +25,9 @@ export function SeccionPrecios({ cotizacion = null }) {
     <section className="precios" id="precios" data-logo="dark">
       <div className="precios__contenedor">
         <header className="precios__encabezado">
-          <p className="precios__eyebrow">{planesEnflora.eyebrow}</p>
+          <p className="precios__eyebrow">
+            <TextoConMarca texto={planesEnflora.eyebrow} />
+          </p>
           <h2>{planesEnflora.titulo}</h2>
         </header>
 

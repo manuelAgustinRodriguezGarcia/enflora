@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { enlaceExternoSeguro } from "@/lib/publicidad";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 
 const ETIQUETAS_PLAN = {
   presencia: "Presencia",
@@ -55,10 +56,10 @@ export function DirectorioComercios({ comercios = [] }) {
       <div className="directorio__vacio">
         <p className="directorio__vacio-titulo">Todavía no hay comercios asociados.</p>
         <p className="directorio__vacio-texto">
-          Cuando una marca active su acuerdo con ENFLORA Partners, va a aparecer acá.
+          Cuando una marca active su acuerdo con <MarcaEnflora /> Partners, va a aparecer acá.
         </p>
         <Link className="landing__accion landing__accion--acento" href="/#partners">
-          Conocer ENFLORA Partners
+          Conocer <MarcaEnflora /> Partners
         </Link>
       </div>
     );

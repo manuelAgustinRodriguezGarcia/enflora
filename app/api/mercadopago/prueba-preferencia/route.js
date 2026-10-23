@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const ARTICULO_PRUEBA = {
   id: "enflora-prueba-integracion",
-  title: "ENFLORA - Prueba de integración",
+  title: "Enflora - Prueba de integración",
   quantity: 1,
   currency_id: "ARS",
   unit_price: 100,

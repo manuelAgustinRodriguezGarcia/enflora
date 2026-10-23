@@ -90,13 +90,16 @@ export function ParaQueSirve() {
       <div className="para-que-sirve__layout">
         <header className="para-que-sirve__encabezado" data-revelar>
           <h2 className="para-que-sirve__titulo">
-            <span className="para-que-sirve__titulo-prefijo">{queEs.tituloPrefijo}</span>{" "}
-            <span className="para-que-sirve__titulo-marca">{queEs.tituloMarca}</span>
+            <span className="para-que-sirve__titulo-prefijo">{queEs.tituloPrefijo}</span>
+            <span className="para-que-sirve__titulo-cierre">
+              <span className="para-que-sirve__titulo-prefijo">{queEs.tituloCon}</span>
+              <span className="para-que-sirve__titulo-marca marca-enflora">{queEs.tituloMarca}</span>
+            </span>
           </h2>
           <p className="para-que-sirve__bajada">{queEs.bajada}</p>
         </header>
 
-        <ul className="para-que-sirve__grilla" aria-label="Por qué cultivar con ENFLORA">
+        <ul className="para-que-sirve__grilla" aria-label="Por qué cultivar con Enflora">
           {queEs.tarjetas.map((tarjeta) => (
             <CardPorQueEnflora key={tarjeta.id} tarjeta={tarjeta} />
           ))}

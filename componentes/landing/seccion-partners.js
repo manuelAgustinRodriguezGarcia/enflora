@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useReducedMotion, motion } from "motion/react";
 import { textosPartners } from "@/lib/partners";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 import { transicionRapida } from "@/lib/animaciones";
 
 export function SeccionPartners() {
@@ -15,7 +16,9 @@ export function SeccionPartners() {
           <div className="partners__intro-texto">
             <p className="partners__eyebrow">{textosPartners.eyebrow}</p>
             <h2 className="partners__titulo">{textosPartners.titulo}</h2>
-            <p className="partners__descripcion">{textosPartners.descripcion}</p>
+            <p className="partners__descripcion">
+              <TextoConMarca texto={textosPartners.descripcion} />
+            </p>
             <motion.div
               whileHover={reducido ? undefined : { scale: 1.02 }}
               whileTap={reducido ? undefined : { scale: 0.98 }}

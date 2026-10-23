@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import { textos } from "@/lib/landing";
+import { NOMBRE_MARCA } from "@/lib/seo";
 
 export function Cierre() {
   const ref = useRef(null);
@@ -30,7 +31,7 @@ export function Cierre() {
 
   return (
     <section className="cierre" data-logo="light" ref={ref}>
-      <img data-cierre src="/logos/enflora-isotipo-light.svg" alt="Flora" />
+      <img data-cierre src="/logos/enflora-isotipo-light.svg" alt={NOMBRE_MARCA} />
       <h2 data-cierre>
         {cierre.titulo.map((linea) => (
           <span key={linea}>{linea}</span>

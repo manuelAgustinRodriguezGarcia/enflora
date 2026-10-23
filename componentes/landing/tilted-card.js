@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import "@/componentes/landing/tilted-card.css";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 const FLIP_THRESHOLD = 12;
 
@@ -551,7 +552,7 @@ const TiltedCard = ({
       </div>
       {showTooltip && captionText && (
         <figcaption ref={captionRef} className="tilted-card__caption">
-          {captionText}
+          <TextoConMarca texto={captionText} />
         </figcaption>
       )}
     </figure>

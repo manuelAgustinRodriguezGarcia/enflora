@@ -8,6 +8,7 @@ import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import TiltedCard from "@/componentes/landing/tilted-card";
 import { TarjetaFlotanteHero } from "@/componentes/landing/tarjeta-flotante-hero";
 import { textos } from "@/lib/landing";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function Hero() {
   const ref = useRef(null);
@@ -75,7 +76,7 @@ export function Hero() {
             <TiltedCard
               className="hero__flora-tilt"
               captionText="Conocé Enflora"
-              altText="Flora, la mascota de ENFLORA, tomando sol en una reposera"
+              altText="Flora, la mascota de Enflora, tomando sol en una reposera"
               containerWidth="100%"
               containerHeight="100%"
               imageWidth="100%"
@@ -96,7 +97,7 @@ export function Hero() {
             >
               <Image
                 src="/images/flora-landing.png"
-                alt=""
+                alt="Flora, la mascota de Enflora, tomando sol en una reposera"
                 width={1254}
                 height={1254}
                 priority
@@ -113,7 +114,9 @@ export function Hero() {
             <span className="hero__linea hero__linea--oscuro">{hero.titulo[0]}</span>
             <span className="hero__linea hero__linea--claro">{hero.titulo[1]}</span>
           </h1>
-          <p className="hero__bajada">{hero.bajada}</p>
+          <p className="hero__bajada">
+            <TextoConMarca texto={hero.bajada} />
+          </p>
           <div className="hero__acciones">
             <Link className="landing__accion landing__accion--principal" href="/registro">
               Registrate hoy

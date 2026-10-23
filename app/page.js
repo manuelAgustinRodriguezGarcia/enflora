@@ -1,21 +1,14 @@
 import { redirect } from "next/navigation";
+import { DatosEstructurados } from "@/componentes/datos-estructurados";
 import { Landing } from "@/componentes/landing/landing";
 import { obtenerCotizacionOficial } from "@/lib/cotizacion";
+import { metadatosPublicos, NOMBRE_MARCA, TITULO_INICIO } from "@/lib/seo";
 
-export const metadata = {
-  title: {
-    absolute: "ENFLORA | Registro y seguimiento de cultivos",
-  },
-  description:
-    "Organizá tus plantas, registrá parámetros y consultá el historial de tus cultivos con ENFLORA, tu aplicación de seguimiento de cultivos.",
-  alternates: {
-    canonical: "https://enflora.com.ar/",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata = metadatosPublicos({
+  titulo: TITULO_INICIO,
+  descripcion: `Organizá tus plantas, registrá parámetros y consultá el historial de tus cultivos con ${NOMBRE_MARCA}, tu aplicación de seguimiento de cultivos.`,
+  canonical: "https://enflora.com.ar/",
+});
 
 export default async function PaginaInicio({ searchParams }) {
   const parametros = await searchParams;
@@ -31,5 +24,10 @@ export default async function PaginaInicio({ searchParams }) {
   }
 
   const cotizacion = await obtenerCotizacionOficial();
-  return <Landing cotizacion={cotizacion} />;
+  return (
+    <>
+      <DatosEstructurados />
+      <Landing cotizacion={cotizacion} />
+    </>
+  );
 }

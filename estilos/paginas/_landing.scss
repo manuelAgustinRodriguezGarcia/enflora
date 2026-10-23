@@ -1852,6 +1852,13 @@ body:has(.landing) {
     color: var(--pqs-verde);
   }
 
+  &__titulo-cierre {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3em;
+    white-space: nowrap;
+  }
+
   &__titulo-marca {
     color: var(--pqs-naranja);
   }
@@ -3536,11 +3543,15 @@ body:has(.landing) {
     var(--flora-bg);
   color: var(--flora-ink);
 
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    padding-inline: 4vw;
+  }
+
   &__contenedor {
     display: flex;
     flex-direction: column;
     gap: 3.5rem;
-    width: min(100%, 72rem);
+    width: 100%;
     margin-inline: auto;
   }
 
@@ -5243,12 +5254,6 @@ body:has(.landing) {
     color: #f4f8ee;
   }
 
-  &__marca {
-      font-family: var(--font-identidad);
-      font-weight: 600;
-    letter-spacing: -0.045em;
-  }
-
   &__visual {
     display: flex;
     justify-content: center;
@@ -5376,19 +5381,37 @@ body:has(.landing) {
 }
 
 .instalacion-modal {
-  position: relative;
-  align-items: stretch;
-  gap: 1rem;
-  width: min(100%, 28rem);
-  max-height: min(88dvh, 40rem);
-  padding: 1.5rem 1.35rem 1.25rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  border: none;
-  border-radius: 24px;
-  background: #f4f8ee;
-  box-shadow: 0 24px 60px -28px rgba(11, 61, 42, 0.55);
-  text-align: left;
+  &.modal__panel {
+    position: relative;
+    align-items: stretch;
+    gap: 1rem;
+    width: min(100%, 28rem);
+    max-height: min(88dvh, 40rem);
+    padding: 1.5rem 1.35rem 1.25rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: none;
+    border-radius: 24px;
+    background: #f4f8ee;
+    box-shadow: 0 24px 60px -28px rgba(11, 61, 42, 0.55);
+    text-align: left;
+
+    .modal__titulo,
+    .modal__texto,
+    .instalacion-modal__paso-titulo,
+    .instalacion-modal__paso-texto,
+    .instalacion-modal__descripcion,
+    .instalacion-modal__manual,
+    .instalacion-modal__manual ol,
+    .instalacion-modal__manual li,
+    .instalacion-modal__manual-titulo,
+    .instalacion-modal__nota,
+    .instalacion-modal__progreso {
+      width: 100%;
+      margin-inline: 0;
+      text-align: left;
+    }
+  }
 
   &__fondo {
     backdrop-filter: blur(4px);
@@ -5489,18 +5512,27 @@ body:has(.landing) {
   &__manual {
     display: grid;
     gap: 0.45rem;
-    max-height: 7.5rem;
+    width: 100%;
     padding: 0.75rem 0.9rem;
-    overflow: auto;
+    overflow: visible;
     border-radius: 14px;
     background: #fff;
+    justify-items: stretch;
+    text-align: left;
 
     ol {
+      width: 100%;
       margin: 0;
       padding-left: 1.15rem;
       color: var(--color-text-secondary);
       font-size: 0.86rem;
       line-height: 1.4;
+      text-align: left;
+      list-style-position: outside;
+
+      li {
+        text-align: left;
+      }
     }
   }
 
@@ -6182,9 +6214,12 @@ body:has(.landing) {
 
   span {
     color: #0b3d2a;
-    font-family: var(--font-funcional);
     font-size: 0.78rem;
     font-weight: 600;
+  }
+
+  span:not(.marca-enflora) {
+    font-family: var(--font-funcional);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }

@@ -1,4 +1,5 @@
 import { Boton, EnlaceBoton } from "@/componentes/boton";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 import { finalizarCiclo, iniciarCompra } from "@/app/pagos/acciones";
 import { formatearFechaCotizacion } from "@/lib/cotizacion";
 import { leerAmbientePagos } from "@/lib/pagos/ambiente";
@@ -107,7 +108,7 @@ export default async function PaginaLicencia({ searchParams }) {
         </p>
         {prueba ? (
           <p className="pago__nota">
-            Esta compra es de prueba. En el checkout tenés que iniciar sesión con el usuario comprador de la aplicación de Mercado Pago. Una cuenta real o una ventana sin sesión deja el botón Pagar deshabilitado. El titular de la tarjeta de prueba es APRO. Si definís MERCADOPAGO_TEST_BUYER_EMAIL con el correo de esa cuenta, las órdenes nuevas lo usan y no el correo de tu usuario de ENFLORA.
+            Esta compra es de prueba. En el checkout tenés que iniciar sesión con el usuario comprador de la aplicación de Mercado Pago. Una cuenta real o una ventana sin sesión deja el botón Pagar deshabilitado. El titular de la tarjeta de prueba es APRO. Si definís MERCADOPAGO_TEST_BUYER_EMAIL con el correo de esa cuenta, las órdenes nuevas lo usan y no el correo de tu usuario de <MarcaEnflora />.
           </p>
         ) : null}
       </header>

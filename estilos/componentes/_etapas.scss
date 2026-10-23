@@ -46,10 +46,6 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
     }
   }
 
-  &--enflora .fila-etapa__texto {
-    font-weight: 600;
-    letter-spacing: -0.045em;
-  }
 }
 
 .indicador-etapa {
@@ -122,10 +118,6 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
     }
   }
 
-  &--enflora > span {
-    font-weight: 600;
-    letter-spacing: -0.045em;
-  }
 }
 
 .etapa-actual {

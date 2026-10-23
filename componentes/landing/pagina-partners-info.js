@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import { FormularioPartners } from "@/componentes/landing/formulario-partners";
 import { PLAN_INDEFINIDO, PLANES_PARTNERS, textosPartners } from "@/lib/partners";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 function scrollAlFormulario() {
   const destino = document.getElementById("partners-formulario");
@@ -35,13 +36,17 @@ function TarjetaPlanPartners({ plan, onElegir }) {
             {plan.periodicidad ? <span>{plan.periodicidad}</span> : null}
           </div>
         ) : null}
-        <p className="partners__plan-desc">{plan.descripcion}</p>
+        <p className="partners__plan-desc">
+          <TextoConMarca texto={plan.descripcion} />
+        </p>
       </header>
       <ul className="partners__plan-lista">
         {plan.beneficios.map((item) => (
           <li key={item}>
             <Check size={16} strokeWidth={2.5} aria-hidden="true" />
-            <span>{item}</span>
+            <span>
+              <TextoConMarca texto={item} />
+            </span>
           </li>
         ))}
       </ul>
@@ -73,7 +78,9 @@ export function PaginaPartnersInfo() {
         <header className="partners__info-cabecera">
           <p className="partners__eyebrow">{textosPartners.eyebrow}</p>
           <h1 className="partners__titulo">{textosPartners.infoTitulo}</h1>
-          <p className="partners__descripcion">{textosPartners.infoDescripcion}</p>
+          <p className="partners__descripcion">
+            <TextoConMarca texto={textosPartners.infoDescripcion} />
+          </p>
           <Link className="partners__volver" href="/#partners">
             Volver a Partners
           </Link>

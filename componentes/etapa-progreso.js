@@ -6,6 +6,7 @@ import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { IconoFlecha } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { ETAPAS, fechaHoy } from "@/lib/etapas";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function EtapaProgreso({
   etapa,
@@ -54,7 +55,11 @@ export function EtapaProgreso({
         <ModalConfirmacion
           abierto={abierto}
           onCerrar={() => setAbierto(false)}
-          titulo={`¿Seguro que querés pasar a la etapa ${siguiente.etiqueta}?`}
+          titulo={
+            <>
+              ¿Seguro que querés pasar a la etapa <TextoConMarca texto={siguiente.etiqueta} />?
+            </>
+          }
           textoConfirmar="Pasar"
           pendiente={pendiente}
           error={estado?.error || ""}

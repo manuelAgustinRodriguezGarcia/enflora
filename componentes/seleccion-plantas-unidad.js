@@ -10,6 +10,7 @@ import { Boton } from "@/componentes/boton";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 import { OpcionesEtapa } from "@/componentes/opciones-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import {
@@ -359,7 +360,12 @@ export function SeleccionPlantasUnidad({
         onCerrar={() => {
           if (!pendiente) setModalAbierto(false);
         }}
-        titulo={`Vas a cambiar ${cantidad} ${cantidad === 1 ? "planta" : "plantas"} a ${etiquetaEtapa(etapa)} desde el ${formatearFecha(fecha)}.`}
+        titulo={
+          <>
+            Vas a cambiar {cantidad} {cantidad === 1 ? "planta" : "plantas"} a{" "}
+            <TextoConMarca texto={etiquetaEtapa(etapa)} /> desde el {formatearFecha(fecha)}.
+          </>
+        }
         textoConfirmar="Confirmar cambio"
         pendiente={pendiente}
         error={errorForm}

@@ -206,7 +206,7 @@ export function PanelExpo({ productos, participantes, partidas, aviso: avisoInic
   return (
     <motion.div className="expo-admin" initial={entrada} animate={{ opacity: 1, y: 0 }}>
       <header className="expo-admin__cabecera">
-        <p className="expo-admin__marca">ENFLORA</p>
+        <p className="expo-admin__marca marca-enflora">Enflora</p>
         <h1>Expo Cannabis</h1>
         <p className="expo-admin__subtitulo">Panel de administración</p>
       </header>

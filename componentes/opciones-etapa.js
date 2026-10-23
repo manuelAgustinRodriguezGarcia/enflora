@@ -3,6 +3,7 @@
 import { useId } from "react";
 import { IconoEtapa } from "@/componentes/icono-etapa";
 import { ETAPAS } from "@/lib/etapas";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function OpcionesEtapa({ valor, onChange, nombre, leyenda = "Nueva etapa" }) {
   const etiquetaId = useId();
@@ -28,7 +29,9 @@ export function OpcionesEtapa({ valor, onChange, nombre, leyenda = "Nueva etapa"
                 onChange={() => onChange(etapa.valor)}
               />
               <IconoEtapa etapa={etapa.valor} />
-              <span>{etapa.etiqueta}</span>
+              <span>
+                <TextoConMarca texto={etapa.etiqueta} />
+              </span>
             </label>
           );
         })}

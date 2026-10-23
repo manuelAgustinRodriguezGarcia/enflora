@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { IconoEtapa } from "@/componentes/icono-etapa";
 import { transicionRapida } from "@/lib/animaciones";
 import { esEtapa, etiquetaEtapa } from "@/lib/etapas";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function IndicadorEtapa({ etapa, tamano = "compacto", animar = false, soloIcono = false }) {
   const conocida = esEtapa(etapa);
@@ -15,7 +16,11 @@ export function IndicadorEtapa({ etapa, tamano = "compacto", animar = false, sol
   const cuerpo = (
     <>
       {conocida ? <IconoEtapa etapa={etapa} /> : null}
-      {soloIcono ? null : <span>{conocida ? etiquetaEtapa(etapa) : "Sin etapa"}</span>}
+      {soloIcono ? null : (
+        <span>
+          <TextoConMarca texto={conocida ? etiquetaEtapa(etapa) : "Sin etapa"} />
+        </span>
+      )}
     </>
   );
 

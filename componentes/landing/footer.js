@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { Mail, Store } from "lucide-react";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
+import { CORREO_PUBLICO, INSTAGRAM_URL, NOMBRE_MARCA } from "@/lib/seo";
 
 const ENLACES = [
   {
     id: "instagram",
-    href: "https://www.instagram.com/enflora420/?hl=es-la",
+    href: INSTAGRAM_URL,
     etiqueta: "Instagram",
     externo: true,
     Icono: IconoInstagram,
@@ -18,8 +20,8 @@ const ENLACES = [
   },
   {
     id: "correo",
-    href: "mailto:enflora.420@gmail.com",
-    etiqueta: "enflora.420@gmail.com",
+    href: `mailto:${CORREO_PUBLICO}`,
+    etiqueta: CORREO_PUBLICO,
     externo: false,
     Icono: Mail,
   },
@@ -106,13 +108,14 @@ export function Footer() {
     <footer className="pie" data-logo="light">
       <div className="pie__contenedor">
         <div className="pie__principal">
-          <Link className="pie__marca" href="/" aria-label="ENFLORA">
+          <Link className="pie__marca" href="/" aria-label={NOMBRE_MARCA}>
             <img
               src="/logos/enflora-logo-apaisado-light.svg"
               alt=""
               width={1000}
               height={300}
               decoding="async"
+              loading="lazy"
             />
           </Link>
 
@@ -162,7 +165,7 @@ export function Footer() {
 
         <div className="pie__base">
           <p className="pie__copy">
-            © {anio} ENFLORA. Todos los derechos reservados.
+            © {anio} <MarcaEnflora />. Todos los derechos reservados.
           </p>
         </div>
       </div>
@@ -184,6 +187,7 @@ export function Footer() {
               width={998}
               height={364}
               decoding="async"
+              loading="lazy"
             />
           </span>
         </p>

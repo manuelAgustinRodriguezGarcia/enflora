@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 import { esRutaPublica } from "@/lib/navegacion";
 
@@ -50,7 +51,7 @@ export function BotonNotificaciones() {
           >
             <Dialog.Title className="modal__titulo">Notificaciones</Dialog.Title>
             <Dialog.Description className="modal__texto">
-              Próximamente las novedades sobre ENFLORA estarán aquí.
+              <TextoConMarca texto="Próximamente las novedades sobre Enflora estarán aquí." />
             </Dialog.Description>
             <div className="modal__acciones">
               <Dialog.Close className="encabezado__cerrar-aviso">Entendido</Dialog.Close>

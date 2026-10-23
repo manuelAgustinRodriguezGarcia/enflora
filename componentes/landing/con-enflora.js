@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import { OptionWheel } from "@/componentes/landing/option-wheel";
 import { textos } from "@/lib/landing";
+import { NOMBRE_MARCA } from "@/lib/seo";
 
 const EXPANDIR_HASTA = 0.2;
 const RUEDA_HASTA = 0.72;
@@ -418,7 +419,7 @@ export function ConEnflora() {
                   snapAlSoltar
                   inercia={false}
                   capturarRueda={false}
-                  ariaLabel="Beneficios de ENFLORA"
+                  ariaLabel={`Beneficios de ${NOMBRE_MARCA}`}
                 />
               ) : null}
             </motion.div>

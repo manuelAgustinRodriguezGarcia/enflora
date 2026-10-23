@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversacionFlora } from "@/componentes/landing/conversacion-flora";
 import { TearTicket } from "@/componentes/landing/tear-ticket";
 import { textos } from "@/lib/landing";
+import { MarcaEnflora, TextoConMarca } from "@/componentes/marca-enflora";
 import { transicionVista } from "@/lib/animaciones";
 
 const HREF_REGISTRO = "/registro";
@@ -211,7 +212,7 @@ export function SeccionRegalo() {
                         border
                         borderColor="#0B3D2A"
                         borderWidth={1.25}
-                        ariaLabel="Romper el ticket de ENFLORA"
+                        ariaLabel="Romper el ticket de Enflora"
                         onTear={revelar}
                         className={`regalo__ticket${esDesktop ? "" : " regalo__ticket--vertical"}`}
                         stub={
@@ -243,7 +244,9 @@ export function SeccionRegalo() {
                               height={45}
                               unoptimized
                             />
-                            <span>ENFLORA - INVITADO ESPECIAL</span>
+                            <span>
+                              <MarcaEnflora /> - INVITADO ESPECIAL
+                            </span>
                           </div>
                           <p className="regalo-ticket__serie">ENTRADA N° 000420</p>
                           <h3 className="regalo-ticket__headline">Rompé este ticket</h3>
@@ -288,7 +291,9 @@ export function SeccionRegalo() {
                   {regalo.beneficios.map((item) => (
                     <li key={item}>
                       <Check className="regalo__check" size={16} strokeWidth={2.5} aria-hidden="true" />
-                      <span>{item}</span>
+                      <span>
+                        <TextoConMarca texto={item} />
+                      </span>
                     </li>
                   ))}
                 </ul>

@@ -3,30 +3,28 @@ import path from "node:path";
 import sharp from "sharp";
 
 const root = process.cwd();
-const sourcePath = path.join(root, "public/logos/enflora-isotipo-light.svg");
-const source = fs.readFileSync(sourcePath, "utf8");
-const paths = [...source.matchAll(/<path class="cls-1" d="([^"]+)"\s*\/>/g)].map((m) => m[1]);
+const sourcePath = path.join(root, "public/logos/enflora-favicon-source.png");
 
-if (paths.length !== 3) {
-  throw new Error(`Expected 3 paths, got ${paths.length}`);
+if (!fs.existsSync(sourcePath)) {
+  throw new Error(`No está la fuente del favicon: ${sourcePath}`);
 }
 
-const brandBg = "#0B3D2A";
-const markFill = "#f4f8ef";
-const mark = paths.map((d) => `  <path fill="${markFill}" d="${d}"/>`).join("\n");
+const origen = await sharp(sourcePath).metadata();
+if (!origen.width || !origen.height || origen.width !== origen.height) {
+  throw new Error(
+    `La fuente debe ser cuadrada. Llegó ${origen.width}x${origen.height}.`
+  );
+}
 
-const composed = [
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ENFLORA">',
-  `  <rect width="512" height="512" fill="${brandBg}"/>`,
-  '  <g transform="translate(256 256) scale(0.86) translate(-256 -256)">',
-  mark,
-  "  </g>",
-  "</svg>",
-  "",
-].join("\n");
-
-fs.writeFileSync(path.join(root, "app/icon.svg"), composed);
-fs.writeFileSync(path.join(root, "public/favicon.svg"), composed);
+async function raster(size) {
+  return sharp(sourcePath)
+    .resize(size, size, {
+      fit: "contain",
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png()
+    .toBuffer();
+}
 
 async function pngSizes(buffers) {
   const meta = [];
@@ -73,32 +71,37 @@ async function toIco(buffers) {
   return out;
 }
 
-const svgBuf = Buffer.from(composed);
-const png16 = await sharp(svgBuf).resize(16, 16).png().toBuffer();
-const png32 = await sharp(svgBuf).resize(32, 32).png().toBuffer();
-const png48 = await sharp(svgBuf).resize(48, 48).png().toBuffer();
-const png180 = await sharp(svgBuf).resize(180, 180).png().toBuffer();
-const png192 = await sharp(svgBuf).resize(192, 192).png().toBuffer();
-
-fs.writeFileSync(path.join(root, "app/icon.png"), png48);
-fs.writeFileSync(path.join(root, "app/apple-icon.png"), png180);
-fs.writeFileSync(path.join(root, "public/favicon-48.png"), png48);
+const png16 = await raster(16);
+const png32 = await raster(32);
+const png48 = await raster(48);
+const png96 = await raster(96);
 
 const ico = await toIco([png16, png32, png48]);
 fs.writeFileSync(path.join(root, "app/favicon.ico"), ico);
+fs.writeFileSync(path.join(root, "app/icon.png"), png96);
+
+for (const obsoleto of [
+  "app/icon.svg",
+  "public/favicon.svg",
+  "public/favicon-48.png",
+]) {
+  const destino = path.join(root, obsoleto);
+  if (fs.existsSync(destino)) fs.unlinkSync(destino);
+}
 
 console.log(
   JSON.stringify(
     {
-      paths: paths.length,
+      fuente: "public/logos/enflora-favicon-source.png",
+      origen: { width: origen.width, height: origen.height, hasAlpha: origen.hasAlpha },
       icoBytes: ico.length,
-      files: [
-        "app/icon.svg",
-        "app/icon.png",
+      archivos: ["app/favicon.ico", "app/icon.png"],
+      conservados: [
         "app/apple-icon.png",
-        "app/favicon.ico",
-        "public/favicon.svg",
-        "public/favicon-48.png",
+        "public/icons/enflora-isotipo-192.png",
+        "public/icons/enflora-isotipo-512.png",
+        "public/icons/enflora-maskable-192.png",
+        "public/icons/enflora-maskable-512.png",
       ],
     },
     null,

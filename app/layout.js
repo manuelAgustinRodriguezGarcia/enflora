@@ -7,6 +7,7 @@ import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
+import { NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
@@ -28,15 +29,33 @@ const fredoka = Fredoka({
 export const metadata = {
   metadataBase: new URL("https://enflora.com.ar"),
   title: {
-    default: "ENFLORA",
-    template: "%s | ENFLORA",
+    default: NOMBRE_MARCA,
+    template: `%s | ${NOMBRE_MARCA}`,
   },
-  description: "Espacios de cultivo y plantas",
-  applicationName: "ENFLORA",
+  description:
+    "Aplicación web argentina para organizar, registrar y seguir cultivos de cannabis.",
+  applicationName: NOMBRE_MARCA,
   appleWebApp: {
     capable: true,
-    title: "ENFLORA",
+    title: NOMBRE_MARCA,
     statusBarStyle: "default",
+  },
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    siteName: NOMBRE_MARCA,
+    images: [
+      {
+        url: "/og/enflora.png",
+        width: 1200,
+        height: 630,
+        alt: `${NOMBRE_MARCA}, aplicación de seguimiento de cultivos de cannabis`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og/enflora.png"],
   },
 };
 
@@ -61,7 +80,7 @@ export default async function Layout({ children }) {
   const claseCuerpo = claseInicial(ruta);
 
   return (
-    <html lang="es" className={`${fredoka.variable} ${inter.variable}`}>
+    <html lang="es-AR" className={`${fredoka.variable} ${inter.variable}`}>
       <body className={claseCuerpo || undefined}>
         <ClaseCuerpo />
         <ProveedorMotion>
@@ -73,12 +92,16 @@ export default async function Layout({ children }) {
               <img
                 className="encabezado__logo encabezado__logo--oscuro"
                 src="/logos/enflora-logo-apaisado.svg"
-                alt="ENFLORA"
+                alt={NOMBRE_MARCA}
+                width={1000}
+                height={300}
               />
               <img
                 className="encabezado__logo encabezado__logo--claro"
                 src="/logos/enflora-logo-apaisado-light.svg"
-                alt="ENFLORA"
+                alt={NOMBRE_MARCA}
+                width={1000}
+                height={300}
               />
             </Link>
             {usuario && !bloqueado ? <BotonNotificaciones /> : null}

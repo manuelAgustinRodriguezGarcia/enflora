@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Counter from "@/componentes/landing/counter";
 import TextLoop from "@/componentes/landing/text-loop";
 import { textos } from "@/lib/landing";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 const OBJETIVO_MS = Date.parse("2026-11-01T00:00:00-03:00");
 const TEXTO_CLARO = "#FDF1D7";
@@ -135,7 +136,7 @@ export function SeccionLanzamiento() {
 
         {listo ? (
           <p className="lanzamiento__disponible" role="status">
-            {lanzamiento.disponible}
+            <TextoConMarca texto={lanzamiento.disponible} />
           </p>
         ) : (
           <>

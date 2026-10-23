@@ -57,18 +57,16 @@ body:has(.expo-admin) {
   &__marca,
   &__subtitulo {
     margin: 0;
-    font-family: var(--font-funcional);
   }
 
   &__marca {
     color: $verde;
     font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
   }
 
   &__subtitulo {
     color: rgb(11 61 42 / 72%);
+    font-family: var(--font-funcional);
     font-size: 1rem;
   }
 

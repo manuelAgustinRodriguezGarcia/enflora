@@ -10,6 +10,7 @@ import {
   IlustracionPromptInstalar,
 } from "@/componentes/landing/ilustraciones-instalacion";
 import { PasoTutorialInstalacion } from "@/componentes/landing/paso-tutorial-instalacion";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
@@ -17,29 +18,51 @@ const panelCerrado = { opacity: 0, scale: 0.96, y: 10 };
 
 const PASOS = [
   {
-    titulo: "Abrí ENFLORA en Chrome",
+    titulo: (
+      <>
+        Abrí <MarcaEnflora /> en Chrome
+      </>
+    ),
     descripcion: "Desde tu celular Android, entrá a enflora.com.ar usando Google Chrome.",
     ilustracion: <IlustracionChromeAndroid />,
   },
   {
     titulo: "Instalá la app",
-    descripcion:
-      "Presioná el botón Instalar ENFLORA. Si tu navegador lo permite, aparecerá la confirmación de instalación.",
+    descripcion: (
+      <>
+        Presioná el botón Instalar <MarcaEnflora />. Si tu navegador lo permite, aparecerá la
+        confirmación de instalación.
+      </>
+    ),
     ilustracion: <IlustracionPromptInstalar />,
   },
   {
     titulo: "Confirmá y listo",
-    descripcion:
-      "Confirmá la instalación. Cuando termine, vas a encontrar el ícono de ENFLORA entre tus aplicaciones.",
+    descripcion: (
+      <>
+        Confirmá la instalación. Cuando termine, vas a encontrar el ícono de <MarcaEnflora /> entre
+        tus aplicaciones.
+      </>
+    ),
     ilustracion: <IlustracionIconoInicio />,
   },
 ];
 
 const PASOS_MANUAL = [
-  "Abrí ENFLORA en Chrome.",
-  "Tocá el menú de los tres puntos.",
-  'Buscá "Instalar app" o la opción equivalente para instalar la aplicación web.',
-  "Confirmá la instalación.",
+  {
+    id: "chrome",
+    texto: (
+      <>
+        Abrí <MarcaEnflora /> en Chrome.
+      </>
+    ),
+  },
+  { id: "menu", texto: "Tocá el menú de los tres puntos." },
+  {
+    id: "instalar",
+    texto: 'Buscá "Instalar app" o la opción equivalente para instalar la aplicación web.',
+  },
+  { id: "confirmar", texto: "Confirmá la instalación." },
 ];
 
 function ContenidoAndroid({ onCerrar, pwa }) {
@@ -76,16 +99,16 @@ function ContenidoAndroid({ onCerrar, pwa }) {
           height={40}
         />
         <Dialog.Title className="modal__titulo instalacion-modal__titulo">
-          Instalá ENFLORA en Android
+          Instalá <MarcaEnflora /> en Android
         </Dialog.Title>
         <Dialog.Description className="modal__texto instalacion-modal__descripcion">
-          Tené ENFLORA en tu pantalla de inicio, como una app más.
+          Tené <MarcaEnflora /> en tu pantalla de inicio, como una app más.
         </Dialog.Description>
       </div>
 
       {instalada ? (
         <p className="instalacion-modal__estado" role="status">
-          ¡Ya tenés ENFLORA instalada!
+          ¡Ya tenés <MarcaEnflora /> instalada!
         </p>
       ) : (
         <>
@@ -105,10 +128,12 @@ function ContenidoAndroid({ onCerrar, pwa }) {
 
           {mostrarManual ? (
             <div className="instalacion-modal__manual">
-              <p className="instalacion-modal__manual-titulo">Si no aparece Instalar ENFLORA</p>
+              <p className="instalacion-modal__manual-titulo">
+                Si no aparece Instalar <MarcaEnflora />
+              </p>
               <ol>
                 {PASOS_MANUAL.map((item) => (
-                  <li key={item}>{item}</li>
+                  <li key={item.id}>{item.texto}</li>
                 ))}
               </ol>
               <p className="instalacion-modal__nota">
@@ -125,7 +150,7 @@ function ContenidoAndroid({ onCerrar, pwa }) {
               onClick={instalar}
               disabled={instalando}
             >
-              {instalando ? "Abriendo…" : "Instalar ENFLORA"}
+              {instalando ? "Abriendo…" : <>Instalar <MarcaEnflora /></>}
             </Boton>
           ) : null}
         </>

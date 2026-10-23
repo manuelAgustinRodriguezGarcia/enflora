@@ -16,7 +16,7 @@ function partida(parcial) {
   };
 }
 
-test("la pregunta de ENFLORA no sale antes de la tercera", () => {
+test("la pregunta de Enflora no sale antes de la tercera", () => {
   for (let indice = 0; indice < 40; indice += 1) {
     const primera = planificarRonda(partida({ ronda: 0, rondaEspecial: 3 }), () => indice / 40);
     const segunda = planificarRonda(partida({ ronda: 1, rondaEspecial: 5 }), () => indice / 40);
@@ -25,7 +25,7 @@ test("la pregunta de ENFLORA no sale antes de la tercera", () => {
   }
 });
 
-test("la pregunta de ENFLORA sale en la ronda prevista", () => {
+test("la pregunta de Enflora sale en la ronda prevista", () => {
   for (const rondaEspecial of [3, 4, 5]) {
     const plan = planificarRonda(partida({ ronda: rondaEspecial - 1, rondaEspecial }), () => 0.2);
     assert.equal(plan.preguntaId, especial.id);

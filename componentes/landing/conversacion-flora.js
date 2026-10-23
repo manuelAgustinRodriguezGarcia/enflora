@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Image from "next/image";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import TextType from "@/componentes/landing/text-type";
+import { MarcaEnflora } from "@/componentes/marca-enflora";
 
 const MENSAJE_INICIAL = "Entrada en mano porfavor!";
 
@@ -222,7 +223,9 @@ export function ConversacionFlora({
           <h3 id={tituloId} className="flora-chat__nombre">
             Flora Tricoma
           </h3>
-          <p className="flora-chat__rol">Seguridad VIP de ENFLORA</p>
+          <p className="flora-chat__rol">
+            Seguridad VIP de <MarcaEnflora />
+          </p>
         </div>
       </header>
 

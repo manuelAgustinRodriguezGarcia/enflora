@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { forwardRef } from "react";
 import { BeneficiosFuncionalidad } from "@/componentes/landing/beneficios-funcionalidad";
 import { VistaPreviaFuncionalidad } from "@/componentes/landing/vista-previa-funcionalidad";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export const PanelFuncionalidad = forwardRef(function PanelFuncionalidad(
   { funcionalidad, style },
@@ -30,8 +31,12 @@ export const PanelFuncionalidad = forwardRef(function PanelFuncionalidad(
               <div className="producto-panel__meta">
                 <span className="producto-panel__etiqueta">{funcionalidad.etiqueta}</span>
               </div>
-              <h3 className="producto-panel__titulo">{funcionalidad.titulo}</h3>
-              <p className="producto-panel__descripcion">{funcionalidad.descripcion}</p>
+              <h3 className="producto-panel__titulo">
+                <TextoConMarca texto={funcionalidad.titulo} />
+              </h3>
+              <p className="producto-panel__descripcion">
+                <TextoConMarca texto={funcionalidad.descripcion} />
+              </p>
             </div>
             <VistaPreviaFuncionalidad
               preview={funcionalidad.preview}

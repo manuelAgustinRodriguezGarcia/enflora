@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { IconoEtapa } from "@/componentes/icono-etapa";
 import { transicionRapida } from "@/lib/animaciones";
 import { ETAPAS, estadoEnCiclo } from "@/lib/etapas";
+import { TextoConMarca } from "@/componentes/marca-enflora";
 
 function textoEstado(estado) {
   if (estado === "actual") return "Actual";
@@ -30,7 +31,9 @@ export function CicloEtapas({ etapa, historial }) {
           >
             <span className="ciclo-etapas__cuerpo">
               <IconoEtapa etapa={item.valor} />
-              <span className="ciclo-etapas__nombre">{item.etiqueta}</span>
+              <span className="ciclo-etapas__nombre">
+                <TextoConMarca texto={item.etiqueta} />
+              </span>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
                   key={estado}
