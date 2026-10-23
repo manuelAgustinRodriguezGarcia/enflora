@@ -1,19 +1,19 @@
 "use client";
 
 import { useId, useState } from "react";
-import Link from "next/link";
+import Image from "next/image";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
-import { enviarContacto } from "@/lib/contactos/cliente";
+import { confirmarDiversion, enviarContacto } from "@/lib/contactos/cliente";
 import {
   MENSAJES_CONTACTOS,
-  TEXTOS_CONSENTIMIENTO,
   normalizarEmail,
   normalizarNombre,
   normalizarTelefono,
+  validarDiversion,
 } from "@/lib/contactos/reglas";
 
-export const CLAVE_PRESENTACION_RULETA = "enflora-ruleta-presentacion";
+export const CLAVE_DIVERSION_RULETA = "enflora-ruleta-diversion";
 
 export const textosPresentacion = {
   titulo: "¡Flora te quiere conocer!",
@@ -21,28 +21,24 @@ export const textosPresentacion = {
   nombre: "Nombre",
   correo: "Correo electrónico",
   telefono: "Teléfono",
-  opcional: "Opcional",
-  obligatorio: "Obligatorio",
   jugar: "¡AHORA SÍ, A JUGAR!",
   guardando: "GUARDANDO...",
   cancelar: "VOLVER",
-  privacidad: "Política de privacidad",
+  diversion: "Querés volver a jugar por diversión?",
+  diversionAyuda: "Ingresá el mail o numero de telefono que ingresaste y jugá las veces que quieras!",
 };
 
-export function leerPresentacionRuleta() {
+export function leerDiversionRuleta() {
   try {
-    const crudo = window.sessionStorage.getItem(CLAVE_PRESENTACION_RULETA);
-    if (!crudo) return null;
-    const datos = JSON.parse(crudo);
-    return datos && datos.registrado === true ? datos : null;
+    return window.sessionStorage.getItem(CLAVE_DIVERSION_RULETA) === "1";
   } catch {
-    return null;
+    return false;
   }
 }
 
-export function guardarPresentacionRuleta(nombre) {
+export function marcarDiversionRuleta() {
   try {
-    window.sessionStorage.setItem(CLAVE_PRESENTACION_RULETA, JSON.stringify({ registrado: true, nombre }));
+    window.sessionStorage.setItem(CLAVE_DIVERSION_RULETA, "1");
   } catch {}
 }
 
@@ -55,7 +51,7 @@ export function validarPresentacion({ nombre, email, telefono }) {
   if (correo === undefined) errores.email = MENSAJES_CONTACTOS.email;
   const tel = normalizarTelefono(telefono);
   if (tel === undefined) errores.telefono = MENSAJES_CONTACTOS.telefono;
-  if (!errores.email && !errores.telefono && !correo && !tel) errores.email = MENSAJES_CONTACTOS.algunContacto;
+  if (!errores.email && !errores.telefono && !correo && !tel) errores.contacto = MENSAJES_CONTACTOS.algunContacto;
   return errores;
 }
 
@@ -64,17 +60,58 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [consentimiento, setConsentimiento] = useState(false);
   const [empresa, setEmpresa] = useState("");
   const [errores, setErrores] = useState({});
   const [errorGeneral, setErrorGeneral] = useState("");
-  const [enviando, setEnviando] = useState(false);
+  const [errorDiversion, setErrorDiversion] = useState("");
+  const [accion, setAccion] = useState("");
+  const enviando = accion !== "";
 
   function cerrar() {
     if (enviando) return;
     setErrores({});
     setErrorGeneral("");
+    setErrorDiversion("");
     onCerrar();
+  }
+
+  function aplicarFallo(resultado) {
+    if (resultado.campo && ["nombre", "email", "telefono", "contacto"].includes(resultado.campo)) {
+      setErrores({ [resultado.campo]: resultado.error });
+      return;
+    }
+    setErrorGeneral(resultado.error);
+  }
+
+  async function jugarPorDiversion() {
+    if (enviando) return;
+    const validacion = validarDiversion({ email, telefono, empresa });
+    setErrorGeneral("");
+    setErrorDiversion("");
+    if (!validacion.ok) {
+      aplicarFallo(validacion);
+      return;
+    }
+    setErrores({});
+    if (validacion.honeypot) {
+      onListo("", { diversion: true });
+      return;
+    }
+
+    setAccion("diversion");
+    const resultado = await confirmarDiversion({ email, telefono, empresa });
+    setAccion("");
+    if (!resultado.ok) {
+      if (resultado.campo) aplicarFallo(resultado);
+      else setErrorDiversion(resultado.error);
+      return;
+    }
+    setNombre("");
+    setEmail("");
+    setTelefono("");
+    setEmpresa("");
+    setErrores({});
+    onListo("", { diversion: true });
   }
 
   async function enviar(evento) {
@@ -83,41 +120,49 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
     const detectados = validarPresentacion({ nombre, email, telefono });
     setErrores(detectados);
     setErrorGeneral("");
+    setErrorDiversion("");
     if (Object.keys(detectados).length) return;
 
-    setEnviando(true);
+    setAccion("registro");
     const resultado = await enviarContacto({
       origen: "ruleta_420",
       nombre,
       email,
       telefono,
-      consentimiento,
+      consentimiento: false,
       empresa,
     });
-    setEnviando(false);
+    setAccion("");
     if (!resultado.ok) {
-      if (resultado.campo && ["nombre", "email", "telefono"].includes(resultado.campo)) {
-        setErrores({ [resultado.campo]: resultado.error });
-      } else {
-        setErrorGeneral(resultado.error);
-      }
+      aplicarFallo(resultado);
       return;
     }
-    const nombreLimpio = normalizarNombre(nombre) || "";
-    guardarPresentacionRuleta(nombreLimpio);
+    setNombre("");
+    setEmail("");
+    setTelefono("");
+    setEmpresa("");
     setErrores({});
-    onListo(nombreLimpio);
+    onListo(normalizarNombre(nombre) || "");
   }
 
   const t = textosPresentacion;
 
   return (
-    <ModalRuleta abierto={abierto} onCerrar={cerrar} titulo={t.titulo} descripcion={t.descripcion} className="ruleta-presentacion">
+    <ModalRuleta
+      abierto={abierto}
+      onCerrar={cerrar}
+      titulo={t.titulo}
+      descripcion={t.descripcion}
+      className="ruleta-presentacion"
+      encabezado={
+        <div className="ruleta-presentacion__flora">
+          <Image src="/images/flora-saluda.png" alt="" width={1129} height={1176} draggable={false} priority />
+        </div>
+      }
+    >
       <form className="ruleta-presentacion__formulario" onSubmit={enviar} noValidate>
         <label className="ruleta-presentacion__campo" htmlFor={`${idBase}-nombre`}>
-          <span className="ruleta-presentacion__etiqueta">
-            {t.nombre} <small>{t.obligatorio}</small>
-          </span>
+          <span className="ruleta-presentacion__etiqueta">{t.nombre}</span>
           <input
             id={`${idBase}-nombre`}
             name="nombre"
@@ -125,6 +170,7 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
             autoComplete="name"
             required
             maxLength={80}
+            placeholder="Flora Tricoma"
             value={nombre}
             disabled={enviando}
             aria-invalid={errores.nombre ? true : undefined}
@@ -139,9 +185,7 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
         </label>
 
         <label className="ruleta-presentacion__campo" htmlFor={`${idBase}-email`}>
-          <span className="ruleta-presentacion__etiqueta">
-            {t.correo} <small>{t.opcional}</small>
-          </span>
+          <span className="ruleta-presentacion__etiqueta">{t.correo}</span>
           <input
             id={`${idBase}-email`}
             name="email"
@@ -149,10 +193,11 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
             inputMode="email"
             autoComplete="email"
             maxLength={254}
+            placeholder="flora.trico420@gmail.com"
             value={email}
             disabled={enviando}
-            aria-invalid={errores.email ? true : undefined}
-            aria-describedby={errores.email ? `${idBase}-email-error` : undefined}
+            aria-invalid={errores.email || errores.contacto ? true : undefined}
+            aria-describedby={errores.email ? `${idBase}-email-error` : errores.contacto ? `${idBase}-contacto-error` : undefined}
             onChange={(evento) => setEmail(evento.target.value)}
           />
           {errores.email ? (
@@ -163,9 +208,7 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
         </label>
 
         <label className="ruleta-presentacion__campo" htmlFor={`${idBase}-telefono`}>
-          <span className="ruleta-presentacion__etiqueta">
-            {t.telefono} <small>{t.opcional}</small>
-          </span>
+          <span className="ruleta-presentacion__etiqueta">{t.telefono}</span>
           <input
             id={`${idBase}-telefono`}
             name="telefono"
@@ -176,8 +219,8 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
             placeholder="+54 9 11 1234 5678"
             value={telefono}
             disabled={enviando}
-            aria-invalid={errores.telefono ? true : undefined}
-            aria-describedby={errores.telefono ? `${idBase}-telefono-error` : undefined}
+            aria-invalid={errores.telefono || errores.contacto ? true : undefined}
+            aria-describedby={errores.telefono ? `${idBase}-telefono-error` : errores.contacto ? `${idBase}-contacto-error` : undefined}
             onChange={(evento) => setTelefono(evento.target.value)}
           />
           {errores.telefono ? (
@@ -186,6 +229,12 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
             </span>
           ) : null}
         </label>
+
+        {errores.contacto ? (
+          <p id={`${idBase}-contacto-error`} className="ruleta-presentacion__error" role="alert">
+            {errores.contacto}
+          </p>
+        ) : null}
 
         <div className="ruleta-presentacion__trampa" aria-hidden="true">
           <label htmlFor={`${idBase}-empresa`}>Empresa</label>
@@ -200,25 +249,6 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
           />
         </div>
 
-        <label className="ruleta-presentacion__consentimiento" htmlFor={`${idBase}-consentimiento`}>
-          <input
-            id={`${idBase}-consentimiento`}
-            name="consentimiento"
-            type="checkbox"
-            checked={consentimiento}
-            disabled={enviando}
-            onChange={(evento) => setConsentimiento(evento.target.checked)}
-          />
-          <span>{TEXTOS_CONSENTIMIENTO.casilla}</span>
-        </label>
-
-        <p className="ruleta-presentacion__finalidad">
-          {TEXTOS_CONSENTIMIENTO.finalidadRuleta}{" "}
-          <Link href="/privacidad" target="_blank" rel="noopener">
-            {t.privacidad}
-          </Link>
-        </p>
-
         {errorGeneral ? (
           <p className="ruleta-aviso" role="alert">
             {errorGeneral}
@@ -226,12 +256,31 @@ export function ModalPresentacion({ abierto, onCerrar, onListo }) {
         ) : null}
 
         <div className="ruleta-acciones">
-          <BotonRuleta type="submit" disabled={enviando} aria-busy={enviando || undefined}>
-            {enviando ? t.guardando : t.jugar}
+          <BotonRuleta type="submit" disabled={enviando} aria-busy={accion === "registro" || undefined}>
+            {accion === "registro" ? t.guardando : t.jugar}
           </BotonRuleta>
           <BotonRuleta type="button" variante="secundario" onClick={cerrar} disabled={enviando}>
             {t.cancelar}
           </BotonRuleta>
+        </div>
+
+        <div className="ruleta-presentacion__diversion">
+          <BotonRuleta
+            type="button"
+            variante="secundario"
+            className="ruleta-presentacion__diversion-boton"
+            onClick={jugarPorDiversion}
+            disabled={enviando}
+            aria-busy={accion === "diversion" || undefined}
+          >
+            {t.diversion}
+          </BotonRuleta>
+          <p className="ruleta-presentacion__diversion-texto">{t.diversionAyuda}</p>
+          {errorDiversion ? (
+            <p className="ruleta-presentacion__error" role="alert">
+              {errorDiversion}
+            </p>
+          ) : null}
         </div>
       </form>
     </ModalRuleta>

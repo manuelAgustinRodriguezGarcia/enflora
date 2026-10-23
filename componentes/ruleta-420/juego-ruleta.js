@@ -5,7 +5,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { Marcador } from "@/componentes/ruleta-420/marcador";
-import { ModalPresentacion, leerPresentacionRuleta } from "@/componentes/ruleta-420/modal-presentacion";
+import { ModalPresentacion, leerDiversionRuleta, marcarDiversionRuleta } from "@/componentes/ruleta-420/modal-presentacion";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { PantallaBienvenida } from "@/componentes/ruleta-420/pantalla-bienvenida";
 import { PantallaDecision } from "@/componentes/ruleta-420/pantalla-decision";
@@ -79,6 +79,8 @@ export function JuegoRuleta() {
   const [estado, despachar] = useReducer(reducirRuleta, undefined, estadoInicial);
   const [confirmarReinicio, setConfirmarReinicio] = useState(false);
   const [presentacionAbierta, setPresentacionAbierta] = useState(false);
+  const [cicloPresentacion, setCicloPresentacion] = useState(0);
+  const modoInicio = useRef("empezar");
   const reducido = useReducedMotion();
   const duracionGiro = reducido ? DURACION_GIRO_REDUCIDO_MS : DURACION_GIRO_MS;
   const pausa = reducido ? 700 : PAUSA_RESULTADO_RULETA_MS;
@@ -187,26 +189,30 @@ export function JuegoRuleta() {
     }
   };
 
-  const empezar = () => {
+  const abrirPresentacion = (tipo) => {
     if (ocupado.current) return;
-    if (leerPresentacionRuleta()) {
-      comenzarPartida("empezar");
-      return;
-    }
+    modoInicio.current = tipo;
     if (estado.fase === "rules") despachar({ type: "cerrar-reglas" });
     setAviso("");
+    if (leerDiversionRuleta()) {
+      if (tipo === "reiniciar") window.sessionStorage.removeItem(CLAVE_PARTIDA);
+      comenzarPartida(tipo);
+      return;
+    }
+    setCicloPresentacion((valor) => valor + 1);
     setPresentacionAbierta(true);
   };
 
-  const presentacionLista = () => {
+  const empezar = () => abrirPresentacion("empezar");
+
+  const presentacionLista = (_nombre, opciones) => {
     setPresentacionAbierta(false);
-    comenzarPartida("empezar");
+    if (opciones?.diversion) marcarDiversionRuleta();
+    if (modoInicio.current === "reiniciar") window.sessionStorage.removeItem(CLAVE_PARTIDA);
+    comenzarPartida(modoInicio.current);
   };
 
-  const reiniciar = () => {
-    window.sessionStorage.removeItem(CLAVE_PARTIDA);
-    comenzarPartida("reiniciar");
-  };
+  const reiniciar = () => abrirPresentacion("reiniciar");
 
   const volverInicio = () => {
     window.sessionStorage.removeItem(CLAVE_PARTIDA);
@@ -476,6 +482,7 @@ export function JuegoRuleta() {
           ) : null}
         </AnimatePresence>
         <ModalPresentacion
+          key={cicloPresentacion}
           abierto={presentacionAbierta}
           onCerrar={() => setPresentacionAbierta(false)}
           onListo={presentacionLista}

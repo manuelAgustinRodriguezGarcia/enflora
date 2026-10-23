@@ -8,7 +8,7 @@ import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
-import { NOMBRE_MARCA } from "@/lib/seo";
+import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
@@ -33,9 +33,15 @@ export const metadata = {
     default: NOMBRE_MARCA,
     template: `%s | ${NOMBRE_MARCA}`,
   },
-  description:
-    "Aplicación web argentina para organizar, registrar y seguir cultivos de cannabis.",
+  description: DESCRIPCION_INICIO,
   applicationName: NOMBRE_MARCA,
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48", type: "image/x-icon" },
+      { url: "/icon.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: {
     capable: true,
     title: NOMBRE_MARCA,

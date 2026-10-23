@@ -98,7 +98,27 @@ $rojo: #C2413B;
   }
 }
 
+.ruleta-modal__panel.ruleta-presentacion {
+  gap: 0.65rem;
+  padding-top: 1rem;
+}
+
 .ruleta-presentacion {
+  &__flora {
+    display: flex;
+    flex: none;
+    align-self: center;
+    width: clamp(6.25rem, 22vw, 7.5rem);
+    margin: -0.2rem auto -0.65rem;
+
+    img {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+    }
+  }
+
   &__formulario {
     display: flex;
     flex-direction: column;
@@ -148,17 +168,10 @@ $rojo: #C2413B;
     font-size: 0.92rem;
     font-weight: 700;
     text-align: left;
-
-    small {
-      color: rgb(11 61 42 / 62%);
-      font-size: 0.76rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
   }
 
   &__error {
+    margin: 0;
     color: $rojo;
     font-size: 0.84rem;
     font-weight: 600;
@@ -173,46 +186,29 @@ $rojo: #C2413B;
     overflow: hidden;
   }
 
-  &__consentimiento {
+  &__diversion {
     display: flex;
-    align-items: flex-start;
-    gap: 0.65rem;
-    padding: 0.75rem 0.9rem;
-    border-radius: 1rem;
-    background: #fff;
-    font-size: 0.9rem;
-    line-height: 1.4;
-    text-align: left;
-    cursor: pointer;
-
-    input {
-      flex: none;
-      width: 1.35rem;
-      height: 1.35rem;
-      margin: 0.05rem 0 0;
-      accent-color: $verde;
-    }
-
-    input:focus-visible {
-      outline: 3px solid $lima;
-      outline-offset: 2px;
-    }
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-top: 0.15rem;
   }
 
-  &__finalidad {
+  &__diversion-boton.ruleta-boton {
+    min-height: 2.8rem;
+    padding: 0.7rem 1rem;
+    font-size: 0.98rem;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  &__diversion-texto {
     margin: 0;
     color: rgb(11 61 42 / 72%);
-    font-size: 0.8rem;
+    font-size: 0.84rem;
     line-height: 1.4;
-    text-align: left;
-
-    a {
-      color: $verde;
-      font-weight: 700;
-      text-decoration: underline;
-      text-underline-offset: 0.18em;
-    }
+    text-align: center;
   }
+
 }
 
 .privacidad {

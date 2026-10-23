@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import { DatosEstructurados } from "@/componentes/datos-estructurados";
 import { Landing } from "@/componentes/landing/landing";
 import { obtenerCotizacionOficial } from "@/lib/cotizacion";
-import { metadatosPublicos, NOMBRE_MARCA, TITULO_INICIO } from "@/lib/seo";
+import { DESCRIPCION_INICIO, metadatosPublicos, TITULO_INICIO } from "@/lib/seo";
 
 export const metadata = metadatosPublicos({
   titulo: TITULO_INICIO,
-  descripcion: `Organizá tus plantas, registrá parámetros y consultá el historial de tus cultivos con ${NOMBRE_MARCA}, tu aplicación de seguimiento de cultivos.`,
+  descripcion: DESCRIPCION_INICIO,
   canonical: "https://enflora.com.ar/",
 });
 

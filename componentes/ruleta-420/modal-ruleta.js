@@ -7,7 +7,7 @@ import { motion } from "motion/react";
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.94, y: 24 };
 
-export function ModalRuleta({ abierto, onCerrar, titulo, descripcion, children, className = "" }) {
+export function ModalRuleta({ abierto, onCerrar, titulo, descripcion, children, className = "", encabezado = null }) {
   const acciones = useRef(null);
 
   function cambiar(siguiente, detalles) {
@@ -44,6 +44,7 @@ export function ModalRuleta({ abierto, onCerrar, titulo, descripcion, children, 
               />
             }
           >
+            {encabezado}
             <Dialog.Title className="ruleta-modal__titulo">{titulo}</Dialog.Title>
             {descripcion ? (
               <Dialog.Description className="ruleta-modal__texto">{descripcion}</Dialog.Description>

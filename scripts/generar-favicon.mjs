@@ -77,10 +77,12 @@ const png48 = await raster(48);
 const png96 = await raster(96);
 
 const ico = await toIco([png16, png32, png48]);
-fs.writeFileSync(path.join(root, "app/favicon.ico"), ico);
-fs.writeFileSync(path.join(root, "app/icon.png"), png96);
+fs.writeFileSync(path.join(root, "public/favicon.ico"), ico);
+fs.writeFileSync(path.join(root, "public/icon.png"), png96);
 
 for (const obsoleto of [
+  "app/favicon.ico",
+  "app/icon.png",
   "app/icon.svg",
   "public/favicon.svg",
   "public/favicon-48.png",
@@ -95,9 +97,9 @@ console.log(
       fuente: "public/logos/enflora-favicon-source.png",
       origen: { width: origen.width, height: origen.height, hasAlpha: origen.hasAlpha },
       icoBytes: ico.length,
-      archivos: ["app/favicon.ico", "app/icon.png"],
+      archivos: ["public/favicon.ico", "public/icon.png"],
       conservados: [
-        "app/apple-icon.png",
+        "public/apple-icon.png",
         "public/icons/enflora-isotipo-192.png",
         "public/icons/enflora-isotipo-512.png",
         "public/icons/enflora-maskable-192.png",
