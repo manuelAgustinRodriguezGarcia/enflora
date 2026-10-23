@@ -1,31 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { Ruleta } from "@/componentes/ruleta-420/ruleta";
-import { IMAGENES_RULETA, VIDAS_INICIALES } from "@/lib/ruleta-420/configuracion";
+import { IMAGENES_RULETA } from "@/lib/ruleta-420/configuracion";
 import { SECTORES_CATEGORIAS, buscarCategoria } from "@/lib/ruleta-420/logica";
 
 export function PantallaRuletaCategorias({
   fase,
   ronda,
-  aciertos,
-  vidas,
   categoriaId,
   rotacion,
   duracion,
   onGirar,
   onResponder,
-  onReiniciar,
 }) {
-  const [confirmar, setConfirmar] = useState(false);
   const girando = fase === "spinning-category";
   const detenida = fase === "category-result";
   const categoria = detenida ? buscarCategoria(categoriaId) : null;
   const numeroRonda = fase === "category-wheel" ? ronda + 1 : ronda;
-  const huboIntento = ronda > 0 || aciertos > 0 || vidas < VIDAS_INICIALES;
 
   let mensaje = { clave: "listo", texto: "Girá la ruleta para descubrir tu categoría" };
   if (girando) mensaje = null;
@@ -65,9 +59,6 @@ export function PantallaRuletaCategorias({
       <BotonRuleta onClick={onGirar} disabled={fase !== "category-wheel"}>
         ¡GIRAR RULETA!
       </BotonRuleta>
-      <BotonRuleta variante="secundario" onClick={() => setConfirmar(true)} disabled={!huboIntento || girando}>
-        Reiniciar intento
-      </BotonRuleta>
 
       <ModalRuleta
         abierto={Boolean(categoria)}
@@ -83,28 +74,6 @@ export function PantallaRuletaCategorias({
           />
         ) : null}
         <BotonRuleta onClick={onResponder}>Responder pregunta</BotonRuleta>
-      </ModalRuleta>
-
-      <ModalRuleta
-        abierto={confirmar}
-        onCerrar={() => setConfirmar(false)}
-        titulo="¿REINICIAR INTENTO?"
-        descripcion="Se pierde el progreso de esta partida y empezás de cero."
-        className="ruleta-modal__panel--alerta"
-      >
-        <div className="ruleta-acciones">
-          <BotonRuleta
-            onClick={() => {
-              setConfirmar(false);
-              onReiniciar();
-            }}
-          >
-            SÍ, REINICIAR
-          </BotonRuleta>
-          <BotonRuleta variante="secundario" onClick={() => setConfirmar(false)}>
-            SEGUIR JUGANDO
-          </BotonRuleta>
-        </div>
       </ModalRuleta>
     </div>
   );

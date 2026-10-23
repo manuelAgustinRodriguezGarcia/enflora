@@ -5,6 +5,7 @@ export default function manifest() {
     name: NOMBRE_MARCA,
     short_name: NOMBRE_MARCA,
     description: "Seguimiento de cultivos de cannabis",
+    id: "/",
     start_url: "/",
     scope: "/",
     display: "standalone",

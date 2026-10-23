@@ -82,7 +82,7 @@ export function PaginaPartnersInfo() {
             <TextoConMarca texto={textosPartners.infoDescripcion} />
           </p>
           <Link className="partners__volver" href="/#partners">
-            Volver a Partners
+            Volver a Tu Marca
           </Link>
         </header>
 

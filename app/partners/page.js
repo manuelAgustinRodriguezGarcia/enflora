@@ -10,7 +10,7 @@ export async function generateMetadata() {
   const metadatos = metadatosPublicos({
     titulo: `Comercios asociados | ${NOMBRE_MARCA}`,
     descripcion:
-      `Directorio de marcas y comercios asociados a ${NOMBRE_MARCA} Partners. Solo acuerdos activos y vigentes.`,
+      `Directorio de marcas y comercios asociados a ${NOMBRE_MARCA}. Solo acuerdos activos y vigentes.`,
     canonical: "https://enflora.com.ar/partners",
   });
   const { comercios } = await cargarComerciosPublicos();
@@ -43,7 +43,7 @@ export default async function PaginaPartners() {
             <div className="directorio__contenedor">
               <header className="directorio__encabezado">
                 <p className="directorio__eyebrow">
-                  <MarcaEnflora /> PARTNERS
+                  TU MARCA
                 </p>
                 <h1 className="directorio__titulo">Comercios asociados</h1>
                 <p className="directorio__bajada">

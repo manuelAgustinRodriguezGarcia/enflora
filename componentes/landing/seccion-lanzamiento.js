@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AvisoDisponibilidad } from "@/componentes/aviso-disponibilidad";
 import Counter from "@/componentes/landing/counter";
 import TextLoop from "@/componentes/landing/text-loop";
 import { textos } from "@/lib/landing";
@@ -157,6 +158,7 @@ export function SeccionLanzamiento() {
             </div>
           </>
         )}
+        <AvisoDisponibilidad />
       </div>
     </section>
   );

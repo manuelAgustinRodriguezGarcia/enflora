@@ -1,7 +1,8 @@
 import { Fredoka, Inter } from "next/font/google";
 import { headers } from "next/headers";
-import Link from "next/link";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
+import { RegistroServiceWorker } from "@/componentes/registro-service-worker";
+import { MarcaEncabezado } from "@/componentes/marca-encabezado";
 import { BottomNav } from "@/componentes/bottom-nav";
 import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
@@ -83,27 +84,13 @@ export default async function Layout({ children }) {
     <html lang="es-AR" className={`${fredoka.variable} ${inter.variable}`}>
       <body className={claseCuerpo || undefined}>
         <ClaseCuerpo />
+        <RegistroServiceWorker />
         <ProveedorMotion>
           <header className="encabezado" inert={bloqueado || undefined}>
-            <Link
-              className="encabezado__marca"
-              href={usuario && !bloqueado ? "/espacios" : "/"}
-            >
-              <img
-                className="encabezado__logo encabezado__logo--oscuro"
-                src="/logos/enflora-logo-apaisado.svg"
-                alt={NOMBRE_MARCA}
-                width={1000}
-                height={300}
-              />
-              <img
-                className="encabezado__logo encabezado__logo--claro"
-                src="/logos/enflora-logo-apaisado-light.svg"
-                alt={NOMBRE_MARCA}
-                width={1000}
-                height={300}
-              />
-            </Link>
+            <MarcaEncabezado
+              alt={NOMBRE_MARCA}
+              confirmarSalida={Boolean(usuario && !bloqueado)}
+            />
             {usuario && !bloqueado ? <BotonNotificaciones /> : null}
           </header>
           <main className="pagina" inert={bloqueado || undefined}>

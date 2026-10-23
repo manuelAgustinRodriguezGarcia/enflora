@@ -254,7 +254,7 @@ create table if not exists public.expo_ruleta_partidas (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   estado text not null default 'jugando',
-  vidas integer not null default 2,
+  vidas integer not null default 3,
   aciertos integer not null default 0,
   ronda integer not null default 0,
   ronda_especial integer not null,
@@ -272,12 +272,16 @@ create table if not exists public.expo_ruleta_partidas (
   giro integer,
   constraint expo_ruleta_partidas_estado_valido check (estado in ('jugando', 'ganada', 'perdida', 'resuelta')),
   constraint expo_ruleta_partidas_ronda_especial check (ronda_especial between 1 and 5),
-  constraint expo_ruleta_partidas_vidas check (vidas >= 0 and vidas <= 2),
+  constraint expo_ruleta_partidas_vidas check (vidas >= 0 and vidas <= 3),
   constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5),
   constraint expo_ruleta_partidas_resultado check (
     resultado is null or resultado in ('SAFE_PACK', 'GRINDER', 'TUBE', 'BONUS_PACK', 'CONSOLATION')
   )
 );
+
+alter table public.expo_ruleta_partidas alter column vidas set default 3;
+alter table public.expo_ruleta_partidas drop constraint if exists expo_ruleta_partidas_vidas;
+alter table public.expo_ruleta_partidas add constraint expo_ruleta_partidas_vidas check (vidas >= 0 and vidas <= 3);
 
 alter table public.expo_ruleta_partidas drop constraint if exists expo_ruleta_partidas_aciertos;
 alter table public.expo_ruleta_partidas add constraint expo_ruleta_partidas_aciertos check (aciertos >= 0 and aciertos <= 5);

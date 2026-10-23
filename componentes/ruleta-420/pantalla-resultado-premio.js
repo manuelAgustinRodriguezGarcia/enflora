@@ -2,16 +2,44 @@
 
 import { motion } from "motion/react";
 import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
-import { ComprobantePremio } from "@/componentes/ruleta-420/comprobante-premio";
 import { Confeti } from "@/componentes/ruleta-420/confeti";
 import { ImagenRuleta } from "@/componentes/ruleta-420/imagen-ruleta";
 import { RESULTADOS_PREMIO } from "@/lib/ruleta-420/configuracion";
 import { TextoConMarca } from "@/componentes/marca-enflora";
 
+const FOTO_STICKERS = "/images/premios/enflora_stickers_web_1280.webp";
+const FOTO_FILTROS = "/images/premios/enflora_filtros_web_1280.webp";
+
 const PIEZAS_RESTA = [
-  { src: "/images/premios/enflora_stickers_web_1280.webp", alt: "Sticker" },
-  { src: "/images/premios/enflora_filtros_web_1280.webp", alt: "Filtro" },
+  { src: FOTO_STICKERS, alt: "Sticker" },
+  { src: FOTO_FILTROS, alt: "Filtro" },
 ];
+
+const PACKS = {
+  SAFE_PACK: [
+    { src: FOTO_STICKERS, alt: "Stickers", cantidad: 2 },
+    { src: FOTO_FILTROS, alt: "Filtros", cantidad: 2 },
+  ],
+  BONUS_PACK: [
+    { src: FOTO_STICKERS, alt: "Stickers", cantidad: 3 },
+    { src: FOTO_FILTROS, alt: "Filtros", cantidad: 3 },
+  ],
+};
+
+function PackPremio({ piezas }) {
+  const etiqueta = piezas.map((pieza) => `x${pieza.cantidad} ${pieza.alt.toLowerCase()}`).join(" y ");
+
+  return (
+    <div className="ruleta-pack" aria-label={etiqueta}>
+      {piezas.map((pieza) => (
+        <span className="ruleta-pack__premio" key={pieza.src}>
+          <img src={pieza.src} alt={pieza.alt} width="160" height="160" />
+          <span className="ruleta-pack__marca">x{pieza.cantidad}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
 
 function RestaPremio() {
   return (
@@ -58,13 +86,17 @@ export function PantallaResultadoPremio({ premioId, onVolver }) {
         animate={{ opacity: 1, scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 240, damping: 14 }}
       >
-        <ImagenRuleta
-          clave={resultado.imagen}
-          alt={resultado.descripcion}
-          icono={resultado.icono}
-          etiqueta="Tu premio"
-          tono={resultado.tono}
-        />
+        {PACKS[premioId] ? (
+          <PackPremio piezas={PACKS[premioId]} />
+        ) : (
+          <ImagenRuleta
+            clave={resultado.imagen}
+            alt={resultado.descripcion}
+            icono={resultado.icono}
+            etiqueta="Tu premio"
+            tono={resultado.tono}
+          />
+        )}
       </motion.div>
       <motion.h1
         className="ruleta-titulo"
@@ -83,7 +115,6 @@ export function PantallaResultadoPremio({ premioId, onVolver }) {
         <TextoConMarca texto={resultado.descripcion} />
       </motion.p>
       {resultado.secundario ? <p className="ruleta-cierre__texto">{resultado.secundario}</p> : null}
-      <ComprobantePremio premioId={premioId} />
       <div className="ruleta-acciones">
         <BotonRuleta variante="secundario" onClick={onVolver}>
           VOLVER AL INICIO

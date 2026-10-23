@@ -7,6 +7,10 @@
     {
       "path": "/api/pagos/reconciliar",
       "schedule": "15 * * * *"
+    },
+    {
+      "path": "/api/push/lanzamiento",
+      "schedule": "7,22,37,52 * * * *"
     }
   ]
 }

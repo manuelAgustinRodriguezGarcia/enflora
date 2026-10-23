@@ -5,13 +5,14 @@ import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { Ruleta } from "@/componentes/ruleta-420/ruleta";
 import { SECTORES_CATEGORIAS } from "@/lib/ruleta-420/logica";
+import { ACIERTOS_PARA_GANAR, VIDAS_INICIALES } from "@/lib/ruleta-420/configuracion";
 import { MarcaEnflora } from "@/componentes/marca-enflora";
 
 const REGLAS = [
   "Girá la ruleta para descubrir tu categoría.",
   "Respondé correctamente las preguntas.",
-  "Tenés 2 vidas; cada error te cuesta una.",
-  "Conseguí 5 aciertos para ganar.",
+  `Tenés ${VIDAS_INICIALES} vidas; cada error te cuesta una.`,
+  `Conseguí ${ACIERTOS_PARA_GANAR} aciertos para ganar.`,
   "Elegí el premio seguro o arriesgá todo en la ruleta final.",
 ];
 
@@ -25,7 +26,7 @@ export function PantallaBienvenida({ reglasAbiertas, onJugar, onAbrirReglas, onC
         <h1 className="ruleta-titulo ruleta-titulo--grande">
           LA RULETA <span className="ruleta-titulo__acento">420</span> DE FLORA
         </h1>
-        <p className="ruleta-bienvenida__subtitulo">2 vidas - 3 categorías - Muchos premios</p>
+        <p className="ruleta-bienvenida__subtitulo">{VIDAS_INICIALES} vidas - 3 categorías - Muchos premios</p>
       </div>
 
       <div className="ruleta-bienvenida__escena">

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
+import { ControlNotificaciones } from "@/componentes/control-notificaciones";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
-import { TextoConMarca } from "@/componentes/marca-enflora";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 import { esRutaPublica } from "@/lib/navegacion";
 
@@ -51,10 +51,11 @@ export function BotonNotificaciones() {
           >
             <Dialog.Title className="modal__titulo">Notificaciones</Dialog.Title>
             <Dialog.Description className="modal__texto">
-              <TextoConMarca texto="Próximamente las novedades sobre Enflora estarán aquí." />
+              Los avisos llegan al sistema del dispositivo, aunque Enflora no esté abierta.
             </Dialog.Description>
+            <ControlNotificaciones />
             <div className="modal__acciones">
-              <Dialog.Close className="encabezado__cerrar-aviso">Entendido</Dialog.Close>
+              <Dialog.Close className="encabezado__cerrar-aviso">Cerrar</Dialog.Close>
             </div>
           </Dialog.Popup>
         </Dialog.Viewport>

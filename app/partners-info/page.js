@@ -5,9 +5,9 @@ import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { metadatosPublicos, NOMBRE_MARCA } from "@/lib/seo";
 
 export const metadata = metadatosPublicos({
-  titulo: `Cómo asocio mi marca? | ${NOMBRE_MARCA} Partners`,
+  titulo: `Cómo asocio mi marca? | Tu Marca`,
   descripcion:
-    `Conocé cómo asociar tu marca a ${NOMBRE_MARCA} Partners, las opciones de presencia publicitaria y enviá tu propuesta comercial.`,
+    `Conocé cómo asociar tu marca a ${NOMBRE_MARCA}, las opciones de presencia publicitaria y enviá tu propuesta comercial.`,
   canonical: "https://enflora.com.ar/partners-info",
 });
 

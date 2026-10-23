@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { BotonRuleta } from "@/componentes/ruleta-420/boton-ruleta";
 import { Marcador } from "@/componentes/ruleta-420/marcador";
+import { ModalRuleta } from "@/componentes/ruleta-420/modal-ruleta";
 import { PantallaBienvenida } from "@/componentes/ruleta-420/pantalla-bienvenida";
 import { PantallaDecision } from "@/componentes/ruleta-420/pantalla-decision";
 import { PantallaPregunta } from "@/componentes/ruleta-420/pantalla-pregunta";
@@ -14,6 +16,7 @@ import { PantallaDerrota } from "@/componentes/ruleta-420/pantallas-cierre";
 import {
   ACIERTOS_PARA_GANAR,
   DURACION_GIRO_MS,
+  VIDAS_INICIALES,
   DURACION_GIRO_REDUCIDO_MS,
   PAUSA_RESULTADO_RULETA_MS,
   PREMIO_ASEGURADO,
@@ -73,6 +76,7 @@ function estadoDesdePartida(partida) {
 
 export function JuegoRuleta() {
   const [estado, despachar] = useReducer(reducirRuleta, undefined, estadoInicial);
+  const [confirmarReinicio, setConfirmarReinicio] = useState(false);
   const reducido = useReducedMotion();
   const duracionGiro = reducido ? DURACION_GIRO_REDUCIDO_MS : DURACION_GIRO_MS;
   const pausa = reducido ? 700 : PAUSA_RESULTADO_RULETA_MS;
@@ -332,14 +336,11 @@ export function JuegoRuleta() {
         <PantallaRuletaCategorias
           fase={estado.fase}
           ronda={estado.ronda}
-          aciertos={estado.aciertos}
-          vidas={estado.vidas}
           categoriaId={estado.categoriaId}
           rotacion={estado.rotacionCategoria}
           duracion={duracionGiro}
           onGirar={girarCategoria}
           onResponder={() => despachar({ type: "mostrar-pregunta" })}
-          onReiniciar={reiniciar}
         />
       );
       break;
@@ -395,6 +396,8 @@ export function JuegoRuleta() {
   }
 
   const enPartida = FASES_PARTIDA.has(estado.fase);
+  const enRuleta = pantalla === "ruleta";
+  const huboIntento = estado.ronda > 0 || estado.aciertos > 0 || estado.vidas < VIDAS_INICIALES;
 
   return (
     <div
@@ -413,18 +416,16 @@ export function JuegoRuleta() {
               decoding="async"
             />
           </Link>
-          <AnimatePresence initial={false}>
-            {enPartida ? (
-              <motion.div
-                key="marcador"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-              >
-                <Marcador vidas={estado.vidas} aciertos={estado.aciertos} />
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
+          {enRuleta ? (
+            <BotonRuleta
+              variante="secundario"
+              className="ruleta-juego__reiniciar"
+              onClick={() => setConfirmarReinicio(true)}
+              disabled={!huboIntento || estado.fase === "spinning-category"}
+            >
+              Reiniciar
+            </BotonRuleta>
+          ) : null}
         </header>
 
         {aviso ? (
@@ -445,6 +446,40 @@ export function JuegoRuleta() {
             {contenido}
           </motion.section>
         </AnimatePresence>
+        <AnimatePresence initial={false}>
+          {enPartida ? (
+            <motion.div
+              key="marcador"
+              className="ruleta-juego__marcador"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+            >
+              <Marcador vidas={estado.vidas} aciertos={estado.aciertos} />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+        <ModalRuleta
+          abierto={confirmarReinicio}
+          onCerrar={() => setConfirmarReinicio(false)}
+          titulo="¿REINICIAR INTENTO?"
+          descripcion="Se pierde el progreso de esta partida y empezás de cero."
+          className="ruleta-modal__panel--alerta"
+        >
+          <div className="ruleta-acciones">
+            <BotonRuleta
+              onClick={() => {
+                setConfirmarReinicio(false);
+                reiniciar();
+              }}
+            >
+              SÍ, REINICIAR
+            </BotonRuleta>
+            <BotonRuleta variante="secundario" onClick={() => setConfirmarReinicio(false)}>
+              SEGUIR JUGANDO
+            </BotonRuleta>
+          </div>
+        </ModalRuleta>
       </div>
     </div>
   );

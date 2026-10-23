@@ -86,7 +86,6 @@ export function BienvenidaExpo() {
                   {texto.cta}
                   <ArrowUpRight size={18} strokeWidth={2.4} aria-hidden="true" />
                 </a>
-                <Dialog.Close className="expo-bienvenida__descartar">{texto.descartar}</Dialog.Close>
               </div>
             </div>
           </Dialog.Popup>

@@ -81,6 +81,19 @@ body:has(.ruleta-juego) {
     min-height: 3rem;
   }
 
+  &__reiniciar.ruleta-boton {
+    width: auto;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.95rem;
+    font-size: 0.92rem;
+  }
+
+  &__marcador {
+    display: flex;
+    justify-content: center;
+    margin-top: auto;
+  }
+
   &__marca {
     display: inline-flex;
     line-height: 0;
@@ -1091,6 +1104,10 @@ body:has(.ruleta-juego) {
     width: clamp(9rem, 46vw, 12rem);
   }
 
+  &__flora:has(.ruleta-pack) {
+    width: auto;
+  }
+
   &__texto {
     max-width: 28rem;
     font-size: 1.05rem;
@@ -1148,6 +1165,46 @@ body:has(.ruleta-juego) {
     background: $rosa;
     color: $verde-oscuro;
     font-size: 1.4rem;
+  }
+}
+
+.ruleta-pack {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.85rem;
+
+  &__premio {
+    position: relative;
+    display: block;
+    width: 6.5rem;
+    height: 6.5rem;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  &__marca {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    place-items: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border: 2px solid $verde-oscuro;
+    border-radius: 50%;
+    background: $naranja;
+    color: $verde-oscuro;
+    font-family: var(--font-identidad);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    transform: translate(20%, 16%);
   }
 }
 
@@ -1439,51 +1496,6 @@ body:has(.ruleta-juego) {
     font-size: 0.92rem;
     line-height: 1.35;
     text-align: left;
-  }
-}
-
-.ruleta-comprobante {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  max-width: 26rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px dashed rgb(11 61 42 / 35%);
-  border-radius: 1rem;
-  background: rgb(255 255 255 / 70%);
-  color: $verde-oscuro;
-  text-align: left;
-
-  svg {
-    flex: 0 0 auto;
-    width: 1.1rem;
-    height: 1.1rem;
-    margin-top: 0.1rem;
-  }
-
-  &__texto {
-    margin: 0;
-    font-size: 0.82rem;
-    line-height: 1.4;
-  }
-
-  &--emitido {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  &__etiqueta {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  &__codigo {
-    font-family: var(--font-identidad);
-    font-size: 1.5rem;
-    letter-spacing: 0.12em;
   }
 }
 
