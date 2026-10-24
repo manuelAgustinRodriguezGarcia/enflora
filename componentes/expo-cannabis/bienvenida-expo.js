@@ -2,14 +2,15 @@
 
 import { Dialog } from "@base-ui/react/dialog";
 import { ArrowUpRight, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { irASeccionExpo } from "@/componentes/expo-cannabis/enlace-desplazar";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { IconoInstagram } from "@/componentes/iconos-ui";
 import { RuletaVitrina } from "@/componentes/expo-cannabis/entrada-expo";
 import { useExpo } from "@/componentes/expo-cannabis/proveedor-expo";
 import { ESTADOS_EXPO, expoCannabis } from "@/lib/expo-cannabis/configuracion";
 
 const CLAVE_SESION = "enflora-expo-bienvenida";
-const { bienvenida: configuracion, textos, ids } = expoCannabis;
+const { bienvenida: configuracion, textos } = expoCannabis;
 const texto = textos.bienvenida;
 
 function yaSeMostro() {
@@ -33,7 +34,6 @@ function recordarMostrada() {
 export function BienvenidaExpo() {
   const { estado, listo } = useExpo();
   const [abierto, setAbierto] = useState(false);
-  const irAlCerrar = useRef(false);
   const disponible =
     expoCannabis.publicada && configuracion.visible && estado !== ESTADOS_EXPO.finalizado;
 
@@ -47,19 +47,8 @@ export function BienvenidaExpo() {
     return () => window.clearTimeout(temporizador);
   }, [listo, disponible]);
 
-  const participar = () => {
-    irAlCerrar.current = true;
-    setAbierto(false);
-  };
-
-  const alTerminar = (abiertoAhora) => {
-    if (abiertoAhora || !irAlCerrar.current) return;
-    irAlCerrar.current = false;
-    irASeccionExpo(ids.desafio);
-  };
-
   return (
-    <Dialog.Root open={abierto} onOpenChange={setAbierto} onOpenChangeComplete={alTerminar}>
+    <Dialog.Root open={abierto} onOpenChange={setAbierto}>
       <Dialog.Portal>
         <Dialog.Backdrop className="expo-bienvenida__fondo" />
         <Dialog.Viewport className="expo-bienvenida__vista">
@@ -68,23 +57,36 @@ export function BienvenidaExpo() {
               <X size={20} strokeWidth={2.4} aria-hidden="true" />
             </Dialog.Close>
             <div className="expo-bienvenida__arte">
-              <RuletaVitrina etiqueta={textos.desafio.etiquetaRuleta} />
+              <div className="expo-bienvenida__escena">
+                <RuletaVitrina etiqueta={textos.desafio.etiquetaRuleta} />
+                <img
+                  className="expo-bienvenida__flora"
+                  src="/images/flora-ruleta.png"
+                  alt="Flora"
+                  width={1254}
+                  height={1254}
+                />
+              </div>
             </div>
             <div className="expo-bienvenida__contenido">
               <Dialog.Title className="expo-bienvenida__titulo">{texto.titulo}</Dialog.Title>
               <Dialog.Description className="expo-bienvenida__texto">{texto.descripcion}</Dialog.Description>
               <div className="expo-bienvenida__acciones">
-                <a
+                <Link
                   className="landing__accion landing__accion--principal expo-bienvenida__cta"
-                  href={`#${ids.desafio}`}
-                  onClick={(evento) => {
-                    if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) return;
-                    evento.preventDefault();
-                    participar();
-                  }}
+                  href={`${expoCannabis.rutaJuego}?bienvenida=1`}
                 >
                   {texto.cta}
                   <ArrowUpRight size={18} strokeWidth={2.4} aria-hidden="true" />
+                </Link>
+                <a
+                  className="seguinos-pill expo-bienvenida__seguinos"
+                  href={expoCannabis.urlInstagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Seguinos
+                  <IconoInstagram className="seguinos-pill__icono" />
                 </a>
               </div>
             </div>

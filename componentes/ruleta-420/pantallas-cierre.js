@@ -27,7 +27,7 @@ export function PantallaVictoria({ onContinuar }) {
       >
         ¡SOBREVIVISTE A LA RULETA!
       </motion.h1>
-      <p className="ruleta-cierre__texto">¡5 respuestas correctas! Flora está impresionada.</p>
+      <p className="ruleta-cierre__texto">¡{ACIERTOS_PARA_GANAR} respuestas correctas! Flora está impresionada.</p>
       <p className="ruleta-cierre__subtitulo">Pero ahora tenés que elegir...</p>
       <div className="ruleta-acciones">
         <BotonRuleta onClick={onContinuar}>A VER</BotonRuleta>

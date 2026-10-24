@@ -646,8 +646,8 @@ $desktop: 64rem;
   position: relative;
   isolation: isolate;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   overflow: hidden;
   padding: 1.75rem 1.15rem;
   background: $verde;
@@ -665,8 +665,36 @@ $desktop: 64rem;
   .ruleta {
     position: relative;
     z-index: 1;
-    width: min(100%, 18rem);
+    width: 100%;
   }
+}
+
+.expo-bienvenida__escena {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  width: 100%;
+  height: 19rem;
+  margin: 0;
+}
+
+.expo-bienvenida__arte .ruleta {
+  position: absolute;
+  bottom: 14%;
+  left: 0.35rem;
+  width: 11.25rem;
+}
+
+.expo-bienvenida__flora {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: -6%;
+  bottom: auto;
+  width: auto;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
 }
 
 .expo-bienvenida__contenido {
@@ -747,6 +775,10 @@ $desktop: 64rem;
   }
 }
 
+.expo-bienvenida__seguinos {
+  display: none;
+}
+
 @media (max-width: 63.99rem) {
   .expo-bienvenida__vista {
     align-items: safe center;
@@ -765,11 +797,23 @@ $desktop: 64rem;
   .expo-bienvenida__arte {
     position: relative;
     flex: none;
-    padding: 2.4rem 1rem 0.85rem;
+    padding: 2rem 0.55rem 0.7rem;
+  }
 
-    .ruleta {
-      width: min(72vw, 16.5rem);
-    }
+  .expo-bienvenida__escena {
+    height: 17.25rem;
+  }
+
+  .expo-bienvenida__arte .ruleta {
+    bottom: 12%;
+    left: 0.15rem;
+    width: min(44vw, 10rem);
+  }
+
+  .expo-bienvenida__flora {
+    top: -2%;
+    right: -1%;
+    height: 102%;
   }
 
   .expo-bienvenida__contenido {
@@ -791,6 +835,11 @@ $desktop: 64rem;
   }
 
   .expo-bienvenida__cta {
+    width: 100%;
+  }
+
+  .expo-bienvenida__seguinos {
+    display: inline-flex;
     width: 100%;
   }
 

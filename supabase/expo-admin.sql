@@ -410,13 +410,7 @@ begin
 
     if peso <= 0 then
       motivo := 'peso';
-    elsif premio = 'GRINDER' and p_giro < 11 then
-      motivo := 'giro';
-    elsif premio = 'TUBE' and p_giro < 11 then
-      motivo := 'giro';
-    elsif premio = 'GRINDER' and p_ultimo = 'TUBE' then
-      motivo := 'consecutivo';
-    elsif premio = 'TUBE' and p_ultimo = 'GRINDER' then
+    elsif premio in ('GRINDER', 'TUBE') and p_ultimo in ('GRINDER', 'TUBE') then
       motivo := 'consecutivo';
     elsif not public.stock_alcanza_ruleta(p_cantidades -> premio) then
       motivo := 'stock';
@@ -500,8 +494,6 @@ as $$
 declare
   fila public.expo_ruleta_partidas%rowtype;
   previa public.expo_ruleta_partidas%rowtype;
-  opciones integer[];
-  ronda integer;
   bloqueadas text[];
 begin
   if p_visitor is null then
@@ -515,28 +507,14 @@ begin
   order by created_at desc
   limit 1;
 
-  if found and previa.ronda_especial in (3, 4, 5) then
-    select coalesce(array_agg(valor order by valor), array[3, 4, 5])
-    into opciones
-    from unnest(array[3, 4, 5]) as valor
-    where valor <> previa.ronda_especial;
-    bloqueadas := coalesce(previa.usadas, '{}'::text[]);
-  elsif found then
-    opciones := array[3, 4, 5];
+  if found then
     bloqueadas := coalesce(previa.usadas, '{}'::text[]);
   else
-    opciones := array[3, 4, 5];
     bloqueadas := '{}'::text[];
   end if;
 
-  ronda := opciones[1 + floor(random() * cardinality(opciones))::integer];
-
-  if ronda is null or ronda not in (3, 4, 5) then
-    raise exception 'La partida no es válida.';
-  end if;
-
   insert into public.expo_ruleta_partidas (visitor_id, ronda_especial, excluidas)
-  values (p_visitor, ronda, bloqueadas)
+  values (p_visitor, 3, bloqueadas)
   returning * into fila;
 
   return jsonb_build_object(
@@ -630,7 +608,7 @@ begin
     );
   end if;
 
-  if fila.aciertos >= 5 or fila.vidas <= 0 then
+  if fila.aciertos >= 3 or fila.vidas <= 0 then
     raise exception 'La partida ya no acepta preguntas.';
   end if;
 
@@ -742,7 +720,7 @@ begin
   nuevas_vidas := case when fue_acierto then fila.vidas else greatest(0, fila.vidas - 1) end;
   nuevo_estado := 'jugando';
 
-  if nuevos_aciertos >= 5 then
+  if nuevos_aciertos >= 3 then
     nuevo_estado := 'ganada';
   elsif nuevas_vidas <= 0 then
     nuevo_estado := 'perdida';
@@ -824,7 +802,7 @@ begin
   habilitada := found
     and fila.estado = 'ganada'
     and fila.resultado is null
-    and fila.aciertos >= 5
+    and fila.aciertos >= 3
     and p_especial = any(fila.usadas);
 
   return jsonb_build_object(
@@ -891,7 +869,7 @@ begin
     );
   end if;
 
-  if fila.estado <> 'ganada' or fila.aciertos < 5 or p_especial is null or not (p_especial = any(fila.usadas)) then
+  if fila.estado <> 'ganada' or fila.aciertos < 3 or p_especial is null or not (p_especial = any(fila.usadas)) then
     raise exception 'La partida no está habilitada para un premio.';
   end if;
 

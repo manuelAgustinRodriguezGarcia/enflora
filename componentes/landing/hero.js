@@ -7,7 +7,9 @@ import { useRef } from "react";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import TiltedCard from "@/componentes/landing/tilted-card";
 import { TarjetaFlotanteHero } from "@/componentes/landing/tarjeta-flotante-hero";
+import { IconoInstagram } from "@/componentes/iconos-ui";
 import { textos } from "@/lib/landing";
+import { INSTAGRAM_URL } from "@/lib/seo";
 import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function Hero() {
@@ -122,6 +124,15 @@ export function Hero() {
               Registrate hoy
               <ArrowRight size={18} aria-hidden="true" />
             </Link>
+            <a
+              className="seguinos-pill hero__seguinos"
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Seguinos
+              <IconoInstagram className="seguinos-pill__icono" />
+            </a>
           </div>
         </div>
       </div>
