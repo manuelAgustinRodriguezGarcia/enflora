@@ -4,7 +4,8 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
-import { ContadorLanzamiento, useRestanteLanzamiento } from "@/componentes/landing/contador-lanzamiento";
+import { useRestanteLanzamiento } from "@/componentes/landing/contador-lanzamiento";
+import { CuerpoPillLanzamiento } from "@/componentes/landing/pill-lanzamiento";
 import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 import { navegacionFlotante, textos } from "@/lib/landing";
 
@@ -18,6 +19,7 @@ export function NavegacionFlotante() {
   const [visible, setVisible] = useState(false);
   const [enProducto, setEnProducto] = useState(false);
   const [enPie, setEnPie] = useState(false);
+  const [enLanzamiento, setEnLanzamiento] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const [activoId, setActivoId] = useState(navegacionFlotante[0]?.id ?? "");
   const restante = useRestanteLanzamiento();
@@ -56,13 +58,20 @@ export function NavegacionFlotante() {
   useEffect(() => {
     const seccion = document.getElementById("producto");
     const pie = document.querySelector("footer.pie");
-    if (!seccion && !pie) return undefined;
+    const lanzamiento = document.getElementById("lanzamiento");
+    if (!seccion && !pie && !lanzamiento) return undefined;
 
     let raf = 0;
 
     const medir = () => {
       raf = 0;
       const alto = window.innerHeight || 1;
+
+      if (lanzamiento) {
+        const caja = lanzamiento.getBoundingClientRect();
+        const dentro = caja.top < alto * 0.62 && caja.bottom > alto * 0.38;
+        setEnLanzamiento((actual) => (actual === dentro ? actual : dentro));
+      }
 
       if (seccion) {
         const caja = seccion.getBoundingClientRect();
@@ -183,6 +192,7 @@ export function NavegacionFlotante() {
     ? { duration: 0.01 }
     : { duration: 0.3, ease: [0.22, 1, 0.36, 1] };
   const mostrado = visible && !enProducto && !enPie;
+  const pillVisible = mostrado && !abierto && !enLanzamiento;
 
   return (
     <div
@@ -235,14 +245,14 @@ export function NavegacionFlotante() {
 
       <div className="nav-flotante__lanzamiento">
         <motion.a
-          className="nav-flotante__pill"
+          className="nav-flotante__pill pill-lanzamiento"
           href="#lanzamiento"
           aria-label={`${textos.lanzamiento.titulo}. Ir a la cuenta regresiva.`}
-          aria-hidden={!mostrado || abierto || undefined}
-          tabIndex={mostrado && !abierto ? 0 : -1}
+          aria-hidden={!pillVisible || undefined}
+          tabIndex={pillVisible ? 0 : -1}
           initial={false}
           animate={
-            mostrado && !abierto
+            pillVisible
               ? { opacity: 1, scale: 1 }
               : { opacity: 0, scale: 0.96 }
           }
@@ -253,12 +263,7 @@ export function NavegacionFlotante() {
             irA("lanzamiento");
           }}
         >
-          <span className="nav-flotante__pill-titulo">{textos.lanzamiento.titulo}</span>
-          {restante?.listo ? (
-            <span className="nav-flotante__pill-listo">{textos.lanzamiento.disponible}</span>
-          ) : (
-            <ContadorLanzamiento restante={restante} compacto />
-          )}
+          <CuerpoPillLanzamiento restante={restante} conTitulo={false} />
         </motion.a>
       </div>
 

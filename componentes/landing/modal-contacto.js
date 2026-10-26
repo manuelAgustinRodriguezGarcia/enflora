@@ -4,7 +4,7 @@ import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import { Dialog } from "@base-ui/react/dialog";
 import { motion, useReducedMotion } from "motion/react";
-import { CircleAlert, PartyPopper, X } from "lucide-react";
+import { CircleAlert, PartyPopper, Rocket, X } from "lucide-react";
 import { Boton } from "@/componentes/boton";
 import { TextoConMarca } from "@/componentes/marca-enflora";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
@@ -15,15 +15,15 @@ const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.96, y: 14 };
 
 export const textosModalContacto = {
-  titulo: "¡El 1/11 llega Enflora!",
+  titulo: "Despegue programado para el 1/11.",
   descripcion:
-    "Estamos preparando todo para el lanzamiento. Dejanos tu correo y sumate a la lista de novedades de Enflora.",
+    "Estamos preparando todo para nuestro lanzamiento. Dejanos tu mail y nosotros te avisamos cuando la nave esté por despegar.",
   nombre: "Nombre",
   nombreAyuda: "Opcional",
   correo: "Correo electrónico",
   correoAyuda: "Obligatorio",
   volver: "Volver",
-  enviar: "Sumarme a la lista",
+  enviar: "Avísenme",
   enviando: "Guardando...",
   reintentar: "Reintentar",
   exitoTitulo: "¡Ya sos parte de la lista!",
@@ -253,14 +253,16 @@ export function ModalContacto({ abierto, onCerrar }) {
                       disabled={enviando}
                       aria-busy={enviando || undefined}
                     >
-                      <img
-                        className="lanzamiento-modal__avisar-isotipo"
-                        src="/logos/enflora-isotipo-light.svg"
-                        alt=""
-                        width={24}
-                        height={24}
-                      />
-                      {enviando ? t.enviando : estado === "error" ? t.reintentar : t.enviar}
+                      {enviando ? (
+                        t.enviando
+                      ) : estado === "error" ? (
+                        t.reintentar
+                      ) : (
+                        <>
+                          <Rocket size={18} aria-hidden="true" />
+                          {t.enviar}
+                        </>
+                      )}
                     </Boton>
                   </div>
                 </form>

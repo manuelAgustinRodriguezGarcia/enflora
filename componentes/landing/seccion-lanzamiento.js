@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { AvisoDisponibilidad } from "@/componentes/aviso-disponibilidad";
+import { Boton } from "@/componentes/boton";
 import { ContadorLanzamiento, useRestanteLanzamiento } from "@/componentes/landing/contador-lanzamiento";
+import { ModalContacto } from "@/componentes/landing/modal-contacto";
 import Particles from "@/componentes/landing/particles";
 import { textos } from "@/lib/landing";
 import { TextoConMarca } from "@/componentes/marca-enflora";
@@ -12,8 +14,15 @@ const COLORES_PARTICULAS = ["#fdf1d7", "#ffffff", "#a4c85b"];
 export function SeccionLanzamiento() {
   const { lanzamiento } = textos;
   const restante = useRestanteLanzamiento();
+  const [contactoAbierto, setContactoAbierto] = useState(false);
+  const [contactoMontado, setContactoMontado] = useState(false);
 
   const listo = restante?.listo ?? false;
+
+  function abrirContacto() {
+    setContactoMontado(true);
+    setContactoAbierto(true);
+  }
 
   return (
     <section
@@ -64,8 +73,15 @@ export function SeccionLanzamiento() {
             <ContadorLanzamiento restante={restante} />
           </>
         )}
-        <AvisoDisponibilidad />
+        <div className="lanzamiento__aviso">
+          <Boton type="button" className="lanzamiento__boton" onClick={abrirContacto}>
+            Avisame cuando Enflora esté disponible
+          </Boton>
+        </div>
       </div>
+      {contactoMontado ? (
+        <ModalContacto abierto={contactoAbierto} onCerrar={() => setContactoAbierto(false)} />
+      ) : null}
     </section>
   );
 }
