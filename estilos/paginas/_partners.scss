@@ -61,7 +61,8 @@
     display: grid;
     gap: 1.75rem;
     align-items: end;
-    max-width: 34rem;
+    width: max-content;
+    max-width: 100%;
   }
 
   &__intro-texto {
@@ -109,13 +110,22 @@
     text-transform: uppercase;
   }
 
-  &__titulo {
+  h1#{&}__titulo,
+  h2#{&}__titulo {
     margin: 0;
-    color: #0b3d2a;
     font-family: var(--font-identidad);
-    font-size: clamp(2rem, 4vw, 2.75rem);
     font-weight: 600;
-    line-height: 1.15;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  h1#{&}__titulo {
+    font-size: clamp(1.55rem, 4.4vw, 4.25rem);
+  }
+
+  h2#{&}__titulo {
+    font-size: clamp(1.35rem, 3.1vw, 2.85rem);
   }
 
   &__descripcion {
@@ -155,7 +165,7 @@
     display: grid;
     gap: 0.85rem;
     justify-items: start;
-    max-width: 40rem;
+    max-width: none;
   }
 
   &__volver {
@@ -185,6 +195,15 @@
     .partners__titulo,
     .partners__descripcion {
       color: #fdf1d7;
+    }
+
+    .partners__contenedor {
+      width: 100%;
+      margin-inline: 0;
+    }
+
+    @media (min-width: 64rem) and (max-width: 104.99rem) {
+      padding-inline: 4vw;
     }
 
     .partners__volver {
@@ -253,15 +272,20 @@
     font-size: 0.78rem;
   }
 
+  &__info-cuerpo {
+    display: grid;
+    gap: 1.5rem;
+    align-items: start;
+
+    @media (min-width: 64rem) {
+      grid-template-columns: minmax(0, 1.25fr) minmax(22rem, 0.78fr);
+      gap: 1.75rem 2rem;
+    }
+  }
+
   &__planes {
     display: grid;
     gap: 1rem;
-
-    @media (min-width: 48rem) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1.15rem;
-      align-items: stretch;
-    }
   }
 
   &__plan {
@@ -388,6 +412,39 @@
   &__plan-cta {
     width: 100%;
     margin-top: auto;
+  }
+
+  @media (min-width: 64rem) {
+    &--info &__plan {
+      display: grid;
+      grid-template-columns: minmax(10.5rem, 0.82fr) minmax(0, 1.18fr);
+      column-gap: 1.25rem;
+      row-gap: 0.85rem;
+      align-items: start;
+    }
+
+    &--info &__plan-tope {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    &--info &__plan-cta {
+      grid-column: 1;
+      grid-row: 2;
+      width: auto;
+      justify-self: start;
+      margin-top: 0;
+    }
+
+    &--info &__plan-lista {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+    }
+
+    &--info &__plan-aclaracion {
+      grid-column: 1 / -1;
+    }
   }
 
   &__plan--destacado &__plan-cta.landing__accion--acento {

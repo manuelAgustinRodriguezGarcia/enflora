@@ -151,12 +151,15 @@ function ExpoDesafio() {
 }
 
 export function SeccionExpo() {
-  if (!expoCannabis.publicada) return null;
+  const { desafio, premios } = expoCannabis.seccionesVisibles;
+  if (!expoCannabis.publicada || (!desafio && !premios)) return null;
+
+  const tituloId = desafio ? ids.desafio : ids.premios;
 
   return (
-    <section className="expo" id={ids.seccion} aria-labelledby={`${ids.desafio}-titulo`}>
-      <ExpoDesafio />
-      <ExpoRegalos />
+    <section className="expo" id={ids.seccion} aria-labelledby={`${tituloId}-titulo`}>
+      {desafio ? <ExpoDesafio /> : null}
+      {premios ? <ExpoRegalos /> : null}
     </section>
   );
 }

@@ -4,8 +4,9 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowUp, Menu, X } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import { ContadorLanzamiento, useRestanteLanzamiento } from "@/componentes/landing/contador-lanzamiento";
 import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
-import { navegacionFlotante } from "@/lib/landing";
+import { navegacionFlotante, textos } from "@/lib/landing";
 
 const UMBRAL_SCROLL = 120;
 
@@ -19,6 +20,7 @@ export function NavegacionFlotante() {
   const [enPie, setEnPie] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const [activoId, setActivoId] = useState(navegacionFlotante[0]?.id ?? "");
+  const restante = useRestanteLanzamiento();
   const reducido = useReducedMotion();
   const menuId = useId();
   const raizRef = useRef(null);
@@ -230,6 +232,35 @@ export function NavegacionFlotante() {
       >
         <ArrowUp size={22} aria-hidden="true" />
       </motion.button>
+
+      <div className="nav-flotante__lanzamiento">
+        <motion.a
+          className="nav-flotante__pill"
+          href="#lanzamiento"
+          aria-label={`${textos.lanzamiento.titulo}. Ir a la cuenta regresiva.`}
+          aria-hidden={!mostrado || abierto || undefined}
+          tabIndex={mostrado && !abierto ? 0 : -1}
+          initial={false}
+          animate={
+            mostrado && !abierto
+              ? { opacity: 1, scale: 1 }
+              : { opacity: 0, scale: 0.96 }
+          }
+          transition={transicionEntrada}
+          onClick={(evento) => {
+            if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) return;
+            evento.preventDefault();
+            irA("lanzamiento");
+          }}
+        >
+          <span className="nav-flotante__pill-titulo">{textos.lanzamiento.titulo}</span>
+          {restante?.listo ? (
+            <span className="nav-flotante__pill-listo">{textos.lanzamiento.disponible}</span>
+          ) : (
+            <ContadorLanzamiento restante={restante} compacto />
+          )}
+        </motion.a>
+      </div>
 
       <div className="nav-flotante__menu">
         <AnimatePresence>

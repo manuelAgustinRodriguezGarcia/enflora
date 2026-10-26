@@ -35,8 +35,7 @@ export function Hero() {
 
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
-      tl.from(".hero__marca", { opacity: 0, y: 16, duration: 0.4 })
-        .from(".hero__linea", { opacity: 0, y: 28, duration: 0.55, stagger: 0.1 }, 0.08)
+      tl.from(".hero__linea", { opacity: 0, y: 28, duration: 0.55, stagger: 0.1 }, 0.08)
         .from(".hero__bajada", { opacity: 0, y: 18, duration: 0.45 }, 0.28)
         .from(".hero__acciones > *", { opacity: 0, y: 14, duration: 0.4, stagger: 0.08 }, 0.4)
         .from(".hero__flora", { opacity: 0, y: 22, scale: 0.97, duration: 0.7 }, 0.4)
@@ -111,7 +110,6 @@ export function Hero() {
         </div>
 
         <div className="hero__contenido">
-          <p className="hero__marca">{hero.marca}</p>
           <h1>
             <span className="hero__linea hero__linea--oscuro">{hero.titulo[0]}</span>
             <span className="hero__linea hero__linea--claro">{hero.titulo[1]}</span>

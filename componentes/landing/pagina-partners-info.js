@@ -86,18 +86,20 @@ export function PaginaPartnersInfo() {
           </Link>
         </header>
 
-        <div className="partners__planes" aria-label="Planes publicitarios">
-          {PLANES_PARTNERS.map((plan) => (
-            <TarjetaPlanPartners key={plan.id} plan={plan} onElegir={elegirPlan} />
-          ))}
-        </div>
+        <div className="partners__info-cuerpo">
+          <div className="partners__planes" aria-label="Planes publicitarios">
+            {PLANES_PARTNERS.map((plan) => (
+              <TarjetaPlanPartners key={plan.id} plan={plan} onElegir={elegirPlan} />
+            ))}
+          </div>
 
-        <div className="partners__form-bloque">
-          <header className="partners__form-cabecera">
-            <h2 className="partners__form-titulo">{textosPartners.formTitulo}</h2>
-            <p className="partners__form-subtitulo">{textosPartners.formSubtitulo}</p>
-          </header>
-          <FormularioPartners key={planSeleccionado} planInicial={planSeleccionado} />
+          <div className="partners__form-bloque">
+            <header className="partners__form-cabecera">
+              <h2 className="partners__form-titulo">{textosPartners.formTitulo}</h2>
+              <p className="partners__form-subtitulo">{textosPartners.formSubtitulo}</p>
+            </header>
+            <FormularioPartners key={planSeleccionado} planInicial={planSeleccionado} />
+          </div>
         </div>
       </div>
     </section>
