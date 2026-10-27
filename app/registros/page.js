@@ -4,12 +4,15 @@ import { FormularioCrearRegistro } from "@/componentes/formulario-crear-registro
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { cargarRegistrosUsuario } from "@/lib/cargar-registros";
 import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
+import { esUuid } from "@/lib/historial-registros";
 import { rangoDiaLocal } from "@/lib/registros";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
-export default async function PaginaRegistros() {
+export default async function PaginaRegistros({ searchParams }) {
+  const parametros = await searchParams;
+  const registroInicialId = esUuid(parametros?.editar) ? String(parametros.editar).trim() : "";
   if (!configuracionLista()) {
     return (
       <section className="registros">
@@ -114,6 +117,9 @@ export default async function PaginaRegistros() {
         <p className="registros__intro">
           Guardá acciones y observaciones. Podés crear varios registros independientes el mismo día.
         </p>
+        <EnlaceBoton href="/registros/historial" variante="secundario" className="registros__historial">
+          Ver historial
+        </EnlaceBoton>
         {unidades.length === 0 ? (
           <div className="vacio">
             <p>Necesitás al menos una unidad de cultivo para registrar.</p>
@@ -129,6 +135,7 @@ export default async function PaginaRegistros() {
               opciones: seguimientoCargado.opciones,
             }}
             registrosHoy={hoy.error ? [] : hoy.registros}
+            registroInicialId={registroInicialId}
           />
         )}
       </section>

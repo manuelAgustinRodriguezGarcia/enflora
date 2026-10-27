@@ -4,7 +4,12 @@ import { guardarRegistro, obtenerRegistroCompleto } from "@/app/registros/accion
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { FormularioRegistroCultivo } from "@/componentes/formulario-registro-cultivo";
 
-export function FormularioCrearRegistro({ unidades = [], seguimientoInicial, registrosHoy = [] }) {
+export function FormularioCrearRegistro({
+  unidades = [],
+  seguimientoInicial,
+  registrosHoy = [],
+  registroInicialId = "",
+}) {
   return (
     <FormularioRegistroCultivo
       unidades={unidades}
@@ -13,6 +18,7 @@ export function FormularioCrearRegistro({ unidades = [], seguimientoInicial, reg
       accionGuardar={guardarRegistro}
       cargarRegistro={obtenerRegistroCompleto}
       EditorSeguimiento={EditorSeguimiento}
+      registroInicialId={registroInicialId}
     />
   );
 }

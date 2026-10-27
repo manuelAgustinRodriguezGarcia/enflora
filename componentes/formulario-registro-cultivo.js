@@ -15,6 +15,8 @@ import { toque, transicionToque } from "@/lib/animaciones";
 import {
   agruparPlantasPorGenetica,
   claveParametroRegistro,
+  aplicarConservacionEdicion,
+  fechaEventoAlEditar,
   fechaEventoDesdeDia,
   ordenarAccionesRegistro,
   ordenarParametrosRegistro,
@@ -169,6 +171,7 @@ export function FormularioRegistroCultivo({
   seleccionInicial = null,
   onGuardado = null,
   accionesOcultas = SIN_ACCIONES_OCULTAS,
+  registroInicialId = "",
 }) {
   const inicial = partesFechaLocal();
   const reducido = useReducedMotion();
@@ -203,6 +206,8 @@ export function FormularioRegistroCultivo({
   const [errorLocal, setErrorLocal] = useState("");
   const ultimoPayload = useRef(null);
   const ultimoExito = useRef(null);
+  const baseEdicion = useRef(null);
+  const edicionSolicitada = useRef("");
   const onGuardadoRef = useRef(onGuardado);
   const seguimientoRef = useRef(null);
 
@@ -227,14 +232,14 @@ export function FormularioRegistroCultivo({
   const plantas = unidad?.plantas || [];
   const gruposGenetica = useMemo(() => agruparPlantasPorGenetica(plantas), [plantas]);
   const accionesOrdenadas = useMemo(() => {
-    const orden = ordenarAccionesRegistro(accionesPrioritarias, opciones);
+    const orden = ordenarAccionesRegistro(accionesPrioritarias, opciones, accionesHistoricas);
     if (!accionesOcultas.length) return orden;
     const visible = (item) => !(item.origen === "nativa" && accionesOcultas.includes(item.clave));
     return {
       prioritarias: orden.prioritarias.filter(visible),
       secundarias: orden.secundarias.filter(visible),
     };
-  }, [accionesPrioritarias, opciones, accionesOcultas]);
+  }, [accionesPrioritarias, opciones, accionesOcultas, accionesHistoricas]);
   const parametrosOrdenados = useMemo(
     () =>
       ordenarParametrosRegistro(parametrosPrioritarios, opciones, paramsHistoricos, {
@@ -273,6 +278,7 @@ export function FormularioRegistroCultivo({
     setErrorLocal("");
     setEditorPlantas(false);
     setEditandoId("");
+    baseEdicion.current = null;
     setMostrarMasParametros(false);
     setMostrarMasAcciones(false);
   }
@@ -428,23 +434,31 @@ export function FormularioRegistroCultivo({
     const aplica = registro.aplica_a === "ambiente" ? "ambiente" : "plantas";
     setTipoRegistro(aplica);
 
+    const idsSnapshot = (registro.registro_plantas || [])
+      .map((fila) => fila.planta_id)
+      .filter(Boolean);
+    const unidadReg = unidades.find((item) => item.id === registro.unidad_cultivo_id);
+    const idsUnidad = (unidadReg?.plantas || []).map((planta) => planta.id);
+    const idsEnUnidad = idsSnapshot.filter((id) => idsUnidad.includes(id));
+
     if (aplica === "ambiente") {
-      setIdsSeleccionados(new Set());
-    } else if (registro.alcance === "unidad") {
       setModoSeleccion("unidad");
-      const unidadReg = unidades.find((item) => item.id === registro.unidad_cultivo_id);
-      setIdsSeleccionados(new Set((unidadReg?.plantas || []).map((planta) => planta.id)));
+      setIdsSeleccionados(new Set());
+    } else if (
+      idsUnidad.length > 0 &&
+      idsEnUnidad.length === idsUnidad.length &&
+      idsSnapshot.length === idsUnidad.length
+    ) {
+      setModoSeleccion("unidad");
+      setIdsSeleccionados(new Set(idsEnUnidad));
     } else if (registro.alcance === "genetica") {
       setModoSeleccion("genetica");
-      setIdsSeleccionados(
-        new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
-      );
+      setIdsSeleccionados(new Set(idsEnUnidad));
     } else {
       setModoSeleccion("manual");
-      setIdsSeleccionados(
-        new Set((registro.registro_plantas || []).map((fila) => fila.planta_id).filter(Boolean))
-      );
+      setIdsSeleccionados(new Set(idsEnUnidad));
     }
+    baseEdicion.current = registro;
 
     const partes = partesFechaLocal(registro.fecha_evento);
     setFecha(partes.fecha);
@@ -484,6 +498,14 @@ export function FormularioRegistroCultivo({
     }
   }
 
+  useEffect(() => {
+    if (!registroInicialId || edicionSolicitada.current === registroInicialId) return;
+    edicionSolicitada.current = registroInicialId;
+    cargarEdicion({ id: registroInicialId });
+    // El id de la URL dispara una sola carga. cargarEdicion cambia en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registroInicialId]);
+
   function armarPayload() {
     if (!unidad) {
       return { error: "Seleccioná una unidad." };
@@ -503,7 +525,13 @@ export function FormularioRegistroCultivo({
       return { error: "Seleccioná al menos una planta." };
     }
 
-    const fechaEvento = fechaEventoDesdeDia(fecha);
+    const base = editandoId && baseEdicion.current?.id === editandoId ? baseEdicion.current : null;
+    const fechaEvento = base
+      ? fechaEventoAlEditar({
+          fechaSeleccionada: fecha,
+          fechaOriginalIso: base.fecha_evento,
+        })
+      : fechaEventoDesdeDia(fecha);
     if (!fechaEvento) {
       return { error: "La fecha del evento no es válida." };
     }
@@ -532,7 +560,7 @@ export function FormularioRegistroCultivo({
       acciones = [];
     }
 
-    if (aplicaA === "ambiente" && editandoId && accionesHistoricas.length > 0) {
+    if (editandoId && accionesHistoricas.length > 0) {
       const claves = new Set(
         acciones.map((item) =>
           item.origen === "nativa"
@@ -590,7 +618,14 @@ export function FormularioRegistroCultivo({
     };
 
     if (editandoId) datos.id = editandoId;
-    return { error: "", datos };
+    return {
+      error: "",
+      datos: aplicarConservacionEdicion(datos, {
+        base,
+        idsSeleccionados,
+        idsPlantasUnidad: plantas.map((planta) => planta.id),
+      }),
+    };
   }
 
   function enviar(formData) {

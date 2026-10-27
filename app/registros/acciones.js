@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cargarRegistroPorId } from "@/lib/cargar-registros";
+import {
+  afirmarFiltrosHistorial,
+  cargarHistorialRegistros,
+  cargarRegistroPorId,
+} from "@/lib/cargar-registros";
+import { normalizarFiltrosHistorial } from "@/lib/historial-registros";
 import {
   argumentosRpcRegistro,
   prepararDatosRegistro,
@@ -69,6 +74,7 @@ async function sesion() {
 
 function revalidarContexto(datos) {
   revalidatePath("/registros");
+  revalidatePath("/registros/historial");
   revalidatePath("/espacios");
   if (datos?.espacio_id) {
     revalidatePath(`/espacios/${datos.espacio_id}`);
@@ -219,4 +225,48 @@ export async function eliminarRegistro(_estado, formularioODatos) {
     unidad_cultivo_id: unidadId || null,
   });
   return { ok: true };
+}
+
+export async function cargarPaginaHistorial(payload) {
+  const normalizado = normalizarFiltrosHistorial({
+    unidad: payload?.unidadId || "",
+    planta: payload?.plantaId || "",
+    genetica: payload?.genetica || "",
+    desde: payload?.desde || "",
+    hasta: payload?.hasta || "",
+    contenido: payload?.sinContenido ? "ninguno" : (payload?.contenidos || []).join(","),
+    cursorFecha: payload?.cursorFecha || "",
+    cursorId: payload?.cursorId || "",
+  });
+
+  if (normalizado.error || !normalizado.filtros?.cursor) {
+    return {
+      error: true,
+      mensaje: normalizado.error || "No se pudo continuar el historial.",
+      registros: [],
+      hayMas: false,
+    };
+  }
+
+  const acceso = await sesion();
+  if (acceso.error) {
+    return { error: true, mensaje: acceso.error, registros: [], hayMas: false };
+  }
+
+  const propio = await afirmarFiltrosHistorial(acceso.supabase, normalizado.filtros);
+  if (propio.error) {
+    return { error: true, mensaje: propio.error, registros: [], hayMas: false };
+  }
+
+  const pagina = await cargarHistorialRegistros(acceso.supabase, normalizado.filtros);
+  if (pagina.error) {
+    return {
+      error: true,
+      mensaje: "No se pudo cargar más registros.",
+      registros: [],
+      hayMas: false,
+    };
+  }
+
+  return { error: false, mensaje: "", registros: pagina.registros, hayMas: pagina.hayMas };
 }

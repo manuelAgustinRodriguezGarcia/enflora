@@ -18,6 +18,7 @@ import {
   formatearFecha,
   textoDias,
 } from "@/lib/etapas";
+import { hrefHistorial } from "@/lib/historial-registros";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -139,6 +140,13 @@ export default async function PaginaPlanta({ params }) {
           unidadId={unidad.id}
           espacioId={unidad.espacio_id}
         />
+        <EnlaceBoton
+          href={hrefHistorial({ plantaId: planta.id })}
+          variante="secundario"
+          className="registros__historial"
+        >
+          Ver historial
+        </EnlaceBoton>
         <h2>Historial de etapas</h2>
         {errorHistorial ? <p>No se pudo cargar el historial de etapas.</p> : null}
         {!errorHistorial && (historial || []).length === 0 ? (

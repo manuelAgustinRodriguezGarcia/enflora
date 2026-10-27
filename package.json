@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "historial:demo": "node --experimental-detect-module --import ./tests/register-alias.mjs scripts/generar-historial-demo.mjs",
-    "test": "node --experimental-detect-module --import ./tests/register-alias.mjs --test tests/pagos.test.js tests/ruleta-plan.test.js tests/push.test.js tests/sw.test.js tests/demo.test.js tests/demo-historial.test.js tests/contactos.test.js"
+    "test": "node --experimental-detect-module --import ./tests/register-alias.mjs --test tests/pagos.test.js tests/ruleta-plan.test.js tests/push.test.js tests/sw.test.js tests/demo.test.js tests/demo-historial.test.js tests/contactos.test.js tests/historial-registros.test.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

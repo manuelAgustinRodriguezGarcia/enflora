@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { CabeceraUnidad } from "@/componentes/cabecera-unidad";
+import { EnlaceBoton } from "@/componentes/boton";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { PanelAgregarPlanta } from "@/componentes/panel-agregar-planta";
 import { SeleccionPlantasUnidad } from "@/componentes/seleccion-plantas-unidad";
@@ -81,6 +82,13 @@ export default async function PaginaUnidad({ params }) {
           tipoEspacio={espacioRespuesta.data.tipo}
           cantidadPlantas={lista.length}
         />
+        <EnlaceBoton
+          href={`/registros/historial?unidad=${unidad.id}`}
+          variante="secundario"
+          className="registros__historial"
+        >
+          Ver historial
+        </EnlaceBoton>
         <SeleccionPlantasUnidad
           espacioId={unidad.espacio_id}
           unidadId={unidad.id}
