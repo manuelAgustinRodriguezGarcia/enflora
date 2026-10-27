@@ -1,0 +1,26 @@
+{
+  "id": "fixture-ph-concepto",
+  "titulo": "Documento de prueba pH",
+  "tema": "nutricion",
+  "subtema": "ph",
+  "palabrasClave": ["ph", "acidez", "medicion"],
+  "estado": "fixture",
+  "version": "0",
+  "incorporado": "2026-10-27",
+  "referencias": [
+    {
+      "cita": "Referencia ficticia solo para tests.",
+      "tipo": "fixture"
+    }
+  ],
+  "fuenteOriginal": "Fixture ENFLORA",
+  "autor": "Equipo de pruebas",
+  "secciones": [
+    {
+      "id": "definicion",
+      "titulo": "Qué es el pH",
+      "contenido": "El pH describe la acidez o alcalinidad de una solución en escala logarítmica.",
+      "palabrasClave": ["ph"]
+    }
+  ]
+}
