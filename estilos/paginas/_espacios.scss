@@ -47,6 +47,13 @@
     color: var(--color-primary);
   }
 
+  &__texto {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+    line-height: 1.4;
+  }
+
   label:not(.formulario__campo) {
     display: flex;
     align-items: center;
@@ -127,6 +134,15 @@
     color: var(--color-primary);
   }
 
+  &__pregunta {
+    margin: 0;
+    font-family: var(--font-identidad);
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-h3);
+    line-height: var(--line-height-heading);
+    color: var(--color-primary);
+  }
+
   &__plantas {
     display: flex;
     flex-direction: column;
@@ -178,6 +194,7 @@
     background: var(--color-surface);
     color: var(--color-text);
     border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
     transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 
     &:hover:not(:disabled) {
@@ -216,6 +233,23 @@
       padding: 0.55rem 0.4rem;
       text-align: center;
       font-size: var(--font-size-body-small);
+      line-height: 1.25;
+      white-space: normal;
+    }
+  }
+
+  &--par {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 3.5rem;
+      padding: 0.55rem 0.65rem;
+      text-align: center;
       line-height: 1.25;
       white-space: normal;
     }

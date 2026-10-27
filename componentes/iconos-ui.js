@@ -1,55 +1,29 @@
+import {
+  ArrowRight,
+  Calendar,
+  ChevronDown,
+  Package,
+  Pause,
+  Pencil,
+  Play,
+  Sprout,
+  Thermometer,
+  Trash2,
+  Video,
+} from "lucide-react";
+
+// Iconos funcionales: Lucide. IconoEliminarPlanta*, IconoInstagram y las ilustraciones de marca
+// se mantienen como SVG propios (no son iconos funcionales de interfaz).
 export function IconoChevron({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
+  return <ChevronDown className={className} strokeWidth={2} aria-hidden="true" />;
 }
 
 export function IconoFlecha({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M5 12h14M13 6l6 6-6 6" />
-    </svg>
-  );
+  return <ArrowRight className={className} strokeWidth={2} aria-hidden="true" />;
 }
 
 export function IconoBasura({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 7h16" />
-      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
-      <path d="M7 7l1 12a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-12" />
-      <path d="M10 11v6M14 11v6" />
-    </svg>
-  );
+  return <Trash2 className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoEliminarPlantaMin({ className }) {
@@ -69,59 +43,15 @@ export function IconoEliminarPlanta({ className }) {
 }
 
 export function IconoLapiz({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12.5 5.5l6 6" />
-      <path d="M4 20l4.2-.8L19 8.4a1.8 1.8 0 0 0 0-2.5l-.9-.9a1.8 1.8 0 0 0-2.5 0L4.8 15.8 4 20z" />
-    </svg>
-  );
+  return <Pencil className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoCalendario({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3.5" y="5" width="17" height="15.5" rx="2" />
-      <path d="M8 3.5v3M16 3.5v3M3.5 10h17" />
-    </svg>
-  );
+  return <Calendar className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoPlanta({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M12 20v-7" />
-      <path d="M12 13c-2.2-1.8-5.2-2.2-7.5-1.2 1.2 3.2 4 5.2 7.5 5.2" />
-      <path d="M12 13c2.2-1.8 5.2-2.2 7.5-1.2-1.2 3.2-4 5.2-7.5 5.2" />
-      <path d="M12 10c-1.4-2.4-1.2-5.2.4-7.2 2.4 1 4 3.4 4 6.2" />
-    </svg>
-  );
+  return <Sprout className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoInstagram({ className }) {
@@ -144,76 +74,21 @@ export function IconoInstagram({ className }) {
 }
 
 export function IconoCaja({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-      <path d="m3.3 7 8.7 5 8.7-5" />
-      <path d="M12 22V12" />
-    </svg>
-  );
+  return <Package className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoAmbiente({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M4 18h16" />
-      <path d="M6 18V9.5a2.5 2.5 0 0 1 5 0V18" />
-      <path d="M13 18v-5.2a2.3 2.3 0 0 1 4.6 0V18" />
-      <path d="M8.5 6.2c.4-1.4 1.4-2.4 2.7-2.7" />
-      <path d="M15.2 8.1c.5-1.1 1.4-1.9 2.5-2.2" />
-    </svg>
-  );
+  return <Thermometer className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoVideo({ className }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <rect x="3" y="6" width="13" height="12" rx="2" />
-      <path d="m16 10 5-2.5v9L16 14" />
-    </svg>
-  );
+  return <Video className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoReproducir({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8 5.5v13a1 1 0 0 0 1.52.86l10.4-6.5a1 1 0 0 0 0-1.72L9.52 4.64A1 1 0 0 0 8 5.5Z" />
-    </svg>
-  );
+  return <Play className={className} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />;
 }
 
 export function IconoPausa({ className }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <rect x="6" y="5" width="4.5" height="14" rx="1" />
-      <rect x="13.5" y="5" width="4.5" height="14" rx="1" />
-    </svg>
-  );
+  return <Pause className={className} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />;
 }

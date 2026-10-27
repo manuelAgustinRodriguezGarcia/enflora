@@ -10,7 +10,7 @@ import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
 import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { obtenerUsuario } from "@/lib/supabase/servidor";
+import { obtenerSesionRapida } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
 
 const inter = Inter({
@@ -84,7 +84,7 @@ export default async function Layout({ children }) {
   const esDemo = esRutaDemo(ruta);
   const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/") || esDemo;
   const conSupabase = configuracionLista();
-  const usuario = !esShellPublico && conSupabase ? await obtenerUsuario() : null;
+  const usuario = !esShellPublico && conSupabase ? await obtenerSesionRapida() : null;
   const bloqueado = usuarioBloqueadoPrelanzamiento(usuario, ruta);
   const claseCuerpo = claseInicial(ruta);
 

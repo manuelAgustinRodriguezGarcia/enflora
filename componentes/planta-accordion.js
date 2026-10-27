@@ -8,6 +8,7 @@ import { transicionRapida } from "@/lib/animaciones";
 export function PlantaAccordion({
   titulo,
   meta = "",
+  detalle = null,
   abierto,
   onToggle,
   children,
@@ -26,6 +27,7 @@ export function PlantaAccordion({
       >
         <span className="planta-accordion__info">
           <span className="planta-accordion__titulo">{titulo}</span>
+          {detalle}
           {meta ? <span className="planta-accordion__meta">{meta}</span> : null}
         </span>
         <motion.span

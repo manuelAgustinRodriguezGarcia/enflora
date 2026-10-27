@@ -3,12 +3,16 @@ import { EnlaceBoton } from "@/componentes/boton";
 import { FormularioCrearRegistro } from "@/componentes/formulario-crear-registro";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { cargarRegistrosUsuario } from "@/lib/cargar-registros";
-import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
+import {
+  cargarSeguimiento,
+  leerSeguimiento,
+  seguimientoDesdeLectura,
+} from "@/lib/cargar-seguimiento";
 import { esUuid } from "@/lib/historial-registros";
 import { rangoDiaLocal } from "@/lib/registros";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 export default async function PaginaRegistros({ searchParams }) {
   const parametros = await searchParams;
@@ -22,32 +26,41 @@ export default async function PaginaRegistros({ searchParams }) {
     );
   }
 
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");
   }
 
-  const [perfilRespuesta, espaciosRespuesta, unidadesRespuesta, plantasRespuesta] =
-    await Promise.all([
-      supabase
-        .from("perfiles")
-        .select("tipo_seguimiento")
-        .eq("id", user.id)
-        .maybeSingle(),
-      supabase.from("espacios").select("id, nombre").order("nombre"),
-      supabase
-        .from("unidades_cultivo")
-        .select("id, nombre, tipo, tipo_personalizado, numero, espacio_id")
-        .order("numero"),
-      supabase
-        .from("plantas")
-        .select("id, nombre, genetica, numero, unidad_cultivo_id, estado")
-        .order("numero"),
-    ]);
+  const supabase = await crearClienteServidor();
+  const dia = rangoDiaLocal();
+
+  // Todo lo independiente se pide junto: antes eran cuatro vueltas a la base en serie.
+  const [
+    perfilRespuesta,
+    espaciosRespuesta,
+    unidadesRespuesta,
+    plantasRespuesta,
+    lecturaSeguimiento,
+    hoy,
+  ] = await Promise.all([
+    supabase.from("perfiles").select("tipo_seguimiento").eq("id", user.id).maybeSingle(),
+    supabase.from("espacios").select("id, nombre").order("nombre"),
+    supabase
+      .from("unidades_cultivo")
+      .select("id, nombre, tipo, tipo_personalizado, numero, espacio_id")
+      .order("numero"),
+    supabase
+      .from("plantas")
+      .select("id, nombre, genetica, numero, unidad_cultivo_id, estado")
+      .order("numero"),
+    leerSeguimiento(supabase, user.id),
+    cargarRegistrosUsuario(supabase, {
+      desde: dia.desde,
+      hasta: dia.hasta,
+      limite: 30,
+    }),
+  ]);
 
   if (
     perfilRespuesta.error ||
@@ -90,9 +103,15 @@ export default async function PaginaRegistros({ searchParams }) {
     .filter(Boolean);
 
   const tipo = perfilRespuesta.data?.tipo_seguimiento || "";
-  const seguimientoCargado = esTipoSeguimiento(tipo)
-    ? await cargarSeguimiento(supabase, user.id, tipo)
-    : { error: false, acciones: [], parametros: [], opciones: [] };
+  let seguimientoCargado = { error: false, acciones: [], parametros: [], opciones: [] };
+  if (esTipoSeguimiento(tipo)) {
+    // Caso normal: la fila de preferencias ya existe y no hace falta ninguna consulta extra.
+    // Solo si falta (usuario nuevo) se la crea con la RPC y se vuelve a leer.
+    seguimientoCargado =
+      !lecturaSeguimiento.error && lecturaSeguimiento.preferencias
+        ? seguimientoDesdeLectura(lecturaSeguimiento)
+        : await cargarSeguimiento(supabase, user.id, tipo);
+  }
 
   if (seguimientoCargado.error) {
     return (
@@ -102,13 +121,6 @@ export default async function PaginaRegistros({ searchParams }) {
       </section>
     );
   }
-
-  const dia = rangoDiaLocal();
-  const hoy = await cargarRegistrosUsuario(supabase, {
-    desde: dia.desde,
-    hasta: dia.hasta,
-    limite: 30,
-  });
 
   return (
     <TransicionVista>
@@ -136,6 +148,7 @@ export default async function PaginaRegistros({ searchParams }) {
             }}
             registrosHoy={hoy.error ? [] : hoy.registros}
             registroInicialId={registroInicialId}
+            usuarioId={user.id}
           />
         )}
       </section>

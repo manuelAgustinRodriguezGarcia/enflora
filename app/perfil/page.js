@@ -3,7 +3,7 @@ import { PerfilVista } from "@/componentes/perfil-vista";
 import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 export default async function PaginaPerfil() {
   if (!configuracionLista()) {
@@ -11,9 +11,7 @@ export default async function PaginaPerfil() {
   }
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");

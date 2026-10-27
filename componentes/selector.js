@@ -59,7 +59,7 @@ export function Selector({
             sideOffset={6}
             alignItemWithTrigger={false}
           >
-            <Select.Popup className="selector__popup">
+            <Select.Popup className={`selector__popup${className ? ` ${className}` : ""}`}>
               <Select.List>
                 {opciones.map((opcion) => (
                   <Select.Item

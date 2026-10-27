@@ -2,12 +2,13 @@
 
 import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cargarPaginaHistorial, eliminarRegistro } from "@/app/registros/acciones";
+import { cargarPaginaHistorial, eliminarRegistro, urlFotoOriginal } from "@/app/registros/acciones";
 import { Boton, EnlaceBoton } from "@/componentes/boton";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { IconoBasura } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { Selector } from "@/componentes/selector";
+import { VisorFotos } from "@/componentes/visor-fotos";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { formatearFecha } from "@/lib/etapas";
 import {
@@ -123,6 +124,57 @@ function PlantasRegistro({ filas }) {
   );
 }
 
+const MINIATURAS_EN_TARJETA = 4;
+
+// Miniaturas firmadas (480 px) del registro. Las originales solo se piden al abrir el visor.
+function FotosRegistro({ registro }) {
+  const [abierta, setAbierta] = useState(null);
+  const fotos = (registro.registro_fotos || []).map((foto) => ({
+    ...foto,
+    registro_id: registro.id,
+    fecha_evento: registro.fecha_evento,
+    aplica_a: registro.aplica_a,
+    compartida: (registro.registro_plantas || []).length > 1,
+    cantidad_plantas: (registro.registro_plantas || []).length,
+  }));
+  if (fotos.length === 0) return null;
+
+  const visibles = fotos.slice(0, MINIATURAS_EN_TARJETA);
+  const restantes = fotos.length - visibles.length;
+
+  return (
+    <>
+      <ul className="historial__fotos" aria-label="Fotos del registro">
+        {visibles.map((foto, indice) => (
+          <li key={foto.id}>
+            <button
+              type="button"
+              className="historial__foto"
+              onClick={() => setAbierta(indice)}
+              aria-label={`Ver foto ${indice + 1} de ${fotos.length}`}
+            >
+              {foto.url_miniatura ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={foto.url_miniatura} alt="" loading="lazy" decoding="async" />
+              ) : null}
+              {restantes > 0 && indice === visibles.length - 1 ? (
+                <span className="historial__foto-mas">+{restantes}</span>
+              ) : null}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <VisorFotos
+        fotos={fotos}
+        obtenerUrl={urlFotoOriginal}
+        indice={abierta}
+        onCambiar={setAbierta}
+        onCerrar={() => setAbierta(null)}
+      />
+    </>
+  );
+}
+
 function TarjetaRegistro({ registro, unidades, onEliminado }) {
   const hora = horaArgentina(registro.fecha_evento);
   const dia = diaArgentina(registro.fecha_evento);
@@ -159,6 +211,7 @@ function TarjetaRegistro({ registro, unidades, onEliminado }) {
         </dl>
       ) : null}
       {registro.observacion ? <p className="historial__observacion">{registro.observacion}</p> : null}
+      <FotosRegistro registro={registro} />
       {ambiente ? (
         <p className="historial__vacio-inline">Medición de la unidad, sin plantas asociadas.</p>
       ) : (
@@ -224,6 +277,19 @@ function TarjetaRegistro({ registro, unidades, onEliminado }) {
         )}
         <h3>Observaciones</h3>
         <p>{registro.observacion || "Sin observaciones."}</p>
+        {(registro.registro_fotos || []).length > 0 ? (
+          <>
+            <h3>Fotos</h3>
+            <p>
+              {registro.registro_fotos.length === 1
+                ? "1 foto."
+                : `${registro.registro_fotos.length} fotos.`}
+              {(registro.registro_plantas || []).length > 1
+                ? " Son fotos compartidas del registro: no identifican a cada planta por separado."
+                : ""}
+            </p>
+          </>
+        ) : null}
       </details>
       <div className="historial__tarjeta-acciones">
         <EnlaceBoton
@@ -370,8 +436,9 @@ export function HistorialRegistros({
       siguiente.add(id);
       return siguiente;
     });
-    router.refresh();
-  }, [router]);
+    // eliminarRegistro ya revalida /registros/historial en el servidor: no hace falta un
+    // router.refresh() extra (era una segunda ida y vuelta completa a la misma página).
+  }, []);
 
   return (
     <div className="historial__cuerpo">

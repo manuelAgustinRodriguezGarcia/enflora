@@ -6,7 +6,8 @@ import { afirmarFiltrosHistorial, cargarHistorialRegistros } from "@/lib/cargar-
 import { filtrosDesdeConsulta } from "@/lib/historial-registros";
 import { agruparPlantasPorGenetica, normalizarGenetica } from "@/lib/registros";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { adjuntarMiniaturas } from "@/lib/fotos-servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 export const metadata = {
   title: "Historial",
@@ -28,6 +29,17 @@ function catalogoGeneticas(plantas, filas, activa) {
     .sort((a, b) => a.etiqueta.localeCompare(b.etiqueta, "es"));
 }
 
+function cargarEtapasPlanta(supabase, filtros) {
+  let consulta = supabase
+    .from("historial_etapas")
+    .select("id, etapa, fecha_inicio, fecha_fin")
+    .eq("planta_id", filtros.plantaId)
+    .order("fecha_inicio", { ascending: false });
+  if (filtros.desde) consulta = consulta.gte("fecha_inicio", filtros.desde);
+  if (filtros.hasta) consulta = consulta.lte("fecha_inicio", filtros.hasta);
+  return consulta;
+}
+
 export default async function PaginaHistorial({ searchParams }) {
   const parametros = await searchParams;
 
@@ -40,16 +52,29 @@ export default async function PaginaHistorial({ searchParams }) {
     );
   }
 
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) redirect("/ingreso");
 
+  const supabase = await crearClienteServidor();
   const normalizado = filtrosDesdeConsulta(parametros);
-  const [espaciosRespuesta, unidadesRespuesta, plantasRespuesta, geneticasRespuesta] =
-    await Promise.all([
+  const filtros = !normalizado.error ? normalizado.filtros : null;
+  const traerRegistros = Boolean(filtros && !filtros.sinContenido);
+  const traerEtapas = Boolean(
+    traerRegistros && filtros.plantaId && filtros.contenidos.length === 3
+  );
+
+  // Los filtros ya vienen de la URL: la validación de pertenencia, la página de registros y las
+  // etapas no dependen de los catálogos, así que todo se pide en una sola tanda.
+  const [
+    espaciosRespuesta,
+    unidadesRespuesta,
+    plantasRespuesta,
+    geneticasRespuesta,
+    propio,
+    pagina,
+    etapasRespuesta,
+  ] = await Promise.all([
       supabase.from("espacios").select("id, nombre").order("nombre"),
       supabase
         .from("unidades_cultivo")
@@ -64,6 +89,11 @@ export default async function PaginaHistorial({ searchParams }) {
         .select("genetica_clave, genetica_etiqueta")
         .not("genetica_clave", "is", null)
         .limit(100),
+      filtros ? afirmarFiltrosHistorial(supabase, filtros) : Promise.resolve({ error: "" }),
+      traerRegistros
+        ? cargarHistorialRegistros(supabase, filtros)
+        : Promise.resolve(null),
+      traerEtapas ? cargarEtapasPlanta(supabase, filtros) : Promise.resolve(null),
     ]);
 
   if (espaciosRespuesta.error || unidadesRespuesta.error || plantasRespuesta.error) {
@@ -103,33 +133,16 @@ export default async function PaginaHistorial({ searchParams }) {
   let fichaPlanta = null;
 
   if (!mensajeFiltro && normalizado.filtros) {
-    const propio = await afirmarFiltrosHistorial(supabase, normalizado.filtros);
     if (propio.error) {
       mensajeFiltro = propio.error;
-    } else if (!normalizado.filtros.sinContenido) {
-      const pagina = await cargarHistorialRegistros(supabase, normalizado.filtros);
+    } else if (pagina) {
       if (pagina.error) errorCarga = true;
       else {
-        registros = pagina.registros;
+        registros = await adjuntarMiniaturas(supabase, pagina.registros);
         hayMas = pagina.hayMas;
       }
 
-      const muestraEtapas =
-        normalizado.filtros.plantaId &&
-        normalizado.filtros.contenidos.length === 3;
-      if (muestraEtapas) {
-        let consulta = supabase
-          .from("historial_etapas")
-          .select("id, etapa, fecha_inicio, fecha_fin")
-          .eq("planta_id", normalizado.filtros.plantaId)
-          .order("fecha_inicio", { ascending: false });
-        if (normalizado.filtros.desde) {
-          consulta = consulta.gte("fecha_inicio", normalizado.filtros.desde);
-        }
-        if (normalizado.filtros.hasta) {
-          consulta = consulta.lte("fecha_inicio", normalizado.filtros.hasta);
-        }
-        const etapasRespuesta = await consulta;
+      if (etapasRespuesta) {
         if (etapasRespuesta.error) errorEtapas = true;
         else etapas = etapasRespuesta.data || [];
 

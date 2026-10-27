@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import {
   ACCIONES_SEGUIMIENTO,
   PARAMETROS_SEGUIMIENTO,
+  accionesOfrecibles,
   esTipoSeguimiento,
   esTipoValor,
   nombreOpcionValido,
@@ -13,7 +14,7 @@ import {
   unidadOpcionValida,
 } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 const MENSAJES = [
   "Seleccioná un tipo de seguimiento.",
@@ -45,9 +46,7 @@ async function sesion() {
   }
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");
@@ -170,7 +169,8 @@ export async function desactivarOpcionSeguimiento(opcionId) {
 
 export async function guardarConfiguracionSeguimiento(_estado, formulario) {
   const tipo = String(formulario.get("tipo_seguimiento") || "");
-  const acciones = formulario.getAll("acciones").map(String);
+  // Foto y Nota ya no son acciones: si un cliente viejo las envía, se descartan.
+  const acciones = accionesOfrecibles(formulario.getAll("acciones").map(String));
   const parametros = formulario.getAll("parametros").map(String);
   const opciones = formulario.getAll("opciones").map(String);
   const continuarEn = String(formulario.get("continuar_en") || "");

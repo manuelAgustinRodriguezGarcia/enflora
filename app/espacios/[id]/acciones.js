@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { datosTipoUnidad, MAXIMO_UNIDADES } from "@/lib/unidades";
 
 const MAXIMO_PLANTAS = 100;
@@ -14,9 +14,7 @@ async function sesion() {
   if (!configuracionLista()) return { error: "Falta la configuración de Supabase." };
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) redirect("/ingreso");
   return { supabase, user };

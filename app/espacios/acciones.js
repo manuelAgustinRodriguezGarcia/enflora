@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { datosTipoUnidad, tipoUnidadPermitido } from "@/lib/unidades";
 
 const MAXIMO_UNIDADES = 20;
@@ -80,9 +80,7 @@ export async function crearCultivo(_estado, formulario) {
   if (!configuracionLista()) return { error: "Falta la configuración de Supabase." };
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) redirect("/ingreso");
 
@@ -192,9 +190,7 @@ export async function editarEspacio(_estado, formulario) {
   }
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");
@@ -245,9 +241,7 @@ export async function eliminarEspacio(_estado, formulario) {
   }
 
   const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");

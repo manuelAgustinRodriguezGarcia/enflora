@@ -7,6 +7,7 @@ import { crearCultivo } from "@/app/espacios/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContadorCantidad } from "@/componentes/contador-cantidad";
+import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { PlantaAccordion } from "@/componentes/planta-accordion";
 import { ResumenConfiguracion } from "@/componentes/resumen-configuracion";
@@ -97,11 +98,23 @@ function usaMetodo(modo) {
   return modo === "mismo_metodo" || modo === "misma_genetica_y_metodo";
 }
 
+function tituloPlanta(planta, indice) {
+  const genetica = String(planta.genetica || "").trim();
+  const numero = indice + 1;
+  if (!genetica) return `Planta ${numero}`;
+  return `${genetica} #${numero}`;
+}
+
+function detalleEtapa(planta) {
+  if (!planta.etapa) return null;
+  return <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />;
+}
+
 export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null }) {
   const guardar = espacio ? agregarUnidad : crearCultivo;
   const [estado, setEstado] = useState(() => (espacio ? estadoInicialUnidad(espacio) : estadoInicial()));
   const [sentido, setSentido] = useState(1);
-  const [abiertas, setAbiertas] = useState(() => new Set([0]));
+  const [abierta, setAbierta] = useState(0);
   const [resultado, accion, pendiente] = useActionState(guardar, null);
 
   function aplicar(funcion, ...args) {
@@ -130,6 +143,10 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
     aplicar(funcion, ...args);
   }
 
+  function alternarPlanta(indice) {
+    setAbierta((actual) => (actual === indice ? null : indice));
+  }
+
   const gruposResumen = [];
   if (estado.nombre.trim()) {
     gruposResumen.push({
@@ -141,7 +158,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   if (estado.unidades.length) {
     gruposResumen.push({
       id: "unidades",
-      titulo: "Unidades",
+      titulo: estado.unidades.length === 1 ? "Unidad" : "Unidades",
       items: estado.unidades.map((item, indice) => {
         const marca = estadoVisibleUnidad(estado, indice);
         const meta =
@@ -236,6 +253,9 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
 
           {estado.paso === "tipo_unidad" ? (
             <div className="bloque">
+              {estado.tipo === "exterior" ? (
+                <p className="asistente__pregunta">¿Cómo cultivas en exterior?</p>
+              ) : null}
               <div className="eleccion">
                 {tipos.map((tipo) => (
                   <motion.button
@@ -253,7 +273,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               </div>
               <Aparecer visible={estado.tipoUnidad === "otro"}>
                 <label className="formulario__campo">
-                  Tipo de unidad
+                  {estado.tipo === "exterior" ? "Nombre del método" : "Tipo de unidad"}
                   <input
                     type="text"
                     value={estado.tipoPersonalizado || ""}
@@ -353,17 +373,10 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                     key={`${unidad.numero}-${indice}`}
                     className="asistente__planta"
                     style={{ borderLeftColor: colorPlanta(planta, unidad.modo) }}
-                    titulo={`Planta ${indice + 1}`}
-                    meta={planta.genetica || ""}
-                    abierto={abiertas.has(indice)}
-                    onToggle={() =>
-                      setAbiertas((actual) => {
-                        const siguiente = new Set(actual);
-                        if (siguiente.has(indice)) siguiente.delete(indice);
-                        else siguiente.add(indice);
-                        return siguiente;
-                      })
-                    }
+                    titulo={tituloPlanta(planta, indice)}
+                    detalle={detalleEtapa(planta)}
+                    abierto={abierta === indice}
+                    onToggle={() => alternarPlanta(indice)}
                   >
                     <label className="formulario__campo">
                       Genética
@@ -402,22 +415,27 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
             <div className="bloque">
               <fieldset className="opciones">
                 <legend>Etapa inicial</legend>
-                <label>
-                  <input
-                    type="radio"
-                    checked={unidad.modoEtapa === "misma"}
-                    onChange={() => aplicar(cambiarModoEtapa, "misma")}
-                  />
-                  Misma etapa para todas
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    checked={unidad.modoEtapa === "individual"}
-                    onChange={() => aplicar(cambiarModoEtapa, "individual")}
-                  />
-                  Personalizar por planta
-                </label>
+                <p className="opciones__texto">
+                  Todas las plantas empiezan desde la misma etapa o hay diferentes etapas.
+                </p>
+                <div className="eleccion eleccion--par" role="group" aria-label="Etapa inicial">
+                  <button
+                    type="button"
+                    className={unidad.modoEtapa === "misma" ? "eleccion__activa" : undefined}
+                    aria-pressed={unidad.modoEtapa === "misma"}
+                    onClick={() => aplicar(cambiarModoEtapa, "misma")}
+                  >
+                    Misma etapa
+                  </button>
+                  <button
+                    type="button"
+                    className={unidad.modoEtapa === "individual" ? "eleccion__activa" : undefined}
+                    aria-pressed={unidad.modoEtapa === "individual"}
+                    onClick={() => aplicar(cambiarModoEtapa, "individual")}
+                  >
+                    Etapas diferentes
+                  </button>
+                </div>
               </fieldset>
               <AnimatePresence mode="wait" initial={false}>
                 <motion.div
@@ -445,17 +463,10 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                       {unidad.plantas.map((planta, indice) => (
                         <PlantaAccordion
                           key={`${unidad.numero}-etapa-${indice}`}
-                          titulo={`Planta ${indice + 1}`}
-                          meta={planta.genetica || ""}
-                          abierto={abiertas.has(indice)}
-                          onToggle={() =>
-                            setAbiertas((actual) => {
-                              const siguiente = new Set(actual);
-                              if (siguiente.has(indice)) siguiente.delete(indice);
-                              else siguiente.add(indice);
-                              return siguiente;
-                            })
-                          }
+                          titulo={tituloPlanta(planta, indice)}
+                          detalle={<IndicadorEtapa etapa={planta.etapa} tamano="compacto" />}
+                          abierto={abierta === indice}
+                          onToggle={() => alternarPlanta(indice)}
                         >
                           <SelectorEtapa
                             nombre={`etapa-unidad-${unidad.numero}-planta-${indice}`}
@@ -541,7 +552,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   },
                   {
                     id: "unidades-final",
-                    titulo: "Unidades",
+                    titulo: estado.unidades.length === 1 ? "Unidad" : "Unidades",
                     items: estado.unidades.map((item) => ({
                       id: item.numero,
                       titulo: item.nombre,

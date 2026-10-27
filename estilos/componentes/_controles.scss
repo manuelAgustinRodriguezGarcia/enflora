@@ -960,7 +960,8 @@ a.boton {
   &__info {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    align-items: flex-start;
+    gap: 0.35rem;
     min-width: 0;
   }
 
@@ -968,6 +969,7 @@ a.boton {
     font-family: var(--font-identidad);
     font-size: var(--font-size-card);
     color: var(--color-primary);
+    overflow-wrap: anywhere;
   }
 
   &__meta {

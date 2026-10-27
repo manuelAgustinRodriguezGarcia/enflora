@@ -636,7 +636,7 @@ test("el formulario compartido no tiene persistencia propia y producción conser
   assert.match(compartido, /registrosHoyControlados = false/);
   assert.match(compartido, /seleccionInicial = null/);
   const produccion = leer("componentes/formulario-crear-registro.js");
-  assert.match(produccion, /import \{ guardarRegistro, obtenerRegistroCompleto \} from "@\/app\/registros\/acciones"/);
+  assert.match(produccion, /import \{ guardarRegistro, obtenerRegistroCompleto, urlFotoOriginal \} from "@\/app\/registros\/acciones"/);
   assert.match(produccion, /accionGuardar=\{guardarRegistro\}/);
   assert.match(produccion, /cargarRegistro=\{obtenerRegistroCompleto\}/);
   assert.match(produccion, /EditorSeguimiento=\{EditorSeguimiento\}/);

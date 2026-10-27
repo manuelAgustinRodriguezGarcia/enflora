@@ -1,0 +1,40 @@
+.carga-vista {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+}
+
+.carga-vista__titulo,
+.carga-vista__bloque {
+  display: block;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-secondary);
+  animation: carga-vista-pulso 1.4s ease-in-out infinite;
+}
+
+.carga-vista__titulo {
+  width: 55%;
+  height: 1.75rem;
+}
+
+.carga-vista__bloque {
+  height: 5.5rem;
+}
+
+.carga-vista__bloque--corto {
+  width: 70%;
+  height: 3.5rem;
+}
+
+@keyframes carga-vista-pulso {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carga-vista__titulo,
+  .carga-vista__bloque {
+    animation: none;
+  }
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
@@ -11,7 +12,11 @@ import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
+import { SelectorFotos } from "@/componentes/selector-fotos";
+import { VisorFotos } from "@/componentes/visor-fotos";
 import { toque, transicionToque } from "@/lib/animaciones";
+import { MAX_FOTOS_POR_REGISTRO } from "@/lib/fotos";
+import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
 import {
   agruparPlantasPorGenetica,
   claveParametroRegistro,
@@ -172,10 +177,37 @@ export function FormularioRegistroCultivo({
   onGuardado = null,
   accionesOcultas = SIN_ACCIONES_OCULTAS,
   registroInicialId = "",
+  usuarioId = "",
+  // La subida a Storage la inyecta el contenedor de producción; la demo no la recibe.
+  subirFoto,
+  borrarArchivos,
+  obtenerUrlFoto,
 }) {
   const inicial = partesFechaLocal();
   const reducido = useReducedMotion();
-  const [estado, accion, pendiente] = useActionState(accionGuardar, null);
+  // Si falla la red, la acción no devuelve estado: se convierte en un error visible y reintentable.
+  const guardarSeguro = useCallback(
+    async (previo, datos) => {
+      try {
+        return await accionGuardar(previo, datos);
+      } catch {
+        return { error: "No se pudo guardar. Revisá tu conexión y volvé a intentar.", sinRespuesta: true };
+      }
+    },
+    [accionGuardar]
+  );
+  const [estado, accion, pendiente] = useActionState(guardarSeguro, null);
+  const permitirFotos = Boolean(usuarioId && subirFoto);
+  const [fotosNuevas, setFotosNuevas] = useState([]);
+  const [fotosExistentes, setFotosExistentes] = useState([]);
+  const [fotosQuitar, setFotosQuitar] = useState(() => new Set());
+  const [fotoPorQuitar, setFotoPorQuitar] = useState(null);
+  const [visorIndice, setVisorIndice] = useState(null);
+  const [subiendo, setSubiendo] = useState(false);
+  // clave de foto nueva -> metadatos ya subidos a Storage (se reutilizan si hay que reintentar).
+  const subidasRef = useRef(new Map());
+  const fotosNuevasRef = useRef(fotosNuevas);
+  const enviandoRef = useRef(false);
   const [inicio] = useState(() => seleccionDeInicio(unidades, seleccionInicial));
   const [unidadId, setUnidadId] = useState(inicio.unidadId);
   const [tipoRegistro, setTipoRegistro] = useState(inicio.tipo);
@@ -214,6 +246,10 @@ export function FormularioRegistroCultivo({
   useEffect(() => {
     onGuardadoRef.current = onGuardado;
   }, [onGuardado]);
+
+  useEffect(() => {
+    fotosNuevasRef.current = fotosNuevas;
+  }, [fotosNuevas]);
 
   useEffect(() => {
     if (!configurar) return undefined;
@@ -281,6 +317,93 @@ export function FormularioRegistroCultivo({
     baseEdicion.current = null;
     setMostrarMasParametros(false);
     setMostrarMasAcciones(false);
+    reiniciarFotos();
+  }
+
+  // Descarta fotos locales sin tocar Storage (después de guardar, los archivos ya pertenecen al registro).
+  function reiniciarFotos() {
+    for (const foto of fotosNuevasRef.current) liberarVista(foto);
+    subidasRef.current = new Map();
+    setFotosNuevas([]);
+    setFotosExistentes([]);
+    setFotosQuitar(new Set());
+    setFotoPorQuitar(null);
+    setVisorIndice(null);
+  }
+
+  // Si el servidor rechazó el registro, ya borró los archivos recién subidos: hay que volver a subirlos.
+  // Si dijo "ya guardadas", un envío anterior sí quedó guardado y no hay que tocar nada.
+  useEffect(() => {
+    if (!estado?.error) return;
+    if (estado.archivosLimpiados) subidasRef.current = new Map();
+    // Un envío anterior sí se guardó: se vacía el formulario para no duplicarlo.
+    if (estado.yaGuardado) {
+      reiniciarFotos();
+    }
+    // reiniciarFotos solo usa refs y setters estables.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [estado]);
+
+  async function seleccionarFotos(archivos) {
+    const cupo = MAX_FOTOS_POR_REGISTRO - fotosExistentes.length + fotosQuitar.size - fotosNuevas.length;
+    if (cupo <= 0) {
+      setErrorLocal(`Un registro admite hasta ${MAX_FOTOS_POR_REGISTRO} fotos.`);
+      return;
+    }
+    setErrorLocal("");
+    const aceptados = archivos.slice(0, cupo);
+    if (archivos.length > cupo) {
+      setErrorLocal(`Solo se agregaron ${cupo}: un registro admite hasta ${MAX_FOTOS_POR_REGISTRO} fotos.`);
+    }
+
+    const marcadores = aceptados.map((archivo) => ({
+      clave: globalThis.crypto.randomUUID(),
+      archivo,
+      estado: "procesando",
+      url: "",
+    }));
+    setFotosNuevas((lista) => [...lista, ...marcadores]);
+
+    for (const marcador of marcadores) {
+      const resultado = await procesarFoto(marcador.archivo);
+      if (resultado.error) {
+        setErrorLocal(resultado.error);
+        setFotosNuevas((lista) => lista.filter((item) => item.clave !== marcador.clave));
+        continue;
+      }
+      setFotosNuevas((lista) =>
+        lista.map((item) =>
+          item.clave === marcador.clave
+            ? { clave: item.clave, estado: "lista", url: resultado.foto.vista, procesada: resultado.foto, vista: resultado.foto.vista }
+            : item
+        )
+      );
+    }
+  }
+
+  function quitarFotoNueva(item) {
+    const subida = subidasRef.current.get(item.clave);
+    if (subida) {
+      // Ya estaba en Storage pero todavía no asociada a ningún registro: se borra para no dejar huérfanos.
+      borrarArchivos?.(subida.rutas);
+      subidasRef.current.delete(item.clave);
+    }
+    liberarVista(item);
+    setFotosNuevas((lista) => lista.filter((foto) => foto.clave !== item.clave));
+  }
+
+  function confirmarQuitarExistente() {
+    if (!fotoPorQuitar) return;
+    setFotosQuitar((actual) => new Set(actual).add(fotoPorQuitar.id));
+    setFotoPorQuitar(null);
+  }
+
+  function deshacerQuitarExistente(id) {
+    setFotosQuitar((actual) => {
+      const siguiente = new Set(actual);
+      siguiente.delete(id);
+      return siguiente;
+    });
   }
 
   useEffect(() => {
@@ -478,6 +601,13 @@ export function FormularioRegistroCultivo({
     setParamsHistoricos(registro.registro_parametros || []);
     setMostrarMasParametros(true);
     setEditorPlantas(false);
+    for (const foto of fotosNuevasRef.current) liberarVista(foto);
+    subidasRef.current = new Map();
+    setFotosNuevas([]);
+    setFotosQuitar(new Set());
+    setFotosExistentes(
+      [...(registro.registro_fotos || [])].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+    );
   }
 
   async function cargarEdicion(registro) {
@@ -594,12 +724,20 @@ export function FormularioRegistroCultivo({
     if (parametrosOk.error) return { error: parametrosOk.error };
 
     const observacionLimpia = observacion.trim();
+    const existentesRestantes = fotosExistentes.filter((foto) => !fotosQuitar.has(foto.id)).length;
+    const hayFotos = permitirFotos && (fotosNuevas.length > 0 || existentesRestantes > 0);
     if (
       acciones.length === 0 &&
       parametrosOk.parametros.length === 0 &&
-      !observacionLimpia
+      !observacionLimpia &&
+      !hayFotos
     ) {
-      return { error: "El registro necesita una acción, un parámetro o una observación." };
+      return {
+        error: "El registro necesita una acción, un parámetro, una observación o una foto.",
+      };
+    }
+    if (fotosNuevas.some((foto) => foto.estado === "procesando")) {
+      return { error: "Esperá a que termine de prepararse la foto." };
     }
 
     const datos = {
@@ -615,6 +753,8 @@ export function FormularioRegistroCultivo({
         aplicaA === "ambiente" ? [] : prepararPlantasRegistro(plantasSeleccionadas, unidad),
       acciones,
       parametros: parametrosOk.parametros,
+      fotos_quitar: editandoId ? [...fotosQuitar] : [],
+      fotos_restantes: existentesRestantes,
     };
 
     if (editandoId) datos.id = editandoId;
@@ -628,16 +768,52 @@ export function FormularioRegistroCultivo({
     };
   }
 
-  function enviar(formData) {
+  // Sube a Storage las fotos que todavía no se subieron. Las que ya subieron en un intento previo
+  // se reutilizan (mismo id y ruta): si un envío anterior llegó a guardarse, la base lo detecta.
+  async function subirFotosPendientes() {
+    const resultado = [];
+    for (const item of fotosNuevasRef.current) {
+      let subida = subidasRef.current.get(item.clave);
+      if (!subida) {
+        subida = await subirFoto(usuarioId, item.procesada);
+        if (subida.error) return { error: subida.error };
+        subidasRef.current.set(item.clave, subida);
+      }
+      resultado.push(subida.foto);
+    }
+    return { fotos: resultado };
+  }
+
+  async function enviar(formData) {
+    if (enviandoRef.current) return;
     setErrorLocal("");
     const armado = armarPayload();
     if (armado.error) {
       setErrorLocal(armado.error);
       return;
     }
-    ultimoPayload.current = armado.datos;
-    formData.set("registro", JSON.stringify(armado.datos));
-    return accion(formData);
+
+    // Bloqueo síncrono contra doble envío (el estado de React llega un render tarde).
+    enviandoRef.current = true;
+    try {
+      let datos = armado.datos;
+      if (permitirFotos && fotosNuevasRef.current.length > 0) {
+        setSubiendo(true);
+        const subidas = await subirFotosPendientes();
+        setSubiendo(false);
+        if (subidas.error) {
+          setErrorLocal(subidas.error);
+          return;
+        }
+        datos = { ...datos, fotos: subidas.fotos };
+      }
+      ultimoPayload.current = datos;
+      formData.set("registro", JSON.stringify(datos));
+      await accion(formData);
+    } finally {
+      setSubiendo(false);
+      enviandoRef.current = false;
+    }
   }
 
   const listaHoy = registrosHoyControlados
@@ -661,7 +837,7 @@ export function FormularioRegistroCultivo({
     etiqueta: `${item.nombre} · ${item.espacio_nombre}`,
   }));
 
-  const bloqueado = pendiente || cargandoEdicion;
+  const bloqueado = pendiente || cargandoEdicion || subiendo;
   const cantidadParametros = useMemo(() => {
     const catalogo = [
       ...parametrosOrdenados.prioritarias,
@@ -996,8 +1172,67 @@ export function FormularioRegistroCultivo({
           </section>
         </Aparecer>
 
+        {permitirFotos ? (
+          <section className="registro-crear__seccion" aria-labelledby="registro-fotos-titulo">
+            <h2 className="registro-crear__etiqueta" id="registro-fotos-titulo">
+              Fotos
+            </h2>
+            {fotosExistentes.length > 0 ? (
+              <ul className="fotos-selector__grilla" aria-label="Fotos guardadas">
+                {fotosExistentes.map((foto, indice) => {
+                  const quitada = fotosQuitar.has(foto.id);
+                  return (
+                    <li key={foto.id} className="fotos-selector__item">
+                      <button
+                        type="button"
+                        className="fotos-selector__abrir"
+                        onClick={() => setVisorIndice(indice)}
+                        aria-label="Ver foto"
+                        style={quitada ? { opacity: 0.35 } : undefined}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={foto.url_miniatura} alt="" loading="lazy" decoding="async" />
+                      </button>
+                      {quitada ? (
+                        <button
+                          type="button"
+                          className="fotos-selector__nueva"
+                          onClick={() => deshacerQuitarExistente(foto.id)}
+                          disabled={bloqueado}
+                        >
+                          Deshacer
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="fotos-selector__quitar"
+                          onClick={() => setFotoPorQuitar(foto)}
+                          disabled={bloqueado}
+                          aria-label="Quitar foto guardada"
+                        >
+                          <X strokeWidth={2} aria-hidden="true" />
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : null}
+            <SelectorFotos
+              items={fotosNuevas}
+              maximo={Math.max(
+                0,
+                MAX_FOTOS_POR_REGISTRO - (fotosExistentes.length - fotosQuitar.size)
+              )}
+              disabled={bloqueado}
+              onSeleccionar={seleccionarFotos}
+              onQuitar={quitarFotoNueva}
+            />
+          </section>
+        ) : null}
+
         <section className="registro-crear__seccion">
-          <h2 className="registro-crear__etiqueta">Observaciones</h2>
+          <h2 className="registro-crear__etiqueta">Notas y observaciones</h2>
           <label className="formulario__campo registro-crear__observacion">
             <span className="registro-crear__sr">Observación</span>
             <textarea
@@ -1055,7 +1290,9 @@ export function FormularioRegistroCultivo({
             className="boton boton--cta boton--ancho"
             disabled={bloqueado || !unidad}
           >
-            {pendiente
+            {subiendo
+              ? "Subiendo fotos..."
+              : pendiente
               ? "Guardando..."
               : cargandoEdicion
                 ? "Cargando..."
@@ -1086,6 +1323,25 @@ export function FormularioRegistroCultivo({
           </div>
         </Aparecer>
       ) : null}
+
+      <VisorFotos
+        fotos={fotosExistentes}
+        obtenerUrl={obtenerUrlFoto}
+        indice={visorIndice}
+        onCambiar={setVisorIndice}
+        onCerrar={() => setVisorIndice(null)}
+      />
+
+      <ModalConfirmacion
+        abierto={Boolean(fotoPorQuitar)}
+        onCerrar={() => setFotoPorQuitar(null)}
+        titulo="¿Quitar esta foto?"
+        descripcion="La foto se elimina del registro cuando guardes los cambios. Podés deshacerlo antes de guardar."
+        textoConfirmar="Quitar foto"
+        textoCancelar="Cancelar"
+        varianteConfirmar="destructivo"
+        onConfirmar={confirmarQuitarExistente}
+      />
 
       <ModalConfirmacion
         abierto={Boolean(tipoPendiente)}

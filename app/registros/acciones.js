@@ -7,13 +7,17 @@ import {
   cargarHistorialRegistros,
   cargarRegistroPorId,
 } from "@/lib/cargar-registros";
+import { SEGUNDOS_URL_ORIGINAL, adjuntarMiniaturas, borrarArchivos, firmarRutas, rutasDeFotos } from "@/lib/fotos-servidor";
+import { esUuidFoto, rutaPerteneceAUsuario } from "@/lib/fotos";
 import { normalizarFiltrosHistorial } from "@/lib/historial-registros";
 import {
   argumentosRpcRegistro,
   prepararDatosRegistro,
 } from "@/lib/registros";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
+
+const FOTOS_YA_GUARDADAS = "Las fotos ya fueron guardadas.";
 
 const MENSAJES = [
   "No hay sesión.",
@@ -34,6 +38,16 @@ const MENSAJES = [
   "Hay un parámetro que no es válido.",
   "Hay un parámetro con tipo inválido.",
   "El registro necesita una acción, un parámetro o una observación.",
+  "El registro necesita una acción, un parámetro, una observación o una foto.",
+  FOTOS_YA_GUARDADAS,
+  "Las fotos del registro no son válidas.",
+  "Las fotos a quitar no son válidas.",
+  "Hay una foto con identificador inválido.",
+  "La ruta de una foto no es válida.",
+  "Hay una foto con un formato no permitido.",
+  "Hay una foto que supera el tamaño permitido.",
+  "No se encontró el archivo de una foto.",
+  "Un registro admite hasta 10 fotos.",
   "No se encontró el registro.",
   "Las plantas del registro no son válidas.",
   "Las acciones del registro no son válidas.",
@@ -60,15 +74,13 @@ async function sesion() {
     return { error: "Falta la configuración de Supabase." };
   }
 
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await obtenerSesionRapida();
 
   if (!user) {
     redirect("/ingreso");
   }
 
+  const supabase = await crearClienteServidor();
   return { supabase, user };
 }
 
@@ -122,17 +134,47 @@ export async function crearRegistro(_estado, formularioODatos) {
     return { error: acceso.error };
   }
 
+  if (!fotosDelUsuario(preparado.datos.fotos, acceso.user.id)) {
+    return { error: "La ruta de una foto no es válida." };
+  }
+
   const { data, error } = await acceso.supabase.rpc(
     "crear_registro",
     argumentosRpcRegistro(preparado.datos)
   );
 
   if (error) {
-    return { error: mensajeDe(error, "No se pudo crear el registro.") };
+    return await respuestaConError(acceso.supabase, error, preparado.datos.fotos, "No se pudo crear el registro.");
   }
 
   revalidarContexto(preparado.datos);
   return { ok: true, registro: data };
+}
+
+function fotosDelUsuario(fotos, usuarioId) {
+  return (fotos || []).every(
+    (foto) =>
+      rutaPerteneceAUsuario(foto.ruta, usuarioId) &&
+      rutaPerteneceAUsuario(foto.ruta_miniatura, usuarioId)
+  );
+}
+
+// Si el registro no pudo guardarse, los archivos recién subidos no quedan asociados a nada:
+// se borran para no dejar huérfanos. Excepción: "ya fueron guardadas" significa que un envío
+// anterior SÍ los asoció, así que no se tocan.
+async function respuestaConError(supabase, error, fotosNuevas, reserva) {
+  const mensaje = mensajeDe(error, reserva);
+  if (mensaje === FOTOS_YA_GUARDADAS) {
+    return {
+      error: "Este registro ya se había guardado. Revisalo en el historial antes de volver a enviarlo.",
+      yaGuardado: true,
+    };
+  }
+  if ((fotosNuevas || []).length > 0) {
+    await borrarArchivos(supabase, rutasDeFotos(fotosNuevas));
+    return { error: mensaje, archivosLimpiados: true };
+  }
+  return { error: mensaje };
 }
 
 export async function editarRegistro(_estado, formularioODatos) {
@@ -156,14 +198,35 @@ export async function editarRegistro(_estado, formularioODatos) {
     return { error: acceso.error };
   }
 
+  if (!fotosDelUsuario(preparado.datos.fotos, acceso.user.id)) {
+    return { error: "La ruta de una foto no es válida." };
+  }
+
+  // Rutas de los archivos que se van a quitar: se leen antes porque la fila desaparece con la edición.
+  let rutasQuitadas = [];
+  if (preparado.datos.fotos_quitar.length > 0) {
+    const { data: aQuitar } = await acceso.supabase
+      .from("registro_fotos")
+      .select("ruta, ruta_miniatura")
+      .eq("registro_id", registroId)
+      .in("id", preparado.datos.fotos_quitar);
+    rutasQuitadas = rutasDeFotos(aQuitar);
+  }
+
   const { data, error } = await acceso.supabase.rpc("editar_registro", {
     p_registro_id: registroId,
     ...argumentosRpcRegistro(preparado.datos),
+    ...(preparado.datos.fotos_quitar.length > 0
+      ? { p_fotos_quitar: preparado.datos.fotos_quitar }
+      : {}),
   });
 
   if (error) {
-    return { error: mensajeDe(error, "No se pudo editar el registro.") };
+    return await respuestaConError(acceso.supabase, error, preparado.datos.fotos, "No se pudo editar el registro.");
   }
+
+  // Los archivos viejos se borran SOLO después de confirmar que la edición quedó guardada.
+  await borrarArchivos(acceso.supabase, rutasQuitadas);
 
   revalidarContexto(preparado.datos);
   return { ok: true, registro: data };
@@ -185,7 +248,28 @@ export async function obtenerRegistroCompleto(registroId) {
     return { error: "No se encontró el registro.", registro: null };
   }
 
-  return { error: "", registro };
+  const [conMiniaturas] = await adjuntarMiniaturas(acceso.supabase, [registro]);
+  return { error: "", registro: conMiniaturas };
+}
+
+// URL temporal (10 minutos) para ver una foto en tamaño ampliado. Solo para fotos propias (RLS).
+export async function urlFotoOriginal(fotoId) {
+  const id = String(fotoId || "").trim();
+  if (!esUuidFoto(id)) return { error: "No se encontró la foto.", url: "" };
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error, url: "" };
+
+  const { data, error } = await acceso.supabase
+    .from("registro_fotos")
+    .select("ruta")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !data) return { error: "No se encontró la foto.", url: "" };
+
+  const urls = await firmarRutas(acceso.supabase, [data.ruta], SEGUNDOS_URL_ORIGINAL);
+  const url = urls.get(data.ruta) || "";
+  return url ? { error: "", url } : { error: "No se pudo cargar la foto.", url: "" };
 }
 
 export async function eliminarRegistro(_estado, formularioODatos) {
@@ -212,6 +296,12 @@ export async function eliminarRegistro(_estado, formularioODatos) {
     return { error: acceso.error };
   }
 
+  // Las filas de fotos se eliminan en cascada con el registro: las rutas se leen antes.
+  const { data: fotosDelRegistro } = await acceso.supabase
+    .from("registro_fotos")
+    .select("ruta, ruta_miniatura")
+    .eq("registro_id", registroId);
+
   const { error } = await acceso.supabase.rpc("eliminar_registro", {
     p_registro_id: registroId,
   });
@@ -219,6 +309,8 @@ export async function eliminarRegistro(_estado, formularioODatos) {
   if (error) {
     return { error: mensajeDe(error, "No se pudo eliminar el registro.") };
   }
+
+  await borrarArchivos(acceso.supabase, rutasDeFotos(fotosDelRegistro));
 
   revalidarContexto({
     espacio_id: espacioId || null,
@@ -268,5 +360,6 @@ export async function cargarPaginaHistorial(payload) {
     };
   }
 
-  return { error: false, mensaje: "", registros: pagina.registros, hayMas: pagina.hayMas };
+  const registros = await adjuntarMiniaturas(acceso.supabase, pagina.registros);
+  return { error: false, mensaje: "", registros, hayMas: pagina.hayMas };
 }
