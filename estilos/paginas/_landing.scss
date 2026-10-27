@@ -284,10 +284,23 @@ body:has(.landing) {
     &__acceso {
       display: flex;
       flex: 0 0 auto;
+      align-items: center;
+      gap: 0.55rem;
       margin-left: 0;
       transition:
         opacity 0.28s ease,
         visibility 0.28s ease;
+
+      .landing__accion--sesion {
+        border: 1px solid rgba(11, 61, 42, 0.14);
+        background: #fff;
+        color: var(--color-primary);
+
+        &:hover {
+          background: #fff;
+          color: var(--color-primary-hover);
+        }
+      }
 
       &--oculto {
         opacity: 0;
@@ -448,17 +461,26 @@ body:has(.landing) {
     .landing__accion {
       width: 100%;
     }
+
+    .landing__accion--principal {
+      border: 1.5px solid var(--color-primary);
+      background: #f4f8ee;
+      color: var(--color-primary);
+      font-weight: 700;
+
+      &:hover {
+        background: #e7f0dc;
+        color: var(--color-primary);
+      }
+    }
   }
 
   &__seguinos {
     display: flex;
     width: 100%;
-  }
-
-  &__lanzamiento {
-    display: none;
-    width: 100%;
-    min-width: 0;
+    font-family: var(--font-funcional);
+    font-size: 0.98rem;
+    font-weight: 700;
   }
 
   &__visual {
@@ -831,6 +853,7 @@ body:has(.landing) {
       display: inline-flex;
       width: max-content;
       max-width: 100%;
+      gap: 0.7rem;
     }
 
     &__acciones {
@@ -845,13 +868,6 @@ body:has(.landing) {
     &__seguinos {
       width: auto;
       min-height: 48px;
-    }
-
-    &__lanzamiento {
-      display: flex;
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
     }
 
     &__visual {
@@ -1110,6 +1126,10 @@ body:has(.landing) {
     outline-offset: 3px;
   }
 
+  &__marco {
+    display: contents;
+  }
+
   &__flora {
     display: block;
     flex: none;
@@ -1291,9 +1311,94 @@ body:has(.landing) {
   }
 }
 
-@media (max-width: 63.99rem) {
-  a.hero__lanzamiento {
-    display: none;
+.pill-lanzamiento-flotante {
+  display: none;
+
+  @media (min-width: 64rem) {
+    position: fixed;
+    z-index: 24;
+    right: max(1.5rem, env(safe-area-inset-right, 0px));
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.65rem;
+    width: max-content;
+    max-width: calc(100vw - 3rem);
+    height: auto;
+    max-height: none;
+    padding: 0.4rem 1rem 0.4rem 0.4rem;
+    overflow: hidden;
+    background: #020f09;
+    border-color: rgb(253 241 215 / 16%);
+    border-radius: 999px;
+    pointer-events: auto;
+    transition: opacity 0.25s ease, visibility 0.25s ease, background-color 0.2s ease;
+
+    &:hover {
+      background: #04140c;
+      color: #fdf1d7;
+    }
+
+    .pill-lanzamiento__marco {
+      display: block;
+      position: relative;
+      flex: none;
+      width: 4.5rem;
+      height: 4.5rem;
+      overflow: hidden;
+      border-radius: 50%;
+      background: #020f09;
+    }
+
+    .pill-lanzamiento__flora {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 155%;
+      height: 155%;
+      max-width: none;
+      margin: 0;
+      border-radius: 0;
+      background: transparent;
+      object-fit: contain;
+      transform: translate(-50%, -48%);
+    }
+
+    .pill-lanzamiento__cuerpo {
+      align-items: flex-start;
+      gap: 0.35rem;
+    }
+
+    .pill-lanzamiento__titulo {
+      align-self: flex-start;
+      width: 100%;
+      font-size: 1.05rem;
+      text-align: left;
+    }
+
+    .lanzamiento__contador--pill {
+      --lanzamiento-digit-w: 0.78em;
+      --lanzamiento-num-size: 1rem;
+      justify-content: center;
+      width: auto;
+      gap: 0.55rem;
+    }
+
+    .lanzamiento__bloque {
+      flex: 0 0 auto;
+      gap: 0.22rem;
+    }
+
+    .lanzamiento__counter {
+      --counter-gap: 0.16em !important;
+    }
+  }
+
+  &--oculto {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
   }
 }
 
@@ -1617,6 +1722,10 @@ body:has(.landing) {
     padding: 6.5rem 7vw;
   }
 
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    padding-inline: 4vw;
+  }
+
   &__layout {
     display: grid;
     grid-template-areas:
@@ -1624,7 +1733,7 @@ body:has(.landing) {
       "form"
       "canales";
     gap: 2.25rem;
-    width: min(100%, 68rem);
+    width: 100%;
     margin-inline: auto;
     align-self: center;
 
@@ -3154,6 +3263,12 @@ body:has(.landing) {
       padding: 0;
     }
   }
+
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    &__escena {
+      padding-inline: 4vw;
+    }
+  }
 }
 
 .producto-menu {
@@ -4304,11 +4419,14 @@ body:has(.landing) {
   &__embed {
     width: 100%;
     min-width: 0;
+    height: 80px;
+    overflow: hidden;
+    border-radius: 12px;
 
     iframe {
       display: block;
       width: 100%;
-      height: 232px;
+      height: 352px;
       border: 0;
       border-radius: 12px;
     }
@@ -4319,8 +4437,9 @@ body:has(.landing) {
   }
 
   @media (min-width: 64rem) {
-    &__embed iframe {
-      height: 352px;
+    &__embed {
+      height: auto;
+      overflow: visible;
     }
 
     &__fila {
@@ -4546,11 +4665,16 @@ body:has(.landing) {
     var(--precios-fondo);
   color: var(--precios-ink);
 
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    padding-inline: 4vw;
+  }
+
   &__contenedor {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    width: min(100%, 72rem);
+    width: 100%;
+    max-width: none;
     margin-inline: auto;
   }
 
@@ -5472,6 +5596,10 @@ body:has(.landing) {
       max-width: none;
       font-size: 1.05rem;
     }
+  }
+
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    padding-inline: 4vw;
   }
 }
 
@@ -7509,6 +7637,7 @@ button.flora-chat__continuar {
     width: 100%;
     min-height: 3.15rem;
     padding-inline: 1.2rem;
+    border-radius: 999px;
     background: #fdf1d7;
     color: #0b3d2a;
     border-color: transparent;

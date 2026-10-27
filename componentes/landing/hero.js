@@ -4,10 +4,7 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { desplazarASeccion } from "@/componentes/landing/desplazar-seccion";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
-import { CuerpoPillLanzamiento } from "@/componentes/landing/pill-lanzamiento";
-import { useRestanteLanzamiento } from "@/componentes/landing/contador-lanzamiento";
 import TiltedCard from "@/componentes/landing/tilted-card";
 import { TarjetaFlotanteHero } from "@/componentes/landing/tarjeta-flotante-hero";
 import { IconoInstagram } from "@/componentes/iconos-ui";
@@ -17,8 +14,7 @@ import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function Hero() {
   const ref = useRef(null);
-  const { hero, lanzamiento } = textos;
-  const restante = useRestanteLanzamiento();
+  const { hero } = textos;
 
   function irASiguiente(evento) {
     evento.preventDefault();
@@ -28,16 +24,6 @@ export function Hero() {
     destino.scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "start" });
     if (typeof window !== "undefined" && window.history?.replaceState) {
       window.history.replaceState(null, "", "#para-que-sirve");
-    }
-  }
-
-  function irALanzamiento(evento) {
-    if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.button !== 0) return;
-    evento.preventDefault();
-    const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    desplazarASeccion("lanzamiento", { suave: !reducido });
-    if (window.history?.replaceState) {
-      window.history.replaceState(null, "", "#lanzamiento");
     }
   }
 
@@ -51,8 +37,12 @@ export function Hero() {
       const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
       tl.from(".hero__linea", { opacity: 0, y: 28, duration: 0.55, stagger: 0.1 }, 0.08)
         .from(".hero__bajada", { opacity: 0, y: 18, duration: 0.45 }, 0.28)
-        .from(".hero__acciones > *", { opacity: 0, y: 14, duration: 0.4, stagger: 0.08 }, 0.4)
-        .from(".hero__lanzamiento", { opacity: 0, y: 14, duration: 0.4 }, 0.52)
+        .fromTo(
+          ".hero__acciones > *",
+          { opacity: 0, y: 14 },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, clearProps: "transform" },
+          0.4,
+        )
         .from(".hero__flora", { opacity: 0, y: 22, scale: 0.97, duration: 0.7 }, 0.4)
         .from(".hero__deco", { opacity: 0, duration: 0.5, stagger: 0.05 }, 0.55);
     });
@@ -149,14 +139,6 @@ export function Hero() {
                 <IconoInstagram className="seguinos-pill__icono" />
               </a>
             </div>
-            <a
-              className="pill-lanzamiento hero__lanzamiento"
-              href="#lanzamiento"
-              aria-label={`${lanzamiento.titulo}. Ir a la cuenta regresiva.`}
-              onClick={irALanzamiento}
-            >
-              <CuerpoPillLanzamiento restante={restante} />
-            </a>
           </div>
         </div>
       </div>

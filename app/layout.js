@@ -15,14 +15,14 @@ import "@/estilos/principal.scss";
 
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-inter",
   display: "swap",
 });
 
 const fredoka = Fredoka({
   subsets: ["latin"],
-  weight: ["500", "600"],
+  weight: ["500", "600", "700"],
   variable: "--font-fredoka",
   display: "swap",
 });

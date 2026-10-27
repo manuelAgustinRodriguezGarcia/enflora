@@ -48,12 +48,16 @@
     }
   }
 
+  @media (min-width: 64rem) and (max-width: 104.99rem) {
+    padding-inline: 4vw;
+  }
+
   &__contenedor {
     position: relative;
     z-index: 1;
     display: grid;
     gap: 2.5rem;
-    width: min(100%, 68rem);
+    width: 100%;
     min-width: 0;
     margin-inline: 0 auto;
   }

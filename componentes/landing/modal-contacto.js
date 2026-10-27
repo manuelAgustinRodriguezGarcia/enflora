@@ -15,9 +15,9 @@ const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.96, y: 14 };
 
 export const textosModalContacto = {
-  titulo: "Despegue programado para el 1/11.",
+  titulo: "Houston, despegamos el 1/11.",
   descripcion:
-    "Estamos preparando todo para nuestro lanzamiento. Dejanos tu mail y nosotros te avisamos cuando la nave esté por despegar.",
+    "Estamos preparando todo para nuestro lanzamiento. Dejanos tu mail y te avisamos cuando la nave esté por despegar.",
   nombre: "Nombre",
   nombreAyuda: "Opcional",
   correo: "Correo electrónico",

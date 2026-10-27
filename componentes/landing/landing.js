@@ -9,6 +9,7 @@ import { EscenaSolar } from "@/componentes/landing/escena-solar";
 import { Footer } from "@/componentes/landing/footer";
 import { Hero } from "@/componentes/landing/hero";
 import { NavegacionFlotante } from "@/componentes/landing/navegacion-flotante";
+import { PillLanzamientoFlotante } from "@/componentes/landing/pill-lanzamiento-flotante";
 import { ParaQueSirve } from "@/componentes/landing/para-que-sirve";
 import { Producto } from "@/componentes/landing/producto";
 import { Revelar } from "@/componentes/landing/revelar";
@@ -46,12 +47,13 @@ export function Landing({ cotizacion = null }) {
             <SeccionRegalo />
             <SeccionPrecios cotizacion={cotizacion} />
             <SeccionInstalacion textos={instalacion} />
-            <SeccionPartners />
             <SeccionContacto />
+            <SeccionPartners />
             <SeccionLanzamiento />
           </main>
           <Footer />
           <NavegacionFlotante />
+          <PillLanzamientoFlotante />
           <PillExpo />
           <BienvenidaExpo />
           <RedirigirAdminExpo />

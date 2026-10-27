@@ -32,7 +32,7 @@ export function PlaylistFlora({ playlist }) {
             title="Playlist de Enflora en Spotify"
             src={playlist.src}
             width="100%"
-            height="232"
+            height="352"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
             allowFullScreen
             loading="lazy"

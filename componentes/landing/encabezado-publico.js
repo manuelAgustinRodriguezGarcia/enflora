@@ -290,11 +290,18 @@ export function EncabezadoPublico() {
           aria-hidden={mostrarCta ? undefined : true}
         >
           <Link
+            className="landing__accion landing__accion--sesion"
+            href="/ingreso"
+            tabIndex={mostrarCta ? undefined : -1}
+          >
+            Iniciar Sesión
+          </Link>
+          <Link
             className="landing__accion landing__accion--principal"
             href="/registro"
             tabIndex={mostrarCta ? undefined : -1}
           >
-            Empezá hoy
+            Registrate
           </Link>
         </div>
       </div>
