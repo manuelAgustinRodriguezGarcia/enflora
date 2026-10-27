@@ -6,6 +6,8 @@ import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from 
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
+import { borrarArchivos } from "@/lib/fotos-servidor";
+import { rutaFotoValida, rutaPerteneceAUsuario } from "@/lib/fotos";
 import { datosTipoUnidad, MAXIMO_UNIDADES } from "@/lib/unidades";
 
 const MAXIMO_PLANTAS = 100;
@@ -441,6 +443,88 @@ export async function editarUnidad(_estado, formulario) {
   redirect(rutaUnidad(espacioId, unidadId));
 }
 
+function rutasPortadaValidas(ruta, miniatura, usuarioId, unidadId) {
+  const prefijo = `${usuarioId}/portadas/${unidadId}/`;
+  return (
+    rutaPerteneceAUsuario(ruta, usuarioId) &&
+    rutaPerteneceAUsuario(miniatura, usuarioId) &&
+    rutaFotoValida(ruta) &&
+    rutaFotoValida(miniatura) &&
+    String(ruta).startsWith(prefijo) &&
+    String(miniatura).startsWith(prefijo)
+  );
+}
+
+function revalidarUnidad(espacioId, unidadId) {
+  revalidatePath("/espacios");
+  revalidatePath(`/espacios/${espacioId}`);
+  revalidatePath(`/espacios/${espacioId}/unidades/${unidadId}`);
+}
+
+async function rutasAnterioresPortada(supabase, rpc, params) {
+  const { data, error } = await supabase.rpc(rpc, params);
+  if (error) return { error: error.message || "No se pudo actualizar la portada.", rutas: [] };
+  const fila = Array.isArray(data) ? data[0] : data;
+  return {
+    error: "",
+    rutas: [fila?.ruta_anterior, fila?.miniatura_anterior].filter(Boolean),
+  };
+}
+
+export async function guardarPortadaUnidad(_estado, formulario) {
+  const unidadId = String(formulario.get("unidad_id") || "").trim();
+  const espacioId = String(formulario.get("espacio_id") || "").trim();
+  const ruta = String(formulario.get("ruta") || "").trim();
+  const miniatura = String(formulario.get("miniatura") || "").trim();
+
+  if (!unidadId || !espacioId) return { error: "No se encontró la unidad." };
+  if (!ruta || !miniatura) return { error: "Falta la imagen de portada." };
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error };
+  const { supabase, user } = acceso;
+
+  if (!rutasPortadaValidas(ruta, miniatura, user.id, unidadId)) {
+    await borrarArchivos(supabase, [ruta, miniatura]);
+    return { error: "La ruta de la portada no es válida.", archivosLimpiados: true };
+  }
+
+  const resultado = await rutasAnterioresPortada(supabase, "establecer_portada_unidad", {
+    p_unidad_id: unidadId,
+    p_ruta: ruta,
+    p_miniatura: miniatura,
+  });
+
+  if (resultado.error) {
+    await borrarArchivos(supabase, [ruta, miniatura]);
+    return { error: resultado.error, archivosLimpiados: true };
+  }
+
+  await borrarArchivos(supabase, resultado.rutas);
+  revalidarUnidad(espacioId, unidadId);
+  return { ok: true };
+}
+
+export async function quitarPortadaUnidad(_estado, formulario) {
+  const unidadId = String(formulario.get("unidad_id") || "").trim();
+  const espacioId = String(formulario.get("espacio_id") || "").trim();
+
+  if (!unidadId || !espacioId) return { error: "No se encontró la unidad." };
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error };
+
+  const resultado = await rutasAnterioresPortada(acceso.supabase, "quitar_portada_unidad", {
+    p_unidad_id: unidadId,
+  });
+
+  if (resultado.error) return { error: resultado.error };
+
+  await borrarArchivos(acceso.supabase, resultado.rutas);
+  revalidarUnidad(espacioId, unidadId);
+  return { ok: true };
+}
+
 export async function eliminarUnidad(_estado, formulario) {
   const unidadId = String(formulario.get("unidad_id") || "").trim();
   const espacioId = String(formulario.get("espacio_id") || "").trim();
@@ -450,6 +534,15 @@ export async function eliminarUnidad(_estado, formulario) {
   const acceso = await sesion();
   if (acceso.error) return { error: acceso.error };
 
+  const { data: unidad } = await acceso.supabase
+    .from("unidades_cultivo")
+    .select("portada_ruta, portada_miniatura")
+    .eq("id", unidadId)
+    .eq("espacio_id", espacioId)
+    .maybeSingle();
+
+  const rutasPortada = [unidad?.portada_ruta, unidad?.portada_miniatura].filter(Boolean);
+
   const { data, error } = await acceso.supabase
     .from("unidades_cultivo")
     .delete()
@@ -458,6 +551,8 @@ export async function eliminarUnidad(_estado, formulario) {
     .select("id");
 
   if (error || !data?.length) return { error: "No se pudo eliminar la unidad." };
+
+  await borrarArchivos(acceso.supabase, rutasPortada);
 
   revalidatePath("/espacios");
   revalidatePath(`/espacios/${espacioId}`);

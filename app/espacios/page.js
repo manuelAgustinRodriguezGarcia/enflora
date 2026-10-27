@@ -2,6 +2,8 @@ import Link from "next/link";
 import { BannerPublicitario } from "@/componentes/banner-publicitario";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
+import { IconoLapiz } from "@/componentes/iconos-ui";
+import { ImagenEspacio } from "@/componentes/imagen-espacio";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { cargarCampañasBanner } from "@/lib/publicidad";
@@ -65,33 +67,37 @@ export default async function PaginaEspacios() {
             {espacios.map((espacio) => {
               const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
               return (
-                <li className="tarjeta" key={espacio.id}>
+                <li className="tarjeta tarjeta--espacio" key={espacio.id}>
                   <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
-                    <div className="tarjeta__cabecera">
-                      <span className="tarjeta__nombre">{espacio.nombre}</span>
-                      <span className="tarjeta__tipo">{etiquetaTipoEspacio(espacio.tipo)}</span>
-                    </div>
-                    <div className="tarjeta__metricas">
-                      <span className="tarjeta__dato">
-                        <span className="tarjeta__etiqueta">Unidades</span>
-                        <span className="tarjeta__valor">
-                          {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
+                    <ImagenEspacio tipo={espacio.tipo} className="imagen-espacio--miniatura" />
+                    <span className="tarjeta__info">
+                      <span className="tarjeta__cabecera">
+                        <span className="tarjeta__nombre">{espacio.nombre}</span>
+                        <span className="tarjeta__tipo">{etiquetaTipoEspacio(espacio.tipo)}</span>
+                      </span>
+                      <span className="tarjeta__metricas">
+                        <span className="tarjeta__dato">
+                          <span className="tarjeta__etiqueta">Unidades</span>
+                          <span className="tarjeta__valor">
+                            {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
+                          </span>
+                        </span>
+                        <span className="tarjeta__dato">
+                          <span className="tarjeta__etiqueta">Plantas</span>
+                          <span className="tarjeta__valor">
+                            {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
+                          </span>
                         </span>
                       </span>
-                      <span className="tarjeta__dato">
-                        <span className="tarjeta__etiqueta">Plantas</span>
-                        <span className="tarjeta__valor">
-                          {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
-                        </span>
-                      </span>
-                    </div>
+                    </span>
                   </Link>
                   <div className="acciones acciones--tarjeta">
                     <EnlaceBoton
-                      className="boton boton--secundario"
+                      className="boton boton--secundario boton--icono"
                       href={`/espacios/${espacio.id}/editar`}
+                      aria-label="Editar espacio"
                     >
-                      Editar
+                      <IconoLapiz />
                     </EnlaceBoton>
                     <EliminarEspacio espacioId={espacio.id} />
                   </div>

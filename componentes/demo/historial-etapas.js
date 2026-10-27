@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
+import { Selector } from "@/componentes/selector";
 import { etiquetaEtapaHistorial } from "@/lib/demo/historial/historial-demo";
 import { esEtapa, formatearFecha, textoDias } from "@/lib/etapas";
 
@@ -18,12 +20,32 @@ function rangoDias(etapa) {
 }
 
 export function HistorialEtapas({ historial }) {
-  const { etapas } = historial;
+  const grupos = historial.etapasPorPlanta;
+  const [plantaId, setPlantaId] = useState(grupos?.[0]?.plantaId || "");
+  const etapas = useMemo(() => {
+    if (!grupos?.length) return historial.etapas || [];
+    const grupo = grupos.find((item) => item.plantaId === plantaId) || grupos[0];
+    return grupo?.etapas || [];
+  }, [grupos, historial.etapas, plantaId]);
+
   if (!etapas.length) return null;
 
   return (
     <section className="historial-etapas" aria-labelledby="historial-etapas-titulo">
       <h2 id="historial-etapas-titulo">Etapas del cultivo</h2>
+      {grupos?.length > 1 ? (
+        <Selector
+          etiqueta="Planta"
+          id="historial-etapas-planta"
+          className="historial-etapas__selector"
+          valor={plantaId || grupos[0].plantaId}
+          onChange={setPlantaId}
+          opciones={grupos.map((grupo) => ({
+            valor: grupo.plantaId,
+            etiqueta: grupo.nombre || "Planta",
+          }))}
+        />
+      ) : null}
       <ListaEntrada>
         {etapas.map((etapa) => {
           const clase = esEtapa(etapa.etapa)

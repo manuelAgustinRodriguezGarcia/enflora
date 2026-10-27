@@ -1,13 +1,18 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { CabeceraUnidad } from "@/componentes/cabecera-unidad";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
+import { GaleriaFotos } from "@/componentes/galeria-fotos";
+import { ListaTareasPendientes } from "@/componentes/lista-tareas-pendientes";
+import { cargarTareasPendientesUnidad } from "@/lib/cargar-tareas";
 import { PanelAgregarPlanta } from "@/componentes/panel-agregar-planta";
 import { SeleccionPlantasUnidad } from "@/componentes/seleccion-plantas-unidad";
 import { TransicionVista } from "@/componentes/transicion-vista";
+import { cargarFotosDeUnidad, firmarPortadas } from "@/lib/cargar-fotos";
+import { consultarUnidad } from "@/lib/consultar-unidad";
 import { fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 function siguienteNumero(plantas) {
   let maximo = 0;
@@ -29,17 +34,17 @@ export default async function PaginaUnidad({ params }) {
     );
   }
 
+  const user = await obtenerSesionRapida();
+  if (!user) redirect("/ingreso");
+
   const supabase = await crearClienteServidor();
-  const { data: unidad, error: errorUnidad } = await supabase
-    .from("unidades_cultivo")
-    .select("id, nombre, tipo, tipo_personalizado, numero, espacio_id")
-    .eq("id", unidadId)
-    .eq("espacio_id", id)
-    .maybeSingle();
+  const lectura = await consultarUnidad(supabase, { unidadId, espacioId: id });
+  if (lectura.error || !lectura.unidad) notFound();
 
-  if (errorUnidad || !unidad) notFound();
+  const unidad = lectura.unidad;
 
-  const [plantasRespuesta, metodosRespuesta, espacioRespuesta] = await Promise.all([
+  const [plantasRespuesta, metodosRespuesta, espacioRespuesta, fotosRespuesta, tareasRespuesta] =
+    await Promise.all([
     supabase
       .from("plantas")
       .select("id, nombre, genetica, metodo, sustrato, etapa, fecha_inicio, fecha_creacion, estado, numero")
@@ -47,11 +52,18 @@ export default async function PaginaUnidad({ params }) {
       .order("numero", { ascending: true }),
     supabase.from("metodos_personalizados").select("nombre").order("nombre", { ascending: true }),
     supabase.from("espacios").select("tipo").eq("id", id).maybeSingle(),
+    cargarFotosDeUnidad(supabase, unidad.id),
+    cargarTareasPendientesUnidad(supabase, unidad.id),
   ]);
 
   if (plantasRespuesta.error) return <p>No se pudieron cargar las plantas.</p>;
   if (metodosRespuesta.error) return <p>No se pudieron cargar los métodos.</p>;
   if (espacioRespuesta.error || !espacioRespuesta.data) notFound();
+
+  const portadas = await firmarPortadas(supabase, [unidad], { conOriginal: true });
+  const portadaFirmada = portadas.get(unidad.id);
+  const portadaUrl = portadaFirmada?.portada || portadaFirmada?.miniatura || "";
+  const tienePortada = Boolean(unidad.portada_ruta && unidad.portada_miniatura);
 
   const lista = plantasRespuesta.data || [];
   const metodosPersonalizados = (metodosRespuesta.data || []).map((metodo) => metodo.nombre);
@@ -81,7 +93,26 @@ export default async function PaginaUnidad({ params }) {
           espacioId={unidad.espacio_id}
           tipoEspacio={espacioRespuesta.data.tipo}
           cantidadPlantas={lista.length}
+          portadaUrl={portadaUrl}
+          usuarioId={user.id}
+          tienePortada={tienePortada}
         />
+        <ListaTareasPendientes tareas={tareasRespuesta.tareas} />
+        {tareasRespuesta.error ? (
+          <p className="galeria-fotos__vacio" role="alert">
+            No se pudieron cargar las tareas pendientes.
+          </p>
+        ) : null}
+        <GaleriaFotos
+          fotos={fotosRespuesta.fotos}
+          titulo="Fotos de la unidad"
+          vacio="Todavía no hay fotos en los registros de esta unidad (incluye registros de ambiente)."
+        />
+        {fotosRespuesta.error ? (
+          <p className="galeria-fotos__vacio" role="alert">
+            No se pudieron cargar las fotos de la unidad.
+          </p>
+        ) : null}
         <EnlaceBoton
           href={`/registros/historial?unidad=${unidad.id}`}
           variante="secundario"

@@ -57,7 +57,12 @@ export function HistorialTimeline({ historial }) {
           <h3 className="historial-mes__titulo">{grupo.titulo}</h3>
           <ol className="historial-dias">
             {grupo.dias.map((dia) => (
-              <HistorialDia key={dia.id} dia={dia} fotos={fotosDeDia(historial, dia, mapa)} onAbrirFoto={setFotoAbierta} />
+              <HistorialDia
+                key={dia.id}
+                dia={dia}
+                fotos={fotosDeDia(historial, dia, mapa)}
+                onAbrirFoto={setFotoAbierta}
+              />
             ))}
           </ol>
         </div>

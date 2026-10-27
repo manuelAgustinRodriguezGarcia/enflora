@@ -29,6 +29,7 @@ export function SelectorFecha({
   deshabilitado = false,
   placeholder = "Elegir fecha",
   sinIcono = false,
+  fechaMinima = "",
 }) {
   const [abierto, setAbierto] = useState(false);
   const [interno, setInterno] = useState(valor || "");
@@ -80,7 +81,12 @@ export function SelectorFecha({
                 locale={es}
                 selected={aFecha(actual)}
                 onSelect={elegir}
-                defaultMonth={aFecha(actual) || new Date()}
+                defaultMonth={aFecha(actual) || aFecha(fechaMinima) || new Date()}
+                disabled={
+                  fechaMinima
+                    ? { before: aFecha(fechaMinima) }
+                    : undefined
+                }
               />
             </Popover.Popup>
           </Popover.Positioner>

@@ -7,6 +7,7 @@ import {
   cargarHistorialRegistros,
   cargarRegistroPorId,
 } from "@/lib/cargar-registros";
+import { cargarRegistrosHistorialPorDias } from "@/lib/cargar-historial-vista";
 import { SEGUNDOS_URL_ORIGINAL, adjuntarMiniaturas, borrarArchivos, firmarRutas, rutasDeFotos } from "@/lib/fotos-servidor";
 import { esUuidFoto, rutaPerteneceAUsuario } from "@/lib/fotos";
 import { normalizarFiltrosHistorial } from "@/lib/historial-registros";
@@ -14,8 +15,10 @@ import {
   argumentosRpcRegistro,
   prepararDatosRegistro,
 } from "@/lib/registros";
+import { normalizarDescripcionTarea, tareaNoEsPasada } from "@/lib/tareas-programadas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
+import { fechaHoy } from "@/lib/etapas";
 
 const FOTOS_YA_GUARDADAS = "Las fotos ya fueron guardadas.";
 
@@ -47,7 +50,7 @@ const MENSAJES = [
   "Hay una foto con un formato no permitido.",
   "Hay una foto que supera el tamaño permitido.",
   "No se encontró el archivo de una foto.",
-  "Un registro admite hasta 10 fotos.",
+  "Un registro admite hasta 3 fotos.",
   "No se encontró el registro.",
   "Las plantas del registro no son válidas.",
   "Las acciones del registro no son válidas.",
@@ -362,4 +365,120 @@ export async function cargarPaginaHistorial(payload) {
 
   const registros = await adjuntarMiniaturas(acceso.supabase, pagina.registros);
   return { error: false, mensaje: "", registros, hayMas: pagina.hayMas };
+}
+
+export async function cargarMasDiasHistorial(payload) {
+  const normalizado = normalizarFiltrosHistorial({
+    unidad: payload?.unidadId || "",
+    planta: payload?.plantaId || "",
+    genetica: payload?.genetica || "",
+    desde: payload?.desde || "",
+    hasta: payload?.hasta || "",
+    contenido: payload?.sinContenido ? "ninguno" : (payload?.contenidos || []).join(","),
+    cursorFecha: payload?.cursorFecha || "",
+    cursorId: payload?.cursorId || "",
+  });
+
+  if (normalizado.error || !normalizado.filtros?.cursor) {
+    return {
+      error: true,
+      mensaje: normalizado.error || "No se pudo continuar el historial.",
+      registros: [],
+      hayMas: false,
+      cursor: null,
+    };
+  }
+
+  const acceso = await sesion();
+  if (acceso.error) {
+    return { error: true, mensaje: acceso.error, registros: [], hayMas: false, cursor: null };
+  }
+
+  const propio = await afirmarFiltrosHistorial(acceso.supabase, normalizado.filtros);
+  if (propio.error) {
+    return { error: true, mensaje: propio.error, registros: [], hayMas: false, cursor: null };
+  }
+
+  const pagina = await cargarRegistrosHistorialPorDias(acceso.supabase, normalizado.filtros);
+  if (pagina.error) {
+    return {
+      error: true,
+      mensaje: "No se pudo cargar más días.",
+      registros: [],
+      hayMas: false,
+      cursor: null,
+    };
+  }
+
+  const registros = await adjuntarMiniaturas(acceso.supabase, pagina.registros);
+  return {
+    error: false,
+    mensaje: "",
+    registros,
+    hayMas: pagina.hayMas,
+    cursor: pagina.cursor,
+  };
+}
+
+function leerPlantasIdsTarea(formulario) {
+  try {
+    const crudo = String(formulario.get("planta_ids") || "[]");
+    const lista = JSON.parse(crudo);
+    return Array.isArray(lista) ? lista.map((id) => String(id || "").trim()).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+// Programa una tarea futura. No crea registros ni acciones de cultivo.
+export async function agendarTarea(_estado, formulario) {
+  const unidadId = String(formulario.get("unidad_id") || "").trim();
+  const descripcionCruda = String(formulario.get("descripcion") || "");
+  const fecha = String(formulario.get("fecha") || "").trim();
+  const plantaIds = leerPlantasIdsTarea(formulario);
+
+  if (!unidadId) return { error: "Seleccioná una unidad." };
+
+  const descripcion = normalizarDescripcionTarea(descripcionCruda);
+  if (descripcion.error) return { error: descripcion.error };
+
+  if (!tareaNoEsPasada(fecha, fechaHoy())) {
+    return { error: "La fecha no puede ser anterior a hoy." };
+  }
+
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error };
+
+  const { data, error } = await acceso.supabase.rpc("crear_tarea_programada", {
+    p_unidad_id: unidadId,
+    p_descripcion: descripcion.descripcion,
+    p_fecha: fecha,
+    p_planta_ids: plantaIds,
+  });
+
+  if (error) {
+    const texto = error.message || "";
+    if (texto.includes("Escribí la tarea")) return { error: "Escribí la tarea." };
+    if (texto.includes("anterior a hoy")) return { error: "La fecha no puede ser anterior a hoy." };
+    if (texto.includes("unidad")) return { error: "No se encontró la unidad." };
+    return { error: "No se pudo agendar la tarea." };
+  }
+
+  const { data: unidad } = await acceso.supabase
+    .from("unidades_cultivo")
+    .select("espacio_id")
+    .eq("id", unidadId)
+    .maybeSingle();
+
+  revalidatePath("/registros");
+  if (unidad?.espacio_id) {
+    revalidatePath(`/espacios/${unidad.espacio_id}`);
+    revalidatePath(`/espacios/${unidad.espacio_id}/unidades/${unidadId}`);
+  }
+
+  return {
+    ok: true,
+    id: data,
+    mensaje: `Tarea agendada para el ${fecha.split("-").reverse().join("/")}.`,
+  };
 }

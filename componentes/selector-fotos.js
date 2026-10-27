@@ -111,11 +111,9 @@ export function SelectorFotos({
         aria-hidden="true"
       />
 
-      <p className="fotos-selector__ayuda">
-        {multiple
-          ? `JPG, PNG o WEBP. Hasta ${maximo} fotos; se optimizan antes de subir.`
-          : "JPG, PNG o WEBP. Se optimiza antes de subir."}
-      </p>
+      {multiple ? (
+        <p className="fotos-selector__ayuda">Podés subir hasta {maximo} imágenes.</p>
+      ) : null}
     </div>
   );
 }

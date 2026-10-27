@@ -20,7 +20,7 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
   }));
 
   return (
-    <form key={estado?.error || "inicial"} className="formulario" action={accion}>
+    <form key={estado?.error || "inicial"} className="formulario formulario--en-modal" action={accion}>
       {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
       <input type="hidden" name="unidad_id" value={unidad.id} />
       <input type="hidden" name="espacio_id" value={espacioId} />
@@ -48,8 +48,8 @@ export function FormularioUnidad({ unidad, espacioId, tipoEspacio }) {
         </label>
       </Aparecer>
       {tipo === "otro" ? null : <input type="hidden" name="tipo_personalizado" value="" />}
-      <Boton type="submit" disabled={pendiente}>
-        Guardar
+      <Boton type="submit" className="boton--ancho" disabled={pendiente}>
+        {pendiente ? "Guardando…" : "Guardar"}
       </Boton>
     </form>
   );

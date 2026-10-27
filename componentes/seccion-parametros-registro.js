@@ -4,6 +4,7 @@ import { Aparecer } from "@/componentes/aparecer";
 import { claveParametroRegistro } from "@/lib/registros";
 
 export function SeccionParametrosRegistro({
+  titulo = "Parámetros",
   prioritarias = [],
   secundarias = [],
   valores = {},
@@ -12,6 +13,7 @@ export function SeccionParametrosRegistro({
   onToggleMas,
   pendiente = false,
   accionCabecera = null,
+  deshabilitado = false,
 }) {
   const visibles = prioritarias;
   const extras = secundarias;
@@ -35,7 +37,7 @@ export function SeccionParametrosRegistro({
           className="registro-crear__param-input"
           value={valores[clave] ?? ""}
           onChange={(evento) => onChange(clave, evento.target.value)}
-          disabled={pendiente}
+          disabled={pendiente || deshabilitado}
           placeholder="—"
           autoComplete="off"
         />
@@ -53,7 +55,7 @@ export function SeccionParametrosRegistro({
           className="registro-crear__param-input"
           value={valores[clave] ?? ""}
           onChange={(evento) => onChange(clave, evento.target.value)}
-          disabled={pendiente}
+          disabled={pendiente || deshabilitado}
           placeholder="—"
           autoComplete="off"
         />
@@ -63,7 +65,7 @@ export function SeccionParametrosRegistro({
 
   const cabecera = (
     <div className="registro-crear__seccion-cabecera">
-      <h2 className="registro-crear__etiqueta">Parámetros</h2>
+      <h2 className="registro-crear__etiqueta">{titulo}</h2>
       {accionCabecera}
     </div>
   );
@@ -100,7 +102,7 @@ export function SeccionParametrosRegistro({
             type="button"
             className="registro-crear__enlace"
             onClick={onToggleMas}
-            disabled={pendiente}
+            disabled={pendiente || deshabilitado}
           >
             {mostrarMas ? "Ocultar más parámetros" : "Más parámetros"}
           </button>

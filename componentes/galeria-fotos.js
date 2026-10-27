@@ -35,6 +35,9 @@ export function GaleriaFotos({ fotos = [], titulo = "Fotos", vacio = "Todavía n
                     <span className="galeria-fotos__sin-imagen">Sin vista previa</span>
                   )}
                   <span className="galeria-fotos__fecha">{dia ? formatearFecha(dia) : ""}</span>
+                  {foto.aplica_a === "ambiente" ? (
+                    <span className="galeria-fotos__etiqueta">Ambiente</span>
+                  ) : null}
                   {foto.compartida ? (
                     <span className="galeria-fotos__etiqueta">Registro compartido</span>
                   ) : null}

@@ -229,8 +229,8 @@ begin
   end loop;
 
   select count(*) into v_total from public.registro_fotos where registro_id = p_registro_id;
-  if v_total > 10 then
-    raise exception 'Un registro admite hasta 10 fotos.';
+  if v_total > 3 then
+    raise exception 'Un registro admite hasta 3 fotos.';
   end if;
 end;
 $$;
@@ -252,7 +252,7 @@ returns void
 language plpgsql
 security definer
 set search_path = public
-as $
+as $$
 declare
   item jsonb;
   planta_uuid uuid;
@@ -497,7 +497,7 @@ begin
     raise exception 'El registro necesita una acción, un parámetro, una observación o una foto.';
   end if;
 end;
-$;
+$$;
 
 -- ---------------------------------------------------------------------------
 -- 7. crear_registro / editar_registro con fotos

@@ -9,10 +9,10 @@ export function MedicionesDia({ mediciones, compacto = false }) {
   if (!mediciones.length) return null;
   return (
     <ul className={`historial-mediciones${compacto ? " historial-mediciones--compacto" : ""}`} aria-label="Mediciones">
-      {mediciones.map((medicion) => {
+      {mediciones.map((medicion, indice) => {
         const { etiqueta, corto, valor, unidad } = textoMedicion(medicion);
         return (
-          <li key={medicion.parametro} className="historial-medicion">
+          <li key={`${medicion.parametro}-${indice}`} className="historial-medicion">
             <span className="historial-medicion__etiqueta" title={etiqueta}>
               <span aria-hidden="true">{corto}</span>
               <span className="demo__sr">{etiqueta}</span>

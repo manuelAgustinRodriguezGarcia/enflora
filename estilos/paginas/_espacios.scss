@@ -5,6 +5,191 @@
   gap: var(--gap-section);
 }
 
+.imagen-espacio {
+  width: 100%;
+  aspect-ratio: 21 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-secondary);
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &--cabecera {
+    margin-bottom: 0.25rem;
+  }
+
+  &--miniatura {
+    width: 4.75rem;
+    height: 4.75rem;
+    flex: 0 0 auto;
+    aspect-ratio: 1;
+    border-radius: var(--radius-control);
+
+    .imagen-espacio__neutro svg {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+
+    .imagen-espacio__tipo {
+      font-size: 0.65rem;
+      line-height: 1.1;
+      text-align: center;
+    }
+  }
+
+  &__neutro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    width: 100%;
+    height: 100%;
+    color: var(--brand-medium);
+    opacity: 0.7;
+
+    svg {
+      width: 2rem;
+      height: 2rem;
+    }
+  }
+
+  &__tipo {
+    font-size: var(--font-size-body-small);
+    font-weight: var(--font-weight-label);
+  }
+}
+
+.tarjeta--unidad,
+.tarjeta--espacio {
+  .tarjeta__info {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: min-content;
+  }
+
+  .tarjeta__cabecera {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .tarjeta__nombre {
+    flex: 0 1 auto;
+    min-width: min-content;
+    max-width: 100%;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .tarjeta__metricas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .tarjeta__dato {
+    flex: 0 1 auto;
+    min-width: min-content;
+  }
+
+  .tarjeta__etiqueta,
+  .tarjeta__valor {
+    overflow-wrap: normal;
+    word-break: normal;
+    white-space: nowrap;
+  }
+}
+
+.tareas-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+
+  &__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+  }
+
+  &__fecha {
+    color: var(--color-primary);
+    font-size: var(--font-size-meta);
+    font-weight: var(--font-weight-label);
+  }
+
+  &__texto {
+    font-size: var(--font-size-body-small);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  &__meta {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-meta);
+  }
+}
+
+.tarjeta--unidad {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.75rem 0.85rem 0.75rem 0.75rem;
+
+  .tarjeta__portada {
+    width: 4.75rem;
+    height: 4.75rem;
+    flex: 0 0 auto;
+    aspect-ratio: 1;
+    border-radius: var(--radius-control);
+  }
+}
+
+.tarjeta--espacio {
+  position: relative;
+  padding: 0;
+
+  .tarjeta__cuerpo {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    padding: 0.75rem 0.75rem calc(var(--touch-min) + 0.85rem);
+  }
+
+  .acciones--tarjeta {
+    position: absolute;
+    right: 0.45rem;
+    bottom: 0.45rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    gap: 0.35rem;
+  }
+}
+
 .contador {
   display: flex;
   flex-wrap: wrap;
@@ -380,6 +565,38 @@
       display: block;
       width: 100%;
       height: auto;
+    }
+  }
+
+  &__barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  &--editar-unidad {
+    align-items: stretch;
+    width: min(26rem, 100%);
+    max-height: min(42rem, calc(100dvh - 2rem));
+    overflow: auto;
+    text-align: left;
+
+    form {
+      align-items: stretch;
+      text-align: left;
+    }
+
+    .modal__titulo {
+      text-align: left;
+    }
+
+    .formulario--en-modal {
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
     }
   }
 

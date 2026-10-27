@@ -99,14 +99,42 @@ function Grafico({ serie, parametro, etapas, metrica }) {
   );
 }
 
+function listaParametros(historial) {
+  const claves = Object.keys(historial.metricas || {});
+  return claves.map((clave) => {
+    const catalogo = PARAMETROS_HISTORIAL.find((item) => item.clave === clave);
+    if (catalogo) return catalogo;
+    const metrica = historial.metricas[clave];
+    return {
+      clave,
+      etiqueta: clave.startsWith("custom:") ? clave.slice(7) : clave,
+      unidad: metrica?.unidad || "",
+      decimales: 2,
+    };
+  });
+}
+
+function serieMediciones(historial, clave) {
+  if (!historial.modoApp) return seriePorParametro(historial, clave);
+  const serie = [];
+  for (const dia of historial.dias) {
+    for (const medicion of dia.mediciones) {
+      if (medicion.parametro !== clave) continue;
+      serie.push({ dia: dia.dia, fecha: dia.fecha, valor: medicion.valor, etapa: dia.etapa });
+    }
+  }
+  return serie;
+}
+
 export function HistorialMetricas({ historial }) {
-  const disponibles = PARAMETROS_HISTORIAL.filter((parametro) => historial.metricas[parametro.clave]);
+  const disponibles = listaParametros(historial);
   const [clave, setClave] = useState(disponibles[0]?.clave || "");
   if (!disponibles.length) return null;
 
-  const parametro = parametroHistorial(clave) || disponibles[0];
+  const parametro = parametroHistorial(clave) || disponibles.find((item) => item.clave === clave) || disponibles[0];
   const metrica = historial.metricas[parametro.clave];
-  const serie = seriePorParametro(historial, parametro.clave);
+  const serie = serieMediciones(historial, parametro.clave);
+  const etapasGrafico = historial.etapas?.length ? historial.etapas : [];
   const ultimo = serie.at(-1);
   const resumen = [
     { parametro: parametro.clave, valor: metrica.minimo, etiqueta: "Mínimo" },
@@ -119,8 +147,9 @@ export function HistorialMetricas({ historial }) {
       <div className="historial-timeline__cabecera">
         <h2 id="historial-metricas-titulo">Evolución de parámetros</h2>
         <p className="demo__aviso">
-          {historial.resumen.mediciones} mediciones del ambiente y la solución nutritiva, cargadas en{" "}
-          {historial.resumen.diasConMediciones} días.
+          {historial.modoApp
+            ? `${historial.resumen.mediciones} mediciones en el alcance seleccionado.`
+            : `${historial.resumen.mediciones} mediciones del ambiente y la solución nutritiva, cargadas en ${historial.resumen.diasConMediciones} días.`}
         </p>
       </div>
       <Selector
@@ -141,7 +170,9 @@ export function HistorialMetricas({ historial }) {
             </p>
           ) : null}
         </div>
-        {serie.length > 1 ? <Grafico serie={serie} parametro={parametro} etapas={historial.etapas} metrica={metrica} /> : null}
+        {serie.length > 1 ? (
+          <Grafico serie={serie} parametro={parametro} etapas={etapasGrafico} metrica={metrica} />
+        ) : null}
         <ul className="historial-grafico__stats" aria-label="Estadísticas">
           {resumen.map((item) => (
             <li key={item.etiqueta} className="historial-medicion">
@@ -158,9 +189,15 @@ export function HistorialMetricas({ historial }) {
           </li>
         </ul>
       </div>
-      <p className="demo__aviso">
-        Las líneas punteadas marcan los cambios de etapa. Cada punto es una medición real cargada ese día.
-      </p>
+      {!historial.modoApp ? (
+        <p className="demo__aviso">
+          Las líneas punteadas marcan los cambios de etapa. Cada punto es una medición real cargada ese día.
+        </p>
+      ) : etapasGrafico.length ? (
+        <p className="demo__aviso">
+          Las líneas punteadas marcan cambios de etapa cuando hay una secuencia única para el alcance.
+        </p>
+      ) : null}
     </section>
   );
 }

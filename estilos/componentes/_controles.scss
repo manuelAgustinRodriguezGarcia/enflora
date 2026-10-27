@@ -208,9 +208,9 @@ a.boton {
   align-items: center;
 
   &--tarjeta {
-    margin-top: 0.15rem;
-    padding-top: 0.65rem;
-    border-top: 1px solid var(--color-border);
+    margin: 0;
+    padding: 0;
+    border: 0;
   }
 
   &--ancho {
@@ -411,6 +411,54 @@ a.boton {
   &__meta {
     color: var(--color-text-secondary);
     font-size: var(--font-size-body-small);
+  }
+
+  &__portada {
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 46%;
+      border-radius: 0 0 var(--radius-card) var(--radius-card);
+      background: linear-gradient(
+        to top,
+        rgb(11 61 42 / 88%) 0%,
+        rgb(11 61 42 / 52%) 48%,
+        rgb(11 61 42 / 0%) 100%
+      );
+      pointer-events: none;
+    }
+  }
+
+  &__pie {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.75rem 0.9rem 0.9rem;
+
+    .detalle-cabecera__superior {
+      align-items: center;
+    }
+
+    .detalle-cabecera__titulo,
+    .detalle-cabecera__meta {
+      color: #fff;
+    }
+
+    .detalle-cabecera__chip {
+      background: rgb(255 255 255 / 18%);
+      color: #fff;
+    }
   }
 }
 

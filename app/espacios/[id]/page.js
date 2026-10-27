@@ -3,8 +3,12 @@ import { notFound } from "next/navigation";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
+import { IconoLapiz } from "@/componentes/iconos-ui";
 import { ListaEntrada } from "@/componentes/lista-entrada";
+import { PortadaUnidad } from "@/componentes/portada-unidad";
 import { TransicionVista } from "@/componentes/transicion-vista";
+import { firmarPortadas } from "@/lib/cargar-fotos";
+import { listarUnidadesConPortada } from "@/lib/consultar-unidad";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { etiquetaTipoEspacio, etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
@@ -30,15 +34,11 @@ export default async function PaginaEspacio({ params }) {
 
   if (errorEspacio || !espacio) notFound();
 
-  const { data: unidades, error: errorUnidades } = await supabase
-    .from("unidades_cultivo")
-    .select("id, nombre, tipo, tipo_personalizado, numero")
-    .eq("espacio_id", espacio.id)
-    .order("numero", { ascending: true });
+  const unidadesRespuesta = await listarUnidadesConPortada(supabase, espacio.id);
+  if (unidadesRespuesta.error) return <p>No se pudieron cargar las unidades.</p>;
 
-  if (errorUnidades) return <p>No se pudieron cargar las unidades.</p>;
-
-  const lista = unidades || [];
+  const lista = unidadesRespuesta.unidades || [];
+  const portadas = await firmarPortadas(supabase, lista);
   const ids = lista.map((unidad) => unidad.id);
   let cantidades = {};
 
@@ -63,19 +63,25 @@ export default async function PaginaEspacio({ params }) {
       <section className="espacio">
         <EnlaceVolver href="/espacios" etiqueta="Volver a espacios" />
         <header className="detalle-cabecera">
-          <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
+          <div className="detalle-cabecera__superior">
+            <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
+            <div className="detalle-cabecera__acciones">
+              <EnlaceBoton
+                className="boton boton--secundario boton--icono"
+                href={`/espacios/${espacio.id}/editar`}
+                aria-label="Editar espacio"
+              >
+                <IconoLapiz />
+              </EnlaceBoton>
+              <EliminarEspacio espacioId={espacio.id} />
+            </div>
+          </div>
           <div className="detalle-cabecera__fila">
             <span className="detalle-cabecera__chip">{etiquetaTipoEspacio(espacio.tipo)}</span>
             <span className="detalle-cabecera__meta">
               {lista.length === 1 ? "1 unidad" : `${lista.length} unidades`}
             </span>
             <span className="detalle-cabecera__meta">{textoCantidad(total)}</span>
-          </div>
-          <div className="acciones">
-            <EnlaceBoton className="boton boton--secundario" href={`/espacios/${espacio.id}/editar`}>
-              Editar
-            </EnlaceBoton>
-            <EliminarEspacio espacioId={espacio.id} />
           </div>
         </header>
         <h2>Unidades</h2>
@@ -89,20 +95,26 @@ export default async function PaginaEspacio({ params }) {
             {lista.map((unidad) => (
               <li key={unidad.id}>
                 <Link
-                  className="tarjeta"
+                  className="tarjeta tarjeta--unidad"
                   href={`/espacios/${espacio.id}/unidades/${unidad.id}`}
                 >
-                  <div className="tarjeta__cabecera">
-                    <span className="tarjeta__nombre">{unidad.nombre}</span>
-                    <span className="tarjeta__tipo">
-                      {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
-                    </span>
-                  </div>
-                  <div className="tarjeta__metricas">
-                    <span className="tarjeta__dato">
-                      <span className="tarjeta__etiqueta">Plantas</span>
-                      <span className="tarjeta__valor">{textoCantidad(cantidades[unidad.id] || 0)}</span>
-                    </span>
+                  <PortadaUnidad
+                    url={portadas.get(unidad.id)?.miniatura || ""}
+                    className="tarjeta__portada"
+                  />
+                  <div className="tarjeta__info">
+                    <div className="tarjeta__cabecera">
+                      <span className="tarjeta__nombre">{unidad.nombre}</span>
+                      <span className="tarjeta__tipo">
+                        {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
+                      </span>
+                    </div>
+                    <div className="tarjeta__metricas">
+                      <span className="tarjeta__dato">
+                        <span className="tarjeta__etiqueta">Plantas</span>
+                        <span className="tarjeta__valor">{textoCantidad(cantidades[unidad.id] || 0)}</span>
+                      </span>
+                    </div>
                   </div>
                 </Link>
               </li>

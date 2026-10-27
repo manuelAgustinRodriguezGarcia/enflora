@@ -539,10 +539,9 @@ test("registrar desde una planta o unidad preselecciona y vuelve al origen", () 
   estado = reducirDemo(estado, {
     type: "REGISTRAR_DESDE",
     unidadId: planta.unidad_cultivo_id,
-    tipo: "ambiente",
     plantaIds: [planta.id],
   });
-  assert.deepEqual(estado.navegacion.registro.plantaIds, []);
+  assert.deepEqual(estado.navegacion.registro.plantaIds, [planta.id]);
   assert.equal(estado.navegacion.registro.origen.fase, "unidad");
   assert.equal(reducirDemo(estado, { type: "IR", fase: "registros" }).navegacion.registro, null);
   assert.equal(reducirDemo(estado, { type: "REGISTRAR_DESDE", unidadId: "nadie", tipo: "plantas" }), estado);
@@ -636,8 +635,12 @@ test("el formulario compartido no tiene persistencia propia y producción conser
   assert.match(compartido, /registrosHoyControlados = false/);
   assert.match(compartido, /seleccionInicial = null/);
   const produccion = leer("componentes/formulario-crear-registro.js");
-  assert.match(produccion, /import \{ guardarRegistro, obtenerRegistroCompleto, urlFotoOriginal \} from "@\/app\/registros\/acciones"/);
+  assert.match(
+    produccion,
+    /import \{[\s\S]*agendarTarea[\s\S]*guardarRegistro[\s\S]*\} from "@\/app\/registros\/acciones"/
+  );
   assert.match(produccion, /accionGuardar=\{guardarRegistro\}/);
+  assert.match(produccion, /agendarTarea=\{agendarTarea\}/);
   assert.match(produccion, /cargarRegistro=\{obtenerRegistroCompleto\}/);
   assert.match(produccion, /EditorSeguimiento=\{EditorSeguimiento\}/);
   assert.ok(!/registrosHoyControlados|seleccionInicial|accionesOcultas/.test(produccion));

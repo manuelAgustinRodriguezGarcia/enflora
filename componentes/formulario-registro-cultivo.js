@@ -7,44 +7,33 @@ import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
-import { IconoAmbiente, IconoPlanta } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
+import { SeccionTareaProgramada } from "@/componentes/seccion-tarea-programada";
 import { SelectorFotos } from "@/componentes/selector-fotos";
 import { VisorFotos } from "@/componentes/visor-fotos";
 import { toque, transicionToque } from "@/lib/animaciones";
 import { MAX_FOTOS_POR_REGISTRO } from "@/lib/fotos";
 import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
+import { planificarCreacionRegistros } from "@/lib/registro-formulario";
 import {
   agruparPlantasPorGenetica,
   claveParametroRegistro,
   aplicarConservacionEdicion,
+  catalogoParametrosGrupo,
   fechaEventoAlEditar,
   fechaEventoDesdeDia,
   ordenarAccionesRegistro,
-  ordenarParametrosRegistro,
   parametrosDesdeValores,
   partesFechaLocal,
   prepararPlantasRegistro,
   resolverAlcanceRegistro,
+  seccionParametrosGrupoVisible,
   valoresDesdeRegistroParametros,
 } from "@/lib/registros";
 import { textoCantidad } from "@/lib/unidades";
-
-const TIPOS_REGISTRO = [
-  {
-    valor: "plantas",
-    etiqueta: "Plantas",
-    descripcion: "Acciones, parámetros y observaciones sobre tus plantas.",
-  },
-  {
-    valor: "ambiente",
-    etiqueta: "Ambiente",
-    descripcion: "Condiciones y parámetros ambientales de tu unidad de cultivo.",
-  },
-];
 
 const MODOS_PLANTAS = [
   { valor: "unidad", etiqueta: "Toda la unidad" },
@@ -140,8 +129,9 @@ function BotonAccion({ item, activa, disabled, onClick }) {
   );
 }
 
-function hayValoresParametros(valores) {
-  return Object.values(valores || {}).some((valor) => String(valor ?? "").trim() !== "");
+function bloqueadoPorEdicion(editandoId, aplicaEdicion, grupo) {
+  if (!editandoId) return false;
+  return aplicaEdicion !== grupo;
 }
 
 const SIN_ACCIONES_OCULTAS = [];
@@ -151,18 +141,15 @@ async function sinPersistencia() {
 }
 
 function seleccionDeInicio(unidades, seleccion) {
-  const vacia = { unidadId: "", tipo: "plantas", modo: "unidad", ids: new Set() };
+  const vacia = { unidadId: "", modo: "unidad", ids: new Set() };
   const unidad = seleccion ? unidades.find((item) => item.id === seleccion.unidadId) : null;
   if (!unidad) return vacia;
-  if (seleccion.tipo === "ambiente") {
-    return { unidadId: unidad.id, tipo: "ambiente", modo: "unidad", ids: new Set() };
-  }
   const todas = (unidad.plantas || []).map((planta) => planta.id);
   const elegidas = (seleccion.plantaIds || []).filter((id) => todas.includes(id));
   if (!elegidas.length || elegidas.length === todas.length) {
-    return { unidadId: unidad.id, tipo: "plantas", modo: "unidad", ids: new Set(todas) };
+    return { unidadId: unidad.id, modo: "unidad", ids: new Set(todas) };
   }
-  return { unidadId: unidad.id, tipo: "plantas", modo: "manual", ids: new Set(elegidas) };
+  return { unidadId: unidad.id, modo: "manual", ids: new Set(elegidas) };
 }
 
 export function FormularioRegistroCultivo({
@@ -182,6 +169,7 @@ export function FormularioRegistroCultivo({
   subirFoto,
   borrarArchivos,
   obtenerUrlFoto,
+  agendarTarea = null,
 }) {
   const inicial = partesFechaLocal();
   const reducido = useReducedMotion();
@@ -210,7 +198,7 @@ export function FormularioRegistroCultivo({
   const enviandoRef = useRef(false);
   const [inicio] = useState(() => seleccionDeInicio(unidades, seleccionInicial));
   const [unidadId, setUnidadId] = useState(inicio.unidadId);
-  const [tipoRegistro, setTipoRegistro] = useState(inicio.tipo);
+  const [aplicaEdicion, setAplicaEdicion] = useState("");
   const [modoSeleccion, setModoSeleccion] = useState(inicio.modo);
   const [idsSeleccionados, setIdsSeleccionados] = useState(inicio.ids);
   const [accionesElegidas, setAccionesElegidas] = useState(() => new Set());
@@ -218,14 +206,16 @@ export function FormularioRegistroCultivo({
   const [paramsHistoricos, setParamsHistoricos] = useState([]);
   const [accionesHistoricas, setAccionesHistoricas] = useState([]);
   const [mostrarMasAcciones, setMostrarMasAcciones] = useState(false);
-  const [mostrarMasParametros, setMostrarMasParametros] = useState(false);
+  const [mostrarMasParametrosAmbiente, setMostrarMasParametrosAmbiente] = useState(false);
+  const [mostrarMasParametrosPlantas, setMostrarMasParametrosPlantas] = useState(false);
   const [editorPlantas, setEditorPlantas] = useState(false);
   const [observacion, setObservacion] = useState("");
   const [fecha, setFecha] = useState(inicial.fecha);
   const [configurar, setConfigurar] = useState(false);
   const [editandoId, setEditandoId] = useState("");
-  const [tipoPendiente, setTipoPendiente] = useState("");
   const [cargandoEdicion, setCargandoEdicion] = useState(false);
+  const creadoParcialRef = useRef({ ambiente: false, plantas: false });
+  const manejoExitoLocalRef = useRef(false);
   const [accionesPrioritarias, setAccionesPrioritarias] = useState(
     seguimientoInicial?.acciones || []
   );
@@ -276,23 +266,24 @@ export function FormularioRegistroCultivo({
       secundarias: orden.secundarias.filter(visible),
     };
   }, [accionesPrioritarias, opciones, accionesOcultas, accionesHistoricas]);
-  const parametrosOrdenados = useMemo(
-    () =>
-      ordenarParametrosRegistro(parametrosPrioritarios, opciones, paramsHistoricos, {
-        aplicaA: tipoRegistro,
-      }),
-    [parametrosPrioritarios, opciones, paramsHistoricos, tipoRegistro]
+  const catalogoAmbiente = useMemo(
+    () => catalogoParametrosGrupo(parametrosPrioritarios, opciones, paramsHistoricos, "ambiente"),
+    [parametrosPrioritarios, opciones, paramsHistoricos]
   );
+  const catalogoPlantas = useMemo(
+    () => catalogoParametrosGrupo(parametrosPrioritarios, opciones, paramsHistoricos, "plantas"),
+    [parametrosPrioritarios, opciones, paramsHistoricos]
+  );
+  const mostrarSeccionAmbiente = seccionParametrosGrupoVisible(catalogoAmbiente);
+  const mostrarSeccionPlantas = seccionParametrosGrupoVisible(catalogoPlantas);
 
-  const aplicaA = tipoRegistro === "ambiente" ? "ambiente" : "plantas";
   const plantasSeleccionadas = plantas.filter((planta) => idsSeleccionados.has(planta.id));
   const resumen = resumenAlcance({
-    aplicaA,
+    aplicaA: "plantas",
     plantasSeleccionadas,
     plantasUnidad: plantas,
     unidadNombre: unidad?.nombre || "",
   });
-
   const accionesVisibles = accionesOrdenadas.prioritarias;
   const accionesExtra = accionesOrdenadas.secundarias;
 
@@ -314,10 +305,49 @@ export function FormularioRegistroCultivo({
     setErrorLocal("");
     setEditorPlantas(false);
     setEditandoId("");
+    setAplicaEdicion("");
     baseEdicion.current = null;
-    setMostrarMasParametros(false);
+    setMostrarMasParametrosAmbiente(false);
+    setMostrarMasParametrosPlantas(false);
     setMostrarMasAcciones(false);
+    creadoParcialRef.current = { ambiente: false, plantas: false };
     reiniciarFotos();
+  }
+
+  function aplicarExitoGuardado(datos, registro) {
+    if (!registro?.id) return;
+    setExitosLocales((lista) => [
+      {
+        id: registro.id,
+        fecha_evento: datos?.fecha_evento || registro.fecha_evento,
+        observacion: datos?.observacion || registro.observacion || "",
+        alcance: datos?.alcance || registro.alcance,
+        aplica_a: datos?.aplica_a || registro.aplica_a,
+        unidad_cultivo_id: datos?.unidad_cultivo_id || registro.unidad_cultivo_id,
+        registro_acciones: (datos?.acciones || []).map((item) => ({
+          origen: item.origen,
+          clave_nativa: item.clave_nativa,
+          opcion_id: item.opcion_id,
+          nombre: item.nombre,
+        })),
+        registro_parametros: (datos?.parametros || []).map((item) => ({
+          origen: item.origen,
+          clave_nativa: item.clave_nativa,
+          opcion_id: item.opcion_id,
+          nombre: item.nombre,
+          tipo_valor: item.tipo_valor,
+          valor_numero: item.valor_numero,
+          valor_texto: item.valor_texto,
+          unidad: item.unidad,
+        })),
+        registro_plantas: (datos?.plantas || []).map((planta) => ({
+          planta_id: planta.id,
+          nombre_planta: planta.nombre,
+        })),
+      },
+      ...lista.filter((item) => item.id !== registro.id),
+    ]);
+    onGuardadoRef.current?.(registro);
   }
 
   // Descarta fotos locales sin tocar Storage (después de guardar, los archivos ya pertenecen al registro).
@@ -407,45 +437,13 @@ export function FormularioRegistroCultivo({
   }
 
   useEffect(() => {
+    if (manejoExitoLocalRef.current) return;
     if (!estado?.ok || !estado.registro?.id) return;
     if (ultimoExito.current === estado) return;
     ultimoExito.current = estado;
 
-    const resumenGuardado = ultimoPayload.current;
-    setExitosLocales((lista) => [
-      {
-        id: estado.registro.id,
-        fecha_evento: resumenGuardado?.fecha_evento || estado.registro.fecha_evento,
-        observacion: resumenGuardado?.observacion || estado.registro.observacion || "",
-        alcance: resumenGuardado?.alcance || estado.registro.alcance,
-        aplica_a: resumenGuardado?.aplica_a || estado.registro.aplica_a,
-        unidad_cultivo_id:
-          resumenGuardado?.unidad_cultivo_id || estado.registro.unidad_cultivo_id,
-        registro_acciones: (resumenGuardado?.acciones || []).map((item) => ({
-          origen: item.origen,
-          clave_nativa: item.clave_nativa,
-          opcion_id: item.opcion_id,
-          nombre: item.nombre,
-        })),
-        registro_parametros: (resumenGuardado?.parametros || []).map((item) => ({
-          origen: item.origen,
-          clave_nativa: item.clave_nativa,
-          opcion_id: item.opcion_id,
-          nombre: item.nombre,
-          tipo_valor: item.tipo_valor,
-          valor_numero: item.valor_numero,
-          valor_texto: item.valor_texto,
-          unidad: item.unidad,
-        })),
-        registro_plantas: (resumenGuardado?.plantas || []).map((planta) => ({
-          planta_id: planta.id,
-          nombre_planta: planta.nombre,
-        })),
-      },
-      ...lista.filter((item) => item.id !== estado.registro.id),
-    ]);
+    aplicarExitoGuardado(ultimoPayload.current, estado.registro);
     limpiarFormulario(true);
-    onGuardadoRef.current?.(estado.registro);
   }, [estado]);
 
   function elegirUnidad(siguienteId) {
@@ -454,50 +452,11 @@ export function FormularioRegistroCultivo({
     setEditorPlantas(false);
     const siguiente = unidades.find((item) => item.id === siguienteId);
     const lista = siguiente?.plantas || [];
-    if (tipoRegistro === "ambiente") {
-      setIdsSeleccionados(new Set());
-      return;
-    }
     if (modoSeleccion === "unidad") {
       setIdsSeleccionados(new Set(lista.map((planta) => planta.id)));
       return;
     }
     setIdsSeleccionados(new Set());
-  }
-
-  function aplicarTipoRegistro(siguiente) {
-    setTipoRegistro(siguiente);
-    setErrorLocal("");
-    setEditorPlantas(false);
-    setTipoPendiente("");
-    setValoresParametros({});
-    setAccionesElegidas(new Set());
-    setObservacion("");
-    if (!editandoId) {
-      setParamsHistoricos([]);
-      setAccionesHistoricas([]);
-    }
-
-    if (siguiente === "ambiente") {
-      setIdsSeleccionados(new Set());
-      return;
-    }
-
-    setModoSeleccion("unidad");
-    setIdsSeleccionados(new Set(plantas.map((planta) => planta.id)));
-  }
-
-  function elegirTipoRegistro(siguiente) {
-    if (siguiente === tipoRegistro) return;
-    const sucio =
-      hayValoresParametros(valoresParametros) ||
-      accionesElegidas.size > 0 ||
-      String(observacion || "").trim() !== "";
-    if (sucio) {
-      setTipoPendiente(siguiente);
-      return;
-    }
-    aplicarTipoRegistro(siguiente);
   }
 
   function aplicarModoSeleccion(siguiente) {
@@ -520,7 +479,7 @@ export function FormularioRegistroCultivo({
   }
 
   function alternarPlanta(plantaId) {
-    if (tipoRegistro === "ambiente") return;
+    if (bloqueoPlantas) return;
     setIdsSeleccionados((actual) => {
       const siguiente = new Set(actual);
       if (siguiente.has(plantaId)) siguiente.delete(plantaId);
@@ -555,7 +514,7 @@ export function FormularioRegistroCultivo({
     }
 
     const aplica = registro.aplica_a === "ambiente" ? "ambiente" : "plantas";
-    setTipoRegistro(aplica);
+    setAplicaEdicion(aplica);
 
     const idsSnapshot = (registro.registro_plantas || [])
       .map((fila) => fila.planta_id)
@@ -599,7 +558,8 @@ export function FormularioRegistroCultivo({
     setAccionesHistoricas(registro.registro_acciones || []);
     setValoresParametros(valoresDesdeRegistroParametros(registro.registro_parametros));
     setParamsHistoricos(registro.registro_parametros || []);
-    setMostrarMasParametros(true);
+    setMostrarMasParametrosAmbiente(true);
+    setMostrarMasParametrosPlantas(true);
     setEditorPlantas(false);
     for (const foto of fotosNuevasRef.current) liberarVista(foto);
     subidasRef.current = new Map();
@@ -636,36 +596,18 @@ export function FormularioRegistroCultivo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registroInicialId]);
 
-  function armarPayload() {
-    if (!unidad) {
-      return { error: "Seleccioná una unidad." };
-    }
-
-    if (aplicaA === "plantas" && plantas.length === 0) {
-      return { error: "Esta unidad no tiene plantas para registrar." };
-    }
-
-    const alcanceResuelto = resolverAlcanceRegistro({
-      aplicaA,
-      plantasSeleccionadas,
-      plantasUnidad: plantas,
-    });
-
-    if (!alcanceResuelto) {
-      return { error: "Seleccioná al menos una planta." };
-    }
-
+  function fechaEventoFormulario() {
     const base = editandoId && baseEdicion.current?.id === editandoId ? baseEdicion.current : null;
-    const fechaEvento = base
-      ? fechaEventoAlEditar({
-          fechaSeleccionada: fecha,
-          fechaOriginalIso: base.fecha_evento,
-        })
-      : fechaEventoDesdeDia(fecha);
-    if (!fechaEvento) {
-      return { error: "La fecha del evento no es válida." };
+    if (base) {
+      return fechaEventoAlEditar({
+        fechaSeleccionada: fecha,
+        fechaOriginalIso: base.fecha_evento,
+      });
     }
+    return fechaEventoDesdeDia(fecha);
+  }
 
+  function recogerAcciones({ incluirHistoricas }) {
     const catalogoAcciones = [
       ...accionesOrdenadas.prioritarias,
       ...accionesOrdenadas.secundarias,
@@ -686,11 +628,7 @@ export function FormularioRegistroCultivo({
             }
       );
 
-    if (aplicaA === "ambiente" && !editandoId) {
-      acciones = [];
-    }
-
-    if (editandoId && accionesHistoricas.length > 0) {
+    if (incluirHistoricas && editandoId && accionesHistoricas.length > 0) {
       const claves = new Set(
         acciones.map((item) =>
           item.origen === "nativa"
@@ -715,29 +653,32 @@ export function FormularioRegistroCultivo({
         claves.add(clave);
       }
     }
+    return acciones;
+  }
 
-    const catalogoParametros = [
-      ...parametrosOrdenados.prioritarias,
-      ...parametrosOrdenados.secundarias,
-    ];
-    const parametrosOk = parametrosDesdeValores(valoresParametros, catalogoParametros);
-    if (parametrosOk.error) return { error: parametrosOk.error };
-
-    const observacionLimpia = observacion.trim();
+  function fotosEnFormulario() {
     const existentesRestantes = fotosExistentes.filter((foto) => !fotosQuitar.has(foto.id)).length;
     const hayFotos = permitirFotos && (fotosNuevas.length > 0 || existentesRestantes > 0);
-    if (
-      acciones.length === 0 &&
-      parametrosOk.parametros.length === 0 &&
-      !observacionLimpia &&
-      !hayFotos
-    ) {
-      return {
-        error: "El registro necesita una acción, un parámetro, una observación o una foto.",
-      };
+    return { existentesRestantes, hayFotos };
+  }
+
+  function armarDatosRegistro(aplicaA, parametros, extras = {}) {
+    const alcanceResuelto =
+      aplicaA === "ambiente"
+        ? resolverAlcanceRegistro({ aplicaA, plantasSeleccionadas: [], plantasUnidad: plantas })
+        : resolverAlcanceRegistro({
+            aplicaA,
+            plantasSeleccionadas,
+            plantasUnidad: plantas,
+          });
+
+    if (!alcanceResuelto) {
+      return { error: "Seleccioná al menos una planta." };
     }
-    if (fotosNuevas.some((foto) => foto.estado === "procesando")) {
-      return { error: "Esperá a que termine de prepararse la foto." };
+
+    const fechaEvento = fechaEventoFormulario();
+    if (!fechaEvento) {
+      return { error: "La fecha del evento no es válida." };
     }
 
     const datos = {
@@ -747,17 +688,19 @@ export function FormularioRegistroCultivo({
       unidad_cultivo_id: unidad.id,
       genetica_clave: alcanceResuelto.genetica_clave,
       genetica_etiqueta: alcanceResuelto.genetica_etiqueta,
-      observacion: observacionLimpia || null,
       fecha_evento: fechaEvento,
       plantas:
         aplicaA === "ambiente" ? [] : prepararPlantasRegistro(plantasSeleccionadas, unidad),
-      acciones,
-      parametros: parametrosOk.parametros,
-      fotos_quitar: editandoId ? [...fotosQuitar] : [],
-      fotos_restantes: existentesRestantes,
+      acciones: extras.acciones || [],
+      parametros,
+      observacion: extras.observacion ?? null,
+      fotos_quitar: extras.fotos_quitar || [],
+      fotos_restantes: extras.fotos_restantes ?? 0,
+      ...extras.datosExtra,
     };
 
     if (editandoId) datos.id = editandoId;
+    const base = editandoId && baseEdicion.current?.id === editandoId ? baseEdicion.current : null;
     return {
       error: "",
       datos: aplicarConservacionEdicion(datos, {
@@ -766,6 +709,96 @@ export function FormularioRegistroCultivo({
         idsPlantasUnidad: plantas.map((planta) => planta.id),
       }),
     };
+  }
+
+  function armarPayload() {
+    if (!unidad) {
+      return { error: "Seleccioná una unidad." };
+    }
+    if (fotosNuevas.some((foto) => foto.estado === "procesando")) {
+      return { error: "Esperá a que termine de prepararse la foto." };
+    }
+
+    const { existentesRestantes, hayFotos } = fotosEnFormulario();
+    const observacionLimpia = observacion.trim();
+
+    if (editandoId) {
+      const aplicaA = aplicaEdicion === "ambiente" ? "ambiente" : "plantas";
+      const catalogo =
+        aplicaA === "ambiente"
+          ? [...catalogoAmbiente.prioritarias, ...catalogoAmbiente.secundarias]
+          : [...catalogoPlantas.prioritarias, ...catalogoPlantas.secundarias];
+      const parametrosOk = parametrosDesdeValores(valoresParametros, catalogo);
+      if (parametrosOk.error) return { error: parametrosOk.error };
+
+      const acciones =
+        aplicaA === "plantas" ? recogerAcciones({ incluirHistoricas: true }) : [];
+      const observacionFinal = observacionLimpia || null;
+
+      if (
+        acciones.length === 0 &&
+        parametrosOk.parametros.length === 0 &&
+        !observacionFinal &&
+        !(permitirFotos && hayFotos)
+      ) {
+        return {
+          error: "El registro necesita una acción, un parámetro, una observación o una foto.",
+        };
+      }
+
+      if (aplicaA === "plantas" && plantasSeleccionadas.length < 1) {
+        return { error: "Seleccioná al menos una planta." };
+      }
+
+      const armado = armarDatosRegistro(aplicaA, parametrosOk.parametros, {
+        acciones,
+        observacion: observacionFinal,
+        fotos_quitar: [...fotosQuitar],
+        fotos_restantes: existentesRestantes,
+      });
+      if (armado.error) return armado;
+      return { error: "", payloads: [{ tipo: aplicaA, datos: armado.datos }] };
+    }
+
+    const acciones = recogerAcciones({ incluirHistoricas: false });
+    const plan = planificarCreacionRegistros({
+      valoresParametros,
+      catalogoAmbiente,
+      catalogoPlantas,
+      cantidadAcciones: acciones.length,
+      observacion,
+      hayFotos: permitirFotos && hayFotos,
+      plantasSeleccionadas: plantasSeleccionadas.length,
+      yaGuardadoAmbiente: creadoParcialRef.current.ambiente,
+      yaGuardadoPlantas: creadoParcialRef.current.plantas,
+    });
+    if (plan.error) return { error: plan.error };
+
+    const payloads = [];
+    for (const tipo of plan.tipos) {
+      if (tipo === "ambiente") {
+        const armado = armarDatosRegistro("ambiente", plan.parametrosAmbiente, {
+          acciones: [],
+          observacion: null,
+          fotos_quitar: [],
+          fotos_restantes: 0,
+        });
+        if (armado.error) return armado;
+        payloads.push({ tipo: "ambiente", datos: armado.datos });
+        continue;
+      }
+
+      const armado = armarDatosRegistro("plantas", plan.parametrosPlantas, {
+        acciones,
+        observacion: plan.observacionLimpia,
+        fotos_quitar: [],
+        fotos_restantes: existentesRestantes,
+      });
+      if (armado.error) return armado;
+      payloads.push({ tipo: "plantas", datos: armado.datos });
+    }
+
+    return { error: "", payloads };
   }
 
   // Sube a Storage las fotos que todavía no se subieron. Las que ya subieron en un intento previo
@@ -793,11 +826,21 @@ export function FormularioRegistroCultivo({
       return;
     }
 
-    // Bloqueo síncrono contra doble envío (el estado de React llega un render tarde).
+    const payloads = armado.payloads || [];
+    if (!payloads.length) {
+      setErrorLocal("No hay datos para guardar.");
+      return;
+    }
+
     enviandoRef.current = true;
+    manejoExitoLocalRef.current = payloads.length > 1 || !editandoId;
+
     try {
-      let datos = armado.datos;
-      if (permitirFotos && fotosNuevasRef.current.length > 0) {
+      let fotosSubidas = null;
+      const necesitaFotos = payloads.some(
+        (item) => item.tipo === "plantas" || item.datos?.aplica_a === "ambiente"
+      );
+      if (necesitaFotos && permitirFotos && fotosNuevasRef.current.length > 0) {
         setSubiendo(true);
         const subidas = await subirFotosPendientes();
         setSubiendo(false);
@@ -805,14 +848,61 @@ export function FormularioRegistroCultivo({
           setErrorLocal(subidas.error);
           return;
         }
-        datos = { ...datos, fotos: subidas.fotos };
+        fotosSubidas = subidas.fotos;
       }
-      ultimoPayload.current = datos;
-      formData.set("registro", JSON.stringify(datos));
-      await accion(formData);
+
+      let guardados = 0;
+      for (const item of payloads) {
+        let datos = item.datos;
+        if (
+          fotosSubidas?.length &&
+          (item.tipo === "plantas" || item.datos?.aplica_a === "ambiente")
+        ) {
+          datos = { ...datos, fotos: fotosSubidas };
+        }
+
+        ultimoPayload.current = datos;
+        formData.set("registro", JSON.stringify(datos));
+
+        const resultado =
+          manejoExitoLocalRef.current
+            ? await guardarSeguro(null, formData)
+            : await accion(formData);
+
+        if (resultado?.error) {
+          if (creadoParcialRef.current.ambiente && item.tipo === "plantas") {
+            setErrorLocal(
+              `Se guardó el registro de ambiente, pero falló el de plantas: ${resultado.error} Reintentá para completar solo plantas.`
+            );
+          } else {
+            setErrorLocal(resultado.error);
+          }
+          if (resultado.archivosLimpiados) subidasRef.current = new Map();
+          if (resultado.yaGuardado) {
+            if (item.tipo === "ambiente") creadoParcialRef.current.ambiente = true;
+            if (item.tipo === "plantas") creadoParcialRef.current.plantas = true;
+          }
+          return;
+        }
+
+        if (!manejoExitoLocalRef.current) {
+          return;
+        }
+
+        if (item.tipo === "ambiente") creadoParcialRef.current.ambiente = true;
+        if (item.tipo === "plantas") creadoParcialRef.current.plantas = true;
+        aplicarExitoGuardado(datos, resultado.registro);
+        guardados += 1;
+      }
+
+      if (manejoExitoLocalRef.current && guardados === payloads.length) {
+        creadoParcialRef.current = { ambiente: false, plantas: false };
+        limpiarFormulario(true);
+      }
     } finally {
       setSubiendo(false);
       enviandoRef.current = false;
+      manejoExitoLocalRef.current = false;
     }
   }
 
@@ -838,16 +928,20 @@ export function FormularioRegistroCultivo({
   }));
 
   const bloqueado = pendiente || cargandoEdicion || subiendo;
+  const bloqueoAmbiente = bloqueado || bloqueadoPorEdicion(editandoId, aplicaEdicion, "ambiente");
+  const bloqueoPlantas = bloqueado || bloqueadoPorEdicion(editandoId, aplicaEdicion, "plantas");
   const cantidadParametros = useMemo(() => {
     const catalogo = [
-      ...parametrosOrdenados.prioritarias,
-      ...parametrosOrdenados.secundarias,
+      ...catalogoAmbiente.prioritarias,
+      ...catalogoAmbiente.secundarias,
+      ...catalogoPlantas.prioritarias,
+      ...catalogoPlantas.secundarias,
     ];
     return catalogo.filter((item) => {
       const valor = valoresParametros[claveParametroRegistro(item)];
       return String(valor ?? "").trim() !== "";
     }).length;
-  }, [parametrosOrdenados, valoresParametros]);
+  }, [catalogoAmbiente, catalogoPlantas, valoresParametros]);
 
   const accionesPill = useMemo(() => {
     const catalogo = [
@@ -868,17 +962,9 @@ export function FormularioRegistroCultivo({
           </span>
           <p className="registro-crear__pill-texto">
             Registro en: <strong>{unidad.nombre}</strong>
-            {aplicaA === "ambiente" ? (
-              <>
-                {" · "}ambiente
-                {" · "}parámetros: {cantidadParametros}
-              </>
-            ) : (
-              <>
-                {" · "}plantas: {plantasSeleccionadas.length}
-                {accionesPill.length > 0 ? ` · ${accionesPill.join(" · ")}` : null}
-              </>
-            )}
+            {" · "}plantas: {plantasSeleccionadas.length}
+            {cantidadParametros > 0 ? ` · parámetros: ${cantidadParametros}` : null}
+            {accionesPill.length > 0 ? ` · ${accionesPill.join(" · ")}` : null}
           </p>
         </div>
       ) : null}
@@ -933,34 +1019,6 @@ export function FormularioRegistroCultivo({
         </section>
 
         <section className="registro-crear__seccion">
-          <h2 className="registro-crear__etiqueta">¿Qué querés registrar?</h2>
-          <div className="registro-crear__tipos" role="group" aria-label="Tipo de registro">
-            {TIPOS_REGISTRO.map((item) => {
-              const activo = tipoRegistro === item.valor;
-              return (
-                <button
-                  key={item.valor}
-                  type="button"
-                  className={`registro-crear__tipo${activo ? " registro-crear__tipo--activo" : ""}`}
-                  onClick={() => elegirTipoRegistro(item.valor)}
-                  disabled={bloqueado}
-                  aria-pressed={activo}
-                >
-                  <span className="registro-crear__tipo-icono" aria-hidden="true">
-                    {item.valor === "ambiente" ? <IconoAmbiente /> : <IconoPlanta />}
-                  </span>
-                  <span className="registro-crear__tipo-cuerpo">
-                    <span className="registro-crear__tipo-nombre">{item.etiqueta}</span>
-                    <span className="registro-crear__tipo-desc">{item.descripcion}</span>
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <Aparecer visible={tipoRegistro === "plantas"} espacio="1.15rem">
-          <section className="registro-crear__seccion">
             <h2 className="registro-crear__etiqueta">Plantas seleccionadas</h2>
             <div className="registro-crear__resumen-wrap">
               <AnimatePresence>
@@ -990,7 +1048,7 @@ export function FormularioRegistroCultivo({
                 type="button"
                 className="registro-crear__enlace"
                 onClick={() => setEditorPlantas((valor) => !valor)}
-                disabled={bloqueado || !unidadId}
+                disabled={bloqueoPlantas || !unidadId}
               >
                 {editorPlantas ? "Cerrar" : "Elegir plantas"}
               </button>
@@ -1006,7 +1064,7 @@ export function FormularioRegistroCultivo({
                       type="button"
                       className={`registro-crear__chip${modoSeleccion === item.valor ? " registro-crear__chip--activo" : ""}`}
                       onClick={() => aplicarModoSeleccion(item.valor)}
-                      disabled={bloqueado}
+                      disabled={bloqueoPlantas}
                       aria-pressed={modoSeleccion === item.valor}
                     >
                       {item.etiqueta}
@@ -1026,7 +1084,7 @@ export function FormularioRegistroCultivo({
                           type="button"
                           className={`registro-crear__pill-genetica${activo ? " registro-crear__pill-genetica--activa" : ""}`}
                           onClick={() => elegirGenetica(grupo.clave)}
-                          disabled={bloqueado}
+                          disabled={bloqueoPlantas}
                           aria-pressed={activo}
                         >
                           <span className="registro-crear__pill-genetica-nombre">{grupo.etiqueta}</span>
@@ -1058,7 +1116,7 @@ export function FormularioRegistroCultivo({
                             type="button"
                             className={`registro-crear__planta${activa ? " registro-crear__planta--activa" : ""}`}
                             onClick={() => alternarPlanta(planta.id)}
-                            disabled={bloqueado}
+                            disabled={bloqueoPlantas}
                             aria-pressed={activa}
                             whileTap={bloqueado ? undefined : toque}
                             transition={transicionToque}
@@ -1080,33 +1138,63 @@ export function FormularioRegistroCultivo({
               </div>
             </Aparecer>
           </section>
-        </Aparecer>
 
-        <SeccionParametrosRegistro
-          prioritarias={parametrosOrdenados.prioritarias}
-          secundarias={parametrosOrdenados.secundarias}
-          valores={valoresParametros}
-          onChange={(clave, valor) =>
-            setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
-          }
-          mostrarMas={mostrarMasParametros}
-          onToggleMas={() => setMostrarMasParametros((valor) => !valor)}
-          pendiente={bloqueado}
-          accionCabecera={
-            EditorSeguimiento ? (
-              <button
-                type="button"
-                className="registro-crear__enlace"
-                onClick={() => setConfigurar((valor) => !valor)}
-                disabled={bloqueado}
-              >
-                {configurar ? "Cerrar" : "Editar"}
-              </button>
-            ) : null
-          }
-        />
+        {mostrarSeccionAmbiente ? (
+          <SeccionParametrosRegistro
+            titulo="Parámetros ambiente"
+            prioritarias={catalogoAmbiente.prioritarias}
+            secundarias={catalogoAmbiente.secundarias}
+            valores={valoresParametros}
+            onChange={(clave, valor) =>
+              setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
+            }
+            mostrarMas={mostrarMasParametrosAmbiente}
+            onToggleMas={() => setMostrarMasParametrosAmbiente((valor) => !valor)}
+            pendiente={bloqueoAmbiente}
+            deshabilitado={bloqueoAmbiente}
+            accionCabecera={
+              EditorSeguimiento ? (
+                <button
+                  type="button"
+                  className="registro-crear__enlace"
+                  onClick={() => setConfigurar((valor) => !valor)}
+                  disabled={bloqueoAmbiente}
+                >
+                  {configurar ? "Cerrar" : "Editar"}
+                </button>
+              ) : null
+            }
+          />
+        ) : null}
 
-        <Aparecer visible={tipoRegistro === "plantas"} espacio="1.15rem">
+        {mostrarSeccionPlantas ? (
+          <SeccionParametrosRegistro
+            titulo="Parámetros plantas"
+            prioritarias={catalogoPlantas.prioritarias}
+            secundarias={catalogoPlantas.secundarias}
+            valores={valoresParametros}
+            onChange={(clave, valor) =>
+              setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
+            }
+            mostrarMas={mostrarMasParametrosPlantas}
+            onToggleMas={() => setMostrarMasParametrosPlantas((valor) => !valor)}
+            pendiente={bloqueoPlantas}
+            deshabilitado={bloqueoPlantas}
+            accionCabecera={
+              EditorSeguimiento ? (
+                <button
+                  type="button"
+                  className="registro-crear__enlace"
+                  onClick={() => setConfigurar((valor) => !valor)}
+                  disabled={bloqueoPlantas}
+                >
+                  {configurar ? "Cerrar" : "Editar"}
+                </button>
+              ) : null
+            }
+          />
+        ) : null}
+
           <section className="registro-crear__seccion">
             <div className="registro-crear__seccion-cabecera">
               <h2 className="registro-crear__etiqueta">Acciones</h2>
@@ -1134,7 +1222,7 @@ export function FormularioRegistroCultivo({
                       key={clave}
                       item={item}
                       activa={accionesElegidas.has(clave)}
-                      disabled={bloqueado}
+                      disabled={bloqueoPlantas}
                       onClick={() => alternarAccion(item)}
                     />
                   );
@@ -1147,7 +1235,7 @@ export function FormularioRegistroCultivo({
                   type="button"
                   className="registro-crear__enlace"
                   onClick={() => setMostrarMasAcciones((valor) => !valor)}
-                  disabled={bloqueado}
+                  disabled={bloqueoPlantas}
                 >
                   {mostrarMasAcciones ? "Ocultar más acciones" : "Más acciones"}
                 </button>
@@ -1160,7 +1248,7 @@ export function FormularioRegistroCultivo({
                           key={clave}
                           item={item}
                           activa={accionesElegidas.has(clave)}
-                          disabled={bloqueado}
+                          disabled={bloqueoPlantas}
                           onClick={() => alternarAccion(item)}
                         />
                       );
@@ -1170,7 +1258,6 @@ export function FormularioRegistroCultivo({
               </>
             ) : null}
           </section>
-        </Aparecer>
 
         {permitirFotos ? (
           <section className="registro-crear__seccion" aria-labelledby="registro-fotos-titulo">
@@ -1240,15 +1327,23 @@ export function FormularioRegistroCultivo({
               onChange={(evento) => setObservacion(evento.target.value)}
               rows={4}
               maxLength={4000}
-              placeholder={
-                tipoRegistro === "ambiente"
-                  ? "¿Qué pasó con las condiciones de la unidad?"
-                  : "¿Qué sucedió con estas plantas?"
-              }
+              placeholder="Anotá lo que necesites para que Flora entienda mejor tu cultivo."
               disabled={bloqueado}
             />
           </label>
         </section>
+
+        {!editandoId ? (
+          <SeccionTareaProgramada
+            agendarTarea={agendarTarea}
+            unidadId={unidad?.id || ""}
+            aplicaA="plantas"
+            plantasSeleccionadas={plantasSeleccionadas}
+            plantasUnidad={plantas}
+            modoSeleccion={modoSeleccion}
+            deshabilitado={bloqueado}
+          />
+        ) : null}
 
         {listaHoy.length > 0 ? (
           <section className="registro-crear__hoy">
@@ -1343,17 +1438,6 @@ export function FormularioRegistroCultivo({
         onConfirmar={confirmarQuitarExistente}
       />
 
-      <ModalConfirmacion
-        abierto={Boolean(tipoPendiente)}
-        onCerrar={() => setTipoPendiente("")}
-        titulo="¿Cambiar el tipo de registro?"
-        descripcion="Estás cambiando el tipo de registro. Algunos datos ingresados no corresponden al nuevo tipo y se descartarán. ¿Querés continuar?"
-        textoConfirmar="Cambiar tipo"
-        textoCancelar="Cancelar"
-        onConfirmar={() => {
-          aplicarTipoRegistro(tipoPendiente);
-        }}
-      />
     </div>
   );
 }

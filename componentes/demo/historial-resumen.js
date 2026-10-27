@@ -2,9 +2,10 @@
 
 import { fechaCorta, fechaLarga, tarjetasResumen } from "@/lib/demo/historial/historial-demo";
 
-export function HistorialResumen({ historial }) {
+export function HistorialResumen({ historial, modoApp = false }) {
   const tarjetas = tarjetasResumen(historial);
   const { resumen, cultivo } = historial;
+  const esApp = modoApp || historial.modoApp;
 
   return (
     <section className="historial-resumen" aria-labelledby="historial-resumen-titulo">
@@ -19,17 +20,29 @@ export function HistorialResumen({ historial }) {
           </li>
         ))}
       </ul>
-      <div className="historial-narrativa">
-        <p>
-          <strong>{cultivo.nombre}</strong> es un cultivo real de {cultivo.genetica || "una genética"} en{" "}
-          {cultivo.metodo || "hidroponía"}, registrado día a día por su cultivador con fotos, mediciones y notas.
-          Lo mostramos tal como fue cargado, en modo lectura: podés recorrerlo, pero no editarlo.
-        </p>
-        <p className="demo__aviso">
-          Los registros van del {fechaCorta(resumen.rango.desde)} al {fechaLarga(resumen.rango.hasta)}. El cultivo
-          empezó el {fechaLarga(cultivo.fechaInicio)}; los primeros días no tuvieron registros digitales.
-        </p>
-      </div>
+      {esApp ? (
+        resumen.rango.desde && resumen.rango.hasta ? (
+          <p className="historial-resumen__alcance">
+            Estadísticas del alcance seleccionado: registros del {fechaCorta(resumen.rango.desde)} al{" "}
+            {fechaLarga(resumen.rango.hasta)}
+            {cultivo.fechaInicio ? ` · inicio del cultivo ${fechaLarga(cultivo.fechaInicio)}` : ""}.
+          </p>
+        ) : (
+          <p className="historial-resumen__alcance">Todavía no hay registros en este alcance.</p>
+        )
+      ) : (
+        <div className="historial-narrativa">
+          <p>
+            <strong>{cultivo.nombre}</strong> es un cultivo real de {cultivo.genetica || "una genética"} en{" "}
+            {cultivo.metodo || "hidroponía"}, registrado día a día por su cultivador con fotos, mediciones y notas.
+            Lo mostramos tal como fue cargado, en modo lectura: podés recorrerlo, pero no editarlo.
+          </p>
+          <p className="demo__aviso">
+            Los registros van del {fechaCorta(resumen.rango.desde)} al {fechaLarga(resumen.rango.hasta)}. El cultivo
+            empezó el {fechaLarga(cultivo.fechaInicio)}; los primeros días no tuvieron registros digitales.
+          </p>
+        </div>
+      )}
     </section>
   );
 }

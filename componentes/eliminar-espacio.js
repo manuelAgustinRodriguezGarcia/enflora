@@ -12,8 +12,13 @@ export function EliminarEspacio({ espacioId }) {
 
   return (
     <>
-      <Boton className="boton boton--destructivo" type="button" onClick={() => setAbierto(true)}>
-        Eliminar
+      <Boton
+        className="boton boton--destructivo boton--icono"
+        type="button"
+        aria-label="Eliminar espacio"
+        onClick={() => setAbierto(true)}
+      >
+        <IconoBasura />
       </Boton>
       <ModalConfirmacion
         abierto={abierto}
