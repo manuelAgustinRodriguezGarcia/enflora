@@ -4,6 +4,7 @@ import {
   resumenConfigGemini,
 } from "@/lib/flora-chat-config";
 import { conversarConFlora } from "@/lib/flora-gemini";
+import { parsearAdjuntoImagenCliente } from "@/lib/flora-imagen-chat";
 import { verificarCuotaUsuario } from "@/lib/flora-chat-limites";
 import { motorGuiaFlora } from "@/lib/flora-rag-config";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -56,8 +57,18 @@ export async function POST(request) {
   const historial = body?.historial;
   const contextoSolucionId = body?.contextoSolucionId;
 
+  const adjuntoParse = parsearAdjuntoImagenCliente(body);
+  if (!adjuntoParse.ok) {
+    return json({ ok: false, error: adjuntoParse.error }, 400);
+  }
+
   const supabase = await crearClienteServidor();
-  const resultado = await conversarConFlora(supabase, { mensaje, historial, contextoSolucionId });
+  const resultado = await conversarConFlora(supabase, {
+    mensaje,
+    historial,
+    contextoSolucionId,
+    adjuntosImagen: adjuntoParse.adjuntos,
+  });
 
   if (!resultado.ok) {
     const status = resultado.error?.includes("demasiado largo") ? 400 : 502;

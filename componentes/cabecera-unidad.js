@@ -41,8 +41,14 @@ export function CabeceraUnidad({
       <div className="detalle-cabecera__portada">
         <PortadaUnidad url={portadaUrl} vertical />
         <div className="detalle-cabecera__pie">
-          <div className="detalle-cabecera__superior">
-            <h1 className="detalle-cabecera__titulo">{unidad.nombre}</h1>
+          <h1 className="detalle-cabecera__titulo">{unidad.nombre}</h1>
+          <div className="detalle-cabecera__inferior">
+            <div className="detalle-cabecera__fila">
+              <span className="detalle-cabecera__chip">
+                {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
+              </span>
+              <span className="detalle-cabecera__meta">{textoCantidad(cantidadPlantas)}</span>
+            </div>
             <div className="detalle-cabecera__acciones">
               <Boton
                 className="boton boton--secundario boton--icono"
@@ -56,12 +62,6 @@ export function CabeceraUnidad({
               </Boton>
               <EliminarUnidad unidadId={unidad.id} espacioId={espacioId} />
             </div>
-          </div>
-          <div className="detalle-cabecera__fila">
-            <span className="detalle-cabecera__chip">
-              {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
-            </span>
-            <span className="detalle-cabecera__meta">{textoCantidad(cantidadPlantas)}</span>
           </div>
         </div>
       </div>

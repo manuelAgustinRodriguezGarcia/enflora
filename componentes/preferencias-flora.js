@@ -1,7 +1,39 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { PERSONALIDADES_FLORA } from "@/lib/flora-personalidad";
+import { PERSONALIDADES_FLORA, rutaImagenPersonalidadFlora } from "@/lib/flora-personalidad";
+
+function ImagenPersonalidadFlora({ id, nombre }) {
+  const [cargada, setCargada] = useState(false);
+  const [fallo, setFallo] = useState(false);
+  const mostrarPlaceholder = !cargada || fallo;
+
+  return (
+    <span
+      className={`perfil-flora__card-imagen${mostrarPlaceholder ? " perfil-flora__card-imagen--placeholder" : ""}`}
+    >
+      {!fallo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={rutaImagenPersonalidadFlora(id)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setCargada(true)}
+          onError={() => {
+            setFallo(true);
+            setCargada(false);
+          }}
+        />
+      ) : null}
+      {mostrarPlaceholder ? (
+        <span className="perfil-flora__card-imagen-vacio" aria-hidden="true">
+          {nombre.charAt(0)}
+        </span>
+      ) : null}
+    </span>
+  );
+}
 
 export function PreferenciasFlora({ personalidadInicial = "cercana_natural" }) {
   const [seleccion, setSeleccion] = useState(personalidadInicial);
@@ -58,8 +90,13 @@ export function PreferenciasFlora({ personalidadInicial = "cercana_natural" }) {
                 onChange={() => guardar(opcion.id)}
               />
               <span className="perfil-flora__card-cuerpo">
-                <span className="perfil-flora__card-nombre">{opcion.nombre}</span>
-                <span className="perfil-flora__card-desc">{opcion.descripcion}</span>
+                <span className="perfil-flora__card-fila">
+                  <ImagenPersonalidadFlora id={opcion.id} nombre={opcion.nombre} />
+                  <span className="perfil-flora__card-texto">
+                    <span className="perfil-flora__card-nombre">{opcion.nombre}</span>
+                    <span className="perfil-flora__card-desc">{opcion.descripcion}</span>
+                  </span>
+                </span>
                 <span className="perfil-flora__card-ejemplo" aria-hidden="true">
                   «{opcion.ejemplo}»
                 </span>

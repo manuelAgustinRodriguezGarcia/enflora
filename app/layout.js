@@ -6,6 +6,7 @@ import { MarcaEncabezado } from "@/componentes/marca-encabezado";
 import { BottomNav } from "@/componentes/bottom-nav";
 import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
+import { ProveedorGuardSalidaFlora } from "@/componentes/flora/proveedor-guard-salida-flora";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
 import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
@@ -94,6 +95,7 @@ export default async function Layout({ children }) {
         <ClaseCuerpo />
         <RegistroServiceWorker />
         <ProveedorMotion>
+          <ProveedorGuardSalidaFlora>
           <header className="encabezado" inert={bloqueado || undefined}>
             <MarcaEncabezado
               alt={NOMBRE_MARCA}
@@ -106,6 +108,7 @@ export default async function Layout({ children }) {
           </main>
           {conSupabase ? <BottomNav oculto={bloqueado} /> : null}
           <ModalAccesoPrelanzamiento abierto={bloqueado} />
+          </ProveedorGuardSalidaFlora>
         </ProveedorMotion>
       </body>
     </html>

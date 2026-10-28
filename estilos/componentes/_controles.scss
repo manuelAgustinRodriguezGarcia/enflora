@@ -392,6 +392,23 @@ a.boton {
     gap: 0.45rem;
   }
 
+  &__inferior {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  &__inferior &__fila {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__inferior &__acciones {
+    flex: 0 0 auto;
+  }
+
   &__fila {
     display: flex;
     flex-wrap: wrap;
@@ -446,8 +463,8 @@ a.boton {
     gap: 0.35rem;
     padding: 1.75rem 0.9rem 0.9rem;
 
-    .detalle-cabecera__superior {
-      align-items: center;
+    .detalle-cabecera__titulo {
+      width: 100%;
     }
 
     .detalle-cabecera__titulo,
