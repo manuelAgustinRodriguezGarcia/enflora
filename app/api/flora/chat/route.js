@@ -1,8 +1,16 @@
-import { resumenConfigGemini } from "@/lib/flora-chat-config";
-import { conversarConFlora, geminiConfigurado } from "@/lib/flora-gemini";
+import {
+  geminiConfigurado,
+  modeloFloraGeminiPublico,
+  resumenConfigGemini,
+} from "@/lib/flora-chat-config";
+import { conversarConFlora } from "@/lib/flora-gemini";
 import { verificarCuotaUsuario } from "@/lib/flora-chat-limites";
+import { motorGuiaFlora } from "@/lib/flora-rag-config";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
+
+/** Vercel Pro (o superior): hasta 60s. En Hobby el límite real sigue siendo ~10s. */
+export const maxDuration = 60;
 
 function json(body, status = 200) {
   return Response.json(body, { status });
@@ -61,7 +69,16 @@ export async function POST(request) {
         }),
       );
     }
-    return json({ ok: false, error: resultado.error }, status);
+    return json(
+      {
+        ok: false,
+        error: resultado.error,
+        ...(resultado.diagnostico?.codigo
+          ? { codigo: resultado.diagnostico.codigo, httpGemini: resultado.diagnostico.httpStatus }
+          : {}),
+      },
+      status,
+    );
   }
 
   return json({
@@ -72,5 +89,12 @@ export async function POST(request) {
 }
 
 export function GET() {
-  return json({ ok: false, error: "Método no permitido" }, 405);
+  return json({
+    ok: true,
+    servicio: "flora-chat",
+    supabase: configuracionLista(),
+    gemini: geminiConfigurado(),
+    modelo: modeloFloraGeminiPublico(),
+    motorGuia: motorGuiaFlora(),
+  });
 }
