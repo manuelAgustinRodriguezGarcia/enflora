@@ -1,4 +1,13 @@
-import { Bell, ClipboardList, ClipboardPen, History, Sprout, UserRound, Warehouse } from "lucide-react";
+import {
+  Bell,
+  ClipboardList,
+  ClipboardPen,
+  History,
+  Sparkles,
+  Sprout,
+  UserRound,
+  Warehouse,
+} from "lucide-react";
 
 // Iconos de navegación y secciones. Lucide, trazo 1.75, color heredado.
 const ICONOS = {
@@ -6,6 +15,7 @@ const ICONOS = {
   cultivos: Sprout,
   historial: History,
   registro: ClipboardPen,
+  flora: Sparkles,
   perfil: UserRound,
   notificaciones: Bell,
   lista: ClipboardList,

@@ -8,10 +8,11 @@
     "start": "next start",
     "lint": "eslint",
     "historial:demo": "node --experimental-detect-module --import ./tests/register-alias.mjs scripts/generar-historial-demo.mjs",
-    "test": "node --experimental-detect-module --import ./tests/register-alias.mjs --test tests/pagos.test.js tests/ruleta-plan.test.js tests/push.test.js tests/sw.test.js tests/demo.test.js tests/demo-historial.test.js tests/contactos.test.js tests/historial-registros.test.js tests/historial-paginacion-dias.test.js tests/fotos-galeria.test.js tests/tareas-programadas.test.js tests/registro-formulario.test.js tests/flora.test.js"
+    "test": "node --experimental-detect-module --import ./tests/register-alias.mjs --test tests/pagos.test.js tests/ruleta-plan.test.js tests/push.test.js tests/sw.test.js tests/demo.test.js tests/demo-historial.test.js tests/contactos.test.js tests/historial-registros.test.js tests/historial-paginacion-dias.test.js tests/fotos-galeria.test.js tests/tareas-programadas.test.js tests/registro-formulario.test.js tests/flora.test.js tests/flora-chat.test.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@google/genai": "^2.31.0",
     "@gsap/react": "^2.1.2",
     "@hugeicons/core-free-icons": "^4.3.5",
     "@hugeicons/react": "^1.1.10",
