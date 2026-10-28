@@ -145,9 +145,9 @@ test("snapshots históricos en plantas del registro", () => {
   assert.equal(compacto.plantas[0].genetica, "Gorilla");
 });
 
-test("guía vacía sin inventar fragmentos", () => {
+test("guía vacía sin inventar fragmentos", async () => {
   reiniciarCacheGuia();
-  const vacia = buscarEnGuiaCultivo({ consulta: "ph", carpeta: path.join(FIXTURES_GUIA, "inexistente") });
+  const vacia = await buscarEnGuiaCultivo({ consulta: "ph", carpeta: path.join(FIXTURES_GUIA, "inexistente") });
   assert.equal(vacia.fuente, FUENTE_GUIA);
   assert.equal(vacia.datos.length, 0);
   assert.ok(vacia.limitaciones?.[0]?.includes("guía"));

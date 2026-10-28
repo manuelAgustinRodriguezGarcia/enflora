@@ -1,13 +1,16 @@
 "use client";
 
-import { Loader2, RotateCcw, Send } from "lucide-react";
+import { RotateCcw, Send } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IndicadorFloraEscribiendo } from "@/componentes/flora/indicador-flora-escribiendo";
+import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 
 const MENSAJE_BIENVENIDA =
   "¡Hola! Soy Flora. Preguntame sobre tus plantas, registros o cultivo y voy a buscar en tus datos reales de ENFLORA.";
 
 const MAX_HISTORIAL_ENVIO = 8;
+const UMBRAL_SCROLL_INFERIOR = 96;
 
 function idMensaje() {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -15,39 +18,63 @@ function idMensaje() {
 
 export function ChatFlora() {
   const [mensajes, setMensajes] = useState([
-    { id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA },
+    { id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA, animar: false },
   ]);
   const [entrada, setEntrada] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const listaRef = useRef(null);
   const envioRef = useRef(false);
+  const cercaDelFinalRef = useRef(true);
+  const forzarScrollRef = useRef(false);
+  const sesionRef = useRef(0);
 
-  const desplazarAbajo = useCallback(() => {
+  const desplazarAbajoSiCorresponde = useCallback((forzar = false) => {
     const el = listaRef.current;
     if (!el) return;
+    if (!forzar && !cercaDelFinalRef.current) return;
     el.scrollTop = el.scrollHeight;
   }, []);
 
+  const onScrollLista = useCallback(() => {
+    const el = listaRef.current;
+    if (!el) return;
+    const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
+    cercaDelFinalRef.current = distancia <= UMBRAL_SCROLL_INFERIOR;
+  }, []);
+
   useEffect(() => {
-    desplazarAbajo();
-  }, [mensajes, cargando, desplazarAbajo]);
+    desplazarAbajoSiCorresponde(forzarScrollRef.current);
+    forzarScrollRef.current = false;
+  }, [mensajes, cargando, desplazarAbajoSiCorresponde]);
+
+  const marcarAnimacionCompleta = useCallback((id) => {
+    setMensajes((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, animar: false } : m)),
+    );
+  }, []);
 
   const nuevaConversacion = () => {
     if (cargando) return;
-    setMensajes([{ id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA }]);
+    sesionRef.current += 1;
+    setMensajes([{ id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA, animar: false }]);
     setError("");
     setEntrada("");
+    cercaDelFinalRef.current = true;
+    forzarScrollRef.current = true;
   };
 
   const enviar = async () => {
     const texto = entrada.trim();
     if (!texto || cargando || envioRef.current) return;
 
+    const sesionActiva = sesionRef.current;
     envioRef.current = true;
     setError("");
     setEntrada("");
     setCargando(true);
+    forzarScrollRef.current = true;
+    cercaDelFinalRef.current = true;
 
     const idUsuario = idMensaje();
     setMensajes((prev) => [...prev, { id: idUsuario, rol: "usuario", texto }]);
@@ -68,6 +95,8 @@ export function ChatFlora() {
       });
       const data = await res.json().catch(() => ({}));
 
+      if (sesionActiva !== sesionRef.current) return;
+
       if (!res.ok || !data.ok) {
         setMensajes((prev) => prev.filter((m) => m.id !== idUsuario));
         setEntrada(texto);
@@ -75,16 +104,26 @@ export function ChatFlora() {
         return;
       }
 
+      const idFlora = idMensaje();
       setMensajes((prev) => [
         ...prev,
-        { id: idMensaje(), rol: "flora", texto: String(data.respuesta || "").trim() || "…" },
+        {
+          id: idFlora,
+          rol: "flora",
+          texto: String(data.respuesta || "").trim() || "…",
+          animar: true,
+        },
       ]);
+      forzarScrollRef.current = true;
     } catch {
+      if (sesionActiva !== sesionRef.current) return;
       setMensajes((prev) => prev.filter((m) => m.id !== idUsuario));
       setEntrada(texto);
       setError("Falló la conexión. Revisá tu internet e intentá otra vez.");
     } finally {
-      setCargando(false);
+      if (sesionActiva === sesionRef.current) {
+        setCargando(false);
+      }
       envioRef.current = false;
     }
   };
@@ -129,21 +168,36 @@ export function ChatFlora() {
         </button>
       </header>
 
-      <div className="flora-chat-app__lista" ref={listaRef} role="log" aria-live="polite" aria-relevant="additions">
+      <div
+        className="flora-chat-app__lista"
+        ref={listaRef}
+        onScroll={onScrollLista}
+        role="log"
+        aria-live="polite"
+        aria-relevant="additions"
+      >
         {mensajes.map((m) => (
           <div
             key={m.id}
             className={`flora-chat-app__fila flora-chat-app__fila--${m.rol === "flora" ? "flora" : "usuario"}`}
           >
-            <div className="flora-chat-app__burbuja">{m.texto}</div>
+            <div className="flora-chat-app__burbuja">
+              {m.rol === "flora" ? (
+                <MensajeFloraMarkdown
+                  texto={m.texto}
+                  animar={Boolean(m.animar)}
+                  onAnimacionCompleta={() => marcarAnimacionCompleta(m.id)}
+                  onProgresoAnimacion={() => desplazarAbajoSiCorresponde(false)}
+                />
+              ) : (
+                m.texto
+              )}
+            </div>
           </div>
         ))}
         {cargando ? (
-          <div className="flora-chat-app__fila flora-chat-app__fila--flora" aria-busy="true">
-            <div className="flora-chat-app__burbuja flora-chat-app__burbuja--pensando">
-              <Loader2 className="flora-chat-app__spinner" strokeWidth={1.75} aria-hidden="true" />
-              <span>Flora está pensando…</span>
-            </div>
+          <div className="flora-chat-app__fila flora-chat-app__fila--flora">
+            <IndicadorFloraEscribiendo />
           </div>
         ) : null}
       </div>

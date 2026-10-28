@@ -1,3 +1,4 @@
+import { resumenConfigGemini } from "@/lib/flora-chat-config";
 import { conversarConFlora, geminiConfigurado } from "@/lib/flora-gemini";
 import { verificarCuotaUsuario } from "@/lib/flora-chat-limites";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -51,6 +52,15 @@ export async function POST(request) {
 
   if (!resultado.ok) {
     const status = resultado.error?.includes("demasiado largo") ? 400 : 502;
+    if (status === 502 && resultado.diagnostico) {
+      console.error(
+        "[flora/chat]",
+        JSON.stringify({
+          ...resultado.diagnostico,
+          config: resumenConfigGemini(),
+        }),
+      );
+    }
     return json({ ok: false, error: resultado.error }, status);
   }
 
