@@ -199,13 +199,40 @@ body:has(.landing) {
   &__marca {
     display: flex;
     justify-content: center;
+    justify-self: center;
     line-height: 0;
+    transition:
+      background-color 0.25s ease,
+      box-shadow 0.25s ease,
+      padding 0.25s ease;
+
+    &--pill {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+
+      .encabezado-publico__logo {
+        height: 26px;
+      }
+
+      &-blanco {
+        background: #fff;
+        box-shadow: 0 2px 12px rgb(11 61 42 / 10%);
+      }
+
+      &-verde {
+        background: #0b3d2a;
+        box-shadow: 0 2px 12px rgb(0 0 0 / 18%);
+      }
+    }
   }
 
   &__logo {
     width: auto;
     height: 34px;
-    transition: opacity 0.2s ease;
+    transition:
+      opacity 0.2s ease,
+      height 0.25s ease;
 
     &--claro {
       display: none;
@@ -260,7 +287,16 @@ body:has(.landing) {
 
     &__marca {
       justify-content: flex-start;
+      justify-self: auto;
       flex: 0 0 auto;
+
+      &--pill {
+        padding: 0.35rem 0.9rem;
+
+        .encabezado-publico__logo {
+          height: 28px;
+        }
+      }
     }
 
     &__logo {

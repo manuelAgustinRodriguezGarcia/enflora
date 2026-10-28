@@ -48,6 +48,7 @@ export function EncabezadoPublico() {
   const ref = useRef(null);
   const navegandoRef = useRef(false);
   const [logoClaro, setLogoClaro] = useState(false);
+  const [fondoMarca, setFondoMarca] = useState(null);
   const [activo, setActivo] = useState(0);
   const [compacto, setCompacto] = useState(false);
   const [mostrarCta, setMostrarCta] = useState(true);
@@ -91,6 +92,12 @@ export function EncabezadoPublico() {
       const claro = seccion.getAttribute("data-logo") === "light";
       setLogoClaro((actual) => (actual === claro ? actual : claro));
       const id = idSeccionActiva(seccion);
+      const pantalla = document.querySelector(".hero__pantalla");
+      const altoHeader = header ? header.getBoundingClientRect().height : 64;
+      const enPrimeraPantalla =
+        pantalla && pantalla.getBoundingClientRect().bottom > altoHeader + 6;
+      const pill = enPrimeraPantalla ? null : claro ? "verde" : "blanco";
+      setFondoMarca((actual) => (actual === pill ? actual : pill));
       const visible = !SECCIONES_SIN_CTA.has(id);
       setMostrarCta((actual) => (actual === visible ? actual : visible));
     };
@@ -247,7 +254,15 @@ export function EncabezadoPublico() {
       ref={ref}
     >
       <div className="encabezado-publico__barra">
-        <Link className="encabezado-publico__marca" href="#inicio" aria-label={NOMBRE_MARCA}>
+        <Link
+          className={`encabezado-publico__marca${
+            fondoMarca
+              ? ` encabezado-publico__marca--pill encabezado-publico__marca--pill-${fondoMarca}`
+              : ""
+          }`}
+          href="#inicio"
+          aria-label={NOMBRE_MARCA}
+        >
           <img
             className="encabezado-publico__logo encabezado-publico__logo--oscuro"
             src="/logos/enflora-logo-apaisado.svg"

@@ -1,8 +1,10 @@
 "use client";
 
-import { RotateCcw, Send } from "lucide-react";
+import { BookOpen, RotateCcw, Send, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BotonGuardarSolucion } from "@/componentes/flora/boton-guardar-solucion";
 import { IndicadorFloraEscribiendo } from "@/componentes/flora/indicador-flora-escribiendo";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 
@@ -16,18 +18,46 @@ function idMensaje() {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function ChatFlora() {
+export function ChatFlora({ continuarSolucionId = "" }) {
   const [mensajes, setMensajes] = useState([
     { id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA, animar: false },
   ]);
   const [entrada, setEntrada] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [bannerContinuar, setBannerContinuar] = useState(null);
   const listaRef = useRef(null);
   const envioRef = useRef(false);
   const cercaDelFinalRef = useRef(true);
   const forzarScrollRef = useRef(false);
   const sesionRef = useRef(0);
+  const contextoContinuarEnviadoRef = useRef(false);
+  const ignorarContinuarRef = useRef(false);
+
+  useEffect(() => {
+    if (!continuarSolucionId) return;
+    contextoContinuarEnviadoRef.current = false;
+    ignorarContinuarRef.current = false;
+    let cancelado = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/flora/soluciones/${continuarSolucionId}`);
+        const data = await res.json().catch(() => ({}));
+        if (cancelado || !res.ok || !data.ok) return;
+        setBannerContinuar({
+          titulo: data.solucion.titulo,
+          pregunta: data.solucion.pregunta,
+        });
+      } catch {
+        /* ignorar */
+      }
+    })();
+
+    return () => {
+      cancelado = true;
+    };
+  }, [continuarSolucionId]);
 
   const desplazarAbajoSiCorresponde = useCallback((forzar = false) => {
     const el = listaRef.current;
@@ -60,6 +90,9 @@ export function ChatFlora() {
     setMensajes([{ id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA, animar: false }]);
     setError("");
     setEntrada("");
+    setBannerContinuar(null);
+    ignorarContinuarRef.current = true;
+    contextoContinuarEnviadoRef.current = false;
     cercaDelFinalRef.current = true;
     forzarScrollRef.current = true;
   };
@@ -87,11 +120,20 @@ export function ChatFlora() {
         texto: m.texto,
       }));
 
+    const payload = { mensaje: texto, historial };
+    if (
+      continuarSolucionId &&
+      !contextoContinuarEnviadoRef.current &&
+      !ignorarContinuarRef.current
+    ) {
+      payload.contextoSolucionId = continuarSolucionId;
+    }
+
     try {
       const res = await fetch("/api/flora/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mensaje: texto, historial }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
 
@@ -104,6 +146,11 @@ export function ChatFlora() {
         return;
       }
 
+      if (payload.contextoSolucionId) {
+        contextoContinuarEnviadoRef.current = true;
+        setBannerContinuar(null);
+      }
+
       const idFlora = idMensaje();
       setMensajes((prev) => [
         ...prev,
@@ -112,6 +159,8 @@ export function ChatFlora() {
           rol: "flora",
           texto: String(data.respuesta || "").trim() || "…",
           animar: true,
+          preguntaAsociada: texto,
+          metaGuardado: data.meta?.guardado || null,
         },
       ]);
       forzarScrollRef.current = true;
@@ -156,17 +205,36 @@ export function ChatFlora() {
             <p className="flora-chat-app__subtitulo">Asistente de ENFLORA</p>
           </div>
         </div>
-        <button
-          type="button"
-          className="flora-chat-app__nueva"
-          onClick={nuevaConversacion}
-          disabled={cargando}
-          aria-label="Nueva conversación"
-        >
-          <RotateCcw strokeWidth={1.75} aria-hidden="true" />
-          <span>Nueva</span>
-        </button>
+        <div className="flora-chat-app__cabecera-acciones">
+          <Link
+            href="/perfil#preferencias-flora"
+            className="flora-chat-app__config"
+            aria-label="Preferencias de Flora"
+          >
+            <SlidersHorizontal strokeWidth={1.75} aria-hidden="true" />
+          </Link>
+          <Link href="/flora/soluciones" className="flora-chat-app__soluciones">
+            <BookOpen strokeWidth={1.75} aria-hidden="true" />
+            <span>Soluciones</span>
+          </Link>
+          <button
+            type="button"
+            className="flora-chat-app__nueva"
+            onClick={nuevaConversacion}
+            disabled={cargando}
+            aria-label="Nueva conversación"
+          >
+            <RotateCcw strokeWidth={1.75} aria-hidden="true" />
+            <span>Nueva</span>
+          </button>
+        </div>
       </header>
+
+      {bannerContinuar ? (
+        <p className="flora-chat-app__continuar" role="status">
+          Continuando desde: <strong>{bannerContinuar.titulo}</strong>. Escribí tu nueva pregunta abajo.
+        </p>
+      ) : null}
 
       <div
         className="flora-chat-app__lista"
@@ -183,12 +251,22 @@ export function ChatFlora() {
           >
             <div className="flora-chat-app__burbuja">
               {m.rol === "flora" ? (
-                <MensajeFloraMarkdown
-                  texto={m.texto}
-                  animar={Boolean(m.animar)}
-                  onAnimacionCompleta={() => marcarAnimacionCompleta(m.id)}
-                  onProgresoAnimacion={() => desplazarAbajoSiCorresponde(false)}
-                />
+                <>
+                  <MensajeFloraMarkdown
+                    texto={m.texto}
+                    animar={Boolean(m.animar)}
+                    onAnimacionCompleta={() => marcarAnimacionCompleta(m.id)}
+                    onProgresoAnimacion={() => desplazarAbajoSiCorresponde(false)}
+                  />
+                  {m.preguntaAsociada && m.metaGuardado ? (
+                    <BotonGuardarSolucion
+                      pregunta={m.preguntaAsociada}
+                      respuesta={m.texto}
+                      metaGuardado={m.metaGuardado}
+                      deshabilitado={cargando}
+                    />
+                  ) : null}
+                </>
               ) : (
                 m.texto
               )}

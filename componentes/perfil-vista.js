@@ -5,6 +5,7 @@ import { CerrarSesion } from "@/componentes/cerrar-sesion";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { FormularioPerfil } from "@/componentes/formulario-perfil";
 import { PerfilGuardarFlotante } from "@/componentes/perfil-guardar-flotante";
+import { PreferenciasFlora } from "@/componentes/preferencias-flora";
 
 function esRedireccion(error) {
   return typeof error?.digest === "string" && error.digest.startsWith("NEXT_REDIRECT");
@@ -14,6 +15,7 @@ export function PerfilVista({
   perfil,
   email,
   seguimiento = null,
+  personalidadFlora = "cercana_natural",
 }) {
   const perfilRef = useRef(null);
   const seguimientoRef = useRef(null);
@@ -67,6 +69,7 @@ export function PerfilVista({
           onSucioChange={alSucioSeguimiento}
         />
       ) : null}
+      <PreferenciasFlora personalidadInicial={personalidadFlora} />
       <PerfilGuardarFlotante visible={sucio} onGuardar={guardar} />
       <CerrarSesion />
     </section>

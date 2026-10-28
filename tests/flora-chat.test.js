@@ -65,7 +65,8 @@ test("UUID inválido en herramienta de cultivo", async () => {
 
 test("lista de herramientas gemini incluye guía", () => {
   assert.ok(NOMBRES_HERRAMIENTAS_FLORA.includes("buscar_en_guia_cultivo"));
-  assert.equal(NOMBRES_HERRAMIENTAS_FLORA.length, 9);
+  assert.ok(NOMBRES_HERRAMIENTAS_FLORA.includes("buscar_soluciones_guardadas"));
+  assert.equal(NOMBRES_HERRAMIENTAS_FLORA.length, 10);
 });
 
 test("geminiConfigurado depende de env", () => {

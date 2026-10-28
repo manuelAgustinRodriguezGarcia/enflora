@@ -54,9 +54,10 @@ export async function POST(request) {
 
   const mensaje = body?.mensaje;
   const historial = body?.historial;
+  const contextoSolucionId = body?.contextoSolucionId;
 
   const supabase = await crearClienteServidor();
-  const resultado = await conversarConFlora(supabase, { mensaje, historial });
+  const resultado = await conversarConFlora(supabase, { mensaje, historial, contextoSolucionId });
 
   if (!resultado.ok) {
     const status = resultado.error?.includes("demasiado largo") ? 400 : 502;

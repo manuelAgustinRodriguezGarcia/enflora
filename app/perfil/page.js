@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { PerfilVista } from "@/componentes/perfil-vista";
 import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
+import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -32,11 +33,14 @@ export default async function PaginaPerfil() {
       ? await cargarSeguimiento(supabase, user.id, perfil.tipo_seguimiento)
       : null;
 
+  const personalidadFlora = await leerPersonalidadFloraUsuario(supabase);
+
   return (
     <PerfilVista
       perfil={perfil}
       email={user.email || ""}
       seguimiento={seguimiento}
+      personalidadFlora={personalidadFlora}
     />
   );
 }

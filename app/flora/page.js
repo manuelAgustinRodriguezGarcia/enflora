@@ -9,7 +9,7 @@ export const metadata = {
   description: "Hablá con Flora, la asistente de ENFLORA, sobre tus cultivos y registros.",
 };
 
-export default async function PaginaFlora() {
+export default async function PaginaFlora({ searchParams }) {
   if (!configuracionLista()) {
     return <p className="flora-chat-app__aviso">Falta la configuración de Supabase.</p>;
   }
@@ -18,6 +18,9 @@ export default async function PaginaFlora() {
   if (!usuario) {
     redirect("/ingreso");
   }
+
+  const params = await searchParams;
+  const continuar = typeof params?.continuar === "string" ? params.continuar : "";
 
   const geminiListo = geminiConfigurado();
 
@@ -32,7 +35,7 @@ export default async function PaginaFlora() {
           <code>GEMINI_API_KEY</code> en las variables de entorno del servidor.
         </p>
       ) : null}
-      <ChatFlora />
+      <ChatFlora continuarSolucionId={continuar} />
     </section>
   );
 }
