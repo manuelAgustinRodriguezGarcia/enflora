@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
 import { RegistroServiceWorker } from "@/componentes/registro-service-worker";
 import { MarcaEncabezado } from "@/componentes/marca-encabezado";
+import { AjusteTecladoViewport } from "@/componentes/ajuste-teclado-viewport";
 import { BottomNav } from "@/componentes/bottom-nav";
 import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
@@ -71,6 +72,7 @@ export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 function claseInicial(ruta) {
@@ -93,6 +95,7 @@ export default async function Layout({ children }) {
     <html lang="es-AR" className={`${fredoka.variable} ${inter.variable}`}>
       <body className={claseCuerpo || undefined}>
         <ClaseCuerpo />
+        <AjusteTecladoViewport />
         <RegistroServiceWorker />
         <ProveedorMotion>
           <ProveedorGuardSalidaFlora>

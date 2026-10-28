@@ -91,4 +91,7 @@
   --color-destructive-hover: #7f2323;
   --color-destructive-soft: #f8e8e8;
   --space-bottom-nav: 5.25rem;
+  --enflora-teclado-inferior: 0px;
+  --enflora-altura-barra-inferior: calc(3.25rem + 0.7rem + env(safe-area-inset-bottom, 0px));
+  --enflora-anclaje-inferior: calc(var(--enflora-teclado-inferior) + var(--enflora-altura-barra-inferior));
 }

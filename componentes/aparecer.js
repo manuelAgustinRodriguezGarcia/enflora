@@ -66,23 +66,25 @@ function desplazarSiHaceFalta(nodo, reducido) {
   contenedor.scrollBy({ top: delta, behavior: reducido ? "auto" : "smooth" });
 }
 
-export function Aparecer({ visible, children, espacio }) {
+export function Aparecer({ visible, children, espacio, desplazar = true }) {
   const reducido = useReducedMotion();
   const panel = useRef(null);
-  const omitirMontaje = useRef(visible);
+  /** true tras el primer render con visible=false (apertura por interacción del usuario). */
+  const huboOculto = useRef(!visible);
   const conEspacio = Boolean(espacio);
 
   useEffect(() => {
-    if (!visible) return undefined;
-    if (omitirMontaje.current) {
-      omitirMontaje.current = false;
+    if (!visible) {
+      huboOculto.current = true;
       return undefined;
     }
+    if (!huboOculto.current || !desplazar) return undefined;
+
     const timer = window.setTimeout(() => {
       if (panel.current) desplazarSiHaceFalta(panel.current, reducido);
     }, reducido ? 0 : ESPERA_APERTURA_MS);
     return () => window.clearTimeout(timer);
-  }, [visible, reducido]);
+  }, [visible, desplazar, reducido]);
   const cerrado = reducido
     ? { opacity: 0, ...(conEspacio ? { marginTop: 0 } : {}) }
     : { opacity: 0, height: 0, y: 4, ...(conEspacio ? { marginTop: 0 } : {}) };

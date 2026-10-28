@@ -30,15 +30,15 @@ export function BottomNav({ oculto = false }) {
                   whileFocus={{ scale: 1.02 }}
                   transition={transicionToque}
                 >
+                  {activo ? (
+                    <motion.span
+                      className="bottom-nav__indicador"
+                      layoutId="bottom-nav-activo"
+                      transition={transicionRapida}
+                      aria-hidden="true"
+                    />
+                  ) : null}
                   <span className="bottom-nav__icono">
-                    {activo ? (
-                      <motion.span
-                        className="bottom-nav__indicador"
-                        layoutId="bottom-nav-activo"
-                        transition={transicionRapida}
-                        aria-hidden="true"
-                      />
-                    ) : null}
                     <IconoNavegacion clave={destino.clave} />
                   </span>
                   <span className="bottom-nav__etiqueta">{destino.etiqueta}</span>

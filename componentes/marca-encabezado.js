@@ -30,13 +30,6 @@ export function MarcaEncabezado({ alt, confirmarSalida }) {
           width={1000}
           height={300}
         />
-        <img
-          className="encabezado__logo encabezado__logo--claro"
-          src="/logos/enflora-logo-apaisado-light.svg"
-          alt={alt}
-          width={1000}
-          height={300}
-        />
       </Link>
       {confirmarSalida ? (
         <ModalConfirmacion

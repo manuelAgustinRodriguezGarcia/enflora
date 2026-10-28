@@ -21,10 +21,7 @@
   &__logo {
     width: auto;
     height: 44px;
-
-    &--claro {
-      display: none;
-    }
+    max-width: min(10rem, 42vw);
   }
 
   &__notificaciones {
@@ -38,13 +35,13 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: var(--color-text-secondary);
+    color: var(--color-primary);
     cursor: pointer;
     box-shadow: none;
 
     &:hover:not(:disabled) {
       background: transparent;
-      color: var(--color-text);
+      color: var(--color-primary-hover);
     }
 
     &:focus-visible {
@@ -60,26 +57,13 @@
 
   @media (max-width: 1023px) {
     justify-content: center;
-    background: #0b3d2a;
-    border-bottom: 0;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
     box-shadow: none;
-
-    .encabezado__logo--oscuro {
-      display: none;
-    }
-
-    .encabezado__logo--claro {
-      display: block;
-    }
 
     .encabezado__notificaciones {
       position: absolute;
       right: 1.5rem;
-      color: rgba(244, 248, 238, 0.78);
-
-      &:hover:not(:disabled) {
-        color: #f4f8ee;
-      }
     }
   }
 

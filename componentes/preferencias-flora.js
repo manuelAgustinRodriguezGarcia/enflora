@@ -69,8 +69,7 @@ export function PreferenciasFlora({ personalidadInicial = "cercana_natural" }) {
     <section className="perfil-flora" id="preferencias-flora" aria-labelledby="perfil-flora-titulo">
       <h2 id="perfil-flora-titulo">Preferencias de Flora</h2>
       <p className="perfil-flora__intro">
-        Elegí cómo querés que Flora te responda. Aplica desde la próxima respuesta; no cambia soluciones
-        ya guardadas.
+        Elegí cómo querés que Flora te responda. Aplica a partir de la próxima respuesta.
       </p>
 
       <div className="perfil-flora__opciones" role="radiogroup" aria-labelledby="perfil-flora-titulo">

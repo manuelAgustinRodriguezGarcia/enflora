@@ -316,31 +316,20 @@ export function ChatFlora({ continuarSolucionId = "" }) {
   return (
     <div className="flora-chat-app">
       <header className="flora-chat-app__cabecera">
-        <div className="flora-chat-app__identidad">
-          <Image
-            src="/images/flora-landingl-selfie.png"
-            alt=""
-            width={48}
-            height={48}
-            className="flora-chat-app__avatar"
-          />
-          <div>
-            <h1 className="flora-chat-app__titulo">Flora</h1>
-            <p className="flora-chat-app__subtitulo">Asistente de ENFLORA</p>
+        <div className="flora-chat-app__cabecera-fila">
+          <div className="flora-chat-app__identidad">
+            <Image
+              src="/images/flora-landingl-selfie.png"
+              alt=""
+              width={48}
+              height={48}
+              className="flora-chat-app__avatar"
+            />
+            <div>
+              <h1 className="flora-chat-app__titulo">Flora</h1>
+              <p className="flora-chat-app__subtitulo">En línea</p>
+            </div>
           </div>
-        </div>
-        <div className="flora-chat-app__cabecera-acciones">
-          <Link
-            href="/perfil#preferencias-flora"
-            className="flora-chat-app__config"
-            aria-label="Preferencias de Flora"
-          >
-            <SlidersHorizontal strokeWidth={1.75} aria-hidden="true" />
-          </Link>
-          <Link href="/flora/soluciones" className="flora-chat-app__soluciones">
-            <BookOpen strokeWidth={1.75} aria-hidden="true" />
-            <span>Soluciones</span>
-          </Link>
           <button
             type="button"
             className="flora-chat-app__nueva"
@@ -348,9 +337,28 @@ export function ChatFlora({ continuarSolucionId = "" }) {
             disabled={cargando}
             aria-label="Nuevo chat"
           >
-            <RotateCcw strokeWidth={1.75} aria-hidden="true" />
-            <span>Nuevo chat</span>
+            Nuevo chat
           </button>
+        </div>
+        <div className="flora-chat-app__cabecera-acciones">
+          <Link
+            href="/perfil"
+            className="flora-chat-app__config"
+            onClick={() => {
+              try {
+                sessionStorage.setItem("enflora-scroll-preferencias-flora", "1");
+              } catch {
+                /* storage no disponible */
+              }
+            }}
+          >
+            <SlidersHorizontal strokeWidth={1.75} aria-hidden="true" />
+            <span>Ajustes de Flora</span>
+          </Link>
+          <Link href="/flora/soluciones" className="flora-chat-app__soluciones">
+            <BookOpen strokeWidth={1.75} aria-hidden="true" />
+            <span>Conversaciones</span>
+          </Link>
         </div>
       </header>
 

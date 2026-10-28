@@ -896,7 +896,7 @@
 
   &__cta {
     position: sticky;
-    bottom: var(--space-bottom-nav);
+    bottom: var(--enflora-anclaje-inferior, var(--space-bottom-nav));
     z-index: 4;
     margin-top: 0.35rem;
     padding-top: 0.55rem;

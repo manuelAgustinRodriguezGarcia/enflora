@@ -2,14 +2,24 @@
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MessageCircle, Search, Trash2 } from "lucide-react";
+import { MessageCircle, Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { Boton } from "@/componentes/boton";
+import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 
 function formatearFecha(iso) {
   try {
     return format(new Date(iso), "d MMM yyyy, HH:mm", { locale: es });
+  } catch {
+    return "";
+  }
+}
+
+function formatearFechaDetalle(iso) {
+  try {
+    return format(new Date(iso), "d 'de' MMMM yyyy, HH:mm", { locale: es });
   } catch {
     return "";
   }
@@ -81,16 +91,16 @@ export function SolucionesVista({ soluciones = [] }) {
   );
 }
 
-export function AccionesDetalleSolucion({ solucionId, tituloInicial }) {
+export function SolucionDetalleVista({ solucion }) {
   const router = useRouter();
-  const [titulo, setTitulo] = useState(tituloInicial);
+  const [titulo, setTitulo] = useState(solucion.titulo);
   const [editando, setEditando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [eliminando, setEliminando] = useState(false);
 
   const guardarTitulo = async () => {
     setMensaje("");
-    const res = await fetch(`/api/flora/soluciones/${solucionId}`, {
+    const res = await fetch(`/api/flora/soluciones/${solucion.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ titulo }),
@@ -108,7 +118,7 @@ export function AccionesDetalleSolucion({ solucionId, tituloInicial }) {
   const eliminar = async () => {
     if (!window.confirm("¿Eliminar esta solución guardada? No se puede deshacer.")) return;
     setEliminando(true);
-    const res = await fetch(`/api/flora/soluciones/${solucionId}`, { method: "DELETE" });
+    const res = await fetch(`/api/flora/soluciones/${solucion.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
     if (!res.ok || !data.ok) {
       setEliminando(false);
@@ -119,48 +129,97 @@ export function AccionesDetalleSolucion({ solucionId, tituloInicial }) {
   };
 
   return (
-    <div className="flora-soluciones-detalle__acciones">
-      {editando ? (
-        <div className="flora-soluciones-detalle__editar">
-          <label htmlFor="editar-titulo-solucion">Título</label>
-          <input
-            id="editar-titulo-solucion"
-            value={titulo}
-            onChange={(e) => setTitulo(e.target.value)}
-            maxLength={120}
-          />
-          <button type="button" onClick={guardarTitulo}>
-            Guardar título
-          </button>
-          <button type="button" className="flora-soluciones-detalle__sec" onClick={() => setEditando(false)}>
-            Cancelar
-          </button>
+    <article className="flora-soluciones-detalle">
+      <header className="flora-soluciones-detalle__cabecera">
+        <Link href="/flora/soluciones" className="flora-soluciones-detalle__volver">
+          ← Soluciones
+        </Link>
+        <div className="flora-soluciones-detalle__cabecera-fila">
+          <div className="flora-soluciones-detalle__cabecera-texto">
+            <h1>{titulo}</h1>
+            <time dateTime={solucion.fecha_respuesta}>
+              Respuesta del {formatearFechaDetalle(solucion.fecha_respuesta)}
+            </time>
+          </div>
+          {!editando ? (
+            <div className="flora-soluciones-detalle__acciones-iconos">
+              <Boton
+                type="button"
+                variante="secundario"
+                className="boton--icono"
+                aria-label="Cambiar título"
+                onClick={() => setEditando(true)}
+              >
+                <Pencil strokeWidth={1.75} aria-hidden="true" />
+              </Boton>
+              <Boton
+                type="button"
+                variante="destructivo"
+                className="boton--icono"
+                aria-label="Eliminar solución"
+                onClick={eliminar}
+                disabled={eliminando}
+              >
+                <Trash2 strokeWidth={1.75} aria-hidden="true" />
+              </Boton>
+            </div>
+          ) : null}
         </div>
-      ) : (
-        <button type="button" onClick={() => setEditando(true)}>
-          Cambiar título
-        </button>
-      )}
+        {editando ? (
+          <div className="flora-soluciones-detalle__editar">
+            <label htmlFor="editar-titulo-solucion">Título</label>
+            <input
+              id="editar-titulo-solucion"
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              maxLength={120}
+            />
+            <div className="flora-soluciones-detalle__editar-acciones">
+              <Boton type="button" onClick={guardarTitulo}>
+                Guardar título
+              </Boton>
+              <Boton type="button" variante="ghost" onClick={() => setEditando(false)}>
+                Cancelar
+              </Boton>
+            </div>
+          </div>
+        ) : null}
+      </header>
 
-      <Link href={`/flora?continuar=${solucionId}`} className="flora-soluciones-detalle__continuar">
-        Continuar con Flora
-      </Link>
+      <p className="flora-soluciones-detalle__aviso-historico" role="note">
+        Esta es una respuesta generada en su fecha original. Los datos actuales de tu cultivo pueden
+        haber cambiado; no uses fechas o recomendaciones históricas como si fueran vigentes hoy.
+      </p>
 
-      <button
-        type="button"
-        className="flora-soluciones-detalle__eliminar"
-        onClick={eliminar}
-        disabled={eliminando}
-      >
-        <Trash2 strokeWidth={1.75} aria-hidden="true" />
-        Eliminar
-      </button>
+      <section className="flora-soluciones-detalle__bloque">
+        <h2>Tu pregunta</h2>
+        <p className="flora-soluciones-detalle__pregunta">{solucion.pregunta}</p>
+      </section>
 
-      {mensaje ? (
-        <p className="flora-soluciones-detalle__mensaje" role="status">
-          {mensaje}
-        </p>
+      <section className="flora-soluciones-detalle__bloque">
+        <h2>Respuesta de Flora</h2>
+        <div className="flora-soluciones-detalle__respuesta">
+          <MensajeFloraMarkdown texto={solucion.respuesta} animar={false} />
+        </div>
+      </section>
+
+      {solucion.referencias ? (
+        <section className="flora-soluciones-detalle__bloque flora-soluciones-detalle__refs">
+          <h2>Referencias conservadas</h2>
+          <pre>{JSON.stringify(solucion.referencias, null, 2)}</pre>
+        </section>
       ) : null}
-    </div>
+
+      <div className="flora-soluciones-detalle__acciones">
+        <Link href={`/flora?continuar=${solucion.id}`} className="flora-soluciones-detalle__continuar">
+          Continuar con Flora
+        </Link>
+        {mensaje ? (
+          <p className="flora-soluciones-detalle__mensaje" role="status">
+            {mensaje}
+          </p>
+        ) : null}
+      </div>
+    </article>
   );
 }

@@ -103,6 +103,18 @@ export default async function PaginaUnidad({ params }) {
             No se pudieron cargar las tareas pendientes.
           </p>
         ) : null}
+        <SeleccionPlantasUnidad
+          espacioId={unidad.espacio_id}
+          unidadId={unidad.id}
+          plantas={lista}
+          inicioPorPlanta={inicioPorPlanta}
+          hoy={hoy}
+        />
+        <PanelAgregarPlanta
+          unidadId={unidad.id}
+          siguienteNumero={siguienteNumero(lista)}
+          metodosPersonalizados={metodosPersonalizados}
+        />
         <GaleriaFotos
           fotos={fotosRespuesta.fotos}
           titulo="Fotos de la unidad"
@@ -120,18 +132,6 @@ export default async function PaginaUnidad({ params }) {
         >
           Ver historial
         </EnlaceBoton>
-        <SeleccionPlantasUnidad
-          espacioId={unidad.espacio_id}
-          unidadId={unidad.id}
-          plantas={lista}
-          inicioPorPlanta={inicioPorPlanta}
-          hoy={hoy}
-        />
-        <PanelAgregarPlanta
-          unidadId={unidad.id}
-          siguienteNumero={siguienteNumero(lista)}
-          metodosPersonalizados={metodosPersonalizados}
-        />
       </section>
     </TransicionVista>
   );

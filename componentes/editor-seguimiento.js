@@ -50,6 +50,7 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
     onSucioChange,
     ocultarGuardar = false,
     idFormulario,
+    desplazarAlExpandir = true,
   },
   ref,
 ) {
@@ -298,12 +299,15 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
       {errorLocal || estado?.error ? (
         <p className="formulario__error">{errorLocal || estado.error}</p>
       ) : null}
-      <Aparecer visible={Boolean(estado?.ok) && !editado && !pendiente && modo === "edicion"}>
+      <Aparecer
+        visible={Boolean(estado?.ok) && !editado && !pendiente && modo === "edicion"}
+        desplazar={desplazarAlExpandir}
+      >
         <p className="preferencias__ok">Preferencias actualizadas.</p>
       </Aparecer>
       {continuarEn ? <input type="hidden" name="continuar_en" value={continuarEn} /> : null}
       <SelectorSeguimiento valor={tipo} onChange={elegirTipo} />
-      <Aparecer visible={Boolean(tipo)}>
+      <Aparecer visible={Boolean(tipo)} desplazar={desplazarAlExpandir}>
         <div className="editor-seguimiento__grupos">
           <fieldset className="preferencias">
             <legend>Acciones prioritarias</legend>
