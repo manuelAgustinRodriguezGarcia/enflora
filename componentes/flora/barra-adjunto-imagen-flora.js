@@ -118,10 +118,12 @@ export function MenuDeslizableAdjuntoFlora({
     onCerrar?.();
   };
 
-  const abrirCamaraODispositivo = () => {
-    const preferirCamara =
-      typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
-    (preferirCamara ? camaraRef : galeriaRef).current?.click();
+  const abrirCamara = () => {
+    camaraRef.current?.click();
+  };
+
+  const abrirGaleriaDispositivo = () => {
+    galeriaRef.current?.click();
   };
 
   return (
@@ -132,17 +134,27 @@ export function MenuDeslizableAdjuntoFlora({
       >
         <div className="flora-adjunto__sheet-inner" role="menu" aria-labelledby="flora-adjunto-sheet-titulo">
           <p id="flora-adjunto-sheet-titulo" className="flora-adjunto__sheet-titulo">
-            Subir imagen desde
+            Adjuntar imagen desde
           </p>
           <button
             type="button"
             role="menuitem"
-            className="flora-adjunto__sheet-item"
-            onClick={abrirCamaraODispositivo}
+            className="flora-adjunto__sheet-item flora-adjunto__sheet-item--camara"
+            onClick={abrirCamara}
             disabled={disabled || preparando || lleno}
           >
             <Camera strokeWidth={1.75} aria-hidden="true" />
-            Cámara o dispositivo
+            Cámara
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="flora-adjunto__sheet-item"
+            onClick={abrirGaleriaDispositivo}
+            disabled={disabled || preparando || lleno}
+          >
+            <ImagePlus strokeWidth={1.75} aria-hidden="true" />
+            Galería del dispositivo
           </button>
           <button
             type="button"
@@ -154,7 +166,14 @@ export function MenuDeslizableAdjuntoFlora({
             }}
             disabled={disabled || preparando || lleno}
           >
-            <ImagePlus strokeWidth={1.75} aria-hidden="true" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logos/enflora-isotipo-dark-green.svg"
+              alt=""
+              className="flora-adjunto__sheet-isotipo"
+              width={18}
+              height={18}
+            />
             <span className="flora-adjunto__sheet-texto">
               Galería de{" "}
               <span className="flora-adjunto__marca-enflora">Enflora</span>
