@@ -24,6 +24,10 @@
     max-width: min(10rem, 42vw);
   }
 
+  &__logo--claro {
+    display: none;
+  }
+
   &__notificaciones {
     display: flex;
     align-items: center;

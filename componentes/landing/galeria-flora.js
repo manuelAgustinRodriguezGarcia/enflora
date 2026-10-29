@@ -322,8 +322,8 @@ function CarruselMobile({ items, reducido, activa }) {
               item={item}
               reducido={reducido}
               indice={i}
-              eager={enVentana || activa}
-              prioridad={i === indice}
+              eager={enVentana}
+              prioridad={i === indice && enVentana}
               animarEntrada={false}
               itemRef={(nodo) => {
                 itemRefs.current[i] = nodo;

@@ -1,0 +1,69 @@
+{
+  "baseline": {
+    "performance": 43,
+    "lcpMs": 4266,
+    "fcpMs": 4204,
+    "tbtMs": 2698,
+    "speedIndexMs": 6358,
+    "cls": 0
+  },
+  "after": {
+    "performance": 41,
+    "lcpMs": 4356,
+    "fcpMs": 4273,
+    "tbtMs": 3165,
+    "speedIndexMs": 6791,
+    "cls": 0,
+    "cssTransferKiB": 45,
+    "imgTransferKiB": 1629,
+    "totalTransferKiB": 2173,
+    "renderBlocking": 8
+  },
+  "runs": [
+    {
+      "perf": 39,
+      "lcpMs": 4610,
+      "fcpMs": 4547,
+      "tbtMs": 3165,
+      "siMs": 7198,
+      "cls": 0,
+      "cssTransferKiB": 45,
+      "imgTransferKiB": 1629,
+      "totalTransferKiB": 2174,
+      "renderBlocking": 0,
+      "carruselEnRed": true
+    },
+    {
+      "perf": 42,
+      "lcpMs": 4285,
+      "fcpMs": 4208,
+      "tbtMs": 3161,
+      "siMs": 6671,
+      "cls": 0,
+      "cssTransferKiB": 45,
+      "imgTransferKiB": 1629,
+      "totalTransferKiB": 2173,
+      "renderBlocking": 8,
+      "carruselEnRed": true
+    },
+    {
+      "perf": 41,
+      "lcpMs": 4356,
+      "fcpMs": 4273,
+      "tbtMs": 3385,
+      "siMs": 6791,
+      "cls": 0,
+      "cssTransferKiB": 45,
+      "imgTransferKiB": 1629,
+      "totalTransferKiB": 2173,
+      "renderBlocking": 8,
+      "carruselEnRed": true
+    }
+  ],
+  "delta": {
+    "lcpMs": 90,
+    "fcpMs": 69,
+    "tbtMs": 467,
+    "performance": -2
+  }
+}

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   contarPalabrasMarkdown,
   duracionAnimacionPalabras,
+  markdownFloraATextoPlano,
   recortarMarkdownPorPalabras,
 } from "../lib/flora-chat-markdown.js";
 
@@ -31,4 +32,24 @@ test("duración de animación tiene tope máximo", () => {
 
 test("contar palabras ignora espacios vacíos", () => {
   assert.equal(contarPalabrasMarkdown("  hola   mundo  "), 2);
+});
+
+test("markdownFloraATextoPlano limpia títulos y listas", () => {
+  const md = `Intro breve.
+
+### 1. Observación visual
+* **Estructura:** Flor chica.
+* **Pistilos:** Largos.
+
+### 2. Hipótesis *(general)*
+Texto **negrita** y *cursiva*.`;
+
+  const plano = markdownFloraATextoPlano(md);
+  assert.match(plano, /Intro breve\./);
+  assert.doesNotMatch(plano, /###/);
+  assert.doesNotMatch(plano, /\*\*/);
+  assert.match(plano, /1\. Observación visual/);
+  assert.match(plano, /• Estructura: Flor chica\./);
+  assert.match(plano, /2\. Hipótesis \(general\)/);
+  assert.match(plano, /Texto negrita y cursiva\./);
 });

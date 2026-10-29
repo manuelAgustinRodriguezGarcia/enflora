@@ -1,0 +1,31 @@
+{
+  "phase": "fase-3-imagenes-css",
+  "when": "2026-10-29",
+  "baselineReference": "mediciones/lcp-fase2-after-summary.json",
+  "diagnosticoPreImplementacion": {
+    "cssChunkMonolitico": "~392 KiB (principal.scss compilado en layout)",
+    "bloqueoLCPImagenes": "vertical-carrusel-landing.png (~543 KiB) descargado vía background-image en CSS antes del LCP (Lighthouse fase 1-2)",
+    "regaloFondos": "patova ~1,8 MiB + mobile ~2 MiB en disco; next/image sin montaje diferido",
+    "galeria": "precalentarSrc en idle + eager amplio en carrusel móvil",
+    "supabaseEnLanding": false
+  },
+  "recursosCss": {
+    "antesKiBCompiladoGlobal": 391.6,
+    "despuesKiBSitioPublico": 207.6,
+    "despuesKiBAppAutenticada": 188.3,
+    "nota": "La ruta / carga solo sitio-publico (~208 KiB); app-autenticada se importa en layouts de rutas privadas."
+  },
+  "medianLighthouseLocal": {
+    "performance": 43,
+    "lcpMs": 4266,
+    "fcpMs": 4204,
+    "tbtMs": 2698,
+    "speedIndexMs": 6358,
+    "cls": 0,
+    "cssTransferKiB": 0,
+    "imgTransferKiB": 0,
+    "totalTransferKiB": 0,
+    "renderBlocking": 0
+  },
+  "notaMedicion": "Completar cssTransferKiB desde script post-run; ver runs en lcp-fase3-after-*.json"
+}

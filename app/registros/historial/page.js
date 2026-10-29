@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { PaginaHistorialCultivo } from "@/componentes/pagina-historial-cultivo";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { afirmarFiltrosHistorial } from "@/lib/cargar-registros";
@@ -59,7 +58,6 @@ export default async function PaginaHistorial({ searchParams }) {
     return (
       <TransicionVista>
         <section className="historial historial--vista-cultivo">
-          <EnlaceVolver href="/registros" etiqueta="Volver a registros" />
           <h1>Historial</h1>
           <p className="historial__error" role="alert">No se pudieron cargar los datos del historial.</p>
         </section>
@@ -112,7 +110,6 @@ export default async function PaginaHistorial({ searchParams }) {
   return (
     <TransicionVista>
       <section className="historial historial--vista-cultivo">
-        <EnlaceVolver href="/registros" etiqueta="Volver a registros" />
         <header className="historial__cabecera">
           <h1>Historial</h1>
           <p className="historial__intro">

@@ -12,6 +12,7 @@ import { HistorialTimelineApp } from "@/componentes/historial-timeline-app";
 import { Boton, EnlaceBoton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
+import { formatearFecha } from "@/lib/etapas";
 import { construirHistorialVista } from "@/lib/historial-vista-cultivo";
 import { compararEventos, CONTENIDOS_HISTORIAL, hrefHistorial } from "@/lib/historial-registros";
 
@@ -20,6 +21,27 @@ const ETIQUETAS_CONTENIDO = {
   parametros: "Parámetros",
   observaciones: "Observaciones",
 };
+
+function resumenFiltros(filtros, plantasUnidad, geneticas) {
+  if (!filtros?.unidadId) return "Elegí una unidad";
+  const partes = [];
+  if (filtros.plantaId) {
+    partes.push(plantasUnidad.find((item) => item.id === filtros.plantaId)?.nombre || "Planta");
+  }
+  if (filtros.genetica) {
+    partes.push(geneticas.find((item) => item.clave === filtros.genetica)?.etiqueta || filtros.genetica);
+  }
+  if (filtros.desde || filtros.hasta) {
+    const desde = filtros.desde ? formatearFecha(filtros.desde) : "…";
+    const hasta = filtros.hasta ? formatearFecha(filtros.hasta) : "…";
+    partes.push(`${desde} – ${hasta}`);
+  }
+  if (filtros.sinContenido) partes.push("Sin tipo de contenido");
+  else if (filtros.contenidos?.length && filtros.contenidos.length < CONTENIDOS_HISTORIAL.length) {
+    partes.push(filtros.contenidos.map((item) => ETIQUETAS_CONTENIDO[item] || item).join(", "));
+  }
+  return partes.length ? partes.join(" · ") : "Todos los registros";
+}
 
 function unirRegistros(base, extras, ocultos) {
   const mapa = new Map();
@@ -148,6 +170,20 @@ export function VistaHistorialCultivo({
     });
   }
 
+  function limpiarFiltros() {
+    if (!unidadId) return;
+    iniciar(() => router.push(hrefHistorial({ unidadId })));
+  }
+
+  const hayFiltros = Boolean(
+    filtrosIniciales?.plantaId ||
+      filtrosIniciales?.genetica ||
+      filtrosIniciales?.desde ||
+      filtrosIniciales?.hasta ||
+      filtrosIniciales?.sinContenido ||
+      (filtrosIniciales?.contenidos && filtrosIniciales.contenidos.length < CONTENIDOS_HISTORIAL.length)
+  );
+
   async function cargarMas() {
     if (!cursor || cargandoMas || !filtrosIniciales) return;
     setCargandoMas(true);
@@ -193,8 +229,11 @@ export function VistaHistorialCultivo({
 
   return (
     <div className="historial-vista-cultivo demo-historial-vista">
-      <details className="historial__panel historial-vista-cultivo__filtros" open>
-        <summary>Filtros del historial</summary>
+      <details className="historial__panel historial-vista-cultivo__filtros" defaultOpen={hayFiltros}>
+        <summary>
+          Filtros
+          <span>{resumenFiltros(filtrosIniciales, plantasUnidad, geneticas)}</span>
+        </summary>
         <form className="historial__formulario" onSubmit={aplicarFiltros}>
           <div className="historial__rejilla">
             <Selector
@@ -223,7 +262,7 @@ export function VistaHistorialCultivo({
             <SelectorFecha id="historial-vista-desde" etiqueta="Desde" valor={desde} onChange={setDesde} />
             <SelectorFecha id="historial-vista-hasta" etiqueta="Hasta" valor={hasta} onChange={setHasta} />
           </div>
-          <div className="historial__contenidos" role="group" aria-label="Tipo de contenido">
+          <div className="historial__contenidos" role="group" aria-label="Tipo de registro">
             {CONTENIDOS_HISTORIAL.map((clave) => (
               <button
                 key={clave}
@@ -240,6 +279,11 @@ export function VistaHistorialCultivo({
             <Boton type="submit" variante="secundario" disabled={pendiente}>
               {pendiente ? "Aplicando..." : "Aplicar filtros"}
             </Boton>
+            {hayFiltros ? (
+              <Boton type="button" variante="ghost" onClick={limpiarFiltros} disabled={pendiente}>
+                Limpiar
+              </Boton>
+            ) : null}
             {filtrosIniciales?.plantaId ? (
               <Boton type="button" variante="ghost" onClick={quitarFiltroPlanta} disabled={pendiente}>
                 Ver toda la unidad
@@ -265,12 +309,10 @@ export function VistaHistorialCultivo({
         hayMasDias={hayMas}
         cargandoMas={cargandoMas}
         onCargarMasDias={cargarMas}
+        errorMas={errorMas}
+        onReintentarMas={cargarMas}
       />
       <HistorialMetricas historial={historial} />
-
-      {errorMas ? (
-        <p className="historial__error" role="alert">{errorMas}</p>
-      ) : null}
 
       {registros.length === 0 ? (
         <div className="vacio">

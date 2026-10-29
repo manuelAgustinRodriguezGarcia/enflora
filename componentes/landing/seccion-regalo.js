@@ -28,6 +28,7 @@ export function SeccionRegalo() {
   const [chatActivo, setChatActivo] = useState(false);
   const [avisoChat, setAvisoChat] = useState(false);
   const [esDesktop, setEsDesktop] = useState(false);
+  const [fondoListo, setFondoListo] = useState(false);
 
   useEffect(() => {
     const consulta = window.matchMedia(CONSULTA_DESKTOP);
@@ -49,8 +50,11 @@ export function SeccionRegalo() {
 
     if (reducido) {
       yaEntrada.current = true;
-      setChatActivo(true);
-      return undefined;
+      const timer = window.setTimeout(() => {
+        setFondoListo(true);
+        setChatActivo(true);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
     const umbral = window.matchMedia(CONSULTA_DESKTOP).matches ? 0.28 : 0.18;
@@ -59,6 +63,7 @@ export function SeccionRegalo() {
         if (!entrada?.isIntersecting || yaEntrada.current) return;
         yaEntrada.current = true;
         observador.disconnect();
+        setFondoListo(true);
         setChatActivo(true);
         setAvisoChat(true);
       },
@@ -106,22 +111,29 @@ export function SeccionRegalo() {
       ref={seccionRef}
     >
       <div className="regalo__fondo" aria-hidden="true">
-        <Image
-          src={FONDO_DESKTOP}
-          alt=""
-          fill
-          sizes="100vw"
-          className="regalo__fondo-img regalo__fondo-img--desktop"
-          priority={false}
-        />
-        <Image
-          src={fondoMobile}
-          alt=""
-          fill
-          sizes="100vw"
-          className="regalo__fondo-img regalo__fondo-img--mobile"
-          priority={false}
-        />
+        {fondoListo ? (
+          <>
+            {esDesktop ? (
+              <Image
+                src={FONDO_DESKTOP}
+                alt=""
+                fill
+                sizes="100vw"
+                quality={75}
+                className="regalo__fondo-img regalo__fondo-img--desktop"
+              />
+            ) : (
+              <Image
+                src={fondoMobile}
+                alt=""
+                fill
+                sizes="100vw"
+                quality={75}
+                className="regalo__fondo-img regalo__fondo-img--mobile"
+              />
+            )}
+          </>
+        ) : null}
         <div className="regalo__velo" />
         <div className="regalo__oscuridad" />
       </div>

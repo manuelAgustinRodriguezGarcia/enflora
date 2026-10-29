@@ -1,3 +1,4 @@
+import "@/estilos/app-autenticada.scss";
 import { ProveedorDemo } from "@/componentes/demo/proveedor-demo";
 import { SalidaDemo } from "@/componentes/demo/salida-demo";
 

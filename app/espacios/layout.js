@@ -1,3 +1,5 @@
+import "@/estilos/app-autenticada.scss";
+
 export const metadata = {
   robots: {
     index: false,

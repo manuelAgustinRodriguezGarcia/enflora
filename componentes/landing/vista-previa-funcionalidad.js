@@ -32,6 +32,9 @@ export function VistaPreviaFuncionalidad({ preview, titulo }) {
           height={ALTO_MOCKUP}
           sizes="(min-width: 64rem) 30rem, 100vw"
           className="producto-preview__imagen"
+          loading="lazy"
+          fetchPriority="low"
+          quality={75}
         />
         <div className="producto-preview__demo">
           <p className="producto-preview__demo-texto">¿Querés probarlo vos?</p>

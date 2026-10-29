@@ -411,7 +411,7 @@
     padding: 0.45rem 3rem 0.45rem 2.9rem;
   }
 
-  .formulario input:not([type="checkbox"]):not([type="radio"]) {
+  .auth .formulario input:not([type="checkbox"]):not([type="radio"]) {
     background: var(--auth-vip-input);
     background-color: var(--auth-vip-input);
     border-color: rgb(232 220 190 / 0.28);

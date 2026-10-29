@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/componentes/landing/gsap";
 import { OptionWheel } from "@/componentes/landing/option-wheel";
@@ -9,6 +10,8 @@ import { NOMBRE_MARCA } from "@/lib/seo";
 
 const EXPANDIR_HASTA = 0.2;
 const RUEDA_HASTA = 0.72;
+const FONDO_CARRUSEL_MOBILE = "/images/vertical-carrusel-landing.png";
+const FONDO_CARRUSEL_DESKTOP = "/images/carrusel-desktop-landing.png";
 const PIN_PROPS =
   "position,top,left,right,bottom,width,height,maxWidth,maxHeight,margin,padding,transform,inset,zIndex";
 const CLIP_PROPS = "clipPath,webkitClipPath";
@@ -97,8 +100,25 @@ export function ConEnflora() {
   const sincronizandoRef = useRef(false);
   const [compacto, setCompacto] = useState(false);
   const [notebook, setNotebook] = useState(false);
-  const [listo, setListo] = useState(false);
+  const [listo, setListo] = useState(true);
+  const [fondoListo, setFondoListo] = useState(false);
   const [indice, setIndice] = useState(0);
+
+  useEffect(() => {
+    const nodo = ref.current;
+    if (!nodo) return undefined;
+    const observador = new IntersectionObserver(
+      ([entrada]) => {
+        if (entrada?.isIntersecting) {
+          setFondoListo(true);
+          observador.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px 120px 0px", threshold: 0 },
+    );
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, []);
 
   useEffect(() => {
     const movil = window.matchMedia("(max-width: 63.99rem)");
@@ -108,7 +128,6 @@ export function ConEnflora() {
       setNotebook(medio.matches);
     };
     actualizar();
-    setListo(true);
     movil.addEventListener("change", actualizar);
     medio.addEventListener("change", actualizar);
     return () => {
@@ -337,7 +356,30 @@ export function ConEnflora() {
   return (
     <div className="con-enflora" id="con-enflora" data-logo="light" ref={ref}>
       <div className="con-enflora__fondo" ref={fondoRef} aria-hidden="true">
-        <div className="con-enflora__media" />
+        <div className="con-enflora__media">
+          {fondoListo ? (
+            <>
+              <Image
+                src={FONDO_CARRUSEL_MOBILE}
+                alt=""
+                fill
+                sizes="100vw"
+                quality={75}
+                className="con-enflora__media-img con-enflora__media-img--mobile"
+                draggable={false}
+              />
+              <Image
+                src={FONDO_CARRUSEL_DESKTOP}
+                alt=""
+                fill
+                sizes="100vw"
+                quality={75}
+                className="con-enflora__media-img con-enflora__media-img--desktop"
+                draggable={false}
+              />
+            </>
+          ) : null}
+        </div>
       </div>
       <div className="con-enflora__escena" ref={escenaRef}>
         <div className="con-enflora__titulo" ref={tituloRef}>

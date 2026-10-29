@@ -45,6 +45,7 @@ import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EsperaFlora } from "@/componentes/flora/espera-flora";
 import { PERSONALIDAD_FLORA_DEFAULT } from "@/lib/flora-personalidad";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
+import { PieRespuestaFlora } from "@/componentes/flora/pie-respuesta-flora";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { useGuardSalidaFloraChat } from "@/componentes/flora/proveedor-guard-salida-flora";
 
@@ -95,6 +96,8 @@ export function ChatFlora({
   const listaRef = useRef(null);
   const envioRef = useRef(false);
   const cercaDelFinalRef = useRef(true);
+  const bloquearAutoScrollRef = useRef(false);
+  const touchScrollRef = useRef(null);
   const forzarScrollRef = useRef(false);
   const sesionRef = useRef(0);
   const contextoContinuarEnviadoRef = useRef(false);
@@ -381,6 +384,7 @@ export function ChatFlora({
   const desplazarAbajoSiCorresponde = useCallback((forzar = false) => {
     const el = listaRef.current;
     if (!el) return;
+    if (!forzar && bloquearAutoScrollRef.current) return;
     if (!forzar && !cercaDelFinalRef.current) return;
     el.scrollTop = el.scrollHeight;
   }, []);
@@ -389,7 +393,31 @@ export function ChatFlora({
     const el = listaRef.current;
     if (!el) return;
     const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
-    cercaDelFinalRef.current = distancia <= UMBRAL_SCROLL_INFERIOR;
+    const cerca = distancia <= UMBRAL_SCROLL_INFERIOR;
+    cercaDelFinalRef.current = cerca;
+    bloquearAutoScrollRef.current = !cerca;
+  }, []);
+
+  const onWheelLista = useCallback((evento) => {
+    if (evento.deltaY < 0) {
+      bloquearAutoScrollRef.current = true;
+      cercaDelFinalRef.current = false;
+    }
+  }, []);
+
+  const onTouchStartLista = useCallback((evento) => {
+    const y = evento.touches[0]?.clientY;
+    touchScrollRef.current = typeof y === "number" ? y : null;
+  }, []);
+
+  const onTouchMoveLista = useCallback((evento) => {
+    const y = evento.touches[0]?.clientY;
+    const inicio = touchScrollRef.current;
+    if (typeof y !== "number" || typeof inicio !== "number") return;
+    if (y - inicio > 8) {
+      bloquearAutoScrollRef.current = true;
+      cercaDelFinalRef.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -456,6 +484,7 @@ export function ChatFlora({
     ignorarContinuarRef.current = true;
     contextoContinuarEnviadoRef.current = false;
     cercaDelFinalRef.current = true;
+    bloquearAutoScrollRef.current = false;
     forzarScrollRef.current = true;
   };
 
@@ -508,6 +537,7 @@ export function ChatFlora({
     setCargando(true);
     forzarScrollRef.current = true;
     cercaDelFinalRef.current = true;
+    bloquearAutoScrollRef.current = false;
 
     const preguntaGuardada = textoEnviado || normalizarPreguntaConImagen("");
     const idUsuario = idMensaje();
@@ -700,6 +730,9 @@ export function ChatFlora({
         className="flora-chat-app__lista"
         ref={listaRef}
         onScroll={onScrollLista}
+        onWheel={onWheelLista}
+        onTouchStart={onTouchStartLista}
+        onTouchMove={onTouchMoveLista}
         role="log"
         aria-live="polite"
         aria-relevant="additions"
@@ -730,6 +763,7 @@ export function ChatFlora({
                     onAnimacionCompleta={() => marcarAnimacionCompleta(m.id)}
                     onProgresoAnimacion={() => desplazarAbajoSiCorresponde(false)}
                   />
+                  {m.id !== "bienvenida" ? <PieRespuestaFlora texto={m.texto} /> : null}
                 </>
               ) : (
                 <>
