@@ -46,10 +46,9 @@ export async function GET(request) {
   let unidades = undefined;
   if (incluirUnidades) {
     const unidadesResp = await listarUnidadesGaleriaFlora(supabase);
-    if (!unidadesResp.ok) {
-      return json({ ok: false, error: unidadesResp.error || "No se pudieron cargar tus unidades." }, 502);
+    if (unidadesResp.ok) {
+      unidades = unidadesResp.unidades;
     }
-    unidades = unidadesResp.unidades;
   }
 
   return json({

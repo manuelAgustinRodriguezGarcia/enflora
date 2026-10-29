@@ -29,9 +29,18 @@ import {
   tieneCambiosPendientesSync,
 } from "@/lib/flora-estado-persistencia-chat";
 import { sugerirTituloChat, mensajesClienteParaPersistencia } from "@/lib/flora-chats-guardados";
-import { mensajesClienteDesdeGuardados } from "@/lib/flora-mensajes-cliente-desde-guardado";
+import {
+  debeRecuperarChatGuardado,
+  mensajeErrorRecuperacionChat,
+  resultadoRecuperacionChatDesdeApi,
+} from "@/lib/flora-recuperacion-chat";
 import { MENSAJE_BIENVENIDA_FLORA } from "@/lib/flora-chat-etiquetas";
 import { BotonGuardarChat } from "@/componentes/flora/boton-guardar-chat";
+import { ErrorRecuperacionChatFlora } from "@/componentes/flora/error-recuperacion-chat-flora";
+import {
+  EsqueletoDockRecuperacionChatFlora,
+  EsqueletoRecuperacionChatFlora,
+} from "@/componentes/flora/esqueleto-recuperacion-chat-flora";
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EsperaFlora } from "@/componentes/flora/espera-flora";
 import { PERSONALIDAD_FLORA_DEFAULT } from "@/lib/flora-personalidad";
@@ -50,13 +59,21 @@ function nuevaClaveSesionChat() {
   return `s-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
+function mensajesInicialesChat(continuarSolucionId) {
+  if (debeRecuperarChatGuardado(continuarSolucionId)) return [];
+  return [{ id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA_FLORA, animar: false }];
+}
+
 export function ChatFlora({
   continuarSolucionId = "",
   personalidadInicial = PERSONALIDAD_FLORA_DEFAULT,
 }) {
-  const [mensajes, setMensajes] = useState([
-    { id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA_FLORA, animar: false },
-  ]);
+  const [mensajes, setMensajes] = useState(() => mensajesInicialesChat(continuarSolucionId));
+  const [estadoRecuperacion, setEstadoRecuperacion] = useState(() =>
+    debeRecuperarChatGuardado(continuarSolucionId) ? "cargando" : null,
+  );
+  const [errorRecuperacion, setErrorRecuperacion] = useState("");
+  const [reintentandoRecuperacion, setReintentandoRecuperacion] = useState(false);
   const [entrada, setEntrada] = useState("");
   const [cargando, setCargando] = useState(false);
   const [esperaConImagen, setEsperaConImagen] = useState(false);
@@ -87,6 +104,7 @@ export function ChatFlora({
   const firmaSincronizadaRef = useRef(firmaSincronizada);
   const cargandoRef = useRef(cargando);
   const montadoRef = useRef(true);
+  const recuperacionGenRef = useRef(0);
 
   useEffect(() => {
     montadoRef.current = true;
@@ -163,6 +181,11 @@ export function ChatFlora({
     [claveSesion, colaPersistencia, tituloBiblioteca],
   );
 
+  const recuperandoHistorial = estadoRecuperacion === "cargando";
+  const falloRecuperacionHistorial = estadoRecuperacion === "error";
+  const inputBloqueado =
+    cargando || preparandoImagen || recuperandoHistorial || falloRecuperacionHistorial;
+
   useEffect(() => {
     const opciones = {
       chatGuardadoId,
@@ -176,24 +199,31 @@ export function ChatFlora({
 
     registrarPoliticaSalida({
       chatGuardadoId,
-      requiereAdvertenciaBeforeUnload: requiereAdvertenciaBeforeUnloadFlora(opciones),
-      chatFloraTieneContenido: () =>
-        chatFloraTieneContenidoPerdible({
+      requiereAdvertenciaBeforeUnload:
+        recuperandoHistorial || falloRecuperacionHistorial
+          ? false
+          : requiereAdvertenciaBeforeUnloadFlora(opciones),
+      chatFloraTieneContenido: () => {
+        if (recuperandoHistorial || falloRecuperacionHistorial) return false;
+        return chatFloraTieneContenidoPerdible({
           mensajes: mensajesRef.current,
           bannerContinuar,
           entrada,
           adjuntos: adjuntosImagen,
           cargando: cargandoRef.current,
-        }),
-      requiereModalSalida: () =>
-        requiereModalSalidaChatFlora({
+        });
+      },
+      requiereModalSalida: () => {
+        if (recuperandoHistorial || falloRecuperacionHistorial) return false;
+        return requiereModalSalidaChatFlora({
           chatGuardadoId: chatGuardadoIdRef.current,
           mensajes: mensajesRef.current,
           bannerContinuar,
           entrada,
           adjuntos: adjuntosImagen,
           cargando: cargandoRef.current,
-        }),
+        });
+      },
       tieneCambiosPendientes: () =>
         tieneCambiosPendientesSync({
           chatGuardadoId: chatGuardadoIdRef.current,
@@ -223,10 +253,13 @@ export function ChatFlora({
     persistirConversacion,
     registrarPoliticaSalida,
     tituloBiblioteca,
+    falloRecuperacionHistorial,
+    recuperandoHistorial,
   ]);
 
   useEffect(() => {
-    if (!chatGuardadoId || guardandoPersistencia) return;
+    if (recuperandoHistorial || falloRecuperacionHistorial) return undefined;
+    if (!chatGuardadoId || guardandoPersistencia) return undefined;
     if (!chatFloraPersistibleParaAutoguardado(mensajes)) return;
     const firma = firmaMensajesChat(mensajes);
     if (firma === firmaSincronizada) return;
@@ -248,6 +281,8 @@ export function ChatFlora({
     guardandoPersistencia,
     mensajes,
     persistirConversacion,
+    recuperandoHistorial,
+    falloRecuperacionHistorial,
   ]);
 
   useEffect(() => {
@@ -267,43 +302,81 @@ export function ChatFlora({
     };
   }, []);
 
-  useEffect(() => {
-    if (!continuarSolucionId) return;
+  const ejecutarRecuperacionChat = useCallback(async (idContinuar, { esReintento = false } = {}) => {
+    if (!debeRecuperarChatGuardado(idContinuar)) return;
+
     contextoContinuarEnviadoRef.current = false;
     ignorarContinuarRef.current = false;
-    let cancelado = false;
+    setErrorRecuperacion("");
+    setEstadoRecuperacion("cargando");
+    if (!esReintento) {
+      setMensajes([]);
+      setBannerContinuar(null);
+      setChatGuardadoId(null);
+      chatGuardadoIdRef.current = null;
+      setFirmaSincronizada("");
+      firmaSincronizadaRef.current = "";
+      setTituloBiblioteca("");
+    }
+    if (esReintento) setReintentandoRecuperacion(true);
+    const gen = (recuperacionGenRef.current += 1);
 
-    (async () => {
-      try {
-        const res = await fetch(`/api/flora/soluciones/${continuarSolucionId}`);
-        const data = await res.json().catch(() => ({}));
-        if (cancelado || !res.ok || !data.ok) return;
-        setBannerContinuar({
-          titulo: data.chat?.titulo || data.solucion?.titulo,
-          pregunta: data.chat?.primera_pregunta || data.solucion?.pregunta,
-        });
-        if (data.chat?.clave_sesion) {
-          setClaveSesion(data.chat.clave_sesion);
-          setChatGuardadoId(data.chat.id);
-          chatGuardadoIdRef.current = data.chat.id;
-          setTituloBiblioteca(data.chat.titulo || "");
-          if (Array.isArray(data.chat.mensajes) && data.chat.mensajes.length) {
-            const restaurados = mensajesClienteDesdeGuardados(data.chat.mensajes);
-            setMensajes(restaurados);
-            const firma = firmaMensajesChat(restaurados);
-            setFirmaSincronizada(firma);
-            firmaSincronizadaRef.current = firma;
-          }
-        }
-      } catch {
-        /* ignorar */
+    try {
+      const res = await fetch(`/api/flora/soluciones/${idContinuar}`);
+      const data = await res.json().catch(() => ({}));
+      if (!montadoRef.current || gen !== recuperacionGenRef.current) return;
+
+      if (!res.ok || !data.ok) {
+        setEstadoRecuperacion("error");
+        setErrorRecuperacion(mensajeErrorRecuperacionChat(res, data));
+        return;
       }
-    })();
 
+      const resultado = resultadoRecuperacionChatDesdeApi(data);
+      if (!resultado.ok) {
+        setEstadoRecuperacion("error");
+        setErrorRecuperacion(resultado.error);
+        return;
+      }
+
+      setMensajes(resultado.mensajes);
+      const firma = firmaMensajesChat(resultado.mensajes);
+      setFirmaSincronizada(firma);
+      firmaSincronizadaRef.current = firma;
+      setBannerContinuar(resultado.bannerContinuar);
+      setTituloBiblioteca(resultado.tituloBiblioteca || "");
+
+      if (resultado.chatGuardadoId) {
+        setChatGuardadoId(resultado.chatGuardadoId);
+        chatGuardadoIdRef.current = resultado.chatGuardadoId;
+        setClaveSesion(
+          resultado.claveSesion ? resultado.claveSesion : nuevaClaveSesionChat(),
+        );
+      }
+
+      setEstadoRecuperacion(null);
+      cercaDelFinalRef.current = true;
+      forzarScrollRef.current = true;
+    } catch {
+      if (!montadoRef.current || gen !== recuperacionGenRef.current) return;
+      setEstadoRecuperacion("error");
+      setErrorRecuperacion("Falló la conexión. Revisá tu internet e intentá de nuevo.");
+    } finally {
+      if (montadoRef.current && gen === recuperacionGenRef.current) setReintentandoRecuperacion(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!continuarSolucionId) return undefined;
+
+    const id = continuarSolucionId;
+    queueMicrotask(() => {
+      void ejecutarRecuperacionChat(id);
+    });
     return () => {
-      cancelado = true;
+      recuperacionGenRef.current += 1;
     };
-  }, [continuarSolucionId]);
+  }, [continuarSolucionId, ejecutarRecuperacionChat]);
 
   const desplazarAbajoSiCorresponde = useCallback((forzar = false) => {
     const el = listaRef.current;
@@ -366,6 +439,8 @@ export function ChatFlora({
   const nuevaConversacion = () => {
     if (cargando) return;
     sesionRef.current += 1;
+    setEstadoRecuperacion(null);
+    setErrorRecuperacion("");
     setMensajes([{ id: "bienvenida", rol: "flora", texto: MENSAJE_BIENVENIDA_FLORA, animar: false }]);
     setError("");
     setEntrada("");
@@ -539,6 +614,11 @@ export function ChatFlora({
     }
   };
 
+  const mostrarFabNuevoChat = useMemo(
+    () => chatFloraPersistibleCompleto(mensajes),
+    [mensajes],
+  );
+
   return (
     <div className="flora-chat-app">
       <header className="flora-chat-app__cabecera">
@@ -571,7 +651,7 @@ export function ChatFlora({
               if (titulo) setTituloBiblioteca(titulo);
             }}
             persistir={persistirConversacion}
-            deshabilitado={cargando || guardandoPersistencia}
+            deshabilitado={cargando || guardandoPersistencia || recuperandoHistorial || falloRecuperacionHistorial}
           />
         </div>
         <div className="flora-chat-app__cabecera-acciones">
@@ -608,16 +688,12 @@ export function ChatFlora({
         varianteConfirmar="secundario"
       />
 
-      <FabNuevoChatFlora
-        onClick={pedirNuevoChat}
-        disabled={cargando}
-        detrasCapas={menuAdjuntoAbierto}
-      />
-
-      {bannerContinuar ? (
-        <p className="flora-chat-app__continuar" role="status">
-          Continuando desde: <strong>{bannerContinuar.titulo}</strong>. Escribí tu nueva pregunta abajo.
-        </p>
+      {mostrarFabNuevoChat && !recuperandoHistorial && !falloRecuperacionHistorial ? (
+        <FabNuevoChatFlora
+          onClick={pedirNuevoChat}
+          disabled={cargando}
+          detrasCapas={menuAdjuntoAbierto}
+        />
       ) : null}
 
       <div
@@ -628,7 +704,19 @@ export function ChatFlora({
         aria-live="polite"
         aria-relevant="additions"
       >
-        {mensajes.map((m) => (
+        {recuperandoHistorial ? (
+          <EsqueletoRecuperacionChatFlora />
+        ) : falloRecuperacionHistorial ? (
+          <ErrorRecuperacionChatFlora
+            mensaje={errorRecuperacion}
+            reintentando={reintentandoRecuperacion}
+            onReintentar={() => {
+              if (!continuarSolucionId) return;
+              void ejecutarRecuperacionChat(continuarSolucionId, { esReintento: true });
+            }}
+          />
+        ) : (
+          mensajes.map((m) => (
           <div
             key={m.id}
             className={`flora-chat-app__fila flora-chat-app__fila--${m.rol === "flora" ? "flora" : "usuario"}`}
@@ -659,8 +747,9 @@ export function ChatFlora({
               )}
             </div>
           </div>
-        ))}
-        {cargando ? (
+          ))
+        )}
+        {cargando && !recuperandoHistorial ? (
           <div className="flora-chat-app__fila flora-chat-app__fila--flora">
             <EsperaFlora
               key={`${personalidad}-${esperaConImagen ? "img" : "txt"}`}
@@ -680,10 +769,12 @@ export function ChatFlora({
 
       <div className="flora-chat-app__dock">
         <div className="flora-chat-app__dock-extra">
+          {!recuperandoHistorial && !falloRecuperacionHistorial ? (
+            <>
           <PreviewsAdjuntoFlora
             adjuntos={adjuntosImagen}
             onQuitar={quitarAdjunto}
-            disabled={cargando || preparandoImagen}
+            disabled={inputBloqueado}
           />
           <EstadoAdjuntoFlora preparando={preparandoImagen} errorAdjunto={errorAdjunto} />
           <MenuDeslizableAdjuntoFlora
@@ -696,7 +787,12 @@ export function ChatFlora({
             onPreparandoChange={setPreparandoImagen}
             onErrorAdjunto={setErrorAdjunto}
           />
+            </>
+          ) : null}
         </div>
+        {recuperandoHistorial ? (
+          <EsqueletoDockRecuperacionChatFlora />
+        ) : (
         <form className="flora-chat-app__form" onSubmit={onSubmit}>
           <div className="flora-chat-app__form-fila">
             <label className="flora-chat-app__sr" htmlFor="flora-chat-input">
@@ -710,26 +806,27 @@ export function ChatFlora({
               value={entrada}
               onChange={(e) => setEntrada(e.target.value)}
               onKeyDown={onKeyDown}
-              disabled={cargando || preparandoImagen}
+              disabled={inputBloqueado}
               maxLength={2000}
             />
             <BotonClipAdjuntoFlora
               abierto={menuAdjuntoAbierto}
               onToggle={() => setMenuAdjuntoAbierto((v) => !v)}
-              disabled={cargando}
+              disabled={inputBloqueado}
               preparando={preparandoImagen}
               lleno={adjuntosImagen.length >= FLORA_CHAT_MAX_IMAGENES}
             />
             <button
               type="submit"
               className="flora-chat-app__enviar"
-              disabled={cargando || preparandoImagen || (!entrada.trim() && !adjuntosImagen.length)}
+              disabled={inputBloqueado || (!entrada.trim() && !adjuntosImagen.length)}
               aria-label="Enviar mensaje"
             >
               <Send strokeWidth={1.75} aria-hidden="true" />
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

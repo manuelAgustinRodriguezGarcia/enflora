@@ -16,6 +16,7 @@ export function Selector({
   renderValor,
   renderOpcion,
   className = "",
+  ariaLabel = "",
 }) {
   const valorActual = valor === undefined || valor === null || valor === "" ? null : valor;
 
@@ -33,7 +34,10 @@ export function Selector({
         id={id}
         disabled={deshabilitado}
       >
-        <Select.Trigger className="selector__trigger">
+        <Select.Trigger
+          className="selector__trigger"
+          aria-label={!etiqueta && ariaLabel ? ariaLabel : undefined}
+        >
           <span className="selector__valor">
             {valorActual == null ? (
               <span className="selector__placeholder">{placeholder}</span>

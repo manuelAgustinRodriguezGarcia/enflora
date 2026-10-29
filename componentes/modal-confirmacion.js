@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { Dialog } from "@base-ui/react/dialog";
+import { X } from "lucide-react";
 import { motion } from "motion/react";
 import { Boton } from "@/componentes/boton";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
@@ -29,11 +30,24 @@ export function ModalConfirmacion({
   varianteIcono = "",
   varianteConfirmar,
   className = "",
+  mostrarCancelar = true,
+  mostrarCerrar = false,
+  accionesEnColumna = false,
   children,
 }) {
   const acciones = useRef(null);
   const claseIcono = varianteIcono ? `modal__icono modal__icono--${varianteIcono}` : "modal__icono";
-  const clasePanel = className ? `modal__panel ${className}` : "modal__panel";
+  const clasesPanel = ["modal__panel"];
+  if (className) clasesPanel.push(className);
+  if (mostrarCerrar) clasesPanel.push("modal__panel--con-cerrar");
+  const clasePanel = clasesPanel.join(" ");
+
+  const clasesAcciones = ["modal__acciones"];
+  if (accionesEnColumna || (onConfirmarSecundario && !mostrarCancelar)) {
+    clasesAcciones.push("modal__acciones--columna");
+  } else if (onConfirmarSecundario) {
+    clasesAcciones.push("modal__acciones--triple");
+  }
 
   function cambiar(siguiente, detalles) {
     if (!siguiente && pendiente) {
@@ -57,10 +71,12 @@ export function ModalConfirmacion({
       {descripcion ? <Dialog.Description className="modal__texto">{descripcion}</Dialog.Description> : null}
       {error ? <p className="formulario__error">{error}</p> : null}
       {children}
-      <div className={`modal__acciones${onConfirmarSecundario ? " modal__acciones--triple" : ""}`}>
-        <Boton type="button" variante="ghost" onClick={() => cambiar(false)} disabled={pendiente}>
-          {textoCancelar}
-        </Boton>
+      <div className={clasesAcciones.join(" ")}>
+        {mostrarCancelar ? (
+          <Boton type="button" variante="ghost" onClick={() => cambiar(false)} disabled={pendiente}>
+            {textoCancelar}
+          </Boton>
+        ) : null}
         {onConfirmarSecundario ? (
           <Boton
             type="button"
@@ -130,6 +146,17 @@ export function ModalConfirmacion({
               />
             }
           >
+            {mostrarCerrar ? (
+              <button
+                type="button"
+                className="flora-modal-fotos__cerrar"
+                aria-label="Cerrar"
+                disabled={pendiente}
+                onClick={() => cambiar(false)}
+              >
+                <X strokeWidth={2} aria-hidden="true" />
+              </button>
+            ) : null}
             {accion ? <form action={accion}>{cuerpo}</form> : cuerpo}
           </Dialog.Popup>
         </Dialog.Viewport>

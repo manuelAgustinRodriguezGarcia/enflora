@@ -3,13 +3,14 @@
 import { ImageOff, LoaderCircle, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { GaleriaFiltroFecha } from "@/componentes/flora/galeria-filtro-fecha";
 import { Selector } from "@/componentes/selector";
-import { SelectorFecha } from "@/componentes/selector-fecha";
 import { formatearFecha } from "@/lib/etapas";
 import { mensajeGaleriaVacia } from "@/lib/flora-galeria-fotos";
 import { diaArgentina } from "@/lib/historial-registros";
 
 const DURACION_MODAL_FOTOS_MS = 320;
+const UMBRAL_EXPANSION_SCROLL_PX = 28;
 
 function parametrosConsulta(filtros, cursor, unidadesInicial) {
   const params = new URLSearchParams();
@@ -41,9 +42,11 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
   const [busquedaDebounced, setBusquedaDebounced] = useState("");
   const [cargando, setCargando] = useState(false);
   const [cargandoMas, setCargandoMas] = useState(false);
-  const [error, setError] = useState("");
+  const [errorInicial, setErrorInicial] = useState("");
+  const [errorMas, setErrorMas] = useState("");
   const [hayMas, setHayMas] = useState(false);
   const [cursor, setCursor] = useState(null);
+  const [expandido, setExpandido] = useState(false);
   const [estadoVacio, setEstadoVacio] = useState({
     sinCoincidencias: false,
     sinFotosEnCuenta: false,
@@ -54,7 +57,9 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
   const sentinelRef = useRef(null);
   const cuerpoRef = useRef(null);
   const peticionRef = useRef(0);
+  const abortRef = useRef(null);
   const unidadesRef = useRef([]);
+  const paginacionPausadaRef = useRef(false);
 
   useEffect(() => {
     unidadesRef.current = unidades;
@@ -85,6 +90,21 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
   }, [montado, abierto, panelVisible]);
 
   useEffect(() => {
+    if (!abierto) {
+      paginacionPausadaRef.current = false;
+      abortRef.current?.abort();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reiniciar sheet al cerrar
+      setExpandido(false);
+      return undefined;
+    }
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [abierto]);
+
+  useEffect(() => {
     if (!abierto) return;
     const timer = window.setTimeout(() => {
       setBusquedaDebounced(filtros.busqueda.trim());
@@ -104,28 +124,41 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
 
   const cargarPagina = useCallback(
     async ({ cursorSiguiente = null, reemplazar = true, traerUnidades = false } = {}) => {
+      abortRef.current?.abort();
+      const controlador = new AbortController();
+      abortRef.current = controlador;
+
       const idPeticion = ++peticionRef.current;
       if (reemplazar) {
         setCargando(true);
-        setError("");
+        setErrorInicial("");
+        setErrorMas("");
+        paginacionPausadaRef.current = false;
         setFotos([]);
         setHayMas(false);
         setCursor(null);
-      } else setCargandoMas(true);
+      } else {
+        setCargandoMas(true);
+        setErrorMas("");
+      }
 
       try {
         const params = parametrosConsulta(filtrosConsulta, cursorSiguiente, traerUnidades);
-        const res = await fetch(`/api/flora/fotos?${params.toString()}`);
+        const res = await fetch(`/api/flora/fotos?${params.toString()}`, { signal: controlador.signal });
         const data = await res.json().catch(() => ({}));
         if (idPeticion !== peticionRef.current) return;
 
         if (!res.ok || !data.ok) {
+          const mensaje = data.error || "No se pudieron cargar tus fotos.";
           if (reemplazar) {
             setFotos([]);
             setHayMas(false);
             setCursor(null);
+            setErrorInicial(mensaje);
+          } else {
+            setErrorMas(mensaje);
+            paginacionPausadaRef.current = true;
           }
-          setError(data.error || "No se pudieron cargar tus fotos.");
           return;
         }
 
@@ -133,6 +166,7 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
         setFotos((prev) => (reemplazar ? nuevas : [...prev, ...nuevas]));
         setHayMas(Boolean(data.hay_mas));
         setCursor(data.cursor || null);
+        paginacionPausadaRef.current = false;
         setEstadoVacio({
           sinCoincidencias: Boolean(data.sin_coincidencias),
           sinFotosEnCuenta: Boolean(data.sin_fotos_cuenta),
@@ -140,13 +174,18 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
         if (Array.isArray(data.unidades)) {
           setUnidades(data.unidades);
         }
-      } catch {
+      } catch (err) {
+        if (err?.name === "AbortError") return;
         if (idPeticion !== peticionRef.current) return;
+        const mensaje = "Falló la conexión al cargar fotos.";
         if (reemplazar) {
           setFotos([]);
           setHayMas(false);
+          setErrorInicial(mensaje);
+        } else {
+          setErrorMas(mensaje);
+          paginacionPausadaRef.current = true;
         }
-        setError("Falló la conexión al cargar fotos.");
       } finally {
         if (idPeticion === peticionRef.current) {
           setCargando(false);
@@ -168,7 +207,7 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
   }, [abierto, filtrosConsulta, cargarPagina]);
 
   useEffect(() => {
-    if (!abierto || !hayMas || cargando || cargandoMas) return;
+    if (!abierto || !hayMas || cargando || cargandoMas || paginacionPausadaRef.current) return;
     const nodo = sentinelRef.current;
     const raiz = cuerpoRef.current;
     if (!nodo || !raiz) return;
@@ -176,14 +215,20 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
     const observador = new IntersectionObserver(
       (entradas) => {
         if (!entradas.some((e) => e.isIntersecting)) return;
-        if (!hayMas || cargando || cargandoMas || !cursor) return;
+        if (!hayMas || cargando || cargandoMas || paginacionPausadaRef.current || !cursor) return;
         cargarPagina({ cursorSiguiente: cursor, reemplazar: false });
       },
       { root: raiz, rootMargin: "120px" },
     );
     observador.observe(nodo);
     return () => observador.disconnect();
-  }, [abierto, hayMas, cargando, cargandoMas, cursor, cargarPagina]);
+  }, [abierto, hayMas, cargando, cargandoMas, cursor, cargarPagina, errorMas]);
+
+  const reintentarMas = () => {
+    if (!cursor || cargando || cargandoMas) return;
+    paginacionPausadaRef.current = false;
+    void cargarPagina({ cursorSiguiente: cursor, reemplazar: false });
+  };
 
   const limpiarFiltros = () => {
     setFiltros(FILTROS_VACIOS);
@@ -198,7 +243,7 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
   );
 
   const mensajeVacio = mensajeGaleriaVacia({
-    errorCarga: Boolean(error),
+    errorCarga: Boolean(errorInicial),
     sinCoincidencias: estadoVacio.sinCoincidencias,
     sinFotosEnCuenta: estadoVacio.sinFotosEnCuenta,
   });
@@ -216,11 +261,27 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
     [unidades],
   );
 
+  const manejarScrollCuerpo = () => {
+    const nodo = cuerpoRef.current;
+    if (!nodo || expandido) return;
+    if (nodo.scrollTop >= UMBRAL_EXPANSION_SCROLL_PX) {
+      setExpandido(true);
+    }
+  };
+
   if (!portalListo || !montado) return null;
+
+  const clasesModal = [
+    "flora-modal-fotos",
+    panelVisible ? "flora-modal-fotos--abierto" : "",
+    expandido ? "flora-modal-fotos--expandido" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const contenido = (
     <div
-      className={`flora-modal-fotos${panelVisible ? " flora-modal-fotos--abierto" : ""}`}
+      className={clasesModal}
       role="dialog"
       aria-modal="true"
       aria-labelledby="flora-modal-fotos-titulo"
@@ -237,39 +298,39 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
             </button>
           </header>
           <div className="flora-modal-fotos__filtros">
-            <label className="flora-modal-fotos__busqueda">
+            <label className="flora-modal-fotos__busqueda campo-busqueda">
               <span className="flora-modal-fotos__sr">Buscar por unidad o planta</span>
-              <Search className="flora-modal-fotos__busqueda-icono" strokeWidth={1.75} aria-hidden="true" />
+              <Search className="campo-busqueda__icono" size={18} strokeWidth={1.75} aria-hidden="true" />
               <input
                 type="search"
+                className="campo-busqueda__input"
                 value={filtros.busqueda}
                 onChange={(evento) => setFiltros((prev) => ({ ...prev, busqueda: evento.target.value }))}
                 placeholder="Unidad o planta…"
                 autoComplete="off"
               />
             </label>
-            <Selector
-              id="flora-galeria-unidad"
-              etiqueta="Unidad"
-              valor={filtros.unidadId}
-              onChange={(valor) => setFiltros((prev) => ({ ...prev, unidadId: valor }))}
-              opciones={opcionesUnidades}
-              disabled={cargando && fotos.length === 0}
-            />
-            <div className="flora-modal-fotos__fechas">
-              <SelectorFecha
-                id="flora-galeria-desde"
-                etiqueta="Desde"
-                valor={filtros.fechaDesde}
-                onChange={(valor) => setFiltros((prev) => ({ ...prev, fechaDesde: valor }))}
-                sinIcono
+            <p className="flora-modal-fotos__filtros-ayuda" id="flora-galeria-filtros-ayuda">
+              Elegí unidad de cultivo y/o fecha
+            </p>
+            <div className="flora-modal-fotos__filtros-fila" aria-labelledby="flora-galeria-filtros-ayuda">
+              <Selector
+                id="flora-galeria-unidad"
+                placeholder="Unidad"
+                ariaLabel="Unidad de cultivo"
+                valor={filtros.unidadId}
+                onChange={(valor) => setFiltros((prev) => ({ ...prev, unidadId: valor }))}
+                opciones={opcionesUnidades}
+                disabled={cargando && fotos.length === 0}
               />
-              <SelectorFecha
-                id="flora-galeria-hasta"
-                etiqueta="Hasta"
-                valor={filtros.fechaHasta}
-                onChange={(valor) => setFiltros((prev) => ({ ...prev, fechaHasta: valor }))}
-                sinIcono
+              <GaleriaFiltroFecha
+                id="flora-galeria-fecha"
+                fechaDesde={filtros.fechaDesde}
+                fechaHasta={filtros.fechaHasta}
+                deshabilitado={cargando && fotos.length === 0}
+                onConfirmar={({ desde, hasta }) =>
+                  setFiltros((prev) => ({ ...prev, fechaDesde: desde, fechaHasta: hasta }))
+                }
               />
             </div>
             {hayFiltrosActivos ? (
@@ -278,7 +339,11 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
               </button>
             ) : null}
           </div>
-          <div className="flora-modal-fotos__cuerpo" ref={cuerpoRef}>
+          <div
+            className="flora-modal-fotos__cuerpo"
+            ref={cuerpoRef}
+            onScroll={manejarScrollCuerpo}
+          >
             {cargando ? (
               <div className="flora-modal-fotos__vacio" role="status" aria-live="polite">
                 <div className="flora-modal-fotos__vacio-inner">
@@ -291,12 +356,12 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
                 </div>
               </div>
             ) : null}
-            {error ? (
+            {errorInicial && !cargando && fotos.length === 0 ? (
               <p className="flora-modal-fotos__error" role="alert">
-                {error}
+                {errorInicial}
               </p>
             ) : null}
-            {!cargando && !error && fotos.length === 0 ? (
+            {!cargando && !errorInicial && fotos.length === 0 ? (
               <div className="flora-modal-fotos__vacio">
                 <div className="flora-modal-fotos__vacio-inner">
                   <ImageOff className="flora-modal-fotos__vacio-icono" strokeWidth={1.5} aria-hidden="true" />
@@ -336,11 +401,24 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
                     </li>
                   );
                 })}
-                {hayMas ? (
-                  <li className="flora-modal-fotos__sentinel" ref={sentinelRef} aria-hidden="true">
+                {hayMas || errorMas ? (
+                  <li className="flora-modal-fotos__sentinel" ref={sentinelRef} aria-hidden={!errorMas}>
                     {cargandoMas ? (
                       <LoaderCircle className="flora-modal-fotos__giro" strokeWidth={1.5} aria-hidden="true" />
                     ) : null}
+                    {errorMas ? (
+                      <div className="flora-modal-fotos__error-mas" role="alert">
+                        <p>{errorMas}</p>
+                        <button type="button" className="flora-modal-fotos__reintentar" onClick={reintentarMas}>
+                          Reintentar
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                ) : null}
+                {!hayMas && fotos.length > 0 && !errorMas ? (
+                  <li className="flora-modal-fotos__fin" aria-live="polite">
+                    No hay más fotos.
                   </li>
                 ) : null}
               </ul>

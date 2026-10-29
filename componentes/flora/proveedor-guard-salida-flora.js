@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Save, X } from "lucide-react";
+import { Save, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   createContext,
@@ -197,7 +197,10 @@ export function ProveedorGuardSalidaFlora({ children }) {
         }}
         titulo="¿Querés salir del chat?"
         descripcion="Si salís de este chat, perdés esta conversación. Para no perderla, guardala antes de irte."
-        textoCancelar="Quedarme"
+        className="modal--salida-flora"
+        mostrarCancelar={false}
+        mostrarCerrar
+        accionesEnColumna
         textoConfirmarSecundario="Salir sin guardar"
         varianteConfirmarSecundario="secundario"
         iconoConfirmarSecundario={<X strokeWidth={1.75} aria-hidden="true" />}
@@ -209,8 +212,6 @@ export function ProveedorGuardSalidaFlora({ children }) {
         }}
         pendiente={pendienteModal}
         error={errorModal}
-        icono={<AlertTriangle strokeWidth={1.75} aria-hidden="true" />}
-        varianteIcono="advertencia"
       />
     </GuardSalidaFloraContext.Provider>
   );

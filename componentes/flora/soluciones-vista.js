@@ -2,11 +2,13 @@
 
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { MessageCircle, Pencil, Search, Trash2 } from "lucide-react";
+import { Pencil, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Boton } from "@/componentes/boton";
+import { EnlaceVolver } from "@/componentes/enlace-volver";
+import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { LIMITES_FLORA_CHATS } from "@/lib/flora-chats-guardados";
 
@@ -24,6 +26,11 @@ function formatearFechaDetalle(iso) {
   } catch {
     return "";
   }
+}
+
+function textoCantidadMensajes(cantidad) {
+  const n = Number(cantidad) || 0;
+  return n === 1 ? "1 mensaje" : `${n} mensajes`;
 }
 
 function textoBusquedaItem(item) {
@@ -78,22 +85,18 @@ export function SolucionesVista({ items = [], paginaInicial = 0 }) {
   return (
     <div className="flora-soluciones">
       <header className="flora-soluciones__cabecera">
-        <div>
-          <h1 className="flora-soluciones__titulo">Chats guardados</h1>
-          <p className="flora-soluciones__sub">
-            Conversaciones completas con Flora y soluciones sueltas anteriores.
-          </p>
-        </div>
-        <Link href="/flora" className="flora-soluciones__link-flora">
-          <MessageCircle strokeWidth={1.75} aria-hidden="true" />
-          Volver a Flora
-        </Link>
+        <h1 id="soluciones-titulo" className="flora-soluciones__titulo">
+          Chats guardados
+        </h1>
       </header>
 
-      <div className="flora-soluciones__busqueda">
-        <Search strokeWidth={1.75} aria-hidden="true" />
+      <FabNuevoChatFlora href="/flora" ariaLabel="Nuevo chat con Flora" />
+
+      <label className="flora-soluciones__busqueda campo-busqueda">
+        <Search className="campo-busqueda__icono" size={18} strokeWidth={1.75} aria-hidden="true" />
         <input
           type="search"
+          className="campo-busqueda__input"
           placeholder="Buscar por título o contenido…"
           value={consulta}
           onChange={(e) => {
@@ -102,7 +105,7 @@ export function SolucionesVista({ items = [], paginaInicial = 0 }) {
           }}
           aria-label="Buscar chats guardados"
         />
-      </div>
+      </label>
 
       {filtradas.length === 0 ? (
         <p className="flora-soluciones__vacio" role="status">
@@ -196,9 +199,7 @@ export function SolucionDetalleVista({ solucion }) {
   return (
     <article className="flora-soluciones-detalle">
       <header className="flora-soluciones-detalle__cabecera">
-        <Link href="/flora/soluciones" className="flora-soluciones-detalle__volver">
-          ← Chats guardados
-        </Link>
+        <EnlaceVolver href="/flora/soluciones" etiqueta="Volver a chats guardados" />
         <div className="flora-soluciones-detalle__cabecera-fila">
           <div className="flora-soluciones-detalle__cabecera-texto">
             <h1>{titulo}</h1>
@@ -251,11 +252,6 @@ export function SolucionDetalleVista({ solucion }) {
           </div>
         ) : null}
       </header>
-
-      <p className="flora-soluciones-detalle__aviso-historico" role="note">
-        Esta es una respuesta generada en su fecha original. Los datos actuales de tu cultivo pueden
-        haber cambiado; no uses fechas o recomendaciones históricas como si fueran vigentes hoy.
-      </p>
 
       <section className="flora-soluciones-detalle__bloque">
         <h2>Tu pregunta</h2>
@@ -332,15 +328,16 @@ export function ChatDetalleVista({ chat }) {
   return (
     <article className="flora-soluciones-detalle">
       <header className="flora-soluciones-detalle__cabecera">
-        <Link href="/flora/soluciones" className="flora-soluciones-detalle__volver">
-          ← Chats guardados
-        </Link>
+        <EnlaceVolver href="/flora/soluciones" etiqueta="Volver a chats guardados" />
         <div className="flora-soluciones-detalle__cabecera-fila">
           <div className="flora-soluciones-detalle__cabecera-texto">
             <h1>{titulo}</h1>
-            <time dateTime={fechaRef}>
-              Actualizado el {formatearFechaDetalle(fechaRef)} · {chat.cantidad_mensajes} mensajes
-            </time>
+            <div className="flora-soluciones-detalle__meta">
+              <time dateTime={fechaRef}>Actualizado el {formatearFechaDetalle(fechaRef)}</time>
+              <span className="flora-soluciones-detalle__meta-pill">
+                {textoCantidadMensajes(chat.cantidad_mensajes)}
+              </span>
+            </div>
           </div>
           {!editando ? (
             <div className="flora-soluciones-detalle__acciones-iconos">
@@ -386,11 +383,6 @@ export function ChatDetalleVista({ chat }) {
           </div>
         ) : null}
       </header>
-
-      <p className="flora-soluciones-detalle__aviso-historico" role="note">
-        Conversación guardada tal como la enviaste. Es información histórica: los datos actuales de tu
-        cultivo pueden haber cambiado.
-      </p>
 
       <div className="flora-soluciones-detalle__conversacion" role="log">
         {(chat.mensajes || []).map((m, i) => (

@@ -674,6 +674,18 @@
         flex: 1 1 100%;
       }
     }
+
+    &--columna {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: stretch;
+
+      .boton {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: none;
+      }
+    }
   }
 
   &__accion-icono {
