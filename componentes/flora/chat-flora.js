@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, RotateCcw, Send, SlidersHorizontal } from "lucide-react";
+import { BookOpen, Plus, Send, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,7 +15,8 @@ import {
 import { FLORA_CHAT_MAX_IMAGENES, normalizarPreguntaConImagen } from "@/lib/flora-imagen-chat";
 import { conversacionFloraPendiente } from "@/lib/flora-chat-conversacion-pendiente";
 import { useGuardSalidaFloraChat } from "@/componentes/flora/proveedor-guard-salida-flora";
-import { BotonGuardarSolucion } from "@/componentes/flora/boton-guardar-solucion";
+import { BotonGuardarChat } from "@/componentes/flora/boton-guardar-chat";
+import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { IndicadorFloraEscribiendo } from "@/componentes/flora/indicador-flora-escribiendo";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
@@ -28,6 +29,10 @@ const UMBRAL_SCROLL_INFERIOR = 96;
 
 function idMensaje() {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function nuevaClaveSesionChat() {
+  return `s-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
 export function ChatFlora({ continuarSolucionId = "" }) {
@@ -43,6 +48,9 @@ export function ChatFlora({ continuarSolucionId = "" }) {
   const [preparandoImagen, setPreparandoImagen] = useState(false);
   const [errorAdjunto, setErrorAdjunto] = useState("");
   const [menuAdjuntoAbierto, setMenuAdjuntoAbierto] = useState(false);
+  const [claveSesion, setClaveSesion] = useState(() => nuevaClaveSesionChat());
+  const [chatGuardadoId, setChatGuardadoId] = useState(null);
+  const [chatMarcadoGuardadoEnSesion, setChatMarcadoGuardadoEnSesion] = useState(false);
   const adjuntoRef = useRef(null);
   const listaRef = useRef(null);
   const envioRef = useRef(false);
@@ -84,9 +92,14 @@ export function ChatFlora({ continuarSolucionId = "" }) {
         const data = await res.json().catch(() => ({}));
         if (cancelado || !res.ok || !data.ok) return;
         setBannerContinuar({
-          titulo: data.solucion.titulo,
-          pregunta: data.solucion.pregunta,
+          titulo: data.chat?.titulo || data.solucion?.titulo,
+          pregunta: data.chat?.primera_pregunta || data.solucion?.pregunta,
         });
+        if (data.chat?.clave_sesion) {
+          setClaveSesion(data.chat.clave_sesion);
+          setChatGuardadoId(data.chat.id);
+          setChatMarcadoGuardadoEnSesion(true);
+        }
       } catch {
         /* ignorar */
       }
@@ -164,6 +177,9 @@ export function ChatFlora({ continuarSolucionId = "" }) {
     limpiarAdjuntos();
     setMenuAdjuntoAbierto(false);
     setBannerContinuar(null);
+    setClaveSesion(nuevaClaveSesionChat());
+    setChatGuardadoId(null);
+    setChatMarcadoGuardadoEnSesion(false);
     ignorarContinuarRef.current = true;
     contextoContinuarEnviadoRef.current = false;
     cercaDelFinalRef.current = true;
@@ -172,6 +188,10 @@ export function ChatFlora({ continuarSolucionId = "" }) {
 
   const pedirNuevoChat = () => {
     if (cargando) return;
+    if (chatMarcadoGuardadoEnSesion || chatGuardadoId) {
+      nuevaConversacion();
+      return;
+    }
     const hayConversacion = conversacionFloraPendiente({
       mensajes,
       bannerContinuar,
@@ -216,6 +236,7 @@ export function ChatFlora({ continuarSolucionId = "" }) {
 
     const preguntaGuardada = textoEnviado || normalizarPreguntaConImagen("");
     const idUsuario = idMensaje();
+    const ahora = new Date().toISOString();
     setMensajes((prev) => [
       ...prev,
       {
@@ -223,6 +244,7 @@ export function ChatFlora({ continuarSolucionId = "" }) {
         rol: "usuario",
         texto: textoEnviado,
         adjuntos: adjuntosEnviados,
+        fecha: ahora,
       },
     ]);
 
@@ -284,6 +306,7 @@ export function ChatFlora({ continuarSolucionId = "" }) {
           preguntaAsociada: preguntaGuardada,
           metaGuardado: data.meta?.guardado || null,
           imagenTransitoriaEnConsulta: data.meta?.imagen?.transitoria || false,
+          fecha: new Date().toISOString(),
         },
       ]);
       forzarScrollRef.current = true;
@@ -330,15 +353,15 @@ export function ChatFlora({ continuarSolucionId = "" }) {
               <p className="flora-chat-app__subtitulo">En línea</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="flora-chat-app__nueva"
-            onClick={pedirNuevoChat}
-            disabled={cargando}
-            aria-label="Nuevo chat"
-          >
-            Nuevo chat
-          </button>
+          <BotonGuardarChat
+            key={`${claveSesion}-${chatGuardadoId || "nuevo"}`}
+            mensajes={mensajes}
+            claveSesion={claveSesion}
+            chatGuardadoId={chatGuardadoId}
+            onChatGuardado={setChatGuardadoId}
+            onChatGuardadoConfirmado={() => setChatMarcadoGuardadoEnSesion(true)}
+            deshabilitado={cargando}
+          />
         </div>
         <div className="flora-chat-app__cabecera-acciones">
           <Link
@@ -357,7 +380,7 @@ export function ChatFlora({ continuarSolucionId = "" }) {
           </Link>
           <Link href="/flora/soluciones" className="flora-chat-app__soluciones">
             <BookOpen strokeWidth={1.75} aria-hidden="true" />
-            <span>Conversaciones</span>
+            <span>Chats guardados</span>
           </Link>
         </div>
       </header>
@@ -370,8 +393,14 @@ export function ChatFlora({ continuarSolucionId = "" }) {
         textoConfirmar="Nuevo chat"
         textoCancelar="Cancelar"
         onConfirmar={aceptarNuevoChat}
-        icono={<RotateCcw strokeWidth={1.75} aria-hidden="true" />}
+        icono={<Plus strokeWidth={1.75} aria-hidden="true" />}
         varianteConfirmar="secundario"
+      />
+
+      <FabNuevoChatFlora
+        onClick={pedirNuevoChat}
+        disabled={cargando}
+        detrasCapas={menuAdjuntoAbierto}
       />
 
       {bannerContinuar ? (
@@ -402,22 +431,6 @@ export function ChatFlora({ continuarSolucionId = "" }) {
                     onAnimacionCompleta={() => marcarAnimacionCompleta(m.id)}
                     onProgresoAnimacion={() => desplazarAbajoSiCorresponde(false)}
                   />
-                  {m.preguntaAsociada && m.metaGuardado ? (
-                    <>
-                      <BotonGuardarSolucion
-                        pregunta={m.preguntaAsociada}
-                        respuesta={m.texto}
-                        metaGuardado={m.metaGuardado}
-                        deshabilitado={cargando}
-                      />
-                      {m.imagenTransitoriaEnConsulta ? (
-                        <p className="flora-chat-app__aviso-imagen">
-                          Si guardás la solución, el texto queda en tu biblioteca; la foto del dispositivo no se
-                          guarda.
-                        </p>
-                      ) : null}
-                    </>
-                  ) : null}
                 </>
               ) : (
                 <>

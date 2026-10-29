@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { calcularOffsetTecladoInferior, entradaEditableActiva } from "@/lib/viewport-teclado";
 
 /** Sincroniza `--enflora-teclado-inferior` con el teclado virtual (visualViewport). */
 export function AjusteTecladoViewport() {
@@ -8,12 +9,16 @@ export function AjusteTecladoViewport() {
     const root = document.documentElement;
 
     const actualizar = () => {
-      const vista = window.visualViewport;
-      if (!vista) {
-        root.style.setProperty("--enflora-teclado-inferior", "0px");
-        return;
-      }
-      const teclado = Math.max(0, window.innerHeight - vista.height - vista.offsetTop);
+      const activo = document.activeElement;
+      const ignorarRaiz =
+        activo === document.body || activo === document.documentElement || activo === document;
+      const teclado = calcularOffsetTecladoInferior(
+        {
+          innerHeight: window.innerHeight,
+          visualViewport: window.visualViewport,
+        },
+        { entradaActiva: !ignorarRaiz && entradaEditableActiva(activo) },
+      );
       root.style.setProperty("--enflora-teclado-inferior", `${teclado}px`);
     };
 
@@ -22,12 +27,16 @@ export function AjusteTecladoViewport() {
     window.visualViewport?.addEventListener("scroll", actualizar);
     window.addEventListener("resize", actualizar);
     window.addEventListener("orientationchange", actualizar);
+    document.addEventListener("focusin", actualizar);
+    document.addEventListener("focusout", actualizar);
 
     return () => {
       window.visualViewport?.removeEventListener("resize", actualizar);
       window.visualViewport?.removeEventListener("scroll", actualizar);
       window.removeEventListener("resize", actualizar);
       window.removeEventListener("orientationchange", actualizar);
+      document.removeEventListener("focusin", actualizar);
+      document.removeEventListener("focusout", actualizar);
       root.style.removeProperty("--enflora-teclado-inferior");
     };
   }, []);

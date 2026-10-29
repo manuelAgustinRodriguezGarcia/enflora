@@ -97,10 +97,16 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
         </header>
         <div className="flora-modal-fotos__cuerpo">
           {cargando ? (
-            <p className="flora-modal-fotos__estado" role="status">
-              <LoaderCircle className="flora-modal-fotos__giro" strokeWidth={1.75} aria-hidden="true" />
-              Cargando fotos…
-            </p>
+            <div className="flora-modal-fotos__vacio" role="status" aria-live="polite">
+              <div className="flora-modal-fotos__vacio-inner">
+                <LoaderCircle
+                  className="flora-modal-fotos__vacio-icono flora-modal-fotos__vacio-spinner"
+                  strokeWidth={1.5}
+                  aria-hidden="true"
+                />
+                <p>Cargando fotos…</p>
+              </div>
+            </div>
           ) : null}
           {error ? (
             <p className="flora-modal-fotos__error" role="alert">
@@ -109,8 +115,10 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
           ) : null}
           {!cargando && !error && fotos.length === 0 ? (
             <div className="flora-modal-fotos__vacio">
-              <ImageOff className="flora-modal-fotos__vacio-icono" strokeWidth={1.5} aria-hidden="true" />
-              <p>{MENSAJE_GALERIA_VACIA}</p>
+              <div className="flora-modal-fotos__vacio-inner">
+                <ImageOff className="flora-modal-fotos__vacio-icono" strokeWidth={1.5} aria-hidden="true" />
+                <p>{MENSAJE_GALERIA_VACIA}</p>
+              </div>
             </div>
           ) : null}
           {!cargando && fotos.length > 0 ? (

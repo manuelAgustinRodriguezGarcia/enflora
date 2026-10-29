@@ -1,0 +1,42 @@
+{
+  "phase": "fase-2-js-hidratacion",
+  "when": "2026-10-28",
+  "environment": {
+    "type": "local-production",
+    "url": "http://localhost:3005/",
+    "lighthouse": "mobile --preset=perf ×3, mediana",
+    "compareBaseline": "mediciones/lcp-fase1-after-summary.json"
+  },
+  "diagnosticoAnalyze": {
+    "comando": "pnpm next experimental-analyze --output",
+    "routeSlashUncompressedJsBefore": 1160248,
+    "routeSlashUncompressedJsAfter": 1164250,
+    "monolithBefore": "1se7wwuo5o0fv.js ~340 KiB — gsap, ScrollTrigger, SideRays, particles, magic-bento en un solo chunk",
+    "monolithAfter": "Varios chunks async (p. ej. particles ~31 KiB, magic-bento ~200 KiB, SideRays+gsap ~51 KiB)",
+    "supabaseEnFirstLoadLanding": false,
+    "motionEnLayout": true,
+    "dobleProveedorMotion": "eliminado en landing.js"
+  },
+  "ssrVerificado": {
+    "heroFloraImg": true,
+    "heroTitulo": true,
+    "conEnflora": true
+  },
+  "median": {
+    "performance": 43,
+    "lcpMs": 4266,
+    "fcpMs": 4204,
+    "tbtMs": 2698,
+    "speedIndexMs": 6358,
+    "cls": 0
+  },
+  "deltaVsFase1After": {
+    "lcpMs": -105,
+    "fcpMs": -160,
+    "tbtMs": -734,
+    "speedIndexMs": -714,
+    "performance": 2,
+    "cls": 0
+  },
+  "notaMontarCuandoVisible": "Probado y revertido: retrasaba JS pero eliminaba SSR de secciones; no cumple restricción de contenido importante."
+}

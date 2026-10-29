@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { cargarListadoEspacios } from "@/lib/cargar-listado-espacios";
 import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -10,6 +11,10 @@ import { datosTipoUnidad, tipoUnidadPermitido } from "@/lib/unidades";
 
 const MAXIMO_UNIDADES = 20;
 const MAXIMO_PLANTAS = 100;
+
+export async function recargarListadoEspacios() {
+  return cargarListadoEspacios({ origen: "reintento_cliente" });
+}
 
 function leerCultivo(formulario) {
   try {

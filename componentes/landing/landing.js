@@ -1,64 +1,118 @@
-import { BienvenidaExpo } from "@/componentes/expo-cannabis/bienvenida-expo";
-import { PillExpo } from "@/componentes/expo-cannabis/pill-expo";
+import dynamic from "next/dynamic";
 import { ProveedorExpo } from "@/componentes/expo-cannabis/proveedor-expo";
-import { RedirigirAdminExpo } from "@/componentes/expo-cannabis/redirigir-admin";
 import { SeccionExpo } from "@/componentes/expo-cannabis/seccion-expo";
-import { ConEnflora } from "@/componentes/landing/con-enflora";
 import { EncabezadoPublico } from "@/componentes/landing/encabezado-publico";
 import { EscenaSolar } from "@/componentes/landing/escena-solar";
 import { Footer } from "@/componentes/landing/footer";
 import { Hero } from "@/componentes/landing/hero";
-import { NavegacionFlotante } from "@/componentes/landing/navegacion-flotante";
-import { PillLanzamientoFlotante } from "@/componentes/landing/pill-lanzamiento-flotante";
 import { ParaQueSirve } from "@/componentes/landing/para-que-sirve";
-import { Producto } from "@/componentes/landing/producto";
 import { Revelar } from "@/componentes/landing/revelar";
-import { SeccionConoceFlora } from "@/componentes/landing/seccion-conoce-flora";
-import { SeccionContacto } from "@/componentes/landing/seccion-contacto";
-import { SeccionInstalacion } from "@/componentes/landing/seccion-instalacion";
-import { SeccionLanzamiento } from "@/componentes/landing/seccion-lanzamiento";
-import { SeccionPartners } from "@/componentes/landing/seccion-partners";
-import { SeccionPrecios } from "@/componentes/landing/seccion-precios";
-import { SeccionRegalo } from "@/componentes/landing/seccion-regalo";
-import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { instanteExpo } from "@/lib/expo-cannabis/tiempo";
 import { textos } from "@/lib/landing";
+
+const ConEnflora = dynamic(() =>
+  import("@/componentes/landing/con-enflora").then((modulo) => ({ default: modulo.ConEnflora })),
+);
+
+const Producto = dynamic(() =>
+  import("@/componentes/landing/producto").then((modulo) => ({ default: modulo.Producto })),
+);
+
+const SeccionConoceFlora = dynamic(() =>
+  import("@/componentes/landing/seccion-conoce-flora").then((modulo) => ({
+    default: modulo.SeccionConoceFlora,
+  })),
+);
+
+const SeccionRegalo = dynamic(() =>
+  import("@/componentes/landing/seccion-regalo").then((modulo) => ({ default: modulo.SeccionRegalo })),
+);
+
+const SeccionPrecios = dynamic(() =>
+  import("@/componentes/landing/seccion-precios").then((modulo) => ({ default: modulo.SeccionPrecios })),
+);
+
+const SeccionInstalacion = dynamic(() =>
+  import("@/componentes/landing/seccion-instalacion").then((modulo) => ({
+    default: modulo.SeccionInstalacion,
+  })),
+);
+
+const SeccionContacto = dynamic(() =>
+  import("@/componentes/landing/seccion-contacto").then((modulo) => ({ default: modulo.SeccionContacto })),
+);
+
+const SeccionPartners = dynamic(() =>
+  import("@/componentes/landing/seccion-partners").then((modulo) => ({ default: modulo.SeccionPartners })),
+);
+
+const SeccionLanzamiento = dynamic(() =>
+  import("@/componentes/landing/seccion-lanzamiento").then((modulo) => ({
+    default: modulo.SeccionLanzamiento,
+  })),
+);
+
+const NavegacionFlotante = dynamic(() =>
+  import("@/componentes/landing/navegacion-flotante").then((modulo) => ({
+    default: modulo.NavegacionFlotante,
+  })),
+);
+
+const PillLanzamientoFlotante = dynamic(() =>
+  import("@/componentes/landing/pill-lanzamiento-flotante").then((modulo) => ({
+    default: modulo.PillLanzamientoFlotante,
+  })),
+);
+
+const PillExpo = dynamic(() =>
+  import("@/componentes/expo-cannabis/pill-expo").then((modulo) => ({ default: modulo.PillExpo })),
+);
+
+const BienvenidaExpo = dynamic(() =>
+  import("@/componentes/expo-cannabis/bienvenida-expo").then((modulo) => ({
+    default: modulo.BienvenidaExpo,
+  })),
+);
+
+const RedirigirAdminExpo = dynamic(() =>
+  import("@/componentes/expo-cannabis/redirigir-admin").then((modulo) => ({
+    default: modulo.RedirigirAdminExpo,
+  })),
+);
 
 export function Landing({ cotizacion = null }) {
   const { instalacion } = textos;
   const expo = instanteExpo();
 
   return (
-    <ProveedorMotion>
-      <ProveedorExpo inicial={expo}>
-        <div className="landing">
-          <EncabezadoPublico />
-          <main>
-            <EscenaSolar>
-              <Hero />
-              <Revelar>
-                <ParaQueSirve />
-              </Revelar>
-            </EscenaSolar>
-            <SeccionExpo />
-            <ConEnflora />
-            <Producto />
-            <SeccionConoceFlora />
-            <SeccionRegalo />
-            <SeccionPrecios cotizacion={cotizacion} />
-            <SeccionInstalacion textos={instalacion} />
-            <SeccionContacto />
-            <SeccionPartners />
-            <SeccionLanzamiento />
-          </main>
-          <Footer />
-          <NavegacionFlotante />
-          <PillLanzamientoFlotante />
-          <PillExpo />
-          <BienvenidaExpo />
-          <RedirigirAdminExpo />
-        </div>
-      </ProveedorExpo>
-    </ProveedorMotion>
+    <ProveedorExpo inicial={expo}>
+      <div className="landing">
+        <EncabezadoPublico />
+        <main>
+          <EscenaSolar>
+            <Hero />
+            <Revelar>
+              <ParaQueSirve />
+            </Revelar>
+          </EscenaSolar>
+          <SeccionExpo />
+          <ConEnflora />
+          <Producto />
+          <SeccionConoceFlora />
+          <SeccionRegalo />
+          <SeccionPrecios cotizacion={cotizacion} />
+          <SeccionInstalacion textos={instalacion} />
+          <SeccionContacto />
+          <SeccionPartners />
+          <SeccionLanzamiento />
+        </main>
+        <Footer />
+        <NavegacionFlotante />
+        <PillLanzamientoFlotante />
+        <PillExpo />
+        <BienvenidaExpo />
+        <RedirigirAdminExpo />
+      </div>
+    </ProveedorExpo>
   );
 }

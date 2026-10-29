@@ -1,0 +1,59 @@
+{
+  "phase": "fase-1-lcp",
+  "when": "2026-10-28",
+  "environment": {
+    "type": "local-production",
+    "command": "pnpm build && PORT=3005 pnpm start",
+    "url": "http://localhost:3005/",
+    "lighthouse": "npx lighthouse --only-categories=performance --preset=perf (mobile emulation)",
+    "note": "No equivalente a enflora.com.ar en CDN/TBT; usar solo como delta antes/después en el mismo entorno."
+  },
+  "productionReference": {
+    "source": "AUDITORIA-LIGHTHOUSE.md / usuario",
+    "url": "https://enflora.com.ar/",
+    "performance": 56,
+    "lcp": "4.3 s",
+    "fcp": "1.6 s",
+    "tbt": "~1050 ms",
+    "speedIndex": "6.4 s",
+    "cls": 0
+  },
+  "runs": [
+    {
+      "file": "mediciones/lcp-fase1-baseline-1.json",
+      "performance": 40,
+      "lcpMs": 4444,
+      "fcpMs": 4430,
+      "tbtMs": 3235,
+      "speedIndexMs": 7191,
+      "cls": 0
+    },
+    {
+      "file": "mediciones/lcp-fase1-baseline-2.json",
+      "performance": 0,
+      "lcpMs": 4258,
+      "fcpMs": 4251,
+      "tbtMs": null,
+      "speedIndexMs": 7079,
+      "cls": 0,
+      "note": "score 0: posible corrida incompleta en CLI; LCP/FCP/SI válidos"
+    },
+    {
+      "file": "mediciones/lcp-fase1-baseline-3.json",
+      "performance": 41,
+      "lcpMs": 4373,
+      "fcpMs": 4366,
+      "tbtMs": 3588,
+      "speedIndexMs": 6713,
+      "cls": 0
+    }
+  ],
+  "median": {
+    "performance": 40,
+    "lcpMs": 4373,
+    "fcpMs": 4366,
+    "tbtMs": 3588,
+    "speedIndexMs": 7079,
+    "cls": 0
+  }
+}

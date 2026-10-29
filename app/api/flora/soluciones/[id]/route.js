@@ -21,6 +21,19 @@ export async function GET(_request, { params }) {
   if (!idVal.ok) return json({ ok: false, error: idVal.error }, 400);
 
   const supabase = await crearClienteServidor();
+
+  const { data: chat, error: chatError } = await supabase
+    .from("flora_chats_guardados")
+    .select(
+      "id, titulo, primera_pregunta, mensajes, referencias, cantidad_mensajes, clave_sesion, created_at, updated_at",
+    )
+    .eq("id", idVal.valor)
+    .maybeSingle();
+
+  if (!chatError && chat) {
+    return json({ ok: true, chat, tipo: "chat" });
+  }
+
   const { data, error } = await supabase
     .from("flora_soluciones")
     .select(
@@ -30,10 +43,10 @@ export async function GET(_request, { params }) {
     .maybeSingle();
 
   if (error || !data) {
-    return json({ ok: false, error: "Solución no encontrada." }, 404);
+    return json({ ok: false, error: "Chat o solución no encontrada." }, 404);
   }
 
-  return json({ ok: true, solucion: data });
+  return json({ ok: true, solucion: data, tipo: "solucion" });
 }
 
 export async function PATCH(request, { params }) {

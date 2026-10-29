@@ -1,0 +1,55 @@
+{
+  "phase": "fase-1-lcp",
+  "when": "2026-10-28",
+  "environment": {
+    "type": "local-production",
+    "command": "pnpm build && PORT=3005 pnpm start (reiniciado tras cambios)",
+    "url": "http://localhost:3005/",
+    "lighthouse": "npx lighthouse --only-categories=performance --preset=perf"
+  },
+  "runs": [
+    {
+      "file": "mediciones/lcp-fase1-after-1.json",
+      "performance": 41,
+      "lcpMs": 4379,
+      "fcpMs": 4372,
+      "tbtMs": 3417,
+      "speedIndexMs": 7039,
+      "cls": 0
+    },
+    {
+      "file": "mediciones/lcp-fase1-after-2.json",
+      "performance": 40,
+      "lcpMs": 4371,
+      "fcpMs": 4364,
+      "tbtMs": 3587,
+      "speedIndexMs": 7072,
+      "cls": 0
+    },
+    {
+      "file": "mediciones/lcp-fase1-after-3.json",
+      "performance": 41,
+      "lcpMs": 4316,
+      "fcpMs": 4309,
+      "tbtMs": 3432,
+      "speedIndexMs": 7297,
+      "cls": 0
+    }
+  ],
+  "median": {
+    "performance": 41,
+    "lcpMs": 4371,
+    "fcpMs": 4364,
+    "tbtMs": 3432,
+    "speedIndexMs": 7072,
+    "cls": 0
+  },
+  "deltaVsBaselineMedian": {
+    "lcpMs": -2,
+    "fcpMs": -2,
+    "tbtMs": -156,
+    "speedIndexMs": -7,
+    "performance": 1,
+    "cls": 0
+  }
+}

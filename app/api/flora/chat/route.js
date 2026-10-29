@@ -6,6 +6,7 @@ import {
 import { conversarConFlora } from "@/lib/flora-gemini";
 import { parsearAdjuntoImagenCliente } from "@/lib/flora-imagen-chat";
 import { verificarCuotaUsuario } from "@/lib/flora-chat-limites";
+import { crearIdSolicitudFlora } from "@/lib/flora-chat-telemetria";
 import { motorGuiaFlora } from "@/lib/flora-rag-config";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
@@ -63,12 +64,18 @@ export async function POST(request) {
   }
 
   const supabase = await crearClienteServidor();
+  const requestId = crearIdSolicitudFlora();
   const resultado = await conversarConFlora(supabase, {
     mensaje,
     historial,
     contextoSolucionId,
     adjuntosImagen: adjuntoParse.adjuntos,
+    requestId,
   });
+
+  if (resultado.telemetria) {
+    console.info("[flora/chat]", JSON.stringify(resultado.telemetria));
+  }
 
   if (!resultado.ok) {
     const status = resultado.error?.includes("demasiado largo") ? 400 : 502;

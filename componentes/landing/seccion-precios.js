@@ -16,6 +16,18 @@ export function SeccionPrecios({ cotizacion = null }) {
   const [modalCotizacion, setModalCotizacion] = useState(false);
   const [modalContacto, setModalContacto] = useState(false);
   const [contactoMontado, setContactoMontado] = useState(false);
+  const [equivalenciaMontada, setEquivalenciaMontada] = useState(false);
+  const [cotizacionMontada, setCotizacionMontada] = useState(false);
+
+  function abrirEquivalencia() {
+    setEquivalenciaMontada(true);
+    setModalEquivalencia(true);
+  }
+
+  function abrirCotizacion() {
+    setCotizacionMontada(true);
+    setModalCotizacion(true);
+  }
 
   function abrirContacto() {
     setContactoMontado(true);
@@ -46,7 +58,7 @@ export function SeccionPrecios({ cotizacion = null }) {
               plan={plan}
               cotizacion={cotizacion}
               hrefRegistro={planesEnflora.hrefRegistro}
-              onAbrirEquivalencia={() => setModalEquivalencia(true)}
+              onAbrirEquivalencia={abrirEquivalencia}
               onPrelanzamiento={abrirContacto}
             />
           ))}
@@ -56,7 +68,7 @@ export function SeccionPrecios({ cotizacion = null }) {
           <button
             type="button"
             className="precios__leyenda-boton"
-            onClick={() => setModalCotizacion(true)}
+            onClick={abrirCotizacion}
           >
             <Info size={18} strokeWidth={1.9} aria-hidden="true" />
             Cotización de dólar.
@@ -66,18 +78,22 @@ export function SeccionPrecios({ cotizacion = null }) {
         <FaqPrecios cotizacion={cotizacion} />
       </div>
 
-      <ModalEquivalencia
-        abierto={modalEquivalencia}
-        onCerrar={() => setModalEquivalencia(false)}
-        hrefRegistro={planesEnflora.hrefRegistro}
-      />
+      {equivalenciaMontada ? (
+        <ModalEquivalencia
+          abierto={modalEquivalencia}
+          onCerrar={() => setModalEquivalencia(false)}
+          hrefRegistro={planesEnflora.hrefRegistro}
+        />
+      ) : null}
 
-      <ModalCotizacion
-        abierto={modalCotizacion}
-        onCerrar={() => setModalCotizacion(false)}
-        titulo="Qué cotización de dólar?"
-        texto={leyenda}
-      />
+      {cotizacionMontada ? (
+        <ModalCotizacion
+          abierto={modalCotizacion}
+          onCerrar={() => setModalCotizacion(false)}
+          titulo="Qué cotización de dólar?"
+          texto={leyenda}
+        />
+      ) : null}
 
       {contactoMontado ? <ModalContacto abierto={modalContacto} onCerrar={() => setModalContacto(false)} /> : null}
     </section>

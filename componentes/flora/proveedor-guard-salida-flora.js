@@ -80,7 +80,7 @@ export function ProveedorGuardSalidaFlora({ children }) {
           setDestinoHref("");
         }}
         titulo="¿Salir del chat?"
-        descripcion="Si salís ahora, perdés esta conversación en pantalla. Para conservar una respuesta de Flora, tocá «Guardar solución» en el mensaje antes de irte."
+        descripcion="Si salís de este chat, perdés esta conversación. Para no perder este chat guardalo antes de irte."
         textoConfirmar="Salir igual"
         textoCancelar="Quedarme"
         onConfirmar={confirmarSalida}

@@ -43,7 +43,11 @@ export function Hero() {
           { opacity: 1, y: 0, duration: 0.4, stagger: 0.08, clearProps: "transform" },
           0.4,
         )
-        .from(".hero__flora", { opacity: 0, y: 22, scale: 0.97, duration: 0.7 }, 0.4)
+        .from(
+          ".hero__flora",
+          { y: 22, scale: 0.97, duration: 0.7, clearProps: "transform" },
+          0.4,
+        )
         .from(".hero__deco", { opacity: 0, duration: 0.5, stagger: 0.05 }, 0.55);
     });
 
@@ -104,8 +108,8 @@ export function Hero() {
               <Image
                 src="/images/flora-landing.png"
                 alt="Flora, la mascota de Enflora, tomando sol en una reposera"
-                width={1254}
-                height={1254}
+                width={1129}
+                height={1152}
                 priority
                 draggable={false}
                 sizes="(min-width: 90rem) 34rem, (min-width: 64rem) 32rem, (min-width: 48rem) 26rem, 18rem"
