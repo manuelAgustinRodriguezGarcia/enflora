@@ -470,11 +470,11 @@
   &__fondo {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: 100;
     background: rgb(11 61 42 / 42%);
 
     &--bloqueo {
-      z-index: 60;
+      z-index: 110;
       background: rgb(11 61 42 / 72%);
     }
   }
@@ -482,7 +482,7 @@
   &__vista {
     position: fixed;
     inset: 0;
-    z-index: 41;
+    z-index: 101;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -490,7 +490,7 @@
     pointer-events: none;
 
     &--bloqueo {
-      z-index: 61;
+      z-index: 111;
     }
   }
 
@@ -661,6 +661,29 @@
       flex: 1 1 0;
       width: 50%;
       min-width: 0;
+    }
+
+    &--triple {
+      flex-wrap: wrap;
+
+      .boton {
+        flex: 1 1 calc(50% - 0.25rem);
+      }
+
+      .boton:first-child {
+        flex: 1 1 100%;
+      }
+    }
+  }
+
+  &__accion-icono {
+    display: inline-flex;
+    margin-inline-end: 0.35rem;
+    vertical-align: middle;
+
+    svg {
+      width: 1rem;
+      height: 1rem;
     }
   }
 }

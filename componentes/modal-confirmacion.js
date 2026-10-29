@@ -20,6 +20,11 @@ export function ModalConfirmacion({
   error = "",
   accion,
   onConfirmar,
+  onConfirmarSecundario = null,
+  textoConfirmarSecundario = "",
+  varianteConfirmarSecundario = "secundario",
+  iconoConfirmarSecundario = null,
+  iconoConfirmar = null,
   icono = null,
   varianteIcono = "",
   varianteConfirmar,
@@ -52,16 +57,41 @@ export function ModalConfirmacion({
       {descripcion ? <Dialog.Description className="modal__texto">{descripcion}</Dialog.Description> : null}
       {error ? <p className="formulario__error">{error}</p> : null}
       {children}
-      <div className="modal__acciones">
+      <div className={`modal__acciones${onConfirmarSecundario ? " modal__acciones--triple" : ""}`}>
         <Boton type="button" variante="ghost" onClick={() => cambiar(false)} disabled={pendiente}>
           {textoCancelar}
         </Boton>
+        {onConfirmarSecundario ? (
+          <Boton
+            type="button"
+            variante={varianteConfirmarSecundario}
+            onClick={onConfirmarSecundario}
+            disabled={pendiente}
+          >
+            {iconoConfirmarSecundario ? (
+              <span className="modal__accion-icono" aria-hidden="true">
+                {iconoConfirmarSecundario}
+              </span>
+            ) : null}
+            {textoConfirmarSecundario}
+          </Boton>
+        ) : null}
         {accion ? (
           <Boton type="submit" variante={varianteConfirmar} disabled={pendiente}>
+            {iconoConfirmar ? (
+              <span className="modal__accion-icono" aria-hidden="true">
+                {iconoConfirmar}
+              </span>
+            ) : null}
             {textoConfirmar}
           </Boton>
         ) : (
           <Boton type="button" variante={varianteConfirmar} onClick={onConfirmar} disabled={pendiente}>
+            {iconoConfirmar ? (
+              <span className="modal__accion-icono" aria-hidden="true">
+                {iconoConfirmar}
+              </span>
+            ) : null}
             {textoConfirmar}
           </Boton>
         )}

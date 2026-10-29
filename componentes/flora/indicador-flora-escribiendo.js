@@ -1,17 +1,12 @@
 "use client";
 
-export function IndicadorFloraEscribiendo() {
-  return (
-    <div
-      className="flora-chat-app__burbuja flora-chat-app__burbuja--escribiendo"
-      aria-busy="true"
-      aria-label="Flora está escribiendo"
-    >
-      <span className="flora-chat-app__puntos" aria-hidden="true">
-        <span className="flora-chat-app__punto" />
-        <span className="flora-chat-app__punto" />
-        <span className="flora-chat-app__punto" />
-      </span>
-    </div>
-  );
+import { EsperaFlora } from "@/componentes/flora/espera-flora";
+import { PERSONALIDAD_FLORA_DEFAULT } from "@/lib/flora-personalidad";
+
+/** @deprecated Preferí `EsperaFlora` con personalidad y contexto de imagen. */
+export function IndicadorFloraEscribiendo({
+  personalidad = PERSONALIDAD_FLORA_DEFAULT,
+  conImagen = false,
+}) {
+  return <EsperaFlora personalidad={personalidad} conImagen={conImagen} />;
 }

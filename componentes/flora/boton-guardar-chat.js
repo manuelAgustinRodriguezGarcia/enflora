@@ -3,10 +3,10 @@
 import { Check, Loader2, Save } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  fusionarReferenciasDesdeMensajesChat,
   mensajesClienteParaPersistencia,
   sugerirTituloChat,
 } from "@/lib/flora-chats-guardados";
+import { firmaMensajesChat } from "@/lib/flora-firma-mensajes-chat";
 import { ETIQUETA_BOTON_GUARDAR } from "@/lib/flora-chat-etiquetas";
 
 const DURACION_PILL_MS = 3200;
@@ -16,18 +16,18 @@ export function BotonGuardarChat({
   claveSesion,
   chatGuardadoId = null,
   onChatGuardado,
-  onChatGuardadoConfirmado,
+  onGuardadoExitoso,
+  persistir,
   deshabilitado = false,
 }) {
   const [estado, setEstado] = useState(chatGuardadoId ? "guardado" : "idle");
   const [pill, setPill] = useState(null);
   const [mostrarTitulo, setMostrarTitulo] = useState(false);
   const [titulo, setTitulo] = useState("");
-  const [idGuardado, setIdGuardado] = useState(chatGuardadoId);
-
+  const idPersistido = chatGuardadoId || null;
   const mensajesPersistibles = useMemo(() => mensajesClienteParaPersistencia(mensajes), [mensajes]);
   const puedeGuardar = mensajesPersistibles.length >= 2;
-  const bloqueadoTrasGuardado = estado === "guardado";
+  const bloqueadoTrasGuardado = Boolean(idPersistido) || estado === "guardado";
 
   useEffect(() => {
     if (!pill) return undefined;
@@ -46,38 +46,29 @@ export function BotonGuardarChat({
   }, [bloqueadoTrasGuardado, claveSesion, deshabilitado, estado, mensajesPersistibles, puedeGuardar]);
 
   const guardar = async () => {
-    if (!claveSesion || estado === "guardando" || !puedeGuardar || bloqueadoTrasGuardado) return;
+    if (!claveSesion || estado === "guardando" || !puedeGuardar || bloqueadoTrasGuardado || !persistir) {
+      return;
+    }
     setEstado("guardando");
     setPill(null);
 
-    try {
-      const res = await fetch("/api/flora/chats", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          titulo: titulo.trim() || sugerirTituloChat(mensajesPersistibles),
-          claveSesion,
-          chatGuardadoId: idGuardado,
-          mensajes,
-          referencias: fusionarReferenciasDesdeMensajesChat(mensajes),
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.ok) {
-        setEstado(idGuardado ? "guardado" : "idle");
-        setPill({ tipo: "error", texto: data.error || "No se pudo guardar." });
-        return;
-      }
-      setEstado("guardado");
-      setMostrarTitulo(false);
-      setIdGuardado(data.id);
-      onChatGuardado?.(data.id);
-      onChatGuardadoConfirmado?.();
-      setPill({ tipo: "exito", texto: "Chat guardado correctamente" });
-    } catch {
-      setEstado(idGuardado ? "guardado" : "idle");
-      setPill({ tipo: "error", texto: "Falló la conexión." });
+    const tituloFinal = titulo.trim() || sugerirTituloChat(mensajesPersistibles);
+    const resultado = await persistir({ titulo: tituloFinal, silencioso: false });
+
+    if (!resultado?.ok) {
+      setEstado(idPersistido ? "guardado" : "idle");
+      setPill({ tipo: "error", texto: resultado.error || "No se pudo guardar." });
+      return;
     }
+
+    setEstado("guardado");
+    setMostrarTitulo(false);
+    onChatGuardado?.(resultado.id);
+    onGuardadoExitoso?.({
+      firma: firmaMensajesChat(mensajes),
+      titulo: tituloFinal,
+    });
+    setPill({ tipo: "exito", texto: "Chat guardado correctamente" });
   };
 
   const iconoBtn =

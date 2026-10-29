@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { ChatFlora } from "@/componentes/flora/chat-flora";
 import { geminiConfigurado } from "@/lib/flora-chat-config";
+import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { obtenerSesionRapida } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 export const metadata = {
   title: "Flora",
@@ -22,6 +23,8 @@ export default async function PaginaFlora({ searchParams }) {
   const params = await searchParams;
   const continuar = typeof params?.continuar === "string" ? params.continuar : "";
 
+  const supabase = await crearClienteServidor();
+  const personalidadFlora = await leerPersonalidadFloraUsuario(supabase);
   const geminiListo = geminiConfigurado();
 
   return (
@@ -35,7 +38,7 @@ export default async function PaginaFlora({ searchParams }) {
           <code>GEMINI_API_KEY</code> en las variables de entorno del servidor.
         </p>
       ) : null}
-      <ChatFlora continuarSolucionId={continuar} />
+      <ChatFlora continuarSolucionId={continuar} personalidadInicial={personalidadFlora} />
     </section>
   );
 }

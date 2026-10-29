@@ -6,6 +6,7 @@ import {
   primeraPreguntaSignificativaDesdeMensajes,
   sugerirTituloChat,
   validarMensajesChatPersistidos,
+  validarMensajesChatActualizacion,
   validarPayloadGuardarChat,
 } from "../lib/flora-chats-guardados.js";
 
@@ -55,6 +56,20 @@ test("validar payload guardar chat exige turno usuario+flora", () => {
   });
   assert.equal(ok.ok, true);
   assert.equal(ok.mensajes.length, 2);
+});
+
+test("actualización permite último mensaje del usuario sin Flora", () => {
+  const mensajes = [
+    { rol: "usuario", texto: "¿Cuándo regué?", fecha: "2026-01-01T12:00:00.000Z" },
+    { rol: "flora", texto: "El martes…", fecha: "2026-01-01T12:00:05.000Z" },
+    { rol: "usuario", texto: "¿Y hoy?", fecha: "2026-01-02T12:00:00.000Z" },
+  ];
+  const val = validarMensajesChatActualizacion(mensajes);
+  assert.equal(val.ok, true);
+});
+
+test("actualización rechaza solo pregunta sin historial flora", () => {
+  assert.equal(validarMensajesChatActualizacion([{ rol: "usuario", texto: "hola" }]).ok, false);
 });
 
 test("validar mensajes rechaza demasiados turnos", () => {

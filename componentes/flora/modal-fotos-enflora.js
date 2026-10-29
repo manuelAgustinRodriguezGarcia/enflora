@@ -51,7 +51,7 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
       setCargando(true);
       setError("");
       try {
-        const res = await fetch("/api/flora/fotos");
+        const res = await fetch("/api/flora/fotos?limite=100");
         const data = await res.json().catch(() => ({}));
         if (cancelado) return;
         if (!res.ok || !data.ok) {
@@ -125,20 +125,17 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
             <ul className="flora-modal-fotos__grilla">
               {fotos.map((foto) => {
                 const dia = diaArgentina(foto.fecha_evento);
-                const etiqueta = [
-                  dia ? formatearFecha(dia) : "",
-                  foto.unidad_nombre,
-                  foto.planta_etiqueta,
-                ]
-                  .filter(Boolean)
-                  .join(" · ");
+                const unidad = String(foto.unidad_nombre || "").trim();
+                const fechaTexto = dia ? formatearFecha(dia) : "";
+                const etiquetaAccesible = [unidad, fechaTexto].filter(Boolean).join(", ");
+                const mostrarMeta = Boolean(unidad || fechaTexto);
                 return (
                   <li key={foto.id}>
                     <button
                       type="button"
                       className="flora-modal-fotos__item"
                       onClick={() => onElegir(foto)}
-                      aria-label={etiqueta || "Seleccionar foto"}
+                      aria-label={etiquetaAccesible || "Seleccionar foto"}
                     >
                       {foto.url_miniatura ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -146,7 +143,12 @@ export function ModalFotosEnflora({ abierto, onCerrar, onElegir }) {
                       ) : (
                         <span className="flora-modal-fotos__sin-img">Sin vista previa</span>
                       )}
-                      {etiqueta ? <span className="flora-modal-fotos__meta">{etiqueta}</span> : null}
+                      {mostrarMeta ? (
+                        <span className="flora-modal-fotos__meta">
+                          {unidad ? <span className="flora-modal-fotos__meta-unidad">{unidad}</span> : null}
+                          {fechaTexto ? <span className="flora-modal-fotos__meta-fecha">{fechaTexto}</span> : null}
+                        </span>
+                      ) : null}
                     </button>
                   </li>
                 );

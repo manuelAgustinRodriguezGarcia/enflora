@@ -1,6 +1,7 @@
 @use "demo-historial";
 
-.pagina:has(.registros) {
+.pagina:has(.registros),
+.pagina:has(.historial--vista-cultivo) {
   max-width: none;
   padding-inline: 0.5rem;
 }
@@ -1250,6 +1251,8 @@ a.registros__historial {
 }
 
 .historial--vista-cultivo {
+  padding: 0;
+
   .historial-vista-cultivo__filtros {
     margin-bottom: 0.5rem;
   }

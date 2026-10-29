@@ -308,8 +308,22 @@ body:has(.flora-chat-app-pagina) {
     overflow-wrap: anywhere;
 
     &--escribiendo {
-      min-width: 3.25rem;
+      min-width: min(100%, 14rem);
       padding: 0.75rem 1rem;
+    }
+  }
+
+  &__espera-frase {
+    margin: 0;
+    min-height: 1.45em;
+    font-size: 0.92em;
+    line-height: 1.45;
+    color: var(--color-text-secondary);
+    opacity: 1;
+    transition: opacity 0.22s ease;
+
+    &--apagada {
+      opacity: 0;
     }
   }
 
@@ -560,6 +574,10 @@ body:has(.flora-chat-app-pagina) {
     animation: none;
     opacity: 0.7;
   }
+
+  .flora-chat-app__espera-frase {
+    transition: none;
+  }
 }
 
 @media (min-width: 640px) {
@@ -744,7 +762,10 @@ body:has(.flora-chat-app-pagina) {
   &__texto {
     line-height: 1;
     white-space: nowrap;
-    color: #f5f8ef;
+  }
+
+  &__btn &__etiqueta {
+    color: #fff;
   }
 
   &__icono-guardado {
@@ -784,13 +805,14 @@ body:has(.flora-chat-app-pagina) {
     border: 1px solid var(--color-border);
     background: var(--color-background);
     box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
-  }
 
-  &__etiqueta {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: var(--font-size-body-small);
-    color: var(--color-text-secondary);
+    .flora-guardar-chat__etiqueta {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-size: var(--font-size-body-small);
+      color: var(--color-text-secondary);
+      white-space: normal;
+    }
   }
 
   &__input {
@@ -1944,13 +1966,29 @@ body:has(.flora-chat-app-pagina) {
   &__item {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0;
+    align-self: stretch;
+    width: 100%;
+    min-height: 0;
     padding: 0;
     border: 1px solid var(--color-border);
     border-radius: 10px;
     overflow: hidden;
-    background: var(--color-background);
+    background: var(--background);
+    color: var(--brand-dark);
+    box-shadow: none;
     cursor: pointer;
+    transition: border-color 160ms ease, background-color 160ms ease;
+
+    &:hover:not(:disabled) {
+      background: var(--background-neutral);
+      color: var(--brand-dark);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
 
     img {
       display: block;
@@ -1961,10 +1999,25 @@ body:has(.flora-chat-app-pagina) {
   }
 
   &__meta {
-    padding: 0.25rem 0.35rem 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.35rem 0.4rem 0.45rem;
     font-size: 0.65rem;
     line-height: 1.25;
-    color: var(--color-text-secondary);
+    font-weight: 500;
+    text-align: center;
+    color: var(--brand-dark);
+    background: inherit;
+  }
+
+  &__meta-unidad,
+  &__meta-fecha {
+    display: block;
+  }
+
+  &__meta-unidad {
+    font-weight: 600;
   }
 
   &__sin-img {

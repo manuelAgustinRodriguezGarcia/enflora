@@ -32,7 +32,7 @@ export default async function PaginaHistorial({ searchParams }) {
 
   if (!configuracionLista()) {
     return (
-      <section className="historial">
+      <section className="historial historial--vista-cultivo">
         <h1>Historial</h1>
         <p>Falta la configuración de Supabase.</p>
       </section>
@@ -58,7 +58,7 @@ export default async function PaginaHistorial({ searchParams }) {
   if (espaciosRespuesta.error || unidadesRespuesta.error || plantasRespuesta.error) {
     return (
       <TransicionVista>
-        <section className="historial">
+        <section className="historial historial--vista-cultivo">
           <EnlaceVolver href="/registros" etiqueta="Volver a registros" />
           <h1>Historial</h1>
           <p className="historial__error" role="alert">No se pudieron cargar los datos del historial.</p>

@@ -62,6 +62,7 @@ export async function POST(request) {
         updated_at: ahora,
       })
       .eq("id", idActualizar)
+      .eq("usuario_id", usuario.id)
       .select("id, titulo, updated_at, cantidad_mensajes")
       .maybeSingle();
 
