@@ -1,4 +1,4 @@
-import { listarFotosGaleriaFlora } from "@/lib/flora-imagen-servidor";
+import { listarFotosGaleriaFlora, listarUnidadesGaleriaFlora } from "@/lib/flora-galeria-fotos-servidor";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import {
   crearClienteServidor,
@@ -27,19 +27,41 @@ export async function GET(request) {
   }
 
   const url = new URL(request.url);
-  const pagina = Math.max(0, Number(url.searchParams.get("pagina")) || 0);
-  const limite = Math.min(100, Math.max(1, Number(url.searchParams.get("limite")) || 48));
+  const incluirUnidades = url.searchParams.get("unidades") === "1";
 
-  const listado = await listarFotosGaleriaFlora(supabase, { pagina, limite });
+  const listado = await listarFotosGaleriaFlora(supabase, usuario.id, {
+    limite: url.searchParams.get("limite"),
+    cursorFecha: url.searchParams.get("cursor_fecha"),
+    cursorId: url.searchParams.get("cursor_id"),
+    unidadId: url.searchParams.get("unidad_id"),
+    busqueda: url.searchParams.get("busqueda"),
+    fechaDesde: url.searchParams.get("fecha_desde"),
+    fechaHasta: url.searchParams.get("fecha_hasta"),
+  });
+
   if (!listado.ok) {
     return json({ ok: false, error: listado.error || "No se pudieron cargar las fotos." }, 502);
+  }
+
+  let unidades = undefined;
+  if (incluirUnidades) {
+    const unidadesResp = await listarUnidadesGaleriaFlora(supabase);
+    if (!unidadesResp.ok) {
+      return json({ ok: false, error: unidadesResp.error || "No se pudieron cargar tus unidades." }, 502);
+    }
+    unidades = unidadesResp.unidades;
   }
 
   return json({
     ok: true,
     fotos: listado.fotos,
-    total: listado.total,
-    pagina: listado.pagina,
+    hay_mas: listado.hay_mas,
+    cursor: listado.cursor,
+    beneficios: listado.beneficios,
     limite: listado.limite,
+    sin_coincidencias: listado.sin_coincidencias,
+    sin_fotos_cuenta: listado.sin_fotos_cuenta,
+    hay_filtros: listado.hay_filtros,
+    unidades,
   });
 }

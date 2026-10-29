@@ -75,3 +75,22 @@ test("geminiConfigurado depende de env", () => {
   assert.equal(geminiConfigurado(), false);
   process.env.GEMINI_API_KEY = prev;
 });
+
+test("timeouts en Vercel alineados con maxDuration del chat", () => {
+  const prevVercel = process.env.VERCEL;
+  const prevPres = process.env.FLORA_CHAT_TIMEOUT_PRESUPUESTO_MS;
+  const prevLlam = process.env.FLORA_CHAT_TIMEOUT_LLAMADA_GEMINI_MS;
+  delete process.env.FLORA_CHAT_TIMEOUT_PRESUPUESTO_MS;
+  delete process.env.FLORA_CHAT_TIMEOUT_LLAMADA_GEMINI_MS;
+
+  process.env.VERCEL = "1";
+  assert.ok(LIMITES_CHAT_FLORA.timeoutPresupuestoMs >= 50_000);
+  assert.ok(LIMITES_CHAT_FLORA.timeoutLlamadaGeminiMs >= 40_000);
+
+  delete process.env.VERCEL;
+  assert.equal(LIMITES_CHAT_FLORA.timeoutPresupuestoMs, 55_000);
+
+  process.env.VERCEL = prevVercel;
+  process.env.FLORA_CHAT_TIMEOUT_PRESUPUESTO_MS = prevPres;
+  process.env.FLORA_CHAT_TIMEOUT_LLAMADA_GEMINI_MS = prevLlam;
+});

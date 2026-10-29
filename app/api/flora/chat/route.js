@@ -11,11 +11,32 @@ import { motorGuiaFlora } from "@/lib/flora-rag-config";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
 
-/** Vercel Pro (o superior): hasta 60s. En Hobby el límite real sigue siendo ~10s. */
-export const maxDuration = 60;
+/** Vercel Pro (o superior): hasta 90s en esta ruta. En Hobby el límite real sigue siendo ~10s. */
+export const maxDuration = 90;
 
 function json(body, status = 200) {
   return Response.json(body, { status });
+}
+
+/** Mapeo HTTP: 502 solo para fallos del proveedor/servidor; 504 timeout; 400 validación. */
+function statusRespuestaFloraChat(resultado) {
+  const err = String(resultado.error || "");
+  if (err.includes("demasiado largo")) return 400;
+  if (
+    resultado.diagnostico?.codigo === "TIMEOUT" ||
+    resultado.telemetria?.timeoutEtapa ||
+    /tardó más de lo habitual/i.test(err)
+  ) {
+    return 504;
+  }
+  if (
+    /demasiado pesad|formato de imagen|adjunt|decodificar|foto no|no encontramos esa fotografía|no se pudo usar la imagen|escribí un mensaje|no se pudo decodificar/i.test(
+      err,
+    )
+  ) {
+    return 400;
+  }
+  return 502;
 }
 
 export async function POST(request) {
@@ -65,12 +86,14 @@ export async function POST(request) {
 
   const supabase = await crearClienteServidor();
   const requestId = crearIdSolicitudFlora();
+  const requestBodyBytes = JSON.stringify(body).length;
   const resultado = await conversarConFlora(supabase, {
     mensaje,
     historial,
     contextoSolucionId,
     adjuntosImagen: adjuntoParse.adjuntos,
     requestId,
+    requestBodyBytes,
   });
 
   if (resultado.telemetria) {
@@ -78,12 +101,16 @@ export async function POST(request) {
   }
 
   if (!resultado.ok) {
-    const status = resultado.error?.includes("demasiado largo") ? 400 : 502;
-    if (status === 502 && resultado.diagnostico) {
+    const status = statusRespuestaFloraChat(resultado);
+    if ((status === 502 || status === 504) && resultado.diagnostico) {
       console.error(
         "[flora/chat]",
         JSON.stringify({
           ...resultado.diagnostico,
+          ...(resultado.telemetria?.timeoutEtapa
+            ? { timeoutEtapa: resultado.telemetria.timeoutEtapa }
+            : {}),
+          ...(resultado.telemetria?.timeouts ? { timeouts: resultado.telemetria.timeouts } : {}),
           config: resumenConfigGemini(),
         }),
       );
