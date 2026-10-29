@@ -3043,6 +3043,19 @@ body:has(.landing) {
     }
   }
 
+  @media (max-width: 63.99rem) {
+    &__escena {
+      align-items: center;
+      justify-content: center;
+      padding: 0 1.25rem !important;
+    }
+
+    &__titulo {
+      flex: 0 1 auto;
+      width: 100%;
+    }
+  }
+
   @media (min-width: 64rem) and (max-width: 119.99rem) {
     --con-enflora-inset-x: 56px;
     --con-enflora-inset-y: 0px;

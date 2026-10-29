@@ -32,12 +32,19 @@ function leerInsets(nodo) {
   return { top, right, bottom, left };
 }
 
+function esViewportMovil() {
+  return window.matchMedia("(max-width: 63.99rem)").matches;
+}
+
 function leerPadEscena(escena) {
   const estilos = getComputedStyle(escena);
-  return {
-    left: Number.parseFloat(estilos.paddingLeft) || 0,
-    right: Number.parseFloat(estilos.paddingRight) || 0,
-  };
+  const lateral = Number.parseFloat(estilos.paddingLeft) || 0;
+  return { left: lateral, right: lateral };
+}
+
+function padSimetricoEscenaMovil(escena) {
+  gsap.set(escena, { clearProps: "padding,paddingLeft,paddingRight" });
+  return leerPadEscena(escena);
 }
 
 function leerPadHeader() {
@@ -98,7 +105,9 @@ export function ConEnflora() {
   const ruedaCtrlRef = useRef(null);
   const triggerRef = useRef(null);
   const sincronizandoRef = useRef(false);
-  const [compacto, setCompacto] = useState(false);
+  const [compacto, setCompacto] = useState(() =>
+    typeof window === "undefined" ? true : esViewportMovil()
+  );
   const [notebook, setNotebook] = useState(false);
   const [listo, setListo] = useState(true);
   const [fondoListo, setFondoListo] = useState(false);
@@ -158,8 +167,10 @@ export function ConEnflora() {
         triggerRef.current = null;
       };
 
-      if (reducido || compacto) {
-        const pad = compacto ? leerPadEscena(escena) : leerPadHeader();
+      const movil = compacto || esViewportMovil();
+
+      if (reducido || movil) {
+        gsap.set(nodo, { clearProps: PIN_PROPS });
         gsap.set(fondo, {
           top: 0,
           right: 0,
@@ -168,15 +179,29 @@ export function ConEnflora() {
           borderRadius: 0,
           clipPath: "none",
         });
-        gsap.set(escena, {
-          top: 0,
-          right: 0,
-          bottom: 0,
-          left: 0,
-          paddingLeft: pad.left,
-          paddingRight: pad.right,
-          clipPath: "none",
-        });
+        if (movil) {
+          const pad = padSimetricoEscenaMovil(escena);
+          gsap.set(escena, {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            paddingLeft: pad.left,
+            paddingRight: pad.right,
+            clipPath: "none",
+          });
+        } else {
+          const pad = leerPadHeader();
+          gsap.set(escena, {
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            paddingLeft: pad.left,
+            paddingRight: pad.right,
+            clipPath: "none",
+          });
+        }
         if (spread) gsap.set(spread, { maxWidth: 10000, flexBasis: 0, flexGrow: 1 });
         if (tituloEl) gsap.set(tituloEl, { x: 0 });
         if (ruedaEl) gsap.set(ruedaEl, { x: 0 });

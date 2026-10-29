@@ -1,5 +1,5 @@
 {
-  "baseline": {
+  "baselineFase2": {
     "performance": 43,
     "lcpMs": 4266,
     "fcpMs": 4204,
@@ -7,63 +7,60 @@
     "speedIndexMs": 6358,
     "cls": 0
   },
-  "after": {
-    "performance": 41,
-    "lcpMs": 4356,
-    "fcpMs": 4273,
-    "tbtMs": 3165,
-    "speedIndexMs": 6791,
+  "afterFase3": {
+    "performance": 52,
+    "lcpMs": 3564,
+    "fcpMs": 3516,
+    "tbtMs": 1957,
+    "speedIndexMs": 5487,
     "cls": 0,
     "cssTransferKiB": 45,
-    "imgTransferKiB": 1629,
-    "totalTransferKiB": 2173,
-    "renderBlocking": 8
+    "imgTransferKiB": 1555
   },
   "runs": [
     {
-      "perf": 39,
-      "lcpMs": 4610,
-      "fcpMs": 4547,
-      "tbtMs": 3165,
-      "siMs": 7198,
+      "perf": 52,
+      "lcpMs": 3564,
+      "fcpMs": 3516,
+      "tbtMs": 1957,
+      "siMs": 5615,
       "cls": 0,
       "cssTransferKiB": 45,
-      "imgTransferKiB": 1629,
-      "totalTransferKiB": 2174,
-      "renderBlocking": 0,
-      "carruselEnRed": true
+      "imgTransferKiB": 1555,
+      "carruselEnRed": false
     },
     {
-      "perf": 42,
-      "lcpMs": 4285,
-      "fcpMs": 4208,
-      "tbtMs": 3161,
-      "siMs": 6671,
+      "perf": 53,
+      "lcpMs": 3461,
+      "fcpMs": 3406,
+      "tbtMs": 1998,
+      "siMs": 5190,
       "cls": 0,
       "cssTransferKiB": 45,
-      "imgTransferKiB": 1629,
-      "totalTransferKiB": 2173,
-      "renderBlocking": 8,
-      "carruselEnRed": true
+      "imgTransferKiB": 1555,
+      "carruselEnRed": false
     },
     {
-      "perf": 41,
-      "lcpMs": 4356,
-      "fcpMs": 4273,
-      "tbtMs": 3385,
-      "siMs": 6791,
+      "perf": 52,
+      "lcpMs": 3609,
+      "fcpMs": 3547,
+      "tbtMs": 1705,
+      "siMs": 5487,
       "cls": 0,
       "cssTransferKiB": 45,
-      "imgTransferKiB": 1629,
-      "totalTransferKiB": 2173,
-      "renderBlocking": 8,
-      "carruselEnRed": true
+      "imgTransferKiB": 1555,
+      "carruselEnRed": false
     }
   ],
+  "cssBuildKiB": {
+    "globalAntes": 391.6,
+    "sitioPublico": 207.6,
+    "appAutenticada": 188.3
+  },
   "delta": {
-    "lcpMs": 90,
-    "fcpMs": 69,
-    "tbtMs": 467,
-    "performance": -2
+    "lcpMs": -702,
+    "fcpMs": -688,
+    "tbtMs": -741,
+    "performance": 9
   }
 }
