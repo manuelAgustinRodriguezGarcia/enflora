@@ -1,0 +1,16 @@
+[fase5] 2026-10-30T01:32:47.148Z host VICTUS-MANU win32 10.0.26200 cpus=12 ramGiB=31.7
+[fase5] 2026-10-30T01:32:47.151Z git esperado en el informe; URL https://enflora.com.ar/
+[fase5] 2026-10-30T01:32:47.520Z FATAL Error: curl 60 https://enflora.com.ar/ curl: (60) schannel: SEC_E_UNTRUSTED_ROOT (0x80090325) - La cadena de certificaci�n fue emitida por una entidad en la que no se conf�a.
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the webpage mentioned above.
+
+    at curlText (file:///C:/Users/VICTUS/Desktop/enflora/mediciones/fase5-prod-runner.mjs:61:11)
+    at verifyDeploy (file:///C:/Users/VICTUS/Desktop/enflora/mediciones/fase5-prod-runner.mjs:319:16)
+    at main (file:///C:/Users/VICTUS/Desktop/enflora/mediciones/fase5-prod-runner.mjs:433:28)
+    at file:///C:/Users/VICTUS/Desktop/enflora/mediciones/fase5-prod-runner.mjs:540:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)

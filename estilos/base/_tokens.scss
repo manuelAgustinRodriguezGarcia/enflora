@@ -90,8 +90,16 @@
   --color-destructive: #9b2c2c;
   --color-destructive-hover: #7f2323;
   --color-destructive-soft: #f8e8e8;
-  --space-bottom-nav: 5.25rem;
+  --bottom-nav-capsula-altura: 4.625rem;
+  --bottom-nav-margen-inferior: 0.75rem;
+  --bottom-nav-margen-lateral: 0.875rem;
+  --space-bottom-nav: calc(
+    var(--bottom-nav-margen-inferior) + var(--bottom-nav-capsula-altura) + var(--bottom-nav-margen-inferior) +
+      env(safe-area-inset-bottom, 0px)
+  );
   --enflora-teclado-inferior: 0px;
-  --enflora-altura-barra-inferior: calc(3.25rem + 0.7rem + env(safe-area-inset-bottom, 0px));
+  --enflora-altura-barra-inferior: calc(
+    var(--bottom-nav-margen-inferior) + var(--bottom-nav-capsula-altura) + env(safe-area-inset-bottom, 0px)
+  );
   --enflora-anclaje-inferior: calc(var(--enflora-teclado-inferior) + var(--enflora-altura-barra-inferior));
 }

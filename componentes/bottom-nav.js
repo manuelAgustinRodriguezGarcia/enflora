@@ -17,36 +17,51 @@ export function BottomNav({ oculto = false }) {
   return (
     <LayoutGroup id="bottom-nav">
       <nav className="bottom-nav" aria-label="Secciones">
-        <ul>
-          {DESTINOS_NAVEGACION.map((destino) => {
-            const activo = destinoActivo(ruta, destino);
-            return (
-              <li key={destino.clave}>
-                <Enlace
-                  href={destino.href}
-                  className={`bottom-nav__item${activo ? " bottom-nav__item--activo" : ""}`}
-                  aria-current={activo ? "page" : undefined}
-                  whileTap={toque}
-                  whileFocus={{ scale: 1.02 }}
-                  transition={transicionToque}
+        <div className="bottom-nav__capsula">
+          <ul>
+            {DESTINOS_NAVEGACION.map((destino) => {
+              const activo = destinoActivo(ruta, destino);
+              const esRegistro = destino.clave === "registro";
+              const clases = [
+                "bottom-nav__item",
+                esRegistro ? "bottom-nav__item--registro" : null,
+                activo ? "bottom-nav__item--activo" : null,
+                esRegistro && activo ? "bottom-nav__item--registro-activo" : null,
+              ]
+                .filter(Boolean)
+                .join(" ");
+
+              return (
+                <li
+                  key={destino.clave}
+                  className={esRegistro ? "bottom-nav__celda bottom-nav__celda--registro" : "bottom-nav__celda"}
                 >
-                  {activo ? (
-                    <motion.span
-                      className="bottom-nav__indicador"
-                      layoutId="bottom-nav-activo"
-                      transition={transicionRapida}
-                      aria-hidden="true"
-                    />
-                  ) : null}
-                  <span className="bottom-nav__icono">
-                    <IconoNavegacion clave={destino.clave} />
-                  </span>
-                  <span className="bottom-nav__etiqueta">{destino.etiqueta}</span>
-                </Enlace>
-              </li>
-            );
-          })}
-        </ul>
+                  <Enlace
+                    href={destino.href}
+                    className={clases}
+                    aria-current={activo ? "page" : undefined}
+                    whileTap={toque}
+                    whileFocus={{ scale: 1.02 }}
+                    transition={transicionToque}
+                  >
+                    <span className="bottom-nav__icono">
+                      {activo && !esRegistro ? (
+                        <motion.span
+                          className="bottom-nav__halo"
+                          layoutId="bottom-nav-activo"
+                          transition={transicionRapida}
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <IconoNavegacion clave={destino.clave} />
+                    </span>
+                    <span className="bottom-nav__etiqueta">{destino.etiqueta}</span>
+                  </Enlace>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </nav>
     </LayoutGroup>
   );

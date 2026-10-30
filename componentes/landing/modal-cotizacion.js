@@ -1,16 +1,28 @@
 "use client";
 
 import { useRef } from "react";
+import Link from "next/link";
 import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
 import { Boton } from "@/componentes/boton";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
+import { ENLACE_FUENTE_COTIZACION } from "@/lib/cotizacion";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
 
-export function ModalCotizacion({ abierto, onCerrar, titulo, texto }) {
+export function ModalCotizacion({
+  abierto,
+  onCerrar,
+  titulo,
+  explicacion = "",
+  sinDatos = "",
+  valorTexto = null,
+  fechaTexto = null,
+  etiquetaPill = "Dólar oficial de referencia",
+}) {
   const acciones = useRef(null);
+  const hayValor = Boolean(valorTexto);
 
   function cambiar(siguiente, detalles) {
     if (!siguiente) {
@@ -51,7 +63,41 @@ export function ModalCotizacion({ abierto, onCerrar, titulo, texto }) {
             }
           >
             <Dialog.Title className="modal__titulo">{titulo}</Dialog.Title>
-            <Dialog.Description className="modal__texto">{texto}</Dialog.Description>
+
+            <div className="precios-modal__cotizacion-cuerpo">
+              {hayValor ? (
+                <>
+                  <p className="precios-modal__pill" aria-label={etiquetaPill}>
+                    {valorTexto}
+                  </p>
+                  {fechaTexto ? (
+                    <p className="precios-modal__actualizada">
+                      Actualizada el {fechaTexto}
+                    </p>
+                  ) : null}
+                </>
+              ) : (
+                <p className="modal__texto precios-modal__aviso">{sinDatos}</p>
+              )}
+
+              {explicacion ? (
+                <Dialog.Description className="modal__texto precios-modal__detalle">
+                  {explicacion}
+                </Dialog.Description>
+              ) : null}
+
+              <p className="precios-modal__fuente">
+                Fuente:{" "}
+                <Link
+                  href={ENLACE_FUENTE_COTIZACION.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {ENLACE_FUENTE_COTIZACION.etiqueta}
+                </Link>
+              </p>
+            </div>
+
             <div className="modal__acciones">
               <Boton type="button" variante="ghost" onClick={onCerrar}>
                 Cerrar

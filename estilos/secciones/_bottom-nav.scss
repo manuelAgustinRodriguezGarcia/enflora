@@ -1,25 +1,43 @@
 .bottom-nav {
+  --bottom-nav-fondo: var(--surface);
+  --bottom-nav-icono-registro: #eaedbb;
+
   position: fixed;
   right: 0;
   bottom: var(--enflora-teclado-inferior, 0px);
   left: 0;
   z-index: 50;
-  padding: 0 0 env(safe-area-inset-bottom);
-  background: var(--brand-dark);
-  border-top: 1px solid var(--brand-dark-700);
+  padding: 0 var(--bottom-nav-margen-lateral, 0.875rem)
+    calc(var(--bottom-nav-margen-inferior, 0.75rem) + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+
+  &__capsula {
+    pointer-events: auto;
+    max-width: 32rem;
+    margin-inline: auto;
+    padding: 0.35rem 0.5rem;
+    border-radius: 999px;
+    background: var(--bottom-nav-fondo);
+    box-shadow:
+      0 10px 40px rgb(11 61 42 / 9%),
+      0 4px 12px rgb(11 61 42 / 6%),
+      0 1px 2px rgb(11 61 42 / 4%);
+  }
 
   ul {
     display: flex;
     gap: 0;
+    align-items: flex-end;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
-  li {
+  &__celda {
     display: flex;
     flex: 1;
     min-width: 0;
+    justify-content: center;
   }
 
   &__item {
@@ -28,28 +46,33 @@
     flex: 1;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 0.15rem;
-    min-height: 3.25rem;
-    padding: 0.4rem 0.25rem;
-    border-radius: 0;
-    color: var(--brand-accent-light);
+    justify-content: flex-end;
+    gap: 0.2rem;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--touch-min);
+    padding: 0.25rem 0.15rem 0.15rem;
+    border-radius: 999px;
+    color: var(--brand-medium);
     font-weight: 500;
     text-decoration: none;
 
     &:hover {
-      color: var(--surface-green);
+      color: var(--brand-dark);
     }
 
     &:focus-visible {
       outline: 2px solid var(--brand-accent);
-      outline-offset: -2px;
+      outline-offset: 2px;
     }
   }
 
   &__item--activo,
   &__item--activo:hover {
     color: var(--brand-dark);
+  }
+
+  &__item--activo .bottom-nav__etiqueta {
     font-weight: 600;
   }
 
@@ -60,56 +83,182 @@
     align-items: center;
     justify-content: center;
     width: 2.75rem;
-    height: 1.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
   }
 
-  &__indicador {
+  &__halo {
     position: absolute;
     inset: 0;
     z-index: 0;
-    border-radius: 0;
-    background: var(--brand-accent-light);
+    border-radius: 50%;
+    background: var(--brand-accent);
   }
 
   &__etiqueta {
     position: relative;
     z-index: 1;
+    max-width: 100%;
+    overflow: hidden;
     font-family: var(--font-funcional);
     font-size: 0.6875rem;
     line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  @media (min-width: 48rem) {
-    right: 0;
-    left: 0;
-    width: min(28rem, calc(100% - 2rem));
-    margin-inline: auto;
-    border: 1px solid var(--brand-dark-700);
-    border-bottom: 0;
-    border-radius: 16px 16px 0 0;
-    overflow: hidden;
+  .icono-navegacion {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 1.5rem;
+    height: 1.5rem;
+    flex: 0 0 auto;
+  }
+
+  &__item--registro {
+    gap: 0.15rem;
+    padding-top: 0;
+    color: var(--brand-dark);
+
+    .bottom-nav__icono {
+      width: 3.5rem;
+      height: 3.5rem;
+      margin-top: -0.65rem;
+      border: 2px solid transparent;
+      border-radius: 50%;
+      background: var(--brand-dark);
+      color: var(--bottom-nav-icono-registro);
+      box-shadow: 0 6px 16px rgb(11 61 42 / 22%);
+      box-sizing: border-box;
+    }
+
+    .icono-navegacion {
+      width: 1.5625rem;
+      height: 1.5625rem;
+    }
+
+    .bottom-nav__etiqueta {
+      color: var(--brand-dark);
+      font-weight: 600;
+    }
+
+    &:hover {
+      color: var(--brand-dark);
+    }
+  }
+
+  &__item--registro-activo .bottom-nav__icono {
+    border: 2px solid var(--brand-dark);
+    background: var(--brand-accent);
+    color: var(--brand-dark);
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &__halo {
+      transition: none !important;
+    }
   }
 
   &.demo-nav {
+    pointer-events: auto;
+    padding: 0 0 env(safe-area-inset-bottom);
+    background: var(--brand-dark);
+    border-top: 1px solid var(--brand-dark-700);
+
+    .bottom-nav__capsula {
+      max-width: none;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    ul {
+      align-items: stretch;
+    }
+
     .bottom-nav__item {
+      justify-content: center;
       min-height: 3.75rem;
+      padding: 0.4rem 0.25rem;
+      border-radius: 0;
+      color: var(--brand-accent-light);
+      font-weight: 500;
+
+      &:hover {
+        color: var(--surface-green);
+      }
+
+      &:focus-visible {
+        outline-offset: -2px;
+      }
+    }
+
+    .bottom-nav__item--activo,
+    .bottom-nav__item--activo:hover {
+      color: var(--brand-dark);
+      font-weight: 600;
+    }
+
+    .bottom-nav__icono {
+      width: 2.75rem;
+      height: 1.75rem;
+      margin-top: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      color: inherit;
+    }
+
+    .bottom-nav__indicador {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: 0;
+      background: var(--brand-accent-light);
+    }
+
+    .bottom-nav__item--registro .bottom-nav__icono {
+      width: 2.75rem;
+      height: 1.75rem;
+      margin-top: 0;
+      background: transparent;
+      box-shadow: none;
+      color: inherit;
+    }
+
+    .bottom-nav__item--registro .bottom-nav__etiqueta {
+      font-weight: 500;
+    }
+
+    .bottom-nav__item--registro-activo .bottom-nav__icono {
+      box-shadow: none;
+    }
+
+    .icono-navegacion {
+      width: 1.35rem;
+      height: 1.35rem;
     }
 
     @media (min-width: 48rem) {
-      border-color: var(--brand-dark-700);
+      right: 0;
+      left: 0;
+      width: min(28rem, calc(100% - 2rem));
+      margin-inline: auto;
+      border: 1px solid var(--brand-dark-700);
+      border-bottom: 0;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
     }
   }
 }
 
-.icono-navegacion {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 1.35rem;
-  height: 1.35rem;
-  flex: 0 0 auto;
+body:has(.bottom-nav:not(.demo-nav)) .pagina {
+  padding-bottom: var(--space-bottom-nav);
 }
 
-body:has(.bottom-nav) .pagina {
+body:has(.bottom-nav.demo-nav) .pagina {
   padding-bottom: calc(4.25rem + env(safe-area-inset-bottom) + 0.75rem);
 }

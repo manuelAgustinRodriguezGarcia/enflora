@@ -36,9 +36,9 @@ import {
 import { textoCantidad } from "@/lib/unidades";
 
 const MODOS_PLANTAS = [
-  { valor: "unidad", etiqueta: "Toda la unidad" },
-  { valor: "genetica", etiqueta: "Por genética" },
-  { valor: "manual", etiqueta: "Selección manual" },
+  { valor: "unidad", etiqueta: "Todas" },
+  { valor: "genetica", etiqueta: "Genética" },
+  { valor: "manual", etiqueta: "Manual" },
 ];
 
 function claveAccion(item) {

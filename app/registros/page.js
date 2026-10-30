@@ -20,7 +20,7 @@ export default async function PaginaRegistros({ searchParams }) {
   if (!configuracionLista()) {
     return (
       <section className="registros">
-        <h1>Nuevo registro</h1>
+        <h1>Registrar</h1>
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -70,7 +70,7 @@ export default async function PaginaRegistros({ searchParams }) {
   ) {
     return (
       <section className="registros">
-        <h1>Nuevo registro</h1>
+        <h1>Registrar</h1>
         <p>No se pudieron cargar los datos para registrar.</p>
       </section>
     );
@@ -116,7 +116,7 @@ export default async function PaginaRegistros({ searchParams }) {
   if (seguimientoCargado.error) {
     return (
       <section className="registros">
-        <h1>Nuevo registro</h1>
+        <h1>Registrar</h1>
         <p>No se pudieron cargar las preferencias de seguimiento.</p>
       </section>
     );
@@ -125,13 +125,7 @@ export default async function PaginaRegistros({ searchParams }) {
   return (
     <TransicionVista>
       <section className="registros">
-        <h1>Nuevo registro</h1>
-        <p className="registros__intro">
-          Guardá acciones y observaciones. Podés crear varios registros independientes el mismo día.
-        </p>
-        <EnlaceBoton href="/registros/historial" variante="secundario" className="registros__historial">
-          Ver historial
-        </EnlaceBoton>
+        <h1>Registrar</h1>
         {unidades.length === 0 ? (
           <div className="vacio">
             <p>Necesitás al menos una unidad de cultivo para registrar.</p>

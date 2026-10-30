@@ -4715,13 +4715,15 @@ a.producto-preview__cta {
     }
   }
 
-  &__eyebrow {
+  &__encabezado-pago {
     margin: 0;
-    color: color-mix(in srgb, var(--precios-ink) 72%, white);
+    color: color-mix(in srgb, var(--precios-ink) 82%, white);
     font-family: var(--font-funcional);
-    font-size: 0.78rem;
+    font-size: clamp(0.72rem, 2.8vw, 0.85rem);
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.06em;
+    line-height: 1.45;
+    text-transform: uppercase;
   }
 
   &__descripcion {
@@ -5385,13 +5387,102 @@ a.producto-preview__cta {
 
 .precios-modal {
   max-width: min(100%, 28rem);
+  align-items: stretch;
+  text-align: left;
+
+  .modal__titulo,
+  .modal__texto,
+  .modal__acciones {
+    text-align: left;
+  }
+
+  .modal__acciones {
+    justify-content: flex-start;
+  }
 
   &--cotizacion {
-    text-align: left;
+    align-items: stretch;
+    max-width: min(100%, 22rem);
+    text-align: center;
 
-    .modal__titulo,
+    .modal__titulo {
+      text-align: center;
+    }
+
     .modal__texto {
-      text-align: left;
+      text-align: center;
+    }
+
+    .modal__acciones {
+      justify-content: center;
+    }
+  }
+
+  &__cotizacion-cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  &__pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0.35rem auto 0;
+    padding: 0.7rem 1.5rem;
+    border-radius: 999px;
+    background: var(--precios-lima, #a4c85b);
+    color: var(--precios-ink, #0b3d2a);
+    font-family: var(--font-identidad);
+    font-size: clamp(1.4rem, 5.5vw, 1.85rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    box-shadow: 0 10px 28px -16px rgb(11 61 42 / 45%);
+  }
+
+  &__actualizada {
+    margin: 0;
+    color: color-mix(in srgb, var(--precios-ink, #0b3d2a) 65%, white);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    text-align: center;
+  }
+
+  &__detalle {
+    margin: 0.15rem 0 0;
+  }
+
+  &__aviso {
+    margin: 0;
+  }
+
+  &__fuente {
+    margin: 0.25rem 0 0;
+    color: color-mix(in srgb, var(--precios-ink, #0b3d2a) 72%, white);
+    font-size: 0.88rem;
+    line-height: 1.45;
+    text-align: center;
+
+    a {
+      color: var(--precios-ink, #0b3d2a);
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+
+      &:hover {
+        color: color-mix(in srgb, var(--precios-ink, #0b3d2a) 85%, var(--precios-lima, #a4c85b));
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--precios-lima, #a4c85b);
+        outline-offset: 2px;
+      }
     }
   }
 

@@ -1,5 +1,5 @@
 .pagina:has(.flora-chat-app-pagina) {
-  --flora-altura-bottom-nav: calc(3.25rem + 0.7rem + env(safe-area-inset-bottom, 0px));
+  --flora-altura-bottom-nav: var(--enflora-altura-barra-inferior);
   --flora-reserva-dock: 5.75rem;
   --flora-fab-offset-bottom: calc(
     var(--enflora-anclaje-inferior, var(--flora-altura-bottom-nav)) + var(--flora-reserva-dock) + 0.65rem
@@ -14,7 +14,7 @@
 }
 
 body:has(.flora-chat-app-pagina) {
-  --flora-altura-bottom-nav: calc(3.25rem + 0.7rem + env(safe-area-inset-bottom, 0px));
+  --flora-altura-bottom-nav: var(--enflora-altura-barra-inferior);
   --flora-reserva-dock: 5.75rem;
   --flora-fab-offset-bottom: calc(
     var(--enflora-anclaje-inferior, var(--flora-altura-bottom-nav)) + var(--flora-reserva-dock) + 0.65rem

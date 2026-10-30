@@ -9,7 +9,6 @@ import { ModalContacto } from "@/componentes/landing/modal-contacto";
 import { TarjetaPlan } from "@/componentes/landing/tarjeta-plan";
 import { formatearArs, formatearFechaCotizacion } from "@/lib/cotizacion";
 import { planesEnflora } from "@/lib/planes";
-import { TextoConMarca } from "@/componentes/marca-enflora";
 
 export function SeccionPrecios({ cotizacion = null }) {
   const [modalEquivalencia, setModalEquivalencia] = useState(false);
@@ -36,19 +35,14 @@ export function SeccionPrecios({ cotizacion = null }) {
   const fecha = formatearFechaCotizacion(cotizacion?.fecha);
   const valor = cotizacion?.valor;
   const valorTexto = Number.isFinite(valor) ? formatearArs(valor) : null;
-
-  const leyenda = valorTexto
-    ? `${planesEnflora.leyendaArs}${fecha ? ` Actualizada el ${fecha}.` : ""} Dólar oficial de referencia: ${valorTexto}.`
-    : "Mostramos los precios en dólares. La referencia en pesos se actualizará cuando la cotización esté disponible.";
+  const copyModal = planesEnflora.modalCotizacion;
 
   return (
     <section className="precios" id="precios" data-logo="dark">
       <div className="precios__contenedor">
         <header className="precios__encabezado">
-          <p className="precios__eyebrow">
-            <TextoConMarca texto={planesEnflora.eyebrow} />
-          </p>
           <h2>{planesEnflora.titulo}</h2>
+          <p className="precios__encabezado-pago">{planesEnflora.encabezadoPago}</p>
         </header>
 
         <div className="precios__grid">
@@ -90,8 +84,12 @@ export function SeccionPrecios({ cotizacion = null }) {
         <ModalCotizacion
           abierto={modalCotizacion}
           onCerrar={() => setModalCotizacion(false)}
-          titulo="Qué cotización de dólar?"
-          texto={leyenda}
+          titulo={copyModal.titulo}
+          explicacion={planesEnflora.leyendaArs}
+          sinDatos={copyModal.sinDatos}
+          valorTexto={valorTexto}
+          fechaTexto={fecha}
+          etiquetaPill={copyModal.etiquetaPill}
         />
       ) : null}
 

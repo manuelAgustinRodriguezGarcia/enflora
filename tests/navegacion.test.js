@@ -2,10 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { DESTINOS_NAVEGACION, destinoActivo } from "../lib/navegacion.js";
 
-test("navegación inferior incluye Cultivos, Registro, Historial, Flora y Perfil", () => {
+test("navegación inferior incluye Cultivos, Historial, Registrar, Flora y Perfil", () => {
   assert.deepEqual(
     DESTINOS_NAVEGACION.map((item) => item.etiqueta),
-    ["Cultivos", "Registro", "Historial", "Flora", "Perfil"]
+    ["Cultivos", "Historial", "Registrar", "Flora", "Perfil"]
+  );
+  assert.deepEqual(
+    DESTINOS_NAVEGACION.map((item) => item.clave),
+    ["cultivos", "historial", "registro", "flora", "perfil"]
   );
   assert.equal(DESTINOS_NAVEGACION.find((item) => item.clave === "cultivos")?.href, "/espacios");
   assert.equal(DESTINOS_NAVEGACION.find((item) => item.clave === "historial")?.href, "/registros/historial");
