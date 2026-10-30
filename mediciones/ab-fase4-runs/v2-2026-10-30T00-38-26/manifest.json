@@ -1,0 +1,379 @@
+{
+  "experimentVersion": 2,
+  "protocol": "two-worktree-builds-interleaved",
+  "priorExploratoryNote": "Corridas en carpetas sin v2- (p. ej. 2026-10-30T00-25-09) son referencia v1; no mezclar.",
+  "startedAt": "2026-10-30T00:38:26.214Z",
+  "repoRoot": "C:\\Users\\VICTUS\\Desktop\\enflora",
+  "gitCommit": "2c55c1ad759676287f19181c13689760b98250ff",
+  "gitDescribe": "2c55c1a-dirty",
+  "versionA": {
+    "label": "Fase 3 (fin) — sin patch viewport Fase 4",
+    "files": [
+      "componentes/landing/magic-bento.js",
+      "componentes/landing/particles.js",
+      "componentes/landing/side-rays.js"
+    ]
+  },
+  "versionB": {
+    "label": "Fase 4 — patch viewport",
+    "patch": "mediciones\\patches\\fase4-viewport-main-thread.patch",
+    "files": [
+      "componentes/landing/magic-bento.js",
+      "componentes/landing/particles.js",
+      "componentes/landing/side-rays.js"
+    ]
+  },
+  "lighthouse": {
+    "preset": "perf",
+    "onlyCategories": [
+      "performance"
+    ],
+    "url": "http://127.0.0.1:3005/",
+    "port": 3005,
+    "chromeFlags": "--headless=new",
+    "lighthouseVersion": "12.8.2",
+    "chromePathNote": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "environment": {
+    "hostname": "VICTUS-MANU",
+    "platform": "win32",
+    "osRelease": "10.0.26200",
+    "cpuModel": "12th Gen Intel(R) Core(TM) i5-12450H",
+    "cpuCount": 12,
+    "totalMemGiB": 31.7,
+    "node": "v22.16.0"
+  },
+  "worktrees": {
+    "A": {
+      "path": "mediciones\\worktrees\\ab-fase4-a",
+      "commit": "2c55c1ad759676287f19181c13689760b98250ff",
+      "sourceHash": "2e148f2c9d859cac"
+    },
+    "B": {
+      "path": "mediciones\\worktrees\\ab-fase4-b",
+      "commit": "2c55c1ad759676287f19181c13689760b98250ff",
+      "sourceHash": "f0d441c5cc23e13d"
+    }
+  },
+  "builds": {
+    "A": {
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "durationMs": 26398,
+      "builtAt": "2026-10-30T00:40:44.636Z",
+      "sourceHash": "2e148f2c9d859cac",
+      "worktree": "mediciones\\worktrees\\ab-fase4-a"
+    },
+    "B": {
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "durationMs": 26760,
+      "builtAt": "2026-10-30T00:41:11.400Z",
+      "sourceHash": "f0d441c5cc23e13d",
+      "worktree": "mediciones\\worktrees\\ab-fase4-b"
+    }
+  },
+  "runs": [
+    {
+      "label": "warmup-a",
+      "version": "A",
+      "scored": false,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\warmup-a.json",
+      "lighthouseDurationMs": 48020,
+      "finishedAt": "2026-10-30T00:42:03.985Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 53,
+        "fcpMs": 3411.317,
+        "lcpMs": 3466.875,
+        "tbtMs": 1959.8489999999993,
+        "speedIndexMs": 5464,
+        "cls": 0,
+        "scriptEvaluationMs": 7033.574000000248,
+        "styleLayoutMs": 2801.272999999995,
+        "longTaskMaxMs": 1352.58,
+        "longTaskSumMs": 3834.2060000000006,
+        "longTaskCount": 17
+      }
+    },
+    {
+      "label": "warmup-b",
+      "version": "B",
+      "scored": false,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\warmup-b.json",
+      "lighthouseDurationMs": 45312,
+      "finishedAt": "2026-10-30T00:42:53.569Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 55,
+        "fcpMs": 3400.287,
+        "lcpMs": 3441.964,
+        "tbtMs": 1535.5179999999978,
+        "speedIndexMs": 5337,
+        "cls": 0,
+        "scriptEvaluationMs": 6519.634000000373,
+        "styleLayoutMs": 2728.1790000000005,
+        "longTaskMaxMs": 1040.947,
+        "longTaskSumMs": 3203.2879999999996,
+        "longTaskCount": 13
+      }
+    },
+    {
+      "label": "a1",
+      "version": "A",
+      "scored": true,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\a1.json",
+      "lighthouseDurationMs": 49208,
+      "finishedAt": "2026-10-30T00:43:47.317Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 59,
+        "fcpMs": 3224.953,
+        "lcpMs": 3266.685,
+        "tbtMs": 1212.9630000000002,
+        "speedIndexMs": 5036,
+        "cls": 0,
+        "scriptEvaluationMs": 6716.847000000327,
+        "styleLayoutMs": 2685.3359999999984,
+        "longTaskMaxMs": 939.762,
+        "longTaskSumMs": 2587.628,
+        "longTaskCount": 10
+      }
+    },
+    {
+      "label": "b1",
+      "version": "B",
+      "scored": true,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\b1.json",
+      "lighthouseDurationMs": 48788,
+      "finishedAt": "2026-10-30T00:44:40.031Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 63,
+        "fcpMs": 3113.754,
+        "lcpMs": 3148.526,
+        "tbtMs": 942.748,
+        "speedIndexMs": 4936,
+        "cls": 0,
+        "scriptEvaluationMs": 6605.935000000188,
+        "styleLayoutMs": 2749.347000000001,
+        "longTaskMaxMs": 748.965,
+        "longTaskSumMs": 2098.448,
+        "longTaskCount": 9
+      }
+    },
+    {
+      "label": "a2",
+      "version": "A",
+      "scored": true,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\a2.json",
+      "lighthouseDurationMs": 47928,
+      "finishedAt": "2026-10-30T00:45:31.878Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 44,
+        "fcpMs": 4061.344,
+        "lcpMs": 4144.653,
+        "tbtMs": 2671.3960000000006,
+        "speedIndexMs": 6314,
+        "cls": 0,
+        "scriptEvaluationMs": 8039.616000000043,
+        "styleLayoutMs": 3746.5049999999965,
+        "longTaskMaxMs": 1707.931,
+        "longTaskSumMs": 5307.404999999999,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "b2",
+      "version": "B",
+      "scored": true,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\b2.json",
+      "lighthouseDurationMs": 49735,
+      "finishedAt": "2026-10-30T00:46:25.495Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 45,
+        "fcpMs": 3981.02,
+        "lcpMs": 4036.697,
+        "tbtMs": 2690.87100000001,
+        "speedIndexMs": 6499,
+        "cls": 0,
+        "scriptEvaluationMs": 8323.128000000146,
+        "styleLayoutMs": 3644.4570000000003,
+        "longTaskMaxMs": 1604.955,
+        "longTaskSumMs": 5206.259,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "a3",
+      "version": "A",
+      "scored": true,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\a3.json",
+      "lighthouseDurationMs": 61215,
+      "finishedAt": "2026-10-30T00:47:30.618Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 45,
+        "fcpMs": 3941.798,
+        "lcpMs": 4011.148,
+        "tbtMs": 2902.044000000004,
+        "speedIndexMs": 6360,
+        "cls": 0,
+        "scriptEvaluationMs": 10995.047000000237,
+        "styleLayoutMs": 4725.493000000002,
+        "longTaskMaxMs": 1599.782,
+        "longTaskSumMs": 5382.107999999999,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "b3",
+      "version": "B",
+      "scored": true,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\b3.json",
+      "lighthouseDurationMs": 49049,
+      "finishedAt": "2026-10-30T00:48:23.748Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 43,
+        "fcpMs": 4178.637,
+        "lcpMs": 4254.979,
+        "tbtMs": 3189.8630000000094,
+        "speedIndexMs": 6312,
+        "cls": 0,
+        "scriptEvaluationMs": 7781.862000000141,
+        "styleLayoutMs": 3787.1690000000026,
+        "longTaskMaxMs": 1762.691,
+        "longTaskSumMs": 5772.2789999999995,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "a4",
+      "version": "A",
+      "scored": true,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\a4.json",
+      "lighthouseDurationMs": 47208,
+      "finishedAt": "2026-10-30T00:49:14.805Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 43,
+        "fcpMs": 4043.899,
+        "lcpMs": 4113.452,
+        "tbtMs": 3113.3860000000022,
+        "speedIndexMs": 6447,
+        "cls": 0,
+        "scriptEvaluationMs": 7961.663000000097,
+        "styleLayoutMs": 3457.6900000000014,
+        "longTaskMaxMs": 1700.041,
+        "longTaskSumMs": 5618.728,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "b4",
+      "version": "B",
+      "scored": true,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\b4.json",
+      "lighthouseDurationMs": 50562,
+      "finishedAt": "2026-10-30T00:50:09.816Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 43,
+        "fcpMs": 4073.46,
+        "lcpMs": 4156.736,
+        "tbtMs": 2785.6410000000033,
+        "speedIndexMs": 6583,
+        "cls": 0,
+        "scriptEvaluationMs": 8441.148000000183,
+        "styleLayoutMs": 3805.55,
+        "longTaskMaxMs": 1689.003,
+        "longTaskSumMs": 5412.5999999999985,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "a5",
+      "version": "A",
+      "scored": true,
+      "buildId": "MWWfHdR8V6_BzXiavU6XJ",
+      "sourceHash": "2e148f2c9d859cac",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\a5.json",
+      "lighthouseDurationMs": 48914,
+      "finishedAt": "2026-10-30T00:51:02.757Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 42,
+        "fcpMs": 4188.217,
+        "lcpMs": 4278.511,
+        "tbtMs": 2808.2400000000007,
+        "speedIndexMs": 6598,
+        "cls": 0,
+        "scriptEvaluationMs": 8474.624000000133,
+        "styleLayoutMs": 3846.829000000002,
+        "longTaskMaxMs": 1801.951,
+        "longTaskSumMs": 5550.198,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "b5",
+      "version": "B",
+      "scored": true,
+      "buildId": "o-61heo5xQN-7-kQqa_zW",
+      "sourceHash": "f0d441c5cc23e13d",
+      "outputJson": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26\\b5.json",
+      "lighthouseDurationMs": 45692,
+      "finishedAt": "2026-10-30T00:51:52.842Z",
+      "status": "complete",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 64,
+        "fcpMs": 3061.078,
+        "lcpMs": 3095.726,
+        "tbtMs": 968.0510000000008,
+        "speedIndexMs": 4723,
+        "cls": 0,
+        "scriptEvaluationMs": 5824.145000000494,
+        "styleLayoutMs": 2423.342000000001,
+        "longTaskMaxMs": 736.879,
+        "longTaskSumMs": 2037.8740000000003,
+        "longTaskCount": 8
+      }
+    }
+  ],
+  "baseCommit": "2c55c1ad759676287f19181c13689760b98250ff",
+  "finishedAt": "2026-10-30T00:51:54.855Z",
+  "status": "complete"
+}

@@ -1,0 +1,235 @@
+{
+  "startedAt": "2026-10-30T00:25:09.731Z",
+  "repoRoot": "C:\\Users\\VICTUS\\Desktop\\enflora",
+  "gitCommit": "2c55c1ad759676287f19181c13689760b98250ff",
+  "gitDescribe": "2c55c1a-dirty",
+  "versionA": {
+    "label": "Fase 3 (fin) — sin patch viewport Fase 4",
+    "commit": "2c55c1ad759676287f19181c13689760b98250ff",
+    "files": [
+      {
+        "path": "componentes/landing/magic-bento.js",
+        "state": "HEAD"
+      },
+      {
+        "path": "componentes/landing/particles.js",
+        "state": "HEAD"
+      },
+      {
+        "path": "componentes/landing/side-rays.js",
+        "state": "HEAD"
+      }
+    ]
+  },
+  "versionB": {
+    "label": "Fase 4 — patch viewport (magic-bento, particles, side-rays)",
+    "patch": "mediciones\\patches\\fase4-viewport-main-thread.patch",
+    "files": [
+      "componentes/landing/magic-bento.js",
+      "componentes/landing/particles.js",
+      "componentes/landing/side-rays.js"
+    ]
+  },
+  "lighthouse": {
+    "preset": "perf",
+    "onlyCategories": [
+      "performance"
+    ],
+    "url": "http://127.0.0.1:3005/",
+    "port": 3005,
+    "chromeFlags": "--headless=new",
+    "lighthouseVersion": "12.8.2",
+    "chromePathNote": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+  },
+  "environment": {
+    "hostname": "VICTUS-MANU",
+    "platform": "win32",
+    "osRelease": "10.0.26200",
+    "cpuModel": "12th Gen Intel(R) Core(TM) i5-12450H",
+    "cpuCount": 12,
+    "totalMemGiB": 31.7,
+    "node": "v22.16.0"
+  },
+  "runs": [
+    {
+      "label": "warmup-a",
+      "version": "A",
+      "scored": false,
+      "buildId": "Ampa05akDgk9vF75xRht1",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\warmup-a.json",
+      "finishedAt": "2026-10-30T00:26:21.548Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 60,
+        "fcpMs": 3277.383,
+        "lcpMs": 3319.05,
+        "tbtMs": 1080.3089999999984,
+        "speedIndexMs": 5030,
+        "cls": 0,
+        "scriptEvaluationMs": 6291.48000000041,
+        "styleLayoutMs": 2644.151000000001,
+        "longTaskMaxMs": 886.766,
+        "longTaskSumMs": 2371.612,
+        "longTaskCount": 9
+      }
+    },
+    {
+      "label": "warmup-b",
+      "version": "B",
+      "scored": false,
+      "buildId": "b1UsXWO6Q8Io92kpMvNj6",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\warmup-b.json",
+      "finishedAt": "2026-10-30T00:27:23.358Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 62,
+        "fcpMs": 3002.871,
+        "lcpMs": 3037.629,
+        "tbtMs": 1139.8860000000004,
+        "speedIndexMs": 5148,
+        "cls": 0,
+        "scriptEvaluationMs": 6639.381000000211,
+        "styleLayoutMs": 2404.6260000000043,
+        "longTaskMaxMs": 860.658,
+        "longTaskSumMs": 2226.515,
+        "longTaskCount": 9
+      }
+    },
+    {
+      "label": "a1",
+      "version": "A",
+      "scored": true,
+      "buildId": "z7g2X_jD5VCu585-5a-6M",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\a1.json",
+      "finishedAt": "2026-10-30T00:28:47.143Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 42,
+        "fcpMs": 4209.447,
+        "lcpMs": 4265.044,
+        "tbtMs": 3036.257999999997,
+        "speedIndexMs": 6485,
+        "cls": 0,
+        "scriptEvaluationMs": 10700.345000000434,
+        "styleLayoutMs": 4875.905,
+        "longTaskMaxMs": 1828.757,
+        "longTaskSumMs": 5769.487000000002,
+        "longTaskCount": 20
+      }
+    },
+    {
+      "label": "b1",
+      "version": "B",
+      "scored": true,
+      "buildId": "cr62Id9OZ0ofiSaHnB3SR",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\b1.json",
+      "finishedAt": "2026-10-30T00:29:54.351Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 56,
+        "fcpMs": 3301.407,
+        "lcpMs": 3356.918,
+        "tbtMs": 1452.7139999999995,
+        "speedIndexMs": 5301,
+        "cls": 0,
+        "scriptEvaluationMs": 6685.254000000429,
+        "styleLayoutMs": 2586.4700000000007,
+        "longTaskMaxMs": 1037.509,
+        "longTaskSumMs": 2794.663,
+        "longTaskCount": 9
+      }
+    },
+    {
+      "label": "a2",
+      "version": "A",
+      "scored": true,
+      "buildId": "TuqD42GcnXsR0WGnKsgT9",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\a2.json",
+      "finishedAt": "2026-10-30T00:30:59.340Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 56,
+        "fcpMs": 3368.69,
+        "lcpMs": 3424.233,
+        "tbtMs": 1449.1070000000004,
+        "speedIndexMs": 5290,
+        "cls": 0,
+        "scriptEvaluationMs": 6881.157000000188,
+        "styleLayoutMs": 2878.8239999999955,
+        "longTaskMaxMs": 1110.307,
+        "longTaskSumMs": 3290.2929999999997,
+        "longTaskCount": 17
+      }
+    },
+    {
+      "label": "b2",
+      "version": "B",
+      "scored": true,
+      "buildId": "eMdQcjoQtgyHc5pT-wbvp",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\b2.json",
+      "finishedAt": "2026-10-30T00:32:09.564Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 55,
+        "fcpMs": 3250.547,
+        "lcpMs": 3312.99,
+        "tbtMs": 1878.2279999999978,
+        "speedIndexMs": 5177,
+        "cls": 0,
+        "scriptEvaluationMs": 6860.306000000239,
+        "styleLayoutMs": 2615.3450000000003,
+        "longTaskMaxMs": 1309.781,
+        "longTaskSumMs": 3523.3109999999992,
+        "longTaskCount": 15
+      }
+    },
+    {
+      "label": "a3",
+      "version": "A",
+      "scored": true,
+      "buildId": "u6LmcyuFF0Yi9JwoMNdRz",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\a3.json",
+      "finishedAt": "2026-10-30T00:33:17.706Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 56,
+        "fcpMs": 3452.941,
+        "lcpMs": 3501.555,
+        "tbtMs": 1286.9240000000004,
+        "speedIndexMs": 5349,
+        "cls": 0,
+        "scriptEvaluationMs": 6916.21100000019,
+        "styleLayoutMs": 2862.7850000000053,
+        "longTaskMaxMs": 1074.244,
+        "longTaskSumMs": 2873.6199999999994,
+        "longTaskCount": 11
+      }
+    },
+    {
+      "label": "b3",
+      "version": "B",
+      "scored": true,
+      "buildId": "-jX2dB6j3NHdatlRKCp2Q",
+      "outputJson": "mediciones\\ab-fase4-runs\\2026-10-30T00-25-09\\b3.json",
+      "finishedAt": "2026-10-30T00:34:39.894Z",
+      "metrics": {
+        "lighthouseVersion": "12.8.2",
+        "performance": 38,
+        "fcpMs": 4645.304,
+        "lcpMs": 4714.79,
+        "tbtMs": 3546.0899999999992,
+        "speedIndexMs": 7225,
+        "cls": 0,
+        "scriptEvaluationMs": 10595.050000000345,
+        "styleLayoutMs": 5076.078000000009,
+        "longTaskMaxMs": 2227.244,
+        "longTaskSumMs": 6577.993000000001,
+        "longTaskCount": 20
+      }
+    }
+  ],
+  "buildIdA": "u6LmcyuFF0Yi9JwoMNdRz",
+  "sourceHashA": "2e148f2c9d859cac",
+  "buildIdB": "-jX2dB6j3NHdatlRKCp2Q",
+  "sourceHashB": "f0d441c5cc23e13d"
+}

@@ -570,8 +570,17 @@ function resolverImport(desde, especificador) {
   if (especificador.startsWith("@/")) base = path.join(RAIZ, especificador.slice(2));
   else if (especificador.startsWith(".")) base = path.resolve(path.dirname(desde), especificador);
   else return null;
-  for (const candidato of [`${base}.js`, `${base}.jsx`, `${base}.mjs`, path.join(base, "index.js"), base]) {
-    if (existsSync(candidato) && /\.(m?js|jsx)$/.test(candidato)) return candidato;
+  for (const candidato of [
+    `${base}.js`,
+    `${base}.jsx`,
+    `${base}.mjs`,
+    path.join(base, "index.js"),
+    `${base}.scss`,
+    base,
+  ]) {
+    if (!existsSync(candidato)) continue;
+    if (/\.scss$/.test(candidato)) return candidato;
+    if (/\.(m?js|jsx)$/.test(candidato)) return candidato;
   }
   return undefined;
 }
@@ -585,6 +594,7 @@ function grafoImportaciones(entradas) {
     const archivo = pendientes.pop();
     if (visitados.has(archivo)) continue;
     visitados.add(archivo);
+    if (/\.scss$/.test(archivo)) continue;
     const fuente = readFileSync(archivo, "utf8");
     for (const coincidencia of fuente.matchAll(patron)) {
       const especificador = coincidencia[1] || coincidencia[2] || coincidencia[3];
@@ -671,7 +681,11 @@ test("las pantallas reales de cultivos conservan sus acciones de producción", (
   const planta = leer("app/espacios/[id]/unidades/[unidadId]/plantas/[plantaId]/page.js");
   assert.match(planta, /<EtapaProgreso/);
   assert.match(planta, /<CambiarEtapa /);
-  assert.match(leer("app/espacios/page.js"), /href=\{`\/espacios\/\$\{espacio\.id\}`\}/);
+  assert.match(leer("app/espacios/page.js"), /ContenidoListaEspacios/);
+  assert.match(
+    leer("componentes/espacios/contenido-lista-espacios.js"),
+    /href=\{`\/espacios\/\$\{espacio\.id\}`\}/,
+  );
 });
 
 test("navegación, landing, conversión e historial usan destinos y textos acordados", () => {

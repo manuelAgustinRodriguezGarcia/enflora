@@ -1,0 +1,164 @@
+{
+  "runDir": "mediciones\\ab-fase4-runs\\v2-2026-10-30T00-38-26",
+  "statsA": {
+    "performance": {
+      "median": 44,
+      "min": 42,
+      "max": 59,
+      "stdev": 6.280127387243033,
+      "n": 5
+    },
+    "fcpMs": {
+      "median": 4043.899,
+      "min": 3224.953,
+      "max": 4188.217,
+      "stdev": 342.615451996783,
+      "n": 5
+    },
+    "lcpMs": {
+      "median": 4113.452,
+      "min": 3266.685,
+      "max": 4278.511,
+      "stdev": 358.4281116884669,
+      "n": 5
+    },
+    "tbtMs": {
+      "median": 2808.2400000000007,
+      "min": 1212.9630000000002,
+      "max": 3113.3860000000022,
+      "stdev": 679.7174818626935,
+      "n": 5
+    },
+    "speedIndexMs": {
+      "median": 6360,
+      "min": 5036,
+      "max": 6598,
+      "stdev": 565.8445016079947,
+      "n": 5
+    },
+    "cls": {
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0,
+      "n": 5
+    },
+    "scriptEvaluationMs": {
+      "median": 8039.616000000043,
+      "min": 6716.847000000327,
+      "max": 10995.047000000237,
+      "stdev": 1406.257736361096,
+      "n": 5
+    },
+    "styleLayoutMs": {
+      "median": 3746.5049999999965,
+      "min": 2685.3359999999984,
+      "max": 4725.493000000002,
+      "stdev": 657.7725280960292,
+      "n": 5
+    },
+    "longTaskMaxMs": {
+      "median": 1700.041,
+      "min": 939.762,
+      "max": 1801.951,
+      "stdev": 311.7057638842118,
+      "n": 5
+    },
+    "longTaskSumMs": {
+      "median": 5382.107999999999,
+      "min": 2587.628,
+      "max": 5618.728,
+      "stdev": 1156.2194296553919,
+      "n": 5
+    }
+  },
+  "statsB": {
+    "performance": {
+      "median": 45,
+      "min": 43,
+      "max": 64,
+      "stdev": 9.748846085563153,
+      "n": 5
+    },
+    "fcpMs": {
+      "median": 3981.02,
+      "min": 3061.078,
+      "max": 4178.637,
+      "stdev": 489.4382508649686,
+      "n": 5
+    },
+    "lcpMs": {
+      "median": 4036.697,
+      "min": 3095.726,
+      "max": 4254.979,
+      "stdev": 508.2954043307495,
+      "n": 5
+    },
+    "tbtMs": {
+      "median": 2690.87100000001,
+      "min": 942.748,
+      "max": 3189.8630000000094,
+      "stdev": 961.9129943129819,
+      "n": 5
+    },
+    "speedIndexMs": {
+      "median": 6312,
+      "min": 4723,
+      "max": 6583,
+      "stdev": 808.6652212133276,
+      "n": 5
+    },
+    "cls": {
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0,
+      "n": 5
+    },
+    "scriptEvaluationMs": {
+      "median": 7781.862000000141,
+      "min": 5824.145000000494,
+      "max": 8441.148000000183,
+      "stdev": 1019.3839451233391,
+      "n": 5
+    },
+    "styleLayoutMs": {
+      "median": 3644.4570000000003,
+      "min": 2423.342000000001,
+      "max": 3805.55,
+      "stdev": 579.9462343421155,
+      "n": 5
+    },
+    "longTaskMaxMs": {
+      "median": 1604.955,
+      "min": 736.879,
+      "max": 1762.691,
+      "stdev": 464.4970502320117,
+      "n": 5
+    },
+    "longTaskSumMs": {
+      "median": 5206.259,
+      "min": 2037.8740000000003,
+      "max": 5772.2789999999995,
+      "stdev": 1673.419733789583,
+      "n": 5
+    }
+  },
+  "deltas": {
+    "performance": 1,
+    "fcpMs": -62.878999999999905,
+    "lcpMs": -76.75500000000011,
+    "tbtMs": -117.36899999999059,
+    "speedIndexMs": -48,
+    "cls": 0,
+    "scriptEvaluationMs": -257.7539999999017,
+    "styleLayoutMs": -102.04799999999614,
+    "longTaskMaxMs": -95.08600000000001,
+    "longTaskSumMs": -175.84899999999925
+  },
+  "diagnosis": [
+    "La dispersión de TBT (desvío típico > ~400 ms) es del mismo orden que la diferencia entre medianas; el entorno puede dominar el resultado.",
+    "Las medianas no separan claramente A y B más allá de la dispersión observada → resultado **inconcluso** para atribuir a código vs ruido."
+  ],
+  "recommendation": "**Investigar / re-medir**: alta variabilidad; no revertir Fase 4 solo por una mediana peor sin repetir el protocolo en condiciones estables."
+}

@@ -4,7 +4,6 @@ import { BeneficiosFlora } from "@/componentes/landing/beneficios-flora";
 import { FichaFlora } from "@/componentes/landing/ficha-flora";
 import { GaleriaFlora } from "@/componentes/landing/galeria-flora";
 import { PerfilSocialFlora } from "@/componentes/landing/perfil-social-flora";
-import { PlaylistFlora } from "@/componentes/landing/playlist-flora";
 import { PresentacionFlora } from "@/componentes/landing/presentacion-flora";
 import { floraLanding } from "@/lib/flora-landing";
 
@@ -37,7 +36,6 @@ export function SeccionConoceFlora() {
         </div>
         <div className="flora__bloque flora__bloque--galeria">
           <PerfilSocialFlora instagram={datos.instagram} />
-          <PlaylistFlora playlist={datos.playlist} />
           <GaleriaFlora galeria={datos.galeria} />
         </div>
       </div>

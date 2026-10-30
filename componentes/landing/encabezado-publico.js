@@ -38,6 +38,9 @@ const PILLS_ACENTO = {
 };
 
 const SECCIONES_SIN_CTA = new Set(["con-enflora", "regalo"]);
+/** Pill de marca al primer desplazamiento; no esperar a salir del hero (100svh). */
+const UMBRAL_PILL_MARCA = 8;
+const DURACION_PILL_MARCA_MS = 250;
 
 function idSeccionActiva(seccion) {
   if (!seccion) return "";
@@ -49,6 +52,8 @@ export function EncabezadoPublico() {
   const navegandoRef = useRef(false);
   const [logoClaro, setLogoClaro] = useState(false);
   const [fondoMarca, setFondoMarca] = useState(null);
+  const [marcaPill, setMarcaPill] = useState(false);
+  const pillSalidaRef = useRef(null);
   const [activo, setActivo] = useState(0);
   const [compacto, setCompacto] = useState(false);
   const [mostrarCta, setMostrarCta] = useState(true);
@@ -64,6 +69,37 @@ export function EncabezadoPublico() {
 
     return () => mm.revert();
   }, { scope: ref });
+
+  useEffect(() => {
+    if (pillSalidaRef.current) {
+      window.clearTimeout(pillSalidaRef.current);
+      pillSalidaRef.current = null;
+    }
+
+    if (fondoMarca) {
+      setMarcaPill(true);
+      return undefined;
+    }
+
+    const reducido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const espera = reducido ? 0 : DURACION_PILL_MARCA_MS;
+
+    setMarcaPill((shell) => {
+      if (!shell) return shell;
+      pillSalidaRef.current = window.setTimeout(() => {
+        pillSalidaRef.current = null;
+        setMarcaPill(false);
+      }, espera);
+      return shell;
+    });
+
+    return () => {
+      if (pillSalidaRef.current) {
+        window.clearTimeout(pillSalidaRef.current);
+        pillSalidaRef.current = null;
+      }
+    };
+  }, [fondoMarca]);
 
   useEffect(() => {
     const consulta = window.matchMedia("(min-width: 64rem) and (max-width: 89.99rem)");
@@ -92,11 +128,8 @@ export function EncabezadoPublico() {
       const claro = seccion.getAttribute("data-logo") === "light";
       setLogoClaro((actual) => (actual === claro ? actual : claro));
       const id = idSeccionActiva(seccion);
-      const pantalla = document.querySelector(".hero__pantalla");
-      const altoHeader = header ? header.getBoundingClientRect().height : 64;
-      const enPrimeraPantalla =
-        pantalla && pantalla.getBoundingClientRect().bottom > altoHeader + 6;
-      const pill = enPrimeraPantalla ? null : claro ? "verde" : "blanco";
+      const enTope = window.scrollY <= UMBRAL_PILL_MARCA;
+      const pill = enTope ? null : claro ? "verde" : "blanco";
       setFondoMarca((actual) => (actual === pill ? actual : pill));
       const visible = !SECCIONES_SIN_CTA.has(id);
       setMostrarCta((actual) => (actual === visible ? actual : visible));
@@ -256,10 +289,8 @@ export function EncabezadoPublico() {
       <div className="encabezado-publico__barra">
         <Link
           className={`encabezado-publico__marca${
-            fondoMarca
-              ? ` encabezado-publico__marca--pill encabezado-publico__marca--pill-${fondoMarca}`
-              : ""
-          }`}
+            marcaPill ? " encabezado-publico__marca--pill" : ""
+          }${fondoMarca ? ` encabezado-publico__marca--pill-${fondoMarca}` : ""}`}
           href="#inicio"
           aria-label={NOMBRE_MARCA}
         >

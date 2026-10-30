@@ -1,0 +1,43 @@
+{
+  "source": "Chrome trace vía Lighthouse (mediciones/lcp-fase4-after-1.json), build prod local :3005, mobile preset=perf",
+  "when": "2026-10-29",
+  "mainThreadWorkMs": {
+    "other": 9458,
+    "scriptEvaluation": 8130,
+    "styleLayout": 3499,
+    "paintCompositeRender": 1644,
+    "scriptParseCompile": 142,
+    "parseHTML": 126,
+    "garbageCollection": 70
+  },
+  "longTasksMs": [
+    { "startMs": 2275, "durationMs": 1651, "phase": "carga inicial / parse+eval JS" },
+    { "startMs": 4150, "durationMs": 404, "phase": "carga inicial" },
+    { "startMs": 4942, "durationMs": 241, "phase": "post-FCP" },
+    { "startMs": 6205, "durationMs": 144, "phase": "post-FCP" },
+    { "startMs": 8224, "durationMs": 1712, "phase": "hidración / chunks landing" },
+    { "startMs": 9939, "durationMs": 240, "phase": "post-LCP (~4,1 s en esta corrida)" },
+    { "startMs": 10233, "durationMs": 106, "phase": "scroll/GSAP lazy chunks" },
+    { "startMs": 10592, "durationMs": 107, "phase": "scroll/GSAP lazy chunks" }
+  ],
+  "bootupTopScripts": [
+    { "chunk": "40i-grzhd77uh.js", "totalMs": 8956, "scriptingMs": 808, "note": "bundle app/landing (incl. GSAP, secciones dinámicas)" },
+    { "chunk": "08m0mlft-m_ma.js", "totalMs": 5760, "scriptingMs": 4823, "note": "runtime Next/React hidratación" },
+    { "chunk": "0eej4mcs0l_7o.js", "totalMs": 1212, "scriptingMs": 1032 },
+    { "chunk": "3amkgicj9l829.js", "totalMs": 901, "scriptingMs": 798 }
+  ],
+  "beforeLcp": {
+    "dominant": [
+      "Evaluación y parse de chunks Next + landing (~1,65 s + ~0,4 s long tasks antes de ~4,1 s LCP en corrida 1)",
+      "styleLayout ~3,5 s acumulado en ventana de carga (layout hero, fuentes, escena-solar contenedor)",
+      "SideRays WebGL monta tras idle (Fase 1); costo GPU no domina TBT pero suma paintComposite"
+    ],
+    "gsapScrollTrigger": "ConEnflora / hero / secciones bajo fold: trabajo ScrollTrigger principalmente tras scroll (long tasks ~10 s+), no en primer long task",
+    "webgl": "SideRays fragment shader en rAF cuando visible; pausa off-viewport Fase 4 reduce trabajo al no intersectar",
+    "forcedReflow": "Magic Bento cachea rects en scroll (dirty flag); SideRays getBoundingClientRect solo en pointer move (ahora gated visible)"
+  },
+  "scrollVsInitial": {
+    "initial": "Long tasks >1 s en 2,2–8,2 s: JS boot + hidratación",
+    "scrollInteraction": "Tareas 100–240 ms después de ~10 s alimentan dynamic imports y ScrollTrigger scrub (con-enflora pin en desktop)"
+  }
+}

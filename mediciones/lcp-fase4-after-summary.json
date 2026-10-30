@@ -1,0 +1,88 @@
+{
+  "phase": "fase-4-main-thread",
+  "when": "2026-10-29",
+  "environment": {
+    "type": "local-production",
+    "command": "pnpm build && PORT=3005 pnpm start",
+    "url": "http://localhost:3005/",
+    "lighthouse": "npx lighthouse --only-categories=performance --preset=perf ×3, mediana"
+  },
+  "compareBaseline": "mediciones/lcp-fase3-after-summary.json (afterFase3)",
+  "codeChanges": [
+    "componentes/landing/magic-bento.js — cancel rAF off-viewport; onScroll gated by visible",
+    "componentes/landing/particles.js — cancel rAF off-viewport; rAF only when visible",
+    "componentes/landing/side-rays.js — pointer + rAF off-viewport",
+    "tests/demo.test.js — resolver SCSS; assert cultivos en componente",
+    "lib/flora-mensajes-espera.js — +1 frase CERCANA_NATURAL (≥25)"
+  ],
+  "baselineFase3": {
+    "performance": 52,
+    "lcpMs": 3564,
+    "fcpMs": 3516,
+    "tbtMs": 1957,
+    "speedIndexMs": 5487,
+    "cls": 0
+  },
+  "afterFase4": {
+    "performance": 44,
+    "lcpMs": 4110,
+    "fcpMs": 4040,
+    "tbtMs": 3080,
+    "speedIndexMs": 6405,
+    "cls": 0
+  },
+  "runs": [
+    {
+      "perf": 44,
+      "lcpMs": 4110,
+      "fcpMs": 4040,
+      "tbtMs": 3080,
+      "siMs": 6405,
+      "cls": 0,
+      "carruselEnRed": false
+    },
+    {
+      "perf": 56,
+      "lcpMs": 3384,
+      "fcpMs": 3335,
+      "tbtMs": 1427,
+      "siMs": 5342,
+      "cls": 0,
+      "carruselEnRed": false
+    },
+    {
+      "perf": 43,
+      "lcpMs": 4215,
+      "fcpMs": 4146,
+      "tbtMs": 3262,
+      "siMs": 6448,
+      "cls": 0,
+      "carruselEnRed": false
+    }
+  ],
+  "deltaMedianVsFase3": {
+    "performance": -8,
+    "lcpMs": 546,
+    "fcpMs": 524,
+    "tbtMs": 1123,
+    "speedIndexMs": 918
+  },
+  "bestRunCompare": {
+    "note": "Mediana Fase 4 empeoró por alta varianza (2/3 corridas lentas). Mejor corrida Fase 4 vs mejor Fase 3 (after-2).",
+    "fase3Best": { "perf": 53, "lcpMs": 3461, "tbtMs": 1998 },
+    "fase4Best": { "perf": 56, "lcpMs": 3384, "tbtMs": 1427 },
+    "deltaBest": { "performance": 3, "lcpMs": -77, "tbtMs": -571 }
+  },
+  "varianceNote": "TBT en corridas 1 y 3 ~3,1 s vs ~1,7–2,0 s en Fase 3; posible contención CPU en Lighthouse secuencial headless. Re-medir en sesión idle o producción antes de revertir pausa off-viewport.",
+  "mainThreadTraceFile": "mediciones/lcp-fase4-mainthread-trace.json",
+  "fase3Validation": {
+    "tests": "pnpm test — 255 pass (2026-10-29)",
+    "routesSmoke": "/, /registro, /espacios, /demo, /ingreso — HTTP 200",
+    "carruselInitialNetwork": "false en 3/3 corridas Fase 4",
+    "cssSplit": "sin regresión reportada en smoke; layouts app importan app-autenticada.scss"
+  },
+  "notModified": [
+    "con-enflora.js",
+    "escena-solar.js (SideRays idle Fase 1 sin cambios Fase 4)"
+  ]
+}

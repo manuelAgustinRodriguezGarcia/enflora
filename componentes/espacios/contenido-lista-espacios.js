@@ -23,11 +23,15 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
         return (
           <li className="tarjeta tarjeta--espacio" key={espacio.id}>
             <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
-              <ImagenEspacio tipo={espacio.tipo} className="imagen-espacio--miniatura" />
+              <span className="tarjeta__visual">
+                <ImagenEspacio tipo={espacio.tipo} className="imagen-espacio--miniatura" />
+                <span className={`tarjeta__tipo tarjeta__tipo--${espacio.tipo}`}>
+                  {etiquetaTipoEspacio(espacio.tipo)}
+                </span>
+              </span>
               <span className="tarjeta__info">
                 <span className="tarjeta__cabecera">
                   <span className="tarjeta__nombre">{espacio.nombre}</span>
-                  <span className="tarjeta__tipo">{etiquetaTipoEspacio(espacio.tipo)}</span>
                 </span>
                 <span className="tarjeta__metricas">
                   <span className="tarjeta__dato">

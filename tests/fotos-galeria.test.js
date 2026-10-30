@@ -3,9 +3,10 @@ import test from "node:test";
 import { ilustracionEspacio } from "../lib/imagenes-espacio.js";
 import { rutaPortadaUnidad, rutaFotoValida } from "../lib/fotos.js";
 
-test("ilustraciones de espacio usan fallback hasta que existan archivos en public/", () => {
-  assert.equal(ilustracionEspacio("interior"), null);
-  assert.equal(ilustracionEspacio("exterior"), null);
+test("ilustraciones de espacio apuntan a las imágenes de cultivo", () => {
+  assert.equal(ilustracionEspacio("interior"), "/images/app/interior-cultivos.png");
+  assert.equal(ilustracionEspacio("exterior"), "/images/app/exterior-cultivos.png");
+  assert.equal(ilustracionEspacio("otro"), null);
 });
 
 test("ruta de portada cumple el patrón validado en el servidor", () => {

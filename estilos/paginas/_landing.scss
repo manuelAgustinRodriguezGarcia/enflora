@@ -207,27 +207,33 @@ body:has(.landing) {
     justify-content: center;
     justify-self: center;
     line-height: 0;
+    border-radius: 0;
+    background-color: transparent;
+    box-shadow: none;
     transition:
       background-color 0.25s ease,
       box-shadow 0.25s ease,
-      padding 0.25s ease;
+      padding 0.25s ease,
+      border-radius 0.25s ease;
 
     &--pill {
       width: fit-content;
       border-radius: 999px;
       padding: 0.3rem 0.75rem;
+      background-color: transparent;
+      box-shadow: none;
 
       .encabezado-publico__logo {
         height: 26px;
       }
 
       &-blanco {
-        background: #fff;
+        background-color: #fff;
         box-shadow: 0 2px 12px rgb(11 61 42 / 10%);
       }
 
       &-verde {
-        background: #0b3d2a;
+        background-color: #0b3d2a;
         box-shadow: 0 2px 12px rgb(0 0 0 / 18%);
       }
     }
@@ -3628,6 +3634,10 @@ body:has(.landing) {
 }
 
 .producto-preview {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.85rem;
   min-width: 0;
 
   &__imagen {
@@ -3635,6 +3645,74 @@ body:has(.landing) {
     width: 100%;
     height: auto;
     border-radius: 18px;
+  }
+
+  &__marco {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    box-shadow: 0 14px 30px -22px rgba(11, 61, 42, 0.45);
+  }
+
+  &__demo {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0.9rem 1rem;
+    background: rgba(247, 250, 241, 0.86);
+    backdrop-filter: blur(3px);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+
+  &__demo-texto {
+    margin: 0;
+    color: var(--color-primary);
+    font-family: var(--font-identidad);
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+
+  &__demo-boton {
+    min-width: 10rem;
+  }
+}
+
+a.producto-preview__cta {
+  display: inline-flex;
+  align-self: stretch;
+  justify-content: center;
+  width: 100%;
+}
+
+@media (min-width: 64rem) and (hover: hover) and (pointer: fine) {
+  .producto-preview__demo {
+    display: flex;
+  }
+
+  .producto-preview__marco:hover .producto-preview__demo,
+  .producto-preview__marco:focus-within .producto-preview__demo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  a.producto-preview__cta {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .producto-preview__demo {
+    transition: none;
   }
 }
 
@@ -3733,26 +3811,7 @@ body:has(.landing) {
     gap: 1.75rem;
 
     .flora-ig {
-      order: 1;
       width: 100%;
-    }
-
-    .flora-playlist {
-      order: 2;
-    }
-
-    .flora-galeria {
-      order: 3;
-    }
-
-    @media (min-width: 64rem) {
-      .flora-playlist {
-        order: 3;
-      }
-
-      .flora-galeria {
-        order: 2;
-      }
     }
   }
 }
@@ -4448,111 +4507,7 @@ body:has(.landing) {
 
 }
 
-.flora-playlist {
-  display: flex;
-  flex-direction: column;
-  gap: 1.15rem;
-  width: 100%;
-  min-width: 0;
-
-  &__cabecera {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    max-width: 36rem;
-  }
-
-  &__titulo {
-    margin: 0;
-    font-family: var(--font-identidad);
-    font-size: clamp(1.45rem, 2.5vw, 1.85rem);
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--flora-ink);
-  }
-
-  &__bajada {
-    margin: 0;
-    color: rgba(11, 61, 42, 0.68);
-    line-height: 1.45;
-  }
-
-  &__fila {
-    display: block;
-    width: 100%;
-    min-width: 0;
-  }
-
-  &__embed {
-    width: 100%;
-    min-width: 0;
-    height: 80px;
-    overflow: hidden;
-    border-radius: 12px;
-
-    iframe {
-      display: block;
-      width: 100%;
-      height: 352px;
-      border: 0;
-      border-radius: 12px;
-    }
-  }
-
-  &__dj {
-    display: none;
-  }
-
-  @media (min-width: 64rem) {
-    &__embed {
-      height: auto;
-      overflow: visible;
-    }
-
-    &__fila {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 1.25rem;
-      align-items: center;
-    }
-
-    &__dj {
-      position: relative;
-      display: block;
-      min-height: 352px;
-      overflow: visible;
-      background: transparent;
-
-      img {
-        object-fit: contain;
-        object-position: left center;
-        animation: flora-dj-brillo 2.6s ease-in-out infinite;
-      }
-    }
-  }
-}
-
-@keyframes flora-dj-brillo {
-  0%,
-  100% {
-    filter:
-      drop-shadow(0 0 10px rgba(164, 200, 91, 0.55))
-      drop-shadow(0 0 24px rgba(120, 190, 70, 0.28));
-  }
-
-  50% {
-    filter:
-      drop-shadow(0 0 18px rgba(196, 232, 110, 0.95))
-      drop-shadow(0 0 40px rgba(132, 210, 74, 0.62));
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .flora-playlist__dj img {
-    animation: none;
-    filter: drop-shadow(0 0 14px rgba(164, 200, 91, 0.55));
-  }
-
   .flora-galeria__zoom {
     transition: none;
   }
@@ -6562,7 +6517,7 @@ body:has(.landing) {
     font-size: clamp(1.15rem, 5.2vw, 1.45rem);
     font-weight: 700;
     letter-spacing: -0.02em;
-    line-height: 1.15;
+    line-height: 1.2;
   }
 
   &__pista-bajada {
@@ -7325,23 +7280,67 @@ button.flora-chat__continuar {
 }
 
 @media (max-width: 63.99rem) {
+  .regalo {
+    &__contenido {
+      justify-content: flex-end;
+    }
+
+    &__entrada,
+    &__escenario {
+      flex: 1 1 auto;
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      min-height: 0;
+    }
+
+    &__fase-chat {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      width: 100%;
+      height: auto;
+      max-height: 100%;
+      min-height: 0;
+    }
+
+    &__pista {
+      flex-shrink: 0;
+    }
+
+    &__chat-wrap {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0;
+      max-height: 100%;
+      margin-top: auto;
+    }
+  }
+
   .regalo__ticket-wrap {
     width: min(100%, 17.5rem);
   }
 
   .flora-chat {
+    flex: 1 1 auto;
+    width: 100%;
     height: auto;
     min-height: 0;
-    max-height: none;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .flora-chat__mensajes {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     min-height: 0;
-    overflow: visible;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   .flora-chat__pie {
+    flex-shrink: 0;
     min-height: 10.75rem;
   }
 
