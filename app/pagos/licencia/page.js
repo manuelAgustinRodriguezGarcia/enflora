@@ -36,6 +36,7 @@ const MENSAJES = {
   pruebas_no_confirmadas: "Confirmá en local que el token salió de la pestaña Pruebas.",
   cobros_reales_bloqueados: "Los cobros reales están bloqueados en desarrollo.",
   cobros_reales_desactivados: "Los cobros reales siguen desactivados.",
+  piloto_no_autorizado: "Las compras todavía no están habilitadas para tu cuenta. No se creó ninguna orden.",
   ambiente_no_declarado: "Falta declarar MERCADOPAGO_ENV. No se crea ninguna orden.",
   ambiente_contradictorio: "El ambiente de prueba no puede convivir con cobros reales.",
   sin_servicio: "Falta la clave de servicio de Supabase o la migración de pagos.",

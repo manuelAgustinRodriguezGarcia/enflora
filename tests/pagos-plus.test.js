@@ -653,3 +653,48 @@ test("cancelarSuscripcionPlus actualiza estado local", async () => {
   assert.equal(actualizado.estado_interno, "cancelada");
   assert.equal(actualizado.vigente_hasta_fin_periodo, true);
 });
+
+const envProduccionPiloto = {
+  NODE_ENV: "production",
+  MERCADOPAGO_ENV: "produccion",
+  PAYMENTS_LIVE_ENABLED: "true",
+  PLUS_LIVE_ENABLED: "true",
+  PAYMENTS_PILOT_USER_IDS: USUARIO,
+};
+
+function supabaseSinAcceso() {
+  return {
+    from() {
+      throw new Error("no debe consultar la base");
+    },
+  };
+}
+
+test("iniciarCheckoutPlus bloquea a usuarios ajenos al piloto antes de tocar la base o Mercado Pago", async () => {
+  const { iniciarCheckoutPlus } = await import("../lib/pagos/plus/gestion-servidor.js");
+  const resultado = await iniciarCheckoutPlus({
+    supabase: supabaseSinAcceso(),
+    usuarioId: OTRA,
+    emailUsuario: "ajeno@example.com",
+    env: envProduccionPiloto,
+    fetchFn: async () => {
+      throw new Error("no debe llamar a Mercado Pago");
+    },
+  });
+  assert.deepEqual(resultado, { ok: false, codigo: "piloto_no_autorizado" });
+});
+
+test("prepararAltaPlus bloquea a usuarios ajenos al piloto antes de crear el PreApproval", async () => {
+  const resultado = await prepararAltaPlus({
+    supabase: supabaseSinAcceso(),
+    usuarioId: OTRA,
+    emailUsuario: "ajeno@example.com",
+    env: envProduccionPiloto,
+    ejecutarMp: true,
+    fetchFn: async () => {
+      throw new Error("no debe llamar a Mercado Pago");
+    },
+  });
+  assert.equal(resultado.ok, false);
+  assert.equal(resultado.codigo, "piloto_no_autorizado");
+});

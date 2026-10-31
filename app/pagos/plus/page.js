@@ -26,6 +26,7 @@ const ERRORES = {
   comprador_prueba_invalido: "Configurá MERCADOPAGO_TEST_BUYER_EMAIL para pruebas.",
   comprador_invalido: "Falta un correo válido para el checkout.",
   mp_cancel_fallido: "No pudimos cancelar en Mercado Pago. Probá de nuevo.",
+  piloto_no_autorizado: "Las compras todavía no están habilitadas para tu cuenta.",
 };
 
 function pesos(valor) {
