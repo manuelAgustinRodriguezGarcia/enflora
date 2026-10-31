@@ -5,12 +5,13 @@ import { redirect } from "next/navigation";
 import { cargarListadoEspacios } from "@/lib/cargar-listado-espacios";
 import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
+import { validarAltaPlantasEnUnidad } from "@/lib/flora-beneficios-plantas-servidor";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
-import { datosTipoUnidad, tipoUnidadPermitido } from "@/lib/unidades";
+import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES, tipoUnidadPermitido } from "@/lib/unidades";
 
-const MAXIMO_UNIDADES = 20;
-const MAXIMO_PLANTAS = 100;
+const MAXIMO_UNIDADES_CREAR = MAXIMO_UNIDADES;
+const MAXIMO_PLANTAS_POR_ALTA = MAXIMO_PLANTAS;
 
 export async function recargarListadoEspacios() {
   return cargarListadoEspacios({ origen: "reintento_cliente" });
@@ -36,7 +37,7 @@ export async function crearCultivo(_estado, formulario) {
   if (tipo !== "interior" && tipo !== "exterior") {
     return { error: "Seleccioná un tipo de espacio." };
   }
-  if (!unidades || unidades.length < 1 || unidades.length > MAXIMO_UNIDADES) {
+  if (!unidades || unidades.length < 1 || unidades.length > MAXIMO_UNIDADES_CREAR) {
     return { error: "Seleccioná un tipo de unidad." };
   }
 
@@ -52,7 +53,7 @@ export async function crearCultivo(_estado, formulario) {
 
     if (!nombreUnidad) return { error: "El nombre es obligatorio." };
     if (datosTipo.error) return { error: datosTipo.error };
-    if (plantas.length < 1 || plantas.length > MAXIMO_PLANTAS) {
+    if (plantas.length < 1 || plantas.length > MAXIMO_PLANTAS_POR_ALTA) {
       return { error: "Seleccioná al menos una planta." };
     }
 
@@ -108,6 +109,17 @@ export async function crearCultivo(_estado, formulario) {
   }
 
   const porNumero = new Map(unidadesCreadas.map((unidad) => [unidad.numero, unidad.id]));
+
+  for (let indice = 0; indice < unidadesCreadas.length; indice += 1) {
+    const unidadId = unidadesCreadas[indice].id;
+    const cantidad = plantasPorUnidad[indice]?.length ?? 0;
+    const cupo = await validarAltaPlantasEnUnidad(supabase, user.id, unidadId, cantidad);
+    if (!cupo.ok) {
+      await supabase.from("espacios").delete().eq("id", espacio.id);
+      return { error: cupo.error };
+    }
+  }
+
   const filasPlantas = [];
   const origenes = [];
   const hoy = fechaHoy();

@@ -6,20 +6,40 @@ import { Boton } from "@/componentes/boton";
 import { IconoBasura } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
-export function EliminarEspacio({ espacioId }) {
+export function EliminarEspacio({ espacioId, presentacion = "icono", alAbrirModal }) {
   const [abierto, setAbierto] = useState(false);
   const [estado, accion, pendiente] = useActionState(eliminarEspacio, null);
 
-  return (
-    <>
+  function abrirModal() {
+    alAbrirModal?.();
+    setAbierto(true);
+  }
+
+  const disparador =
+    presentacion === "menu" ? (
+      <button
+        type="button"
+        className="tarjeta-acciones-menu__opcion tarjeta-acciones-menu__opcion--destructivo"
+        role="menuitem"
+        onClick={abrirModal}
+      >
+        <IconoBasura />
+        Eliminar
+      </button>
+    ) : (
       <Boton
         className="boton boton--destructivo boton--icono"
         type="button"
         aria-label="Eliminar espacio"
-        onClick={() => setAbierto(true)}
+        onClick={abrirModal}
       >
         <IconoBasura />
       </Boton>
+    );
+
+  return (
+    <>
+      {disparador}
       <ModalConfirmacion
         abierto={abierto}
         onCerrar={() => setAbierto(false)}

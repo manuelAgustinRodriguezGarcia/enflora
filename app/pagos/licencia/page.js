@@ -10,11 +10,12 @@ import {
   importeLicenciaCentavos,
 } from "@/lib/pagos/dinero";
 import {
+  DIAS_ALERTA_COTIZACION,
   DIAS_VIGENCIA_COTIZACION,
   URL_BNA,
   obtenerCotizacionBilleteVendedor,
 } from "@/lib/pagos/cotizacion-bna";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
 import { etiquetaTipoUnidad } from "@/lib/unidades";
 
 export const metadata = {
@@ -52,6 +53,8 @@ export default async function PaginaLicencia({ searchParams }) {
   const parametros = await searchParams;
   const codigo = MENSAJES[parametros.error] ? parametros.error : "";
   const supabase = await crearClienteServidor();
+  const usuario = await obtenerUsuario();
+  const usuarioId = usuario?.id || "";
   const [unidadesRespuesta, espaciosRespuesta, ciclosRespuesta, licenciasRespuesta, pagosRespuesta, cotizacion] = await Promise.all([
     supabase
       .from("unidades_cultivo")
@@ -89,8 +92,10 @@ export default async function PaginaLicencia({ searchParams }) {
   const cobertura = new Map();
   for (const licencia of licenciasRespuesta.data || []) {
     const pago = pagosPorId.get(licencia.pago_id);
-    if (licenciaHabilita({ licencia, pago, ambiente: "produccion" })) cobertura.set(licencia.ciclo_cultivo_id, "produccion");
-    else if (licenciaHabilita({ licencia, pago, ambiente: "prueba" })) cobertura.set(licencia.ciclo_cultivo_id, "prueba");
+    if (licenciaHabilita({ licencia, pago, ambiente: "produccion", usuarioId }))
+      cobertura.set(licencia.ciclo_cultivo_id, "produccion");
+    else if (licenciaHabilita({ licencia, pago, ambiente: "prueba", usuarioId }))
+      cobertura.set(licencia.ciclo_cultivo_id, "prueba");
   }
   const activas = new Set(cobertura.keys());
   const ciclos = ciclosRespuesta.data || [];
@@ -231,7 +236,11 @@ export default async function PaginaLicencia({ searchParams }) {
               <dt>Vigencia</dt>
               <dd>
                 {cotizacion.ok
-                  ? `Última publicación del Banco Nación, también en días no hábiles, hasta ${DIAS_VIGENCIA_COTIZACION} días. Vence el ${formatearFechaCotizacion(cotizacion.vigenteHasta)}.`
+                  ? `Última publicación del Banco Nación (también en días no hábiles). Máximo ${DIAS_VIGENCIA_COTIZACION} días de antigüedad; vence el ${formatearFechaCotizacion(cotizacion.vigenteHasta)}.${
+                      cotizacion.advertenciaAntigua
+                        ? ` Publicada hace más de ${DIAS_ALERTA_COTIZACION} días: confirmá el total antes de pagar.`
+                        : ""
+                    }`
                   : "Sin una cotización vigente no se puede pagar."}
               </dd>
             </div>

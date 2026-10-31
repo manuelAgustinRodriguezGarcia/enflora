@@ -80,6 +80,8 @@
   --line-height-body: 1.5;
   --line-height-heading: 1.2;
 
+  /* Gutter horizontal del chat de Flora en mobile: .pagina va en 0 y lista/compositor usan 0.75rem. */
+  --app-padding-inline: 0.75rem;
   --touch-min: 2.75rem;
   --radius-control: 0.5rem;
   --radius-card: 0.625rem;
@@ -102,4 +104,5 @@
     var(--bottom-nav-margen-inferior) + var(--bottom-nav-capsula-altura) + env(safe-area-inset-bottom, 0px)
   );
   --enflora-anclaje-inferior: calc(var(--enflora-teclado-inferior) + var(--enflora-altura-barra-inferior));
+  --enflora-fab-offset-bottom: calc(var(--enflora-anclaje-inferior, 4rem) + 0.85rem);
 }

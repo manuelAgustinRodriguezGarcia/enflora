@@ -20,6 +20,12 @@ export function GaleriaFotos({ fotos = [], titulo = "Fotos", vacio = "Todavía n
         <ul className="galeria-fotos__grilla">
           {fotos.map((foto, indice) => {
             const dia = diaArgentina(foto.fecha_evento);
+            const fechaTexto = dia ? formatearFecha(dia) : "";
+            const etiquetas = [
+              foto.aplica_a === "ambiente" ? "Ambiente" : null,
+              foto.compartida ? "Registro compartido" : null,
+            ].filter(Boolean);
+            const mostrarMeta = etiquetas.length > 0 || fechaTexto;
             return (
               <li key={foto.id}>
                 <button
@@ -34,12 +40,17 @@ export function GaleriaFotos({ fotos = [], titulo = "Fotos", vacio = "Todavía n
                   ) : (
                     <span className="galeria-fotos__sin-imagen">Sin vista previa</span>
                   )}
-                  <span className="galeria-fotos__fecha">{dia ? formatearFecha(dia) : ""}</span>
-                  {foto.aplica_a === "ambiente" ? (
-                    <span className="galeria-fotos__etiqueta">Ambiente</span>
-                  ) : null}
-                  {foto.compartida ? (
-                    <span className="galeria-fotos__etiqueta">Registro compartido</span>
+                  {mostrarMeta ? (
+                    <span className="galeria-fotos__meta">
+                      {etiquetas.map((texto) => (
+                        <span key={texto} className="galeria-fotos__meta-etiqueta">
+                          {texto}
+                        </span>
+                      ))}
+                      {fechaTexto ? (
+                        <span className="galeria-fotos__meta-fecha">{fechaTexto}</span>
+                      ) : null}
+                    </span>
                   ) : null}
                 </button>
               </li>

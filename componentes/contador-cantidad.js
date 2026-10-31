@@ -18,6 +18,7 @@ export function ContadorCantidad({
   minimo = 1,
   maximo = 100,
   contexto = "",
+  contextoExtra = null,
   ariaLabel = "Cantidad",
   deshabilitado = false,
   icono: Icono = IconoPlanta,
@@ -27,9 +28,20 @@ export function ContadorCantidad({
     onChange(siguiente);
   }
 
+  const encabezado = contexto ? (
+    contextoExtra ? (
+      <div className="contador-cantidad__contexto-fila">
+        <p className="contador-cantidad__contexto">{contexto}</p>
+        {contextoExtra}
+      </div>
+    ) : (
+      <p className="contador-cantidad__contexto">{contexto}</p>
+    )
+  ) : null;
+
   return (
     <div className="contador-cantidad">
-      {contexto ? <p className="contador-cantidad__contexto">{contexto}</p> : null}
+      {encabezado}
       <div className="contador-cantidad__controles">
         <motion.button
           type="button"

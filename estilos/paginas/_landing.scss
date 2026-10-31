@@ -5032,6 +5032,18 @@ a.producto-preview__cta {
     }
   }
 
+  &__beneficio-estado {
+    font-size: 0.82em;
+    opacity: 0.85;
+  }
+
+  &__aclaracion--nota {
+    margin-top: 0.35rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
   &__aclaracion {
     margin: 0;
     padding: 0.7rem 0.8rem;

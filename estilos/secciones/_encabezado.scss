@@ -71,6 +71,16 @@
     }
   }
 
+  body:has(.bottom-nav:not(.demo-nav)) & {
+    padding-inline: var(--app-padding-inline);
+
+    @media (max-width: 1023px) {
+      .encabezado__notificaciones {
+        right: var(--app-padding-inline);
+      }
+    }
+  }
+
   &__cerrar-aviso {
     padding: 0.5rem 0.9rem;
     border: 0;

@@ -21,13 +21,13 @@
 }
 
 .perfil {
-  --perfil-salir-alto: 2.75rem;
-  --perfil-salir-gap: 0.65rem;
-  --perfil-nav-base: calc(4.25rem + env(safe-area-inset-bottom) + 0.25rem);
+  --perfil-guardar-alto: 3.35rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  padding-bottom: calc(var(--perfil-nav-base) + var(--perfil-salir-alto) + 5.5rem);
+  /* El padding de .pagina ya reserva --space-bottom-nav (cápsula + márgenes + safe area).
+     Este extra deja el cierre de sesión por encima del botón flotante de guardar. */
+  padding-bottom: calc(var(--perfil-guardar-alto) + 0.85rem);
 
   .formulario {
     padding: 0;
@@ -94,13 +94,13 @@
   &__guardar {
     position: fixed;
     z-index: 10;
-    right: 1.5rem;
-    bottom: calc(var(--perfil-nav-base) + var(--perfil-salir-alto) + var(--perfil-salir-gap));
+    right: var(--app-padding-inline);
+    bottom: var(--enflora-fab-offset-bottom);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 3.35rem;
-    height: 3.35rem;
+    width: var(--perfil-guardar-alto);
+    height: var(--perfil-guardar-alto);
     margin: 0;
     padding: 0;
     border: 0;
@@ -125,30 +125,19 @@
     }
 
     @media (min-width: 48rem) {
-      right: max(1.5rem, calc(50% - 14rem));
+      right: max(var(--app-padding-inline), calc(50% - 14rem));
     }
   }
 
   &__salir {
-    position: fixed;
-    z-index: 9;
-    right: 1.5rem;
-    bottom: var(--perfil-nav-base);
-    left: 1.5rem;
+    position: relative;
+    z-index: 1;
+    scroll-margin-bottom: calc(var(--space-bottom-nav) + var(--perfil-guardar-alto) + 0.85rem);
 
     .boton {
-      min-height: var(--perfil-salir-alto);
-    }
-
-    @media (min-width: 48rem) {
-      right: max(1.5rem, calc(50% - 14rem));
-      left: max(1.5rem, calc(50% - 14rem));
+      min-height: var(--touch-min);
     }
   }
-}
-
-.pagina:has(.perfil) {
-  padding-bottom: calc(var(--space-bottom-nav) + 8rem);
 }
 
 .auth {

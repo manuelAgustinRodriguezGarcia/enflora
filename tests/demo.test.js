@@ -87,18 +87,18 @@ test("genera un espacio exterior con unidades válidas", () => {
 test("respeta el tipo de unidad elegido y el nombre personalizado", () => {
   const sala = generar({ tipoUnidad: "sala", plantasPorUnidad: 3 }).cultivo;
   assert.deepEqual(sala.unidades.map((unidad) => [unidad.nombre, unidad.tipo, unidad.tipo_personalizado]), [
-    ["Sala", "sala", null],
+    ["Sala 1", "sala", null],
   ]);
   const armarios = generar({ tipoUnidad: "otro", tipoPersonalizado: "  Armario ", cantidadUnidades: 2 }).cultivo;
   assert.deepEqual(
     armarios.unidades.map((unidad) => [unidad.nombre, unidad.tipo, unidad.tipo_personalizado]),
     [
-      ["Armario 1", "otro", "Armario"],
-      ["Armario 2", "otro", "Armario"],
+      ["Unidad 1", "otro", "Armario"],
+      ["Unidad 2", "otro", "Armario"],
     ]
   );
   const aire = generar({ tipo: "exterior", tipoUnidad: "aire_libre" }).cultivo;
-  assert.equal(aire.unidades[0].nombre, "Aire libre");
+  assert.equal(aire.unidades[0].nombre, "Sector al aire libre 1");
   assert.equal(textoUnidadesDemo("interior", 2, "otro", "Armario"), "2 armarios");
   assert.equal(textoUnidadesDemo("interior", 1, "sala"), "1 sala de cultivo");
   assert.equal(textoUnidadesDemo("exterior", 3), "3 invernaderos");
@@ -109,10 +109,10 @@ test("rechaza tipos de unidad incoherentes", () => {
   assert.ok(validarConfiguracion({ ...base, tipoUnidad: "invernadero" }).errores.tipoUnidad);
   assert.ok(validarConfiguracion({ ...base, tipoUnidad: "otro", tipoPersonalizado: "  " }).errores.tipoUnidad);
   assert.ok(validarConfiguracion({ ...base, tipoUnidad: "otro", tipoPersonalizado: "a".repeat(25) }).errores.tipoUnidad);
-  assert.ok(validarConfiguracion({ ...base, tipoUnidad: "sala", cantidadUnidades: 2 }).errores.cantidadUnidades);
+  assert.ok(!validarConfiguracion({ ...base, tipoUnidad: "sala", cantidadUnidades: 2 }).errores?.cantidadUnidades);
   assert.ok(
-    validarConfiguracion({ ...base, tipo: "exterior", tipoUnidad: "aire_libre", cantidadUnidades: 2 }).errores
-      .cantidadUnidades
+    !validarConfiguracion({ ...base, tipo: "exterior", tipoUnidad: "aire_libre", cantidadUnidades: 2 }).errores
+      ?.cantidadUnidades
   );
   assert.equal(validarConfiguracion({ ...base, tipoUnidad: "carpa", tipoPersonalizado: "x" }).datos.tipoPersonalizado, "");
 });

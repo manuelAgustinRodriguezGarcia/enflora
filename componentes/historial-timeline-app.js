@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Boton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";
 import { HistorialDiaApp } from "@/componentes/historial-dia-app";
@@ -13,7 +13,6 @@ import {
   mapaFotos,
 } from "@/lib/demo/historial/historial-demo";
 
-const PASO = 10;
 const TODO_EL_CULTIVO = "todo";
 
 function mapaCambiosEtapa(historial) {
@@ -50,27 +49,39 @@ export function HistorialTimelineApp({
   errorMas = "",
   onCargarMasDias = null,
   onReintentarMas = null,
+  children = null,
 }) {
   const [etapa, setEtapa] = useState("");
-  const [visibles, setVisibles] = useState(PASO);
+  const centinelaRef = useRef(null);
   const mapa = useMemo(() => mapaFotos(historial), [historial]);
   const cambiosPorDia = useMemo(() => mapaCambiosEtapa(historial), [historial]);
   const etapas = etapasConRegistros(historial);
   const dias = diasFiltrados(historial, etapa);
-  const recortados = dias.slice(0, visibles);
-  const grupos = agruparPorMes(recortados);
-  const restantes = dias.length - recortados.length;
+  const grupos = agruparPorMes(dias);
 
   function filtrar(valor) {
     setEtapa(valor);
-    setVisibles(PASO);
   }
+
+  useEffect(() => {
+    const nodo = centinelaRef.current;
+    if (!nodo || !hayMasDias || cargandoMas || errorMas || !onCargarMasDias) return undefined;
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        if (entradas.some((entrada) => entrada.isIntersecting)) onCargarMasDias();
+      },
+      { root: null, rootMargin: "240px 0px" }
+    );
+    observador.observe(nodo);
+    return () => observador.disconnect();
+  }, [hayMasDias, cargandoMas, errorMas, onCargarMasDias, dias.length]);
 
   return (
     <section className="historial-timeline" aria-labelledby="historial-timeline-titulo">
       <div className="historial-timeline__cabecera">
-        <h2 id="historial-timeline-titulo">Registro día a día</h2>
+        <h2 id="historial-timeline-titulo">Todos los registros</h2>
       </div>
+      {children}
       {etapas.length > 1 ? (
         <Selector
           etiqueta="Filtrar por etapa"
@@ -108,26 +119,17 @@ export function HistorialTimelineApp({
         </div>
       ) : null}
 
-      {restantes > 0 ? (
-        <Boton
-          type="button"
-          variante="secundario"
-          className="boton--ancho"
-          onClick={() => setVisibles((valor) => valor + PASO)}
-        >
-          Mostrar más días ({restantes} {restantes === 1 ? "restante" : "restantes"})
-        </Boton>
-      ) : hayMasDias && onCargarMasDias ? (
-        <Boton
-          type="button"
-          variante="secundario"
-          className="boton--ancho"
-          onClick={onCargarMasDias}
-          disabled={cargandoMas}
-        >
-          {cargandoMas ? "Cargando..." : "Cargar más días"}
-        </Boton>
-      ) : dias.length > 0 ? (
+      {cargandoMas ? (
+        <p className="demo__aviso historial-timeline__fin" role="status">
+          Cargando registros…
+        </p>
+      ) : null}
+
+      {hayMasDias && !errorMas ? (
+        <div ref={centinelaRef} className="historial-timeline__centinela" aria-hidden="true" />
+      ) : null}
+
+      {!hayMasDias && !cargandoMas && dias.length > 0 ? (
         <p className="demo__aviso historial-timeline__fin">
           Llegaste al último registro disponible de este cultivo.
         </p>

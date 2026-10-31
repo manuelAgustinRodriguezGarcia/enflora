@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { cargarMasDiasHistorial } from "@/app/registros/acciones";
 import { HistorialCabecera } from "@/componentes/demo/historial-cabecera";
@@ -76,6 +76,9 @@ export function VistaHistorialCultivo({
   const [cursor, setCursor] = useState(cursorDias);
   const [cargandoMas, setCargandoMas] = useState(false);
   const [errorMas, setErrorMas] = useState("");
+  const cargandoRef = useRef(false);
+  const cursorRef = useRef(cursorDias);
+  const idsRef = useRef(new Set((registrosIniciales || []).map((item) => item.id)));
 
   const [unidadId, setUnidadId] = useState(filtrosIniciales?.unidadId || "");
   const [plantaId, setPlantaId] = useState(filtrosIniciales?.plantaId || "todas");
@@ -91,11 +94,20 @@ export function VistaHistorialCultivo({
     [registrosIniciales, registrosExtra, ocultos]
   );
 
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+
+  useEffect(() => {
+    idsRef.current = new Set(registros.map((item) => item.id));
+  }, [registros]);
+
   const historial = useMemo(
     () =>
       construirHistorialVista({
         unidad,
         espacioNombre,
+        tipoEspacio: historialBase?.cultivo?.tipoEspacio || "",
         plantas,
         plantaId: filtrosIniciales?.plantaId,
         etapas,
@@ -103,12 +115,14 @@ export function VistaHistorialCultivo({
         registros,
         resumen,
         portada,
+        puntosMedicion: historialBase?.puntosMedicion || null,
         fechaCorte: historialBase?.fechaCorte,
         diaReferenciaUnidad: historialBase?.cultivo?.diaReferenciaUnidad,
       }),
     [
       unidad,
       espacioNombre,
+      historialBase?.cultivo?.tipoEspacio,
       plantas,
       filtrosIniciales?.plantaId,
       etapas,
@@ -116,6 +130,7 @@ export function VistaHistorialCultivo({
       registros,
       resumen,
       portada,
+      historialBase?.puntosMedicion,
       historialBase?.fechaCorte,
       historialBase?.cultivo?.diaReferenciaUnidad,
     ]
@@ -184,8 +199,10 @@ export function VistaHistorialCultivo({
       (filtrosIniciales?.contenidos && filtrosIniciales.contenidos.length < CONTENIDOS_HISTORIAL.length)
   );
 
-  async function cargarMas() {
-    if (!cursor || cargandoMas || !filtrosIniciales) return;
+  const cargarMas = useCallback(async () => {
+    const cursorActual = cursorRef.current;
+    if (!cursorActual || cargandoRef.current || !filtrosIniciales) return;
+    cargandoRef.current = true;
     setCargandoMas(true);
     setErrorMas("");
     try {
@@ -197,22 +214,33 @@ export function VistaHistorialCultivo({
         hasta: filtrosIniciales.hasta,
         contenidos: filtrosIniciales.contenidos,
         sinContenido: filtrosIniciales.sinContenido,
-        cursorFecha: cursor.fecha,
-        cursorId: cursor.id,
+        cursorFecha: cursorActual.fecha,
+        cursorId: cursorActual.id,
       });
       if (respuesta.error) {
-        setErrorMas(respuesta.mensaje || "No se pudieron cargar más días.");
+        setErrorMas(respuesta.mensaje || "No se pudieron cargar más registros.");
         return;
       }
-      setRegistrosExtra((lista) => [...lista, ...(respuesta.registros || [])]);
-      setHayMas(Boolean(respuesta.hayMas));
-      setCursor(respuesta.cursor || null);
+      const recibidos = (respuesta.registros || []).filter((item) => item?.id && !idsRef.current.has(item.id));
+      if (!recibidos.length) {
+        cursorRef.current = null;
+        setCursor(null);
+        setHayMas(false);
+        return;
+      }
+      for (const item of recibidos) idsRef.current.add(item.id);
+      setRegistrosExtra((lista) => [...lista, ...recibidos]);
+      const siguiente = respuesta.hayMas ? respuesta.cursor || null : null;
+      cursorRef.current = siguiente;
+      setCursor(siguiente);
+      setHayMas(Boolean(siguiente));
     } catch {
-      setErrorMas("No se pudieron cargar más días.");
+      setErrorMas("No se pudieron cargar más registros.");
     } finally {
+      cargandoRef.current = false;
       setCargandoMas(false);
     }
-  }
+  }, [filtrosIniciales]);
 
   function alternarContenido(clave) {
     setContenidos((actual) => {
@@ -229,79 +257,10 @@ export function VistaHistorialCultivo({
 
   return (
     <div className="historial-vista-cultivo demo-historial-vista">
-      <details className="historial__panel historial-vista-cultivo__filtros" defaultOpen={hayFiltros}>
-        <summary>
-          Filtros
-          <span>{resumenFiltros(filtrosIniciales, plantasUnidad, geneticas)}</span>
-        </summary>
-        <form className="historial__formulario" onSubmit={aplicarFiltros}>
-          <div className="historial__rejilla">
-            <Selector
-              id="historial-vista-planta"
-              etiqueta="Planta"
-              valor={plantaId}
-              onChange={(valor) => setPlantaId(valor || "todas")}
-              opciones={[
-                { valor: "todas", etiqueta: "Toda la unidad" },
-                ...plantasUnidad.map((planta) => ({
-                  valor: planta.id,
-                  etiqueta: planta.nombre || `Planta ${planta.numero || ""}`.trim(),
-                })),
-              ]}
-            />
-            <Selector
-              id="historial-vista-genetica"
-              etiqueta="Genética"
-              valor={genetica}
-              onChange={(valor) => setGenetica(valor || "todas")}
-              opciones={[
-                { valor: "todas", etiqueta: "Todas" },
-                ...geneticas.map((item) => ({ valor: item.clave, etiqueta: item.etiqueta })),
-              ]}
-            />
-            <SelectorFecha id="historial-vista-desde" etiqueta="Desde" valor={desde} onChange={setDesde} />
-            <SelectorFecha id="historial-vista-hasta" etiqueta="Hasta" valor={hasta} onChange={setHasta} />
-          </div>
-          <div className="historial__contenidos" role="group" aria-label="Tipo de registro">
-            {CONTENIDOS_HISTORIAL.map((clave) => (
-              <button
-                key={clave}
-                type="button"
-                className={`historial__contenido${contenidos.has(clave) ? " historial__contenido--activo" : ""}`}
-                aria-pressed={contenidos.has(clave)}
-                onClick={() => alternarContenido(clave)}
-              >
-                {ETIQUETAS_CONTENIDO[clave]}
-              </button>
-            ))}
-          </div>
-          <div className="historial__aplicar">
-            <Boton type="submit" variante="secundario" disabled={pendiente}>
-              {pendiente ? "Aplicando..." : "Aplicar filtros"}
-            </Boton>
-            {hayFiltros ? (
-              <Boton type="button" variante="ghost" onClick={limpiarFiltros} disabled={pendiente}>
-                Limpiar
-              </Boton>
-            ) : null}
-            {filtrosIniciales?.plantaId ? (
-              <Boton type="button" variante="ghost" onClick={quitarFiltroPlanta} disabled={pendiente}>
-                Ver toda la unidad
-              </Boton>
-            ) : null}
-          </div>
-        </form>
-      </details>
-
-      {filtrosIniciales?.plantaId ? (
-        <p className="historial__aviso">
-          Mostrando el historial de una planta. Podés volver al alcance de toda la unidad cuando quieras.
-        </p>
-      ) : null}
-
       <HistorialCabecera historial={historial} modoApp />
-      <HistorialCrecimiento historial={historial} />
       <HistorialResumen historial={historial} modoApp />
+      <HistorialCrecimiento historial={historial} />
+      <HistorialMetricas historial={historial} />
       <HistorialEtapas historial={historial} />
       <HistorialTimelineApp
         historial={historial}
@@ -311,8 +270,76 @@ export function VistaHistorialCultivo({
         onCargarMasDias={cargarMas}
         errorMas={errorMas}
         onReintentarMas={cargarMas}
-      />
-      <HistorialMetricas historial={historial} />
+      >
+        <details className="historial__panel historial-vista-cultivo__filtros" defaultOpen={hayFiltros}>
+          <summary>
+            Filtros
+            <span>{resumenFiltros(filtrosIniciales, plantasUnidad, geneticas)}</span>
+          </summary>
+          <form className="historial__formulario" onSubmit={aplicarFiltros}>
+            <div className="historial__rejilla">
+              <Selector
+                id="historial-vista-planta"
+                etiqueta="Planta"
+                valor={plantaId}
+                onChange={(valor) => setPlantaId(valor || "todas")}
+                opciones={[
+                  { valor: "todas", etiqueta: "Toda la unidad" },
+                  ...plantasUnidad.map((planta) => ({
+                    valor: planta.id,
+                    etiqueta: planta.nombre || `Planta ${planta.numero || ""}`.trim(),
+                  })),
+                ]}
+              />
+              <Selector
+                id="historial-vista-genetica"
+                etiqueta="Genética"
+                valor={genetica}
+                onChange={(valor) => setGenetica(valor || "todas")}
+                opciones={[
+                  { valor: "todas", etiqueta: "Todas" },
+                  ...geneticas.map((item) => ({ valor: item.clave, etiqueta: item.etiqueta })),
+                ]}
+              />
+              <SelectorFecha id="historial-vista-desde" etiqueta="Desde" valor={desde} onChange={setDesde} />
+              <SelectorFecha id="historial-vista-hasta" etiqueta="Hasta" valor={hasta} onChange={setHasta} />
+            </div>
+            <div className="historial__contenidos" role="group" aria-label="Tipo de registro">
+              {CONTENIDOS_HISTORIAL.map((clave) => (
+                <button
+                  key={clave}
+                  type="button"
+                  className={`historial__contenido${contenidos.has(clave) ? " historial__contenido--activo" : ""}`}
+                  aria-pressed={contenidos.has(clave)}
+                  onClick={() => alternarContenido(clave)}
+                >
+                  {ETIQUETAS_CONTENIDO[clave]}
+                </button>
+              ))}
+            </div>
+            <div className="historial__aplicar">
+              <Boton type="submit" variante="secundario" disabled={pendiente}>
+                {pendiente ? "Aplicando..." : "Aplicar filtros"}
+              </Boton>
+              {hayFiltros ? (
+                <Boton type="button" variante="ghost" onClick={limpiarFiltros} disabled={pendiente}>
+                  Limpiar
+                </Boton>
+              ) : null}
+              {filtrosIniciales?.plantaId ? (
+                <Boton type="button" variante="ghost" onClick={quitarFiltroPlanta} disabled={pendiente}>
+                  Ver toda la unidad
+                </Boton>
+              ) : null}
+            </div>
+          </form>
+        </details>
+        {filtrosIniciales?.plantaId ? (
+          <p className="historial__aviso">
+            Mostrando el historial de una planta. Podés volver al alcance de toda la unidad cuando quieras.
+          </p>
+        ) : null}
+      </HistorialTimelineApp>
 
       {registros.length === 0 ? (
         <div className="vacio">

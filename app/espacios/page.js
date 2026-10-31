@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { BannerPublicitario } from "@/componentes/banner-publicitario";
-import { EnlaceBoton } from "@/componentes/boton";
 import { ContenidoListaEspacios } from "@/componentes/espacios/contenido-lista-espacios";
+import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { RecuperacionCargaEspacios } from "@/componentes/espacios/recuperacion-carga-espacios";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { cargarListadoEspacios } from "@/lib/cargar-listado-espacios";
@@ -42,13 +42,13 @@ export default async function PaginaEspacios() {
     <TransicionVista>
       <section className="espacios">
         <h1>Espacios</h1>
-        <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
         <ContenidoListaEspacios
           espacios={espacios}
           unidadesPorEspacio={unidadesPorEspacio}
           plantasPorEspacio={plantasPorEspacio}
         />
         <BannerPublicitario campañas={banners.campañas} />
+        <FabNuevoChatFlora href="/espacios/nuevo" ariaLabel="Crear espacio" />
       </section>
     </TransicionVista>
   );

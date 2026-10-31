@@ -1,0 +1,29 @@
+-- PENDIENTE — no ejecutar automáticamente (sprint comercial 2.1).
+-- Objetivo: evitar superar el cupo de plantas por unidad bajo altas concurrentes.
+-- Hoy la app valida en server actions (relectura de conteo); esta RPC cerraría la carrera.
+
+-- create or replace function public.validar_e_insertar_plantas(
+--   p_usuario uuid,
+--   p_unidad uuid,
+--   p_filas jsonb
+-- ) returns jsonb
+-- language plpgsql
+-- security definer
+-- set search_path = public
+-- as $$
+-- declare
+--   v_limite integer;
+--   v_existentes integer;
+--   v_agregar integer;
+-- begin
+--   -- 1) Verificar dueño de unidad (join espacios.usuario_id = p_usuario).
+--   -- 2) Resolver limite comercial (9 vs técnico) vía licencia/ciclo — hoy duplicar criterio JS o tabla auxiliar.
+--   -- 3) select count(*) ... from plantas where unidad_cultivo_id = p_unidad for update;
+--   -- 4) Si count + jsonb_array_length(p_filas) > v_limite → return jsonb_build_object('ok', false, 'codigo', 'limite_plantas_unidad');
+--   -- 5) insert plantas + historial en la misma transacción.
+--   return jsonb_build_object('ok', true);
+-- end;
+-- $$;
+--
+-- revoke all on function public.validar_e_insertar_plantas(uuid, uuid, jsonb) from public, anon;
+-- grant execute on function public.validar_e_insertar_plantas(uuid, uuid, jsonb) to service_role;

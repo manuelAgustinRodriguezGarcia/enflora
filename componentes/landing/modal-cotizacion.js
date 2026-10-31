@@ -6,7 +6,7 @@ import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
 import { Boton } from "@/componentes/boton";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
-import { ENLACE_FUENTE_COTIZACION } from "@/lib/cotizacion";
+import { ENLACE_FUENTE_COTIZACION } from "@/lib/pagos/cotizacion-comercial";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
@@ -19,7 +19,7 @@ export function ModalCotizacion({
   sinDatos = "",
   valorTexto = null,
   fechaTexto = null,
-  etiquetaPill = "Dólar oficial de referencia",
+  etiquetaPill = "Dólar billete vendedor (Banco Nación)",
 }) {
   const acciones = useRef(null);
   const hayValor = Boolean(valorTexto);

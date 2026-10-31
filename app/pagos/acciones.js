@@ -69,6 +69,13 @@ export async function iniciarCompra(formulario) {
   const ambiente = leerAmbientePagos();
   if (!ambiente.ok) volver(ambiente.codigo);
 
+  const supabaseLectura = await crearClienteServidor();
+  const { data: perfil } = await supabaseLectura
+    .from("perfiles")
+    .select("nombre, apellido")
+    .eq("id", usuario.id)
+    .maybeSingle();
+
   const comprador = correoPayerOrden({
     ambiente: ambiente.ambiente,
     emailUsuario: usuario.email || "",
@@ -113,6 +120,9 @@ export async function iniciarCompra(formulario) {
         pagoId: pago.id,
         importeDecimal: importeOrden,
         email: comprador.email,
+        nombre: perfil?.nombre,
+        apellido: perfil?.apellido,
+        fechaRegistro: usuario.created_at,
       });
       destinoCheckout = creada?.checkout_url || "";
       if (!destinoCheckout || !creada?.id) volver("checkout_ausente");

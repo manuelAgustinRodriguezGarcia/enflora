@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { LayoutGroup, motion } from "motion/react";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { toque, transicionRapida, transicionToque } from "@/lib/animaciones";
@@ -11,6 +12,11 @@ const Enlace = motion.create(Link);
 
 export function BottomNav({ oculto = false }) {
   const ruta = usePathname();
+  const [destinoPendiente, setDestinoPendiente] = useState(null);
+
+  useEffect(() => {
+    setDestinoPendiente(null);
+  }, [ruta]);
 
   if (oculto || !esRutaApp(ruta)) return null;
 
@@ -22,11 +28,13 @@ export function BottomNav({ oculto = false }) {
             {DESTINOS_NAVEGACION.map((destino) => {
               const activo = destinoActivo(ruta, destino);
               const esRegistro = destino.clave === "registro";
+              const pendiente = destinoPendiente === destino.clave && !activo;
               const clases = [
                 "bottom-nav__item",
                 esRegistro ? "bottom-nav__item--registro" : null,
                 activo ? "bottom-nav__item--activo" : null,
                 esRegistro && activo ? "bottom-nav__item--registro-activo" : null,
+                pendiente ? "bottom-nav__item--pendiente" : null,
               ]
                 .filter(Boolean)
                 .join(" ");
@@ -40,6 +48,9 @@ export function BottomNav({ oculto = false }) {
                     href={destino.href}
                     className={clases}
                     aria-current={activo ? "page" : undefined}
+                    onPointerDown={() => {
+                      if (!activo) setDestinoPendiente(destino.clave);
+                    }}
                     whileTap={toque}
                     whileFocus={{ scale: 1.02 }}
                     transition={transicionToque}

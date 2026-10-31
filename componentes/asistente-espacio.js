@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { Info, Pencil } from "lucide-react";
 import { agregarUnidad } from "@/app/espacios/[id]/acciones";
 import { crearCultivo } from "@/app/espacios/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
@@ -28,6 +29,7 @@ import {
   cambiarModoEtapa,
   cambiarNombreEspacio,
   cambiarNombreUnidad,
+  cambiarNombreUnidadPorIndice,
   cambiarPlanta,
   cambiarReplicar,
   cambiarReplicarIndice,
@@ -50,11 +52,11 @@ import {
   volver,
 } from "@/lib/asistente-cultivo";
 import {
-  admiteVarias,
-  etiquetaTipoEspacio,
+  MAXIMO_UNIDADES,
   etiquetaTipoUnidad,
   preguntaCantidadUnidades,
   textoCantidad,
+  TEXTO_AYUDA_CANTIDAD_UNIDADES,
   tiposDeUnidad,
 } from "@/lib/unidades";
 import { toque, transicionRapida, transicionToque, variantesPaso } from "@/lib/animaciones";
@@ -105,6 +107,72 @@ function tituloPlanta(planta, indice) {
   return `${genetica} #${numero}`;
 }
 
+const variantesPasoCarrusel = {
+  entrar: (direccion) => ({ opacity: 0, x: direccion >= 0 ? 28 : -28 }),
+  centro: { opacity: 1, x: 0, transition: transicionRapida },
+  salir: (direccion) => ({
+    opacity: 0,
+    x: direccion >= 0 ? -28 : 28,
+    transition: { duration: 0.14, ease: transicionRapida.ease },
+  }),
+};
+
+function PasoAdjunto({ paso, lado, onClick }) {
+  const clases = ["asistente__paso-adjunto", `asistente__paso-adjunto--${lado}`].join(" ");
+  if (onClick) {
+    return (
+      <button type="button" className={clases} onClick={onClick}>
+        {paso.etiqueta}
+      </button>
+    );
+  }
+  return <span className={clases}>{paso.etiqueta}</span>;
+}
+
+function PasosAsistente({ pasos, indiceActual, ordenVisible, confirmacion, onIrAPaso, sentido }) {
+  const pasoAnterior = indiceActual > 0 ? pasos[indiceActual - 1] : null;
+  const pasoActual = pasos[indiceActual];
+  const pasoSiguiente = indiceActual < pasos.length - 1 ? pasos[indiceActual + 1] : null;
+  const puedeIrAnterior =
+    pasoAnterior && indiceActual - 1 <= ordenVisible && !confirmacion;
+
+  if (!pasoActual) return null;
+
+  return (
+    <nav className="asistente__pasos" aria-label="Progreso del asistente">
+      <div className="asistente__pasos-col asistente__pasos-col--prev">
+        {pasoAnterior ? (
+          <PasoAdjunto
+            paso={pasoAnterior}
+            lado="prev"
+            onClick={puedeIrAnterior ? () => onIrAPaso(pasoAnterior.id) : undefined}
+          />
+        ) : null}
+      </div>
+      <div className="asistente__pasos-col asistente__pasos-col--centro">
+        <div className="asistente__paso-carrusel" aria-current="step">
+          <AnimatePresence mode="wait" initial={false} custom={sentido}>
+            <motion.span
+              key={pasoActual.id}
+              custom={sentido}
+              className="asistente__paso-carrusel__texto"
+              variants={variantesPasoCarrusel}
+              initial="entrar"
+              animate="centro"
+              exit="salir"
+            >
+              {pasoActual.etiqueta}
+            </motion.span>
+          </AnimatePresence>
+        </div>
+      </div>
+      <div className="asistente__pasos-col asistente__pasos-col--sig">
+        {pasoSiguiente ? <PasoAdjunto paso={pasoSiguiente} lado="sig" /> : null}
+      </div>
+    </nav>
+  );
+}
+
 function detalleEtapa(planta) {
   if (!planta.etapa) return null;
   return <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />;
@@ -115,6 +183,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   const [estado, setEstado] = useState(() => (espacio ? estadoInicialUnidad(espacio) : estadoInicial()));
   const [sentido, setSentido] = useState(1);
   const [abierta, setAbierta] = useState(0);
+  const [infoUnidadesAbierto, setInfoUnidadesAbierto] = useState(false);
   const [resultado, accion, pendiente] = useActionState(guardar, null);
 
   function aplicar(funcion, ...args) {
@@ -126,12 +195,15 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   const pasos = estado.soloUnidad ? PASOS_VISIBLES.filter((paso) => paso.id !== "espacio") : PASOS_VISIBLES;
   const ordenVisible = pasos.findIndex((paso) => paso.id === visible);
   const puedeVolver = estado.paso !== "espacio" && !(estado.soloUnidad && estado.paso === "tipo_unidad");
-  const tipos = tiposDeUnidad(estado.tipo).filter((tipo) => {
-    if (!estado.soloUnidad || !estado.ocupadas) return true;
-    if (tipo.valor === "sala" && estado.ocupadas.sala) return false;
-    if (tipo.valor === "aire_libre" && estado.ocupadas.aire_libre) return false;
-    return true;
-  });
+  const tipos = tiposDeUnidad(estado.tipo);
+  const maximoUnidadesNueva =
+    estado.soloUnidad && estado.ocupadas
+      ? Math.max(1, MAXIMO_UNIDADES - (estado.ocupadas.total || 0))
+      : MAXIMO_UNIDADES;
+  const unidadesCantidad =
+    estado.paso === "cantidad_unidades"
+      ? estado.unidades.slice(0, estado.cantidadUnidades)
+      : [];
 
   function seguir() {
     setSentido(1);
@@ -152,58 +224,71 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
     gruposResumen.push({
       id: "espacio",
       titulo: "Espacio",
-      valor: `${estado.nombre.trim()} · ${etiquetaTipoEspacio(estado.tipo) || "—"}`,
+      presentacion: "espacio",
+      nombre: estado.nombre.trim(),
+      tipoEspacio: estado.tipo,
     });
   }
   if (estado.unidades.length) {
+    const primera = estado.unidades[0];
     gruposResumen.push({
-      id: "unidades",
-      titulo: estado.unidades.length === 1 ? "Unidad" : "Unidades",
-      items: estado.unidades.map((item, indice) => {
-        const marca = estadoVisibleUnidad(estado, indice);
-        const meta =
-          marca === "completada"
-            ? textoCantidad(item.plantas.length)
-            : marca === "configurando"
-              ? "configurando"
-              : "pendiente";
-        const signo = marca === "completada" ? "✓ " : marca === "configurando" ? "▾ " : "○ ";
-        return {
-          id: item.numero,
-          titulo: `${signo}${item.nombre}`,
-          meta,
-          onClick:
-            item.estado === "completada" && !estado.confirmacion
-              ? () => retroceder(abrirUnidad, indice)
-              : undefined,
-        };
-      }),
+      id: "tipo_cultivo",
+      titulo: "Tipo de cultivo",
+      presentacion: "tipo_cultivo",
+      valor: etiquetaTipoUnidad(primera.tipo, primera.tipoPersonalizado),
     });
+
+    const itemsUnidades = estado.unidades.map((item, indice) => {
+      const marca = estadoVisibleUnidad(estado, indice);
+      const meta = marca === "completada" ? textoCantidad(item.plantas.length) : "";
+      return {
+        id: item.numero,
+        titulo: item.nombre,
+        meta,
+        onClick:
+          item.estado === "completada" && !estado.confirmacion
+            ? () => retroceder(abrirUnidad, indice)
+            : undefined,
+      };
+    });
+
+    const mostrarListaUnidades =
+      estado.paso !== "tipo_unidad" &&
+      estado.paso !== "cantidad_unidades" &&
+      (estado.unidades.length > 1 || itemsUnidades.some((item) => item.onClick));
+
+    if (mostrarListaUnidades) {
+      gruposResumen.push({
+        id: "unidades",
+        titulo: estado.unidades.length === 1 ? "Unidad" : "Unidades",
+        items: itemsUnidades,
+      });
+    }
   }
 
   return (
     <div className="asistente">
-      <ol className="asistente__pasos">
-        {pasos.map((paso, indice) => {
-          const actual = paso.id === visible;
-          const habilitado = indice <= ordenVisible && !estado.confirmacion;
-          return (
-            <li key={paso.id}>
-              {habilitado && !actual ? (
-                <button type="button" onClick={() => retroceder(irAVisible, paso.id)}>
-                  {indice + 1}. {paso.etiqueta}
-                </button>
-              ) : (
-                <span className={actual ? "asistente__paso-actual" : undefined}>
-                  {indice + 1}. {paso.etiqueta}
-                </span>
-              )}
-            </li>
-          );
-        })}
-      </ol>
+      <PasosAsistente
+        pasos={pasos}
+        indiceActual={ordenVisible}
+        ordenVisible={ordenVisible}
+        confirmacion={estado.confirmacion}
+        sentido={sentido}
+        onIrAPaso={(id) => retroceder(irAVisible, id)}
+      />
 
       {gruposResumen.length ? <ResumenConfiguracion grupos={gruposResumen} /> : null}
+
+      {estado.paso === "cantidad_unidades" ? (
+        <button
+          type="button"
+          className="asistente__info-unidades"
+          onClick={() => setInfoUnidadesAbierto(true)}
+        >
+          <Info size={18} strokeWidth={1.9} aria-hidden="true" />
+          ¿Qué es una unidad de cultivo?
+        </button>
+      ) : null}
 
       <Aparecer visible={Boolean(estado.error)}>
         <p className="formulario__error">{estado.error}</p>
@@ -232,12 +317,13 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           exit="salir"
         >
           {estado.paso === "espacio" ? (
-            <div className="bloque">
+            <div className="asistente__campos">
               <label className="formulario__campo">
                 Nombre del espacio
                 <input
                   type="text"
                   value={estado.nombre}
+                  placeholder="Cuartito del fondo"
                   onChange={(evento) => aplicar(cambiarNombreEspacio, evento.target.value)}
                 />
               </label>
@@ -252,62 +338,63 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           ) : null}
 
           {estado.paso === "tipo_unidad" ? (
-            <div className="bloque">
-              {estado.tipo === "exterior" ? (
-                <p className="asistente__pregunta">¿Cómo cultivas en exterior?</p>
-              ) : null}
-              <div className="eleccion">
-                {tipos.map((tipo) => (
-                  <motion.button
-                    key={tipo.valor}
-                    type="button"
-                    className={estado.tipoUnidad === tipo.valor ? "eleccion__activa" : undefined}
-                    aria-pressed={estado.tipoUnidad === tipo.valor}
-                    whileTap={toque}
-                    transition={transicionToque}
-                    onClick={() => aplicar(cambiarTipoUnidad, tipo.valor)}
-                  >
-                    {tipo.etiqueta}
-                  </motion.button>
-                ))}
+            <>
+              <div className="asistente__tipo-unidad">
+                <p className="asistente__pregunta">
+                  {estado.tipo === "exterior"
+                    ? "¿Cómo cultivás en exterior?"
+                    : "¿Cómo cultivás en interior?"}
+                </p>
+                <div className="eleccion">
+                  {tipos.map((tipo) => (
+                    <motion.button
+                      key={tipo.valor}
+                      type="button"
+                      className={estado.tipoUnidad === tipo.valor ? "eleccion__activa" : undefined}
+                      aria-pressed={estado.tipoUnidad === tipo.valor}
+                      whileTap={toque}
+                      transition={transicionToque}
+                      onClick={() => aplicar(cambiarTipoUnidad, tipo.valor)}
+                    >
+                      {tipo.etiqueta}
+                    </motion.button>
+                  ))}
+                </div>
+                <Aparecer visible={estado.tipoUnidad === "otro"}>
+                  <label className="formulario__campo">
+                    {estado.tipo !== "exterior" ? "Tipo de unidad" : null}
+                    <input
+                      type="text"
+                      value={estado.tipoPersonalizado || ""}
+                      placeholder={
+                        estado.tipo === "exterior" ? "Nombre de tu método" : undefined
+                      }
+                      aria-label={
+                        estado.tipo === "exterior" ? "Nombre del método" : "Tipo de unidad"
+                      }
+                      onChange={(evento) => aplicar(cambiarTipoPersonalizado, evento.target.value)}
+                    />
+                  </label>
+                </Aparecer>
               </div>
-              <Aparecer visible={estado.tipoUnidad === "otro"}>
-                <label className="formulario__campo">
-                  {estado.tipo === "exterior" ? "Nombre del método" : "Tipo de unidad"}
-                  <input
-                    type="text"
-                    value={estado.tipoPersonalizado || ""}
-                    onChange={(evento) => aplicar(cambiarTipoPersonalizado, evento.target.value)}
-                  />
-                </label>
-              </Aparecer>
-            </div>
+            </>
           ) : null}
 
           {estado.paso === "cantidad_unidades" ? (
-            <ContadorCantidad
-              valor={estado.cantidadUnidades}
-              minimo={1}
-              maximo={20}
-              contexto={preguntaCantidadUnidades(estado.tipoUnidad)}
-              ariaLabel="Cantidad de unidades"
-              onChange={(cantidad) => aplicar(cambiarCantidadUnidades, cantidad)}
-            />
-          ) : null}
-
-          {unidad &&
-          (estado.paso === "cantidad_plantas" ||
-            estado.paso === "configuracion" ||
-            estado.paso === "etapa" ||
-            estado.paso === "cierre_unidad") ? (
-            <label className="formulario__campo">
-              Nombre
-              <input
-                type="text"
-                value={unidad.nombre}
-                onChange={(evento) => aplicar(cambiarNombreUnidad, evento.target.value)}
+            <div className="asistente__cantidad-unidades">
+              <ContadorCantidad
+                valor={estado.cantidadUnidades}
+                minimo={1}
+                maximo={maximoUnidadesNueva}
+                contexto={preguntaCantidadUnidades(estado.tipoUnidad)}
+                ariaLabel="Cantidad de unidades"
+                onChange={(cantidad) => aplicar(cambiarCantidadUnidades, cantidad)}
               />
-            </label>
+              <ListaNombresUnidades
+                unidades={unidadesCantidad}
+                onCambiarNombre={(indice, nombre) => aplicar(cambiarNombreUnidadPorIndice, indice, nombre)}
+              />
+            </div>
           ) : null}
 
           {unidad && estado.paso === "cantidad_plantas" ? (
@@ -492,7 +579,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           {unidad && estado.paso === "cierre_unidad" ? (
             <div className="bloque">
               <CierreUnidad unidad={unidad} />
-              {estado.indice === 0 && admiteVarias(unidad.tipo) && estado.unidades.length > 1 ? (
+              {estado.indice === 0 && estado.unidades.length > 1 ? (
                 <fieldset className="opciones">
                   <legend>Replicar</legend>
                   <label>
@@ -548,7 +635,9 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   {
                     id: "tipo",
                     titulo: "Espacio",
-                    valor: `${estado.nombre.trim()} · ${etiquetaTipoEspacio(estado.tipo)}`,
+                    presentacion: "espacio",
+                    nombre: estado.nombre.trim(),
+                    tipoEspacio: estado.tipo,
                   },
                   {
                     id: "unidades-final",
@@ -587,6 +676,16 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         onConfirmar={seguir}
       />
 
+      <ModalConfirmacion
+        abierto={infoUnidadesAbierto}
+        onCerrar={() => setInfoUnidadesAbierto(false)}
+        titulo="¿Qué son las unidades de cultivo?"
+        descripcion={TEXTO_AYUDA_CANTIDAD_UNIDADES}
+        textoConfirmar="Entendido"
+        mostrarCancelar={false}
+        onConfirmar={() => setInfoUnidadesAbierto(false)}
+      />
+
       {estado.paso !== "resumen" ? (
         <div className="asistente__nav">
           {puedeVolver ? (
@@ -608,6 +707,52 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         </div>
       )}
     </div>
+  );
+}
+
+function ListaNombresUnidades({ unidades, onCambiarNombre }) {
+  const [editando, setEditando] = useState(null);
+
+  if (!unidades.length) return null;
+
+  return (
+    <ul className="asistente__lista-unidades" aria-label="Nombres de las unidades">
+      {unidades.map((unidad, indice) => {
+        const activo = editando === indice;
+        return (
+          <li key={unidad.numero ?? indice} className="asistente__lista-unidades-item">
+            {activo ? (
+              <input
+                type="text"
+                className="asistente__lista-unidades-input"
+                value={unidad.nombre}
+                aria-label={`Nombre de ${unidad.nombre || `unidad ${indice + 1}`}`}
+                autoFocus
+                onChange={(evento) => onCambiarNombre(indice, evento.target.value)}
+                onBlur={() => setEditando(null)}
+                onKeyDown={(evento) => {
+                  if (evento.key === "Enter") {
+                    evento.preventDefault();
+                    setEditando(null);
+                  }
+                  if (evento.key === "Escape") setEditando(null);
+                }}
+              />
+            ) : (
+              <span className="asistente__lista-unidades-nombre">{unidad.nombre}</span>
+            )}
+            <button
+              type="button"
+              className="asistente__lista-unidades-editar"
+              aria-label={`Editar nombre de ${unidad.nombre || `unidad ${indice + 1}`}`}
+              onClick={() => setEditando(indice)}
+            >
+              <Pencil size={16} strokeWidth={1.9} aria-hidden="true" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

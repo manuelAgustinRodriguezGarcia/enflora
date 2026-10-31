@@ -43,6 +43,15 @@ export function PaginaHistorialCultivo({
 
       {unidadSeleccionada && datosVista ? (
         <VistaHistorialCultivo
+          key={[
+            filtros.unidadId,
+            filtros.plantaId || "",
+            filtros.genetica || "",
+            filtros.desde || "",
+            filtros.hasta || "",
+            (filtros.contenidos || []).join(","),
+            filtros.sinContenido ? "vacio" : "contenido",
+          ].join("|")}
           filtrosIniciales={filtros}
           mensajeFiltro={mensajeFiltro}
           geneticas={geneticas}

@@ -8,9 +8,10 @@ import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { borrarArchivos } from "@/lib/fotos-servidor";
 import { rutaFotoValida, rutaPerteneceAUsuario } from "@/lib/fotos";
-import { datosTipoUnidad, MAXIMO_UNIDADES } from "@/lib/unidades";
+import { validarAltaPlantasEnUnidad } from "@/lib/flora-beneficios-plantas-servidor";
+import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES } from "@/lib/unidades";
 
-const MAXIMO_PLANTAS = 100;
+const MAXIMO_PLANTAS_POR_ALTA = MAXIMO_PLANTAS;
 
 async function sesion() {
   if (!configuracionLista()) return { error: "Falta la configuración de Supabase." };
@@ -41,7 +42,9 @@ export async function crearPlantas(_estado, formulario) {
 
   if (!unidadId) return { error: "No se encontró la unidad." };
   if (!lista || lista.length < 1) return { error: "Seleccioná al menos una planta." };
-  if (lista.length > MAXIMO_PLANTAS) return { error: "Se pueden crear hasta 100 plantas." };
+  if (lista.length > MAXIMO_PLANTAS_POR_ALTA) {
+    return { error: `Se pueden crear hasta ${MAXIMO_PLANTAS_POR_ALTA} plantas por alta.` };
+  }
 
   const plantas = [];
 
@@ -82,6 +85,9 @@ export async function crearPlantas(_estado, formulario) {
     .maybeSingle();
 
   if (!unidad) return { error: "No se encontró la unidad." };
+
+  const cupo = await validarAltaPlantasEnUnidad(supabase, user.id, unidadId, lista.length);
+  if (!cupo.ok) return { error: cupo.error };
 
   const { data: existentes, error: errorNumeros } = await supabase
     .from("plantas")
@@ -202,6 +208,9 @@ export async function editarPlanta(_estado, formulario) {
 
   let numero = actual.numero;
   if (actual.unidad_cultivo_id !== unidadId) {
+    const cupo = await validarAltaPlantasEnUnidad(supabase, user.id, unidadId, 1);
+    if (!cupo.ok) return { error: cupo.error, ...datos };
+
     const { data: existentes, error: errorNumeros } = await supabase
       .from("plantas")
       .select("numero")
@@ -417,14 +426,6 @@ export async function editarUnidad(_estado, formulario) {
 
   if (errorHermanas) return { error: "No se pudo editar la unidad.", ...datos };
 
-  const repetida = (hermanas || []).some(
-    (unidad) => unidad.id !== unidadId && unidad.tipo === tipoUnidad.tipo && (tipoUnidad.tipo === "sala" || tipoUnidad.tipo === "aire_libre")
-  );
-  if (repetida) {
-    const mensaje = tipoUnidad.tipo === "sala" ? "Este espacio ya tiene una sala." : "Este espacio ya tiene aire libre.";
-    return { error: mensaje, ...datos };
-  }
-
   const { data, error } = await acceso.supabase
     .from("unidades_cultivo")
     .update({
@@ -575,7 +576,7 @@ export async function agregarUnidad(_estado, formulario) {
 
   if (!espacioId) return { error: "No se encontró el espacio." };
   if (!nombre) return { error: "El nombre es obligatorio." };
-  if (plantasEntrada.length < 1 || plantasEntrada.length > MAXIMO_PLANTAS) {
+  if (plantasEntrada.length < 1 || plantasEntrada.length > MAXIMO_PLANTAS_POR_ALTA) {
     return { error: "Seleccioná al menos una planta." };
   }
 
@@ -603,12 +604,6 @@ export async function agregarUnidad(_estado, formulario) {
 
   const lista = existentes || [];
   if (lista.length >= MAXIMO_UNIDADES) return { error: "Se pueden crear hasta 20 unidades." };
-  if (tipoUnidad.tipo === "sala" && lista.some((item) => item.tipo === "sala")) {
-    return { error: "Este espacio ya tiene una sala." };
-  }
-  if (tipoUnidad.tipo === "aire_libre" && lista.some((item) => item.tipo === "aire_libre")) {
-    return { error: "Este espacio ya tiene aire libre." };
-  }
 
   let numero = 0;
   for (const item of lista) {
@@ -646,6 +641,12 @@ export async function agregarUnidad(_estado, formulario) {
     .single();
 
   if (errorUnidad || !creada) return { error: "No se pudo crear la unidad." };
+
+  const cupo = await validarAltaPlantasEnUnidad(supabase, user.id, creada.id, filas.length);
+  if (!cupo.ok) {
+    await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
+    return { error: cupo.error };
+  }
 
   const hoy = fechaHoy();
   const origenes = [];

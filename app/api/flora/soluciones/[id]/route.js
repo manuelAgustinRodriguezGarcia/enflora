@@ -1,3 +1,4 @@
+import { enriquecerMensajesChatGuardado } from "@/lib/flora-chats-enriquecer";
 import { validarTituloSolucion, uuidSolucionOpcional } from "@/lib/flora-soluciones";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
@@ -31,7 +32,8 @@ export async function GET(_request, { params }) {
     .maybeSingle();
 
   if (!chatError && chat) {
-    return json({ ok: true, chat, tipo: "chat" });
+    const mensajes = await enriquecerMensajesChatGuardado(supabase, chat.mensajes || []);
+    return json({ ok: true, chat: { ...chat, mensajes }, tipo: "chat" });
   }
 
   const { data, error } = await supabase

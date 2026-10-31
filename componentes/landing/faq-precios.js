@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { faqPrecios } from "@/lib/planes";
+import { DIAS_VIGENCIA_COTIZACION, FUENTE_BNA } from "@/lib/pagos/cotizacion-comercial";
 import { formatearFechaCotizacion } from "@/lib/cotizacion";
 
 const transicionAcordeon = { duration: 0.28, ease: [0.22, 1, 0.36, 1] };
@@ -12,7 +13,6 @@ export function FaqPrecios({ cotizacion }) {
   const [abiertoId, setAbiertoId] = useState(faqPrecios[0]?.id || "");
   const reducido = useReducedMotion();
   const baseId = useId();
-  const fecha = formatearFechaCotizacion(cotizacion?.fecha);
   const transicion = reducido ? { duration: 0 } : transicionAcordeon;
 
   return (
@@ -24,9 +24,10 @@ export function FaqPrecios({ cotizacion }) {
           const panelId = `${baseId}-${item.id}-panel`;
           const botonId = `${baseId}-${item.id}-boton`;
           let respuesta = item.respuesta;
-          if (item.id === "cotizacion" && cotizacion?.valor) {
-            respuesta = fecha
-              ? `Usamos el dólar oficial de una API pública. Lo refrescamos cada 12 horas, a las 4:20 y a las 16:20 (hora Argentina). Última actualización: ${fecha}.`
+          if (item.id === "cotizacion" && cotizacion?.ok) {
+            const fechaFmt = formatearFechaCotizacion(cotizacion.fecha);
+            respuesta = fechaFmt
+              ? `Usamos el dólar billete vendedor del ${FUENTE_BNA}, el mismo criterio del checkout. En fines de semana y feriados vale la última publicación. Si supera ${DIAS_VIGENCIA_COTIZACION} días, no se puede cobrar. Última publicación usada: ${fechaFmt}.`
               : item.respuesta;
           }
           return (

@@ -4,7 +4,7 @@
 
   position: fixed;
   right: 0;
-  bottom: var(--enflora-teclado-inferior, 0px);
+  bottom: 0;
   left: 0;
   z-index: 50;
   padding: 0 var(--bottom-nav-margen-lateral, 0.875rem)
@@ -85,6 +85,31 @@
     width: 2.75rem;
     height: 2.75rem;
     flex-shrink: 0;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      border-radius: 50%;
+      background: var(--brand-accent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+    }
+  }
+
+  &__item:not(.bottom-nav__item--activo) {
+    &.bottom-nav__item--pendiente .bottom-nav__icono::before,
+    &:active .bottom-nav__icono::before {
+      opacity: 0.28;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    &__item:not(.bottom-nav__item--activo):not(.bottom-nav__item--pendiente):hover .bottom-nav__icono::before {
+      opacity: 0.18;
+    }
   }
 
   &__halo {
@@ -159,9 +184,14 @@
     &__halo {
       transition: none !important;
     }
+
+    &__icono::before {
+      transition: none;
+    }
   }
 
   &.demo-nav {
+    bottom: var(--enflora-teclado-inferior, 0px);
     pointer-events: auto;
     padding: 0 0 env(safe-area-inset-bottom);
     background: var(--brand-dark);
@@ -257,6 +287,22 @@
 
 body:has(.bottom-nav:not(.demo-nav)) .pagina {
   padding-bottom: var(--space-bottom-nav);
+}
+
+body:has(.bottom-nav:not(.demo-nav))
+  .pagina:not(:has(.flora-chat-app-pagina)):not(:has(.flora-soluciones-pagina)):not(:has(.flora-soluciones-detalle)) {
+  padding-inline: var(--app-padding-inline);
+}
+
+html[data-teclado="abierto"]:has(.bottom-nav:not(.demo-nav)) {
+  --enflora-altura-barra-inferior: 0px;
+  --bottom-nav-margen-inferior: 0px;
+  --space-bottom-nav: 0px;
+}
+
+html[data-teclado="abierto"] .bottom-nav:not(.demo-nav) {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 body:has(.bottom-nav.demo-nav) .pagina {

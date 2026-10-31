@@ -45,6 +45,31 @@
     background: linear-gradient(180deg, rgb(11 61 42 / 5%) 30%, rgb(11 61 42 / 62%) 70%, rgb(11 61 42 / 88%) 100%);
   }
 
+  &__tipo {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    padding: 0.28rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgb(11 61 42 / 22%);
+
+    &--interior {
+      color: #ff00aa;
+      background: color-mix(in srgb, #ff00aa 16%, var(--color-surface));
+    }
+
+    &--exterior {
+      color: #e85d04;
+      background: color-mix(in srgb, #e85d04 16%, var(--color-surface));
+    }
+  }
+
   &__texto {
     position: relative;
     display: flex;
@@ -278,6 +303,10 @@
 
   &__fin {
     text-align: center;
+  }
+
+  &__centinela {
+    height: 1px;
   }
 }
 

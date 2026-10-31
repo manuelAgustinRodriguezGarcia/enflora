@@ -3,7 +3,6 @@
 .pagina:has(.registros),
 .pagina:has(.historial--vista-cultivo) {
   max-width: none;
-  padding-inline: 0.5rem;
 }
 
 .registros {
@@ -1298,7 +1297,7 @@ a.registros__historial {
   padding: 0;
 
   .historial-vista-cultivo__filtros {
-    margin-bottom: 0.5rem;
+    margin: 0;
   }
 
   .historial-vista-cultivo__vacio {

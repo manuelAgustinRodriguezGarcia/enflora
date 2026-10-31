@@ -8,6 +8,7 @@ import { ModalEquivalencia } from "@/componentes/landing/modal-equivalencia";
 import { ModalContacto } from "@/componentes/landing/modal-contacto";
 import { TarjetaPlan } from "@/componentes/landing/tarjeta-plan";
 import { formatearArs, formatearFechaCotizacion } from "@/lib/cotizacion";
+import { convertirUsdAArs } from "@/lib/pagos/cotizacion-comercial";
 import { planesEnflora } from "@/lib/planes";
 
 export function SeccionPrecios({ cotizacion = null }) {
@@ -33,8 +34,8 @@ export function SeccionPrecios({ cotizacion = null }) {
     setModalContacto(true);
   }
   const fecha = formatearFechaCotizacion(cotizacion?.fecha);
-  const valor = cotizacion?.valor;
-  const valorTexto = Number.isFinite(valor) ? formatearArs(valor) : null;
+  const tipoCambio = cotizacion?.ok ? convertirUsdAArs(1, cotizacion) : null;
+  const valorTexto = Number.isFinite(tipoCambio) ? formatearArs(tipoCambio) : null;
   const copyModal = planesEnflora.modalCotizacion;
 
   return (

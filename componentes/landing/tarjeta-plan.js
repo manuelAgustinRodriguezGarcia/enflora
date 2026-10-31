@@ -6,7 +6,9 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { gsap } from "@/componentes/landing/gsap";
 import SpotlightCard from "@/componentes/landing/spotlight-card";
-import { convertirUsdAArs, formatearArs } from "@/lib/cotizacion";
+import { formatearArs } from "@/lib/cotizacion";
+import { convertirUsdAArs } from "@/lib/pagos/cotizacion-comercial";
+import { etiquetaEstadoBeneficioPlan, textoBeneficioPlan } from "@/lib/planes";
 import { lanzamientoPendiente } from "@/lib/lanzamiento";
 
 const SPOTLIGHT = {
@@ -65,6 +67,7 @@ function PrecioFlip({ usd, ars, mostrarArs, reducido }) {
   const token = useRef(null);
   const [texto, setTexto] = useState(usd);
   const objetivo = mostrarArs ? ars : usd;
+  const etiqueta = reducido ? objetivo : texto;
 
   useEffect(() => {
     pedido.current = objetivo;
@@ -76,7 +79,6 @@ function PrecioFlip({ usd, ars, mostrarArs, reducido }) {
       gsap.killTweensOf(nodo);
       gsap.set(nodo, { rotateX: 0 });
       mostrado.current = objetivo;
-      setTexto(objetivo);
       return;
     }
 
@@ -114,7 +116,7 @@ function PrecioFlip({ usd, ars, mostrarArs, reducido }) {
   return (
     <span className="precios__precio-flip">
       <strong ref={cara} className="precios__precio-cara">
-        {texto}
+        {etiqueta}
       </strong>
     </span>
   );
@@ -129,7 +131,13 @@ function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia, onPrelanzamient
             ? "landing__accion--acento"
             : "landing__accion--linea"
         } precios__cta`}
-        href={plan.id === "por-cultivo" ? "/pagos/licencia" : hrefRegistro}
+        href={
+          plan.id === "por-cultivo"
+            ? "/pagos/licencia"
+            : plan.id === "plus"
+              ? "/pagos/plus"
+              : hrefRegistro
+        }
         onClick={(evento) => {
           if (!onPrelanzamiento || !lanzamientoPendiente()) return;
           evento.preventDefault();
@@ -150,12 +158,21 @@ function AccionesPlan({ plan, hrefRegistro, onAbrirEquivalencia, onPrelanzamient
 function ListaBeneficios({ items }) {
   return (
     <ul className="precios__lista">
-      {items.map((item) => (
-        <li key={item}>
-          <Check size={16} strokeWidth={2.5} aria-hidden="true" />
-          <span>{item}</span>
-        </li>
-      ))}
+      {items.map((item) => {
+        const texto = textoBeneficioPlan(item);
+        const etiqueta = etiquetaEstadoBeneficioPlan(item);
+        return (
+          <li key={texto}>
+            <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+            <span>
+              {texto}
+              {etiqueta ? (
+                <span className="precios__beneficio-estado"> ({etiqueta})</span>
+              ) : null}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -280,6 +297,9 @@ export function TarjetaPlan({ plan, cotizacion, hrefRegistro, onAbrirEquivalenci
           <hr className="precios__divisor" />
 
           <p className="precios__frase">{plan.frase}</p>
+          {plan.notaComercial ? (
+            <p className="precios__aclaracion precios__aclaracion--nota">{plan.notaComercial}</p>
+          ) : null}
 
           <div className="precios__detalles precios__detalles--desktop">
             <DetallesPlan plan={plan} beneficios={plan.beneficios} />

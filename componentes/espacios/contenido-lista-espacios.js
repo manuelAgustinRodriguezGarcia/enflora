@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { EnlaceBoton } from "@/componentes/boton";
-import { EliminarEspacio } from "@/componentes/eliminar-espacio";
-import { IconoLapiz } from "@/componentes/iconos-ui";
+import { MenuAccionesTarjetaEspacio } from "@/componentes/espacios/menu-acciones-tarjeta-espacio";
 import { ImagenEspacio } from "@/componentes/imagen-espacio";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
@@ -11,7 +9,6 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
     return (
       <div className="vacio">
         <p>Todavía no hay espacios de cultivo.</p>
-        <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
       </div>
     );
   }
@@ -49,16 +46,7 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
                 </span>
               </span>
             </Link>
-            <div className="acciones acciones--tarjeta">
-              <EnlaceBoton
-                className="boton boton--secundario boton--icono"
-                href={`/espacios/${espacio.id}/editar`}
-                aria-label="Editar espacio"
-              >
-                <IconoLapiz />
-              </EnlaceBoton>
-              <EliminarEspacio espacioId={espacio.id} />
-            </div>
+            <MenuAccionesTarjetaEspacio espacioId={espacio.id} />
           </li>
         );
       })}

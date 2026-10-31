@@ -37,10 +37,11 @@ export function SelectorMetodo({
       />
       <Aparecer visible={valor === "otro"}>
         <label className="formulario__campo">
-          Nombre del método
           <input
             type="text"
             value={nombreOtro}
+            placeholder="Nombre de tu método"
+            aria-label="Nombre del método"
             onChange={(evento) => onChangeNombre(evento.target.value)}
           />
         </label>

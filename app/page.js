@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { DatosEstructurados } from "@/componentes/datos-estructurados";
 import { Landing } from "@/componentes/landing/landing";
-import { obtenerCotizacionOficial } from "@/lib/cotizacion";
+import { obtenerCotizacionComercial } from "@/lib/pagos/cotizacion-comercial";
 import { DESCRIPCION_INICIO, metadatosPublicos, TITULO_INICIO } from "@/lib/seo";
 
 export const metadata = metadatosPublicos({
@@ -23,7 +23,7 @@ export default async function PaginaInicio({ searchParams }) {
     redirect(`/correo/confirmar?${consulta.toString()}`);
   }
 
-  const cotizacion = await obtenerCotizacionOficial();
+  const cotizacion = await obtenerCotizacionComercial();
   return (
     <>
       <DatosEstructurados />

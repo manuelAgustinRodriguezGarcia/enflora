@@ -394,7 +394,7 @@ test("el cron y la prueba exigen su secreto", () => {
   assert.equal(cronAutorizado("Bearer secreto-cron", { CRON_SECRET: "secreto-cron", NODE_ENV: "production" }), true);
   assert.equal(cronAutorizado("Bearer otro", { CRON_SECRET: "secreto-cron", NODE_ENV: "production" }), false);
   assert.equal(cronAutorizado(null, { CRON_SECRET: "", NODE_ENV: "production" }), false);
-  assert.equal(cronAutorizado(null, { CRON_SECRET: "", NODE_ENV: "development" }), true);
+  assert.equal(cronAutorizado(null, { CRON_SECRET: "", NODE_ENV: "development" }), false);
   assert.equal(pruebaAutorizada("Bearer 1234567890123456", { PUSH_PRUEBA_SECRETO: "1234567890123456" }), true);
   assert.equal(pruebaAutorizada("Bearer corto", { PUSH_PRUEBA_SECRETO: "corto" }), false);
   assert.equal(bearerCoincide("Bearer abc", "abcd"), false);

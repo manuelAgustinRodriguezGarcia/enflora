@@ -44,6 +44,7 @@ import {
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EsperaFlora } from "@/componentes/flora/espera-flora";
 import { PERSONALIDAD_FLORA_DEFAULT } from "@/lib/flora-personalidad";
+import { AdjuntoMensajeChat } from "@/componentes/flora/imagen-mensaje-flora";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { PieRespuestaFlora } from "@/componentes/flora/pie-respuesta-flora";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
@@ -529,6 +530,8 @@ export function ChatFlora({
       vista: a.vista,
       origen: a.origen,
       etiqueta: a.etiqueta,
+      fotoId: a.fotoId,
+      mimeType: a.mimeType,
     }));
     setEntrada("");
     setAdjuntosImagen([]);
@@ -597,8 +600,38 @@ export function ChatFlora({
         setBannerContinuar(null);
       }
 
-      for (const item of adjuntosSnapshot) {
-        if (item.origen === "transitoria") liberarAdjuntosFlora([item]);
+      const persistidas = Array.isArray(data.meta?.imagenes) ? data.meta.imagenes : [];
+      const aLiberar = persistidas.flatMap((guardada, indice) => {
+        const original = adjuntosSnapshot[indice];
+        if (guardada?.origen === "flora" && guardada.vista && original?.origen === "transitoria") {
+          return [original];
+        }
+        return [];
+      });
+      setMensajes((prev) =>
+        prev.map((m) => {
+          if (m.id !== idUsuario) return m;
+          const adjuntos = (m.adjuntos || []).map((adj, indice) => {
+            const guardada = persistidas[indice];
+            if (guardada?.origen === "flora" && guardada.ruta) {
+              return {
+                origen: "flora",
+                ruta: guardada.ruta,
+                vista: guardada.vista || adj.vista,
+                mimeType: guardada.mimeType,
+                etiqueta: adj.etiqueta,
+              };
+            }
+            if (guardada?.origen === "enflora" && guardada.fotoId) {
+              return { ...adj, origen: "enflora", fotoId: guardada.fotoId };
+            }
+            return adj;
+          });
+          return { ...m, adjuntos };
+        }),
+      );
+      if (aLiberar.length) {
+        window.setTimeout(() => liberarAdjuntosFlora(aLiberar), 1500);
       }
 
       const idFlora = idMensaje();
@@ -768,13 +801,7 @@ export function ChatFlora({
               ) : (
                 <>
                   {(m.adjuntos?.length ? m.adjuntos : m.adjunto ? [m.adjunto] : []).map((adj, i) => (
-                    <figure key={`${m.id}-adj-${i}`} className="flora-chat-app__adjunto-msg">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={adj.vista} alt="" />
-                      {adj.etiqueta ? (
-                        <figcaption className="flora-chat-app__adjunto-msg-meta">{adj.etiqueta}</figcaption>
-                      ) : null}
-                    </figure>
+                    <AdjuntoMensajeChat key={`${m.id}-adj-${i}`} adjunto={adj} />
                   ))}
                   {m.texto ? <span className="flora-chat-app__texto-usuario">{m.texto}</span> : null}
                 </>
@@ -832,6 +859,13 @@ export function ChatFlora({
             <label className="flora-chat-app__sr" htmlFor="flora-chat-input">
               Mensaje para Flora
             </label>
+            <BotonClipAdjuntoFlora
+              abierto={menuAdjuntoAbierto}
+              onToggle={() => setMenuAdjuntoAbierto((v) => !v)}
+              disabled={inputBloqueado}
+              preparando={preparandoImagen}
+              lleno={adjuntosImagen.length >= FLORA_CHAT_MAX_IMAGENES}
+            />
             <textarea
               id="flora-chat-input"
               className="flora-chat-app__input"
@@ -842,13 +876,6 @@ export function ChatFlora({
               onKeyDown={onKeyDown}
               disabled={inputBloqueado}
               maxLength={2000}
-            />
-            <BotonClipAdjuntoFlora
-              abierto={menuAdjuntoAbierto}
-              onToggle={() => setMenuAdjuntoAbierto((v) => !v)}
-              disabled={inputBloqueado}
-              preparando={preparandoImagen}
-              lleno={adjuntosImagen.length >= FLORA_CHAT_MAX_IMAGENES}
             />
             <button
               type="submit"

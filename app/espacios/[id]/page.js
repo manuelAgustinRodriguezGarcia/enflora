@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { EnlaceBoton } from "@/componentes/boton";
-import { EliminarEspacio } from "@/componentes/eliminar-espacio";
+import { MenuAccionesTarjetaEspacio } from "@/componentes/espacios/menu-acciones-tarjeta-espacio";
+import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
-import { IconoLapiz } from "@/componentes/iconos-ui";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { PortadaUnidad } from "@/componentes/portada-unidad";
 import { TransicionVista } from "@/componentes/transicion-vista";
@@ -66,18 +65,13 @@ export default async function PaginaEspacio({ params }) {
           <div className="detalle-cabecera__superior">
             <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
             <div className="detalle-cabecera__acciones">
-              <EnlaceBoton
-                className="boton boton--secundario boton--icono"
-                href={`/espacios/${espacio.id}/editar`}
-                aria-label="Editar espacio"
-              >
-                <IconoLapiz />
-              </EnlaceBoton>
-              <EliminarEspacio espacioId={espacio.id} />
+              <MenuAccionesTarjetaEspacio espacioId={espacio.id} lado="bottom" />
             </div>
           </div>
           <div className="detalle-cabecera__fila">
-            <span className="detalle-cabecera__chip">{etiquetaTipoEspacio(espacio.tipo)}</span>
+            <span className={`detalle-cabecera__chip detalle-cabecera__chip--${espacio.tipo}`}>
+              {etiquetaTipoEspacio(espacio.tipo)}
+            </span>
             <span className="detalle-cabecera__meta">
               {lista.length === 1 ? "1 unidad" : `${lista.length} unidades`}
             </span>
@@ -88,7 +82,6 @@ export default async function PaginaEspacio({ params }) {
         {lista.length === 0 ? (
           <div className="vacio">
             <p>Todavía no hay unidades en este espacio.</p>
-            <EnlaceBoton href={`/espacios/${espacio.id}/unidades/nueva`}>Agregar unidad</EnlaceBoton>
           </div>
         ) : (
           <ListaEntrada>
@@ -121,9 +114,10 @@ export default async function PaginaEspacio({ params }) {
             ))}
           </ListaEntrada>
         )}
-        {lista.length ? (
-          <EnlaceBoton href={`/espacios/${espacio.id}/unidades/nueva`}>Agregar unidad</EnlaceBoton>
-        ) : null}
+        <FabNuevoChatFlora
+          href={`/espacios/${espacio.id}/unidades/nueva`}
+          ariaLabel="Agregar unidad"
+        />
       </section>
     </TransicionVista>
   );

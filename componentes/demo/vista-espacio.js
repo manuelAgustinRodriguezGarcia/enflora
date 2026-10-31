@@ -36,7 +36,9 @@ export function VistaEspacio() {
         <header className="detalle-cabecera">
           <h1 className="detalle-cabecera__titulo">{espacio.nombre}</h1>
           <div className="detalle-cabecera__fila">
-            <span className="detalle-cabecera__chip">{etiquetaTipoEspacio(espacio.tipo)}</span>
+            <span className={`detalle-cabecera__chip detalle-cabecera__chip--${espacio.tipo}`}>
+              {etiquetaTipoEspacio(espacio.tipo)}
+            </span>
             <span className="detalle-cabecera__meta">
               {unidades.length === 1 ? "1 unidad" : `${unidades.length} unidades`}
             </span>

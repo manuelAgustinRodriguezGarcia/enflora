@@ -11,6 +11,8 @@ import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { LIMITES_FLORA_CHATS } from "@/lib/flora-chats-guardados";
+import { AVISO_IMAGEN_CHAT_NO_GUARDADA } from "@/lib/flora-imagen-chat";
+import { ImagenMensajeFlora } from "@/componentes/flora/imagen-mensaje-flora";
 
 function formatearFecha(iso) {
   try {
@@ -41,23 +43,24 @@ function AdjuntoMensajeGuardado({ adj }) {
   if (adj.tipo === "transitoria") {
     return (
       <p className="flora-soluciones-detalle__adjunto-transitorio" role="note">
-        Había una imagen del dispositivo adjunta; no quedó guardada y Flora no puede volver a analizarla.
+        {AVISO_IMAGEN_CHAT_NO_GUARDADA}
       </p>
     );
   }
-  if (adj.tipo === "foto_enflora") {
+  if (adj.tipo === "foto_flora" || adj.tipo === "foto_enflora") {
     if (adj.vistaUrl) {
       return (
         <figure className="flora-soluciones-detalle__adjunto-foto">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={adj.vistaUrl} alt="" />
+          <ImagenMensajeFlora key={adj.vistaUrl} src={adj.vistaUrl} />
           {adj.etiqueta ? <figcaption>{adj.etiqueta}</figcaption> : null}
         </figure>
       );
     }
     return (
       <p className="flora-soluciones-detalle__adjunto-transitorio" role="note">
-        Foto de tu galería ENFLORA (no disponible o sin acceso).
+        {adj.tipo === "foto_flora"
+          ? "No se pudo mostrar la fotografía de esta conversación."
+          : "Foto de tu galería ENFLORA (no disponible o sin acceso)."}
       </p>
     );
   }

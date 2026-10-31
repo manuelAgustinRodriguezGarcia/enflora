@@ -5,17 +5,12 @@ import { IconoInstagram } from "@/componentes/iconos-ui";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { fechaLarga, textoDiaCultivo, textoEstadoCultivo } from "@/lib/demo/historial/historial-demo";
 import { formatearFecha } from "@/lib/etapas";
+import { etiquetaTipoEspacio } from "@/lib/unidades";
 
 const CREDITO_CULTIVO = {
   usuario: "@astutalaplanta",
   url: "https://www.instagram.com/astutalaplanta/",
 };
-
-function textoDiaCabecera(cultivo) {
-  const base = textoDiaCultivo(cultivo.diaActual);
-  if (!cultivo.diaReferenciaUnidad) return base;
-  return `${base} (referencia de la unidad)`;
-}
 
 function EtapasActuales({ cultivo }) {
   const varias = cultivo.etapasActuales?.length > 1;
@@ -55,6 +50,11 @@ export function HistorialCabecera({ historial, modoApp = false }) {
           <div className="historial-portada__vacia" aria-hidden="true" />
         )}
         <div className="historial-portada__velo" aria-hidden="true" />
+        {cultivo.tipoEspacio === "interior" || cultivo.tipoEspacio === "exterior" ? (
+          <span className={`historial-portada__tipo historial-portada__tipo--${cultivo.tipoEspacio}`}>
+            {etiquetaTipoEspacio(cultivo.tipoEspacio)}
+          </span>
+        ) : null}
         <div className="historial-portada__texto">
           <h1 className="historial-portada__titulo">{cultivo.nombre}</h1>
           {cultivo.espacioNombre ? (
@@ -75,7 +75,7 @@ export function HistorialCabecera({ historial, modoApp = false }) {
           ) : null}
           <div className="historial-portada__chips">
             <span className="historial-chip historial-chip--oscuro">{textoEstadoCultivo(cultivo.estado)}</span>
-            <span className="historial-chip historial-chip--oscuro">{textoDiaCabecera(cultivo)}</span>
+            <span className="historial-chip historial-chip--oscuro">{textoDiaCultivo(cultivo.diaActual)}</span>
             <EtapasActuales cultivo={cultivo} />
           </div>
         </div>

@@ -18,7 +18,7 @@ import {
 } from "@/lib/demo/generar-cultivo";
 import { siguienteSecuencia } from "@/lib/demo/estado-demo";
 import { fechaHoy } from "@/lib/etapas";
-import { admiteVarias, etiquetaTipoEspacio, textoCantidad, tiposDeUnidad } from "@/lib/unidades";
+import { etiquetaTipoEspacio, textoCantidad, tiposDeUnidad } from "@/lib/unidades";
 
 const TIPOS_ESPACIO = [
   { valor: "interior", etiqueta: "Interior" },
@@ -76,7 +76,6 @@ export function CrearEspacio() {
   const opcionesUnidad = tiposDeUnidad(configuracion.tipo);
   const esOtro = configuracion.tipoUnidad === "otro";
   const unidadElegida = Boolean(configuracion.tipoUnidad);
-  const variasUnidades = unidadElegida && admiteVarias(configuracion.tipoUnidad);
 
   function limpiarErrores(campos) {
     setErrores((actual) => {
@@ -108,7 +107,7 @@ export function CrearEspacio() {
       ...actual,
       tipoUnidad,
       tipoPersonalizado: tipoUnidad === "otro" ? actual.tipoPersonalizado : "",
-      cantidadUnidades: admiteVarias(tipoUnidad) ? actual.cantidadUnidades : 1,
+      cantidadUnidades: actual.cantidadUnidades,
     }));
     limpiarErrores(["tipoUnidad", "cantidadUnidades"]);
   }
@@ -219,7 +218,7 @@ export function CrearEspacio() {
             ) : null}
           </div>
 
-          <Aparecer visible={unidadElegida && variasUnidades}>
+          <Aparecer visible={unidadElegida}>
             <div className="demo-crear__contador demo-crear__contador--unidades">
               <ContadorCantidad
                 valor={configuracion.cantidadUnidades}

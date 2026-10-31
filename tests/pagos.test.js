@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
 import { correoPayerOrden, leerAmbientePagos, leerRecepcionPagos, urlPublica } from "../lib/pagos/ambiente.js";
-import { claveIdempotenciaOrden, cuerpoOrdenLicencia } from "../lib/pagos/cuerpo-orden.js";
+import { claveIdempotenciaOrden, cuerpoOrdenLicencia, fechaRegistroPagadorIso8601 } from "../lib/pagos/cuerpo-orden.js";
 import { parsearBilleteVendedor, evaluarCotizacion } from "../lib/pagos/cotizacion-bna.js";
 import {
   importeLicenciaCentavos,
@@ -13,6 +13,7 @@ import {
 import { licenciaHabilita } from "../lib/pagos/cobertura.js";
 import { ambienteCompatibleConAviso, eventoOrdenWebhook } from "../lib/pagos/evento-webhook.js";
 import {
+  aplicacionDuplicadaTerminal,
   estadoSiguiente,
   evaluarOrdenRemota,
   operacionDeOrden,
@@ -41,11 +42,13 @@ test("lee el dólar billete vendedor y no la divisa", () => {
   assert.equal(cotizacion.publicadaEn, "2026-10-21T20:02:00.000Z");
 });
 
-test("rechaza una cotización ausente o vieja y acepta un fin de semana", () => {
+test("rechaza cotización ausente o vieja y advierte antigüedad intermedia", () => {
   assert.equal(evaluarCotizacion(null).codigo, "cotizacion_invalida");
   const cotizacion = parsearBilleteVendedor(HTML);
   const domingo = new Date("2026-10-25T15:00:00.000Z");
-  assert.equal(evaluarCotizacion(cotizacion, domingo).ok, true);
+  const domingoEval = evaluarCotizacion(cotizacion, domingo);
+  assert.equal(domingoEval.ok, true);
+  assert.equal(domingoEval.advertenciaAntigua, true);
   const tarde = new Date("2026-10-30T20:03:00.000Z");
   assert.equal(evaluarCotizacion(cotizacion, tarde).codigo, "cotizacion_antigua");
 });
@@ -185,9 +188,19 @@ test("el payload cobra el total del ítem y no restringe el medio de pago", () =
   assert.equal(cuerpo.items.length, 1);
   assert.equal(cuerpo.items[0].unit_price, cuerpo.total_amount);
   assert.equal(cuerpo.items[0].quantity, 1);
+  assert.equal(
+    cuerpo.items[0].description,
+    "Licencia de seguimiento ENFLORA para un ciclo de cultivo",
+  );
+  assert.equal(cuerpo.items[0].category_id, "services");
+  assert.equal(cuerpo.config.statement_descriptor, "ENFLORA");
   assert.equal(cuerpo.payer, undefined);
+  assert.equal(cuerpo.additional_info, undefined);
   assert.equal(cuerpo.config.payment_method, undefined);
   assert.equal(cuerpo.config.online.allowed_user_type, undefined);
+  assert.equal(cuerpo.config.online.auto_return, "all");
+  assert.match(cuerpo.config.online.callback_url, /\/api\/mercadopago\/webhook$/);
+  assert.match(cuerpo.config.online.success_url, new RegExp(`/pagos/resultado/${pagoId}$`));
   assert.equal(cuerpo.expiration_time, undefined);
   assert.equal(cuerpo.capture_mode, undefined);
   const conCorreo = cuerpoOrdenLicencia({
@@ -199,6 +212,38 @@ test("el payload cobra el total del ítem y no restringe el medio de pago", () =
   assert.equal(conCorreo.external_reference, pagoId);
   assert.equal(claveIdempotenciaOrden(pagoId, ""), pagoId);
   assert.notEqual(claveIdempotenciaOrden(pagoId, "comprador@testuser.com"), pagoId);
+});
+
+test("el payload incluye nombre del perfil y fecha real de registro sin documento", () => {
+  const pagoId = "22222222-2222-4222-8222-222222222222";
+  const cuerpo = cuerpoOrdenLicencia({
+    pagoId,
+    importeDecimal: 100,
+    email: "dueno@enflora.com",
+    nombre: "  Ana  ",
+    apellido: "García",
+    fechaRegistro: "2024-05-10T14:22:11.123Z",
+  });
+  assert.deepEqual(cuerpo.payer, {
+    email: "dueno@enflora.com",
+    first_name: "Ana",
+    last_name: "García",
+  });
+  assert.equal(
+    cuerpo.additional_info["payer.registration_date"],
+    "2024-05-10T14:22:11.123Z",
+  );
+  assert.equal(cuerpo.payer.identification, undefined);
+  assert.equal(fechaRegistroPagadorIso8601("fecha-invalida"), null);
+  assert.equal(fechaRegistroPagadorIso8601(null), null);
+  const sinApellido = cuerpoOrdenLicencia({
+    pagoId,
+    importeDecimal: 100,
+    email: "dueno@enflora.com",
+    nombre: "Ana",
+    apellido: "   ",
+  });
+  assert.deepEqual(sinApellido.payer, { email: "dueno@enflora.com", first_name: "Ana" });
 });
 
 test("el correo de prueba no se usa en producción ni reemplaza al dueño de Enflora", () => {
@@ -319,6 +364,34 @@ test("una licencia de prueba no habilita producción ni otro ciclo", () => {
   );
 });
 
+test("licenciaHabilita exige titular y pago acreditado", () => {
+  const licencia = {
+    estado: "activa",
+    pago_id: "pago-1",
+    ciclo_cultivo_id: "ciclo-1",
+    usuario_id: "usuario-1",
+  };
+  const pagoAcreditado = {
+    id: "pago-1",
+    estado: "acreditado",
+    ambiente: "produccion",
+    ciclo_cultivo_id: "ciclo-1",
+    usuario_id: "usuario-1",
+  };
+  assert.equal(
+    licenciaHabilita({ licencia, pago: pagoAcreditado, ambiente: "produccion", usuarioId: "usuario-2" }),
+    false,
+  );
+  assert.equal(
+    licenciaHabilita({ licencia, pago: { ...pagoAcreditado, estado: "pendiente" }, ambiente: "produccion" }),
+    false,
+  );
+  assert.equal(
+    licenciaHabilita({ licencia, pago: pagoAcreditado, ambiente: "produccion", usuarioId: "usuario-1" }),
+    true,
+  );
+});
+
 test("una orden creada no acredita la licencia", () => {
   const orden = {
     id: "ord-1",
@@ -334,6 +407,26 @@ test("una orden creada no acredita la licencia", () => {
   assert.equal(evaluacion.ok, true);
   assert.equal(evaluacion.estado, "pendiente");
   assert.notEqual(evaluacion.estado, "acreditado");
+});
+
+test("reintentos con otro x-request-id no repiten acreditación terminal", () => {
+  const pago = { id: "pago-1", estado: "acreditado", order_id: "ord-1" };
+  const orden = {
+    id: "ord-1",
+    external_reference: "pago-1",
+    currency: "ARS",
+    status: "processed",
+    status_detail: "accredited",
+    total_amount: "46350.00",
+    transactions: {
+      payments: [{ status: "processed", status_detail: "accredited", reference_id: "1" }],
+    },
+  };
+  const evaluacion = evaluarOrdenRemota(pago, orden);
+  assert.equal(
+    aplicacionDuplicadaTerminal(pago, evaluacion, true),
+    true,
+  );
 });
 
 test("sin PAYMENTS_LIVE_ENABLED no hay cobro real y desarrollo exige prueba", () => {
