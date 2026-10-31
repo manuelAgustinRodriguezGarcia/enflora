@@ -7,6 +7,9 @@ export async function resolve(specifier, context, nextResolve) {
   if (specifier === "server-only") {
     return nextResolve(pathToFileURL(path.join(raiz, "tests/stubs/server-only.js")).href, context);
   }
+  if (specifier === "next/headers") {
+    return nextResolve(pathToFileURL(path.join(raiz, "tests/stubs/next-headers.js")).href, context);
+  }
   if (specifier === "next/cache") {
     return nextResolve(pathToFileURL(path.join(raiz, "tests/stubs/next-cache.js")).href, context);
   }

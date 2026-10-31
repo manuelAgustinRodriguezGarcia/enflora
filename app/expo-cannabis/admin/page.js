@@ -2,9 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import { ListaContactos } from "@/componentes/expo-admin/lista-contactos";
 import { PanelExpo } from "@/componentes/expo-admin/panel-expo";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
-import { clienteContactos, listarContactos, resumenContactos } from "@/lib/contactos/datos";
-import { esAdministradorExpo, obtenerPanelExpo, presentarProductos } from "@/lib/expo-cannabis/admin";
-import { obtenerUsuario } from "@/lib/supabase/servidor";
+import { MOTIVOS_ADMIN } from "@/lib/admin/reglas";
+import { obtenerAdminExpo, obtenerPanelExpo, presentarProductos } from "@/lib/expo-cannabis/admin";
+import { operacionesContactosAdmin } from "@/lib/expo-cannabis/contactos-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -13,10 +13,10 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-async function contactosIniciales() {
-  const supabase = clienteContactos();
-  if (!supabase) return { ok: false, error: "El servicio de contactos no está configurado." };
-  const [listado, resumen] = await Promise.all([listarContactos(supabase, {}), resumenContactos(supabase)]);
+async function contactosIniciales(admin) {
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return { ok: false, error: "El servicio de contactos no está configurado." };
+  const [listado, resumen] = await Promise.all([contactos.listar({}), contactos.resumen()]);
   if (!listado.ok || !resumen.ok) {
     return { ok: false, error: "No pudimos cargar los contactos. Verificá que la migración supabase/contactos.sql esté aplicada." };
   }
@@ -33,11 +33,14 @@ async function contactosIniciales() {
 }
 
 export default async function PaginaAdminExpo() {
-  const usuario = await obtenerUsuario();
-  if (!usuario) redirect("/ingreso?siguiente=/expo-cannabis/admin");
-  if (!esAdministradorExpo(usuario)) notFound();
+  const autorizacion = await obtenerAdminExpo();
+  if (!autorizacion.ok) {
+    if (autorizacion.motivo === MOTIVOS_ADMIN.sinSesion) redirect("/ingreso?siguiente=/expo-cannabis/admin");
+    notFound();
+  }
+  const admin = autorizacion.credencial;
 
-  const [panel, contactos] = await Promise.all([obtenerPanelExpo(), contactosIniciales()]);
+  const [panel, contactos] = await Promise.all([obtenerPanelExpo(admin), contactosIniciales(admin)]);
 
   return (
     <ProveedorMotion>
