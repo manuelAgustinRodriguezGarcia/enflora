@@ -25,6 +25,11 @@ const ERRORES = {
   checkout_ausente: "Mercado Pago no devolvió enlace de suscripción.",
   comprador_prueba_invalido: "Configurá MERCADOPAGO_TEST_BUYER_EMAIL para pruebas.",
   comprador_invalido: "Falta un correo válido para el checkout.",
+  correo_pago_invalido: "Ingresá un correo válido para pagar con Mercado Pago.",
+  intento_pendiente:
+    "Tenés un intento de pago pendiente. Continualo o cancelalo para empezar con otro correo.",
+  intento_no_cancelable:
+    "Ese intento ya fue autorizado en Mercado Pago, por lo que no se canceló automáticamente.",
   mp_cancel_fallido: "No pudimos cancelar en Mercado Pago. Probá de nuevo.",
   piloto_no_autorizado: "Las compras todavía no están habilitadas para tu cuenta.",
 };
@@ -167,8 +172,13 @@ export default async function PaginaPlus({ searchParams }) {
           {sub.estado_interno !== ESTADOS_PLUS_INTERNO.cancelada ? (
             <form action={cancelarPlus}>
               <input type="hidden" name="suscripcionId" value={sub.id} />
+              {sub.estado_interno === ESTADOS_PLUS_INTERNO.pendienteCheckout ? (
+                <input type="hidden" name="intentoPendiente" value="1" />
+              ) : null}
               <button type="submit" className="landing__accion landing__accion--linea">
-                Cancelar renovaciones
+                {sub.estado_interno === ESTADOS_PLUS_INTERNO.pendienteCheckout
+                  ? "Cancelar intento pendiente"
+                  : "Cancelar renovaciones"}
               </button>
             </form>
           ) : null}
@@ -177,11 +187,33 @@ export default async function PaginaPlus({ searchParams }) {
 
       {!beneficios &&
       (!sub || sub.estado_interno === ESTADOS_PLUS_INTERNO.pendienteCheckout) ? (
-        <form action={iniciarSuscripcionPlus}>
-          <button type="submit" className="landing__accion landing__accion--acento">
-            {sub?.init_point ? "Continuar checkout Mercado Pago" : "Suscribirme a PLAN 420"}
-          </button>
-        </form>
+        sub ? (
+          <form action={iniciarSuscripcionPlus}>
+            <input type="hidden" name="continuar" value="1" />
+            <button type="submit" className="landing__accion landing__accion--acento">
+              Continuar checkout Mercado Pago
+            </button>
+            <p className="pago__nota">
+              ¿Te equivocaste de correo? Usá «Cancelar intento pendiente» y empezá de nuevo con otro.
+            </p>
+          </form>
+        ) : (
+          <form action={iniciarSuscripcionPlus}>
+            <label htmlFor="correoPago">Correo para pagar con Mercado Pago</label>
+            <input
+              id="correoPago"
+              name="correoPago"
+              type="email"
+              required
+              maxLength={254}
+              defaultValue={usuario.email || ""}
+              autoComplete="email"
+            />
+            <button type="submit" className="landing__accion landing__accion--acento">
+              Suscribirme a PLAN 420
+            </button>
+          </form>
+        )
       ) : null}
 
       {!resumen.dbDisponible ? (
