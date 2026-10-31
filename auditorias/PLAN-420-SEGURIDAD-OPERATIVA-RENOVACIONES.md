@@ -29,8 +29,9 @@ si MP cobraría de más o de menos, y no incluye correos de usuarios, tokens ni 
 
 ## 2. Reintentos
 
-- Máximo `MAX_INTENTOS_PUT = 4` por renovación (suscripción + `next_payment_date` de MP).
-- Espera mínima tras el intento N: 30 min, 2 h, 6 h; con ≤ 6 h al cobro se acorta a 30 min. Después: `agotado`.
+- Máximo `MAX_INTENTOS_PUT = 5` por renovación (suscripción + `next_payment_date` de MP).
+- Espera mínima tras el intento N: 30 min, 2 h, 6 h, 12 h; con ≤ 6 h al cobro se acorta a 30 min. Después: `agotado`.
+- Actualizado por el hardening final: ver `PLAN-420-HARDENING-CRON-RENOVACIONES.md` (fail-closed, fechas vencidas, paginación, heartbeat).
 - Cada corrida hace GET primero: si MP ya tiene el importe → no hay PUT (cubre PUT aplicado con GET caído).
 - Las fallas locales (BNA, GET inicial, sin fecha) no consumen intentos de PUT; se reevalúan en cada corrida.
 - 429 o 2 errores 5xx consecutivos de MP frenan las escrituras del resto del lote (`diferido_proteccion_mp`).
@@ -84,14 +85,9 @@ debe ser un script manual con confirmación explícita, nunca un cron.
 
 ## 5. Riesgos restantes
 
-- El detector es el propio cron: si no corre, nadie alerta. Falta un monitor externo (heartbeat) o consulta
-  periódica de la vista de incidencias abiertas.
-- Lote de 25 ordenado por fecha local: con más suscripciones activas pueden quedar sin evaluar
-  (`loteCompleto` en la respuesta y log); falta paginar.
-- Con auditoría sin migrar el cron sigue operando pero sin límite persistido de intentos.
+- (Resuelto en el hardening final) Heartbeat con ruta de monitoreo externo, paginación, fail-closed sin
+  migración y bloqueo de PUT sobre renovaciones vencidas. Falta contratar/autorizar el monitor externo.
 - Un PUT aplicado cuya confirmación falla se resuelve recién en la corrida siguiente.
-- Después de `next_payment_date` vencida y aún `authorized`, el job puede hacer PUT (comportamiento de MP
-  sobre el reintento de cobro no verificado).
 - Alertas por correo dependen de Resend; un fallo de envío se reintenta pero no hay segundo canal.
 - Política de la sección 4 sin aprobar: hoy, agotados los reintentos, MP cobrará el importe vigente.
 

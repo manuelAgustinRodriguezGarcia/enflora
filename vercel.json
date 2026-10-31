@@ -9,6 +9,10 @@
       "schedule": "15 * * * *"
     },
     {
+      "path": "/api/pagos/plus/renovar-importe",
+      "schedule": "45 * * * *"
+    },
+    {
       "path": "/api/push/lanzamiento",
       "schedule": "7,22,37,52 * * * *"
     }

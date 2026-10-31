@@ -53,6 +53,7 @@ export function mpFalso({
   putIgnorado = false,
   getFalla = false,
   getConfirmacionFalla = false,
+  cambioFecha = null, // { trasGets, next }: MP avanza next_payment_date después de N GET
 } = {}) {
   const estado = { importe, status, next, puts: [], gets: 0, putsIntentados: 0 };
   let fallasRestantes = putFalla === true ? Infinity : Number(putFalla) || 0;
@@ -74,6 +75,7 @@ export function mpFalso({
       return new Response(JSON.stringify({ id: PRE_ID }), { status: 200 });
     }
     estado.gets += 1;
+    if (cambioFecha && estado.gets > cambioFecha.trasGets) estado.next = cambioFecha.next;
     if (getFalla || confirmacionPendiente) {
       confirmacionPendiente = false;
       return new Response(JSON.stringify({ message: "get_caido" }), { status: 503 });
@@ -92,26 +94,72 @@ export function mpFalso({
 }
 
 /**
- * Supabase en memoria: plus_suscripciones devuelve las candidatas; plus_cotizacion_auditoria
- * se comporta como la tabla real (índice único de clave_incidencia, update con filtros).
- * fallaAuditoria: toda operación sobre la auditoría devuelve error (migración sin aplicar).
+ * Mercado Pago falso con una suscripción por preapproval_id (para lotes grandes).
+ * Cuenta GET y PUT por id; cada PUT aplica el importe de inmediato.
  */
-export function supabaseFalso(candidatas = [suscripcion()], { auditoria = [], fallaAuditoria = false } = {}) {
+export function mpMultiple(ids, { importe = 6000, next = PROXIMA } = {}) {
+  const porId = new Map(ids.map((id) => [id, { importe, putsAplicados: 0, gets: 0 }]));
+  const fetchFn = async (url, init) => {
+    await Promise.resolve();
+    const id = decodeURIComponent(String(url).split("/preapproval/")[1]);
+    const s = porId.get(id);
+    if (!s) return new Response(JSON.stringify({ message: "no_encontrada" }), { status: 404 });
+    if ((init?.method || "GET") === "PUT") {
+      s.putsAplicados += 1;
+      s.importe = JSON.parse(init.body).auto_recurring.transaction_amount;
+      return new Response(JSON.stringify({ id }), { status: 200 });
+    }
+    s.gets += 1;
+    return new Response(
+      JSON.stringify({ id, status: "authorized", next_payment_date: next, auto_recurring: { transaction_amount: s.importe } }),
+      { status: 200 },
+    );
+  };
+  return { porId, fetchFn, totalPuts: () => [...porId.values()].reduce((n, s) => n + s.putsAplicados, 0) };
+}
+
+/**
+ * Supabase en memoria (sin red).
+ * - plus_suscripciones: filtra por eq/not/gt, ordena por id y respeta limit (paginación real).
+ * - plus_cotizacion_auditoria: índice único de clave_incidencia, update con filtros, select de columnas.
+ * - plus_cron_heartbeat: upsert por job.
+ * Opciones de fallo: fallaAuditoria (todo), esquemaAuditoria (columnas existentes: pedir otra falla),
+ * fallaInsertAuditoria, fallaDesdePagina (N: la consulta N de suscripciones y siguientes fallan),
+ * updateSuscripcionLanza (id: el update de esa suscripción lanza una excepción).
+ */
+export function supabaseFalso(
+  candidatas = [suscripcion()],
+  {
+    auditoria = [],
+    fallaAuditoria = false,
+    esquemaAuditoria = null,
+    fallaInsertAuditoria = false,
+    fallaDesdePagina = null,
+    updateSuscripcionLanza = null,
+  } = {},
+) {
   const escrituras = [];
   const filtros = [];
   const filas = auditoria.map((f, i) => ({ id: `aud-${i}`, ...f }));
+  const heartbeats = new Map();
   let secuencia = filas.length;
+  let consultasSuscripciones = 0;
+
+  const cumple = (fila, filtrosQ) =>
+    filtrosQ.every(([tipo, col, val]) => {
+      if (tipo === "eq") return fila[col] === val;
+      if (tipo === "is") return (fila[col] ?? null) === val;
+      if (tipo === "in") return val.includes(fila[col]);
+      if (tipo === "not") return fila[col] !== null && fila[col] !== undefined;
+      if (tipo === "gte") return String(fila[col] ?? "") >= String(val);
+      if (tipo === "gt") return String(fila[col] ?? "") > String(val);
+      return true;
+    });
 
   function ejecutarAuditoria(q) {
-    if (fallaAuditoria) return { data: null, error: { code: "42703", message: "columna inexistente" } };
-    const coincide = (fila) =>
-      q.filtros.every(([tipo, col, val]) => {
-        if (tipo === "eq") return fila[col] === val;
-        if (tipo === "not") return fila[col] !== null && fila[col] !== undefined;
-        if (tipo === "gte") return String(fila[col] ?? "") >= String(val);
-        return true;
-      });
+    if (fallaAuditoria) return { data: null, error: { code: "42P01", message: "tabla inexistente" } };
     if (q.op === "insert") {
+      if (fallaInsertAuditoria) return { data: null, error: { code: "XX000", message: "insert caído" } };
       if (q.fila.clave_incidencia && filas.some((f) => f.clave_incidencia === q.fila.clave_incidencia)) {
         return { data: null, error: { code: "23505", message: "duplicado" } };
       }
@@ -121,43 +169,76 @@ export function supabaseFalso(candidatas = [suscripcion()], { auditoria = [], fa
       return { data: [{ ...nueva }], error: null };
     }
     if (q.op === "update") {
-      const afectadas = filas.filter(coincide);
+      const afectadas = filas.filter((f) => cumple(f, q.filtros));
       for (const fila of afectadas) Object.assign(fila, q.fila);
       if (afectadas.length) escrituras.push({ tabla: q.tabla, op: "update", fila: { ...q.fila } });
       return { data: afectadas.map((f) => ({ ...f })), error: null };
     }
-    return { data: filas.filter(coincide).map((f) => ({ ...f })), error: null };
+    if (esquemaAuditoria && q.columnas && q.columnas !== "*") {
+      const faltan = q.columnas.split(",").map((c) => c.trim()).filter((c) => !esquemaAuditoria.includes(c));
+      if (faltan.length) return { data: null, error: { code: "42703", message: `columna inexistente: ${faltan[0]}` } };
+    }
+    return { data: filas.filter((f) => cumple(f, q.filtros)).map((f) => ({ ...f })), error: null };
   }
 
   function ejecutarSuscripciones(q) {
     if (q.op === "update") {
+      const id = q.filtros.find(([t, c]) => t === "eq" && c === "id")?.[2];
+      if (updateSuscripcionLanza && id === updateSuscripcionLanza) throw new Error("update_caido");
       escrituras.push({ tabla: q.tabla, op: "update", fila: q.fila });
       return { data: null, error: null };
     }
-    return { data: candidatas, error: null };
+    consultasSuscripciones += 1;
+    if (fallaDesdePagina && consultasSuscripciones >= fallaDesdePagina) {
+      return { data: null, error: { code: "XX000", message: "página caída" } };
+    }
+    let data = candidatas.filter((c) => cumple(c, q.filtros)).sort((a, b) => String(a.id).localeCompare(String(b.id)));
+    if (q.limite) data = data.slice(0, q.limite);
+    return { data, error: null };
+  }
+
+  function ejecutarHeartbeat(q) {
+    if (q.op === "upsert") {
+      heartbeats.set(q.fila.job, { ...(heartbeats.get(q.fila.job) || {}), ...q.fila });
+      return { data: null, error: null };
+    }
+    const job = q.filtros.find(([t, c]) => t === "eq" && c === "job")?.[2];
+    return { data: heartbeats.get(job) ?? null, error: null };
   }
 
   return {
     escrituras,
     filtros,
     auditoria: filas,
+    heartbeats,
+    consultasSuscripciones: () => consultasSuscripciones,
     from(tabla) {
-      const q = { tabla, op: "select", fila: null, filtros: [] };
+      const q = { tabla, op: "select", fila: null, filtros: [], limite: null, columnas: null };
+      const agregar = (tipo) => (col, val) => {
+        q.filtros.push([tipo, col, val]);
+        return api;
+      };
       const api = {
-        select: () => api,
+        select(columnas) {
+          if (q.op === "select") q.columnas = columnas ?? "*";
+          return api;
+        },
         order: () => api,
-        limit: () => api,
+        limit(n) {
+          q.limite = n;
+          return api;
+        },
         eq(col, val) {
           filtros.push([col, val]);
           q.filtros.push(["eq", col, val]);
           return api;
         },
+        is: agregar("is"),
+        in: agregar("in"),
+        gte: agregar("gte"),
+        gt: agregar("gt"),
         not(col) {
           q.filtros.push(["not", col]);
-          return api;
-        },
-        gte(col, val) {
-          q.filtros.push(["gte", col, val]);
           return api;
         },
         insert(fila) {
@@ -170,8 +251,19 @@ export function supabaseFalso(candidatas = [suscripcion()], { auditoria = [], fa
           q.fila = fila;
           return api;
         },
+        upsert(fila) {
+          q.op = "upsert";
+          q.fila = fila;
+          return api;
+        },
+        maybeSingle: () => api,
         then(resolve, reject) {
-          const ejecutar = tabla === "plus_cotizacion_auditoria" ? ejecutarAuditoria : ejecutarSuscripciones;
+          const ejecutar =
+            tabla === "plus_cotizacion_auditoria"
+              ? ejecutarAuditoria
+              : tabla === "plus_cron_heartbeat"
+                ? ejecutarHeartbeat
+                : ejecutarSuscripciones;
           return Promise.resolve().then(() => ejecutar(q)).then(resolve, reject);
         },
       };

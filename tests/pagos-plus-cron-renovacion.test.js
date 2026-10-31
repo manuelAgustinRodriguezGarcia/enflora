@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 import { ejecutarCronRenovacionImportePlus } from "../lib/pagos/plus/cron-renovacion-ars.js";
 import { evaluarActualizacionArsPreRenovacion } from "../lib/pagos/plus/renovacion-ars.js";
