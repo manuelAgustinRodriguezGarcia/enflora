@@ -2,38 +2,29 @@
 
 import { revalidatePath } from "next/cache";
 import {
-  esAdministradorExpo,
   guardarInventarioServicio,
   mutarEntregaExpo,
+  obtenerAdminExpo,
   obtenerPanelExpo,
   presentarProducto,
   presentarProductos,
   reiniciarParticipantesServicio,
 } from "@/lib/expo-cannabis/admin";
+import { operacionesContactosAdmin } from "@/lib/expo-cannabis/contactos-admin";
 import { deltasEntregaExpo, productoExpo } from "@/lib/expo-cannabis/productos";
-import {
-  actualizarConsentimiento,
-  actualizarContacto,
-  clienteContactos,
-  eliminarContacto,
-  exportarContactos,
-  leerContacto,
-  listarContactos,
-  registrarContacto,
-  resumenContactos,
-} from "@/lib/contactos/datos";
 import { construirCsvContactos, esIdContacto, validarContactoManual } from "@/lib/contactos/reglas";
-import { obtenerUsuario } from "@/lib/supabase/servidor";
 
 const RUTA = "/expo-cannabis/admin";
+const NO_AUTORIZADO = { ok: false, error: "No autorizado." };
 const SIN_SERVICIO = { ok: false, error: "El servicio de contactos no está configurado." };
 const ERROR_CONTACTOS = { ok: false, error: "No pudimos completar la operación. Probá de nuevo." };
 
 export async function leerContactosExpo(consulta) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const [listado, resumen] = await Promise.all([listarContactos(supabase, consulta), resumenContactos(supabase)]);
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const [listado, resumen] = await Promise.all([contactos.listar(consulta), contactos.resumen()]);
   if (!listado.ok || !resumen.ok) return ERROR_CONTACTOS;
   return {
     ok: true,
@@ -48,23 +39,25 @@ export async function leerContactosExpo(consulta) {
 }
 
 export async function leerContactoExpo(id) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!esIdContacto(id)) return { ok: false, error: "El contacto no existe." };
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const lectura = await leerContacto(supabase, id);
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const lectura = await contactos.leer(id);
   if (!lectura.ok) return ERROR_CONTACTOS;
   if (!lectura.contacto) return { ok: false, error: "El contacto no existe." };
   return { ok: true, contacto: lectura.contacto };
 }
 
 export async function crearContactoExpo(datos) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   const validacion = validarContactoManual(datos);
   if (!validacion.ok) return validacion;
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const registro = await registrarContacto(supabase, {
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const registro = await contactos.crear({
     ...validacion.datos,
     origen: "manual",
     detalle: "admin",
@@ -83,13 +76,14 @@ export async function crearContactoExpo(datos) {
 }
 
 export async function editarContactoExpo(id, datos) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!esIdContacto(id)) return { ok: false, error: "El contacto no existe." };
   const validacion = validarContactoManual(datos);
   if (!validacion.ok) return validacion;
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const resultado = await actualizarContacto(supabase, id, validacion.datos);
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const resultado = await contactos.editar(id, validacion.datos);
   if (!resultado.ok) {
     if (resultado.duplicado) return { ok: false, error: "Otro contacto ya usa ese correo o teléfono." };
     return ERROR_CONTACTOS;
@@ -100,22 +94,24 @@ export async function editarContactoExpo(id, datos) {
 }
 
 export async function retirarConsentimientoExpo(id) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!esIdContacto(id)) return { ok: false, error: "El contacto no existe." };
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const resultado = await actualizarConsentimiento(supabase, id, false);
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const resultado = await contactos.cambiarConsentimiento(id, false);
   if (!resultado.ok) return ERROR_CONTACTOS;
   revalidatePath(RUTA);
   return { ok: true };
 }
 
 export async function eliminarContactoExpo(id) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!esIdContacto(id)) return { ok: false, error: "El contacto no existe." };
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const resultado = await eliminarContacto(supabase, id);
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const resultado = await contactos.eliminar(id);
   if (!resultado.ok) return ERROR_CONTACTOS;
   if (!resultado.eliminado) return { ok: false, error: "El contacto ya no existe." };
   revalidatePath(RUTA);
@@ -123,10 +119,11 @@ export async function eliminarContactoExpo(id) {
 }
 
 export async function exportarContactosExpo(consulta) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
-  const supabase = clienteContactos();
-  if (!supabase) return SIN_SERVICIO;
-  const resultado = await exportarContactos(supabase, consulta);
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
+  const contactos = operacionesContactosAdmin(admin);
+  if (!contactos) return SIN_SERVICIO;
+  const resultado = await contactos.exportar(consulta);
   if (!resultado.ok) return ERROR_CONTACTOS;
   return {
     ok: true,
@@ -137,8 +134,9 @@ export async function exportarContactosExpo(consulta) {
 }
 
 export async function leerPanelExpo() {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
-  const panel = await obtenerPanelExpo();
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
+  const panel = await obtenerPanelExpo(admin);
   if (panel.error) return { ok: false, error: panel.error };
   return {
     ok: true,
@@ -149,12 +147,13 @@ export async function leerPanelExpo() {
 }
 
 export async function registrarEntregaExpo(slug, delta) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!productoExpo(slug) || !deltasEntregaExpo(slug).includes(delta)) {
     return { ok: false, error: "La operación no es válida." };
   }
 
-  const resultado = await mutarEntregaExpo(slug, delta);
+  const resultado = await mutarEntregaExpo(admin, slug, delta);
   const producto = resultado.fila ? presentarProducto(productoExpo(slug), resultado.fila) : null;
   if (!resultado.ok) return producto ? { ...resultado, producto } : resultado;
 
@@ -166,7 +165,8 @@ export async function registrarEntregaExpo(slug, delta) {
 }
 
 export async function guardarInventarioExpo(slug, stockTotal, entregados) {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
   if (!productoExpo(slug) || !enteroValido(stockTotal) || !enteroValido(entregados)) {
     return { ok: false, error: "Las cantidades no son válidas." };
   }
@@ -174,7 +174,7 @@ export async function guardarInventarioExpo(slug, stockTotal, entregados) {
     return { ok: false, error: "Las entregas no pueden superar el stock." };
   }
 
-  const resultado = await guardarInventarioServicio(slug, stockTotal, entregados);
+  const resultado = await guardarInventarioServicio(admin, slug, stockTotal, entregados);
   if (!resultado.ok) return resultado;
 
   revalidatePath(RUTA);
@@ -185,18 +185,19 @@ export async function guardarInventarioExpo(slug, stockTotal, entregados) {
 }
 
 export async function reiniciarParticipantesExpo() {
-  if (!(await autorizado())) return { ok: false, error: "No autorizado." };
+  const admin = await administrador();
+  if (!admin) return NO_AUTORIZADO;
 
-  const resultado = await reiniciarParticipantesServicio();
+  const resultado = await reiniciarParticipantesServicio(admin);
   if (!resultado.ok) return resultado;
 
   revalidatePath(RUTA);
   return resultado;
 }
 
-async function autorizado() {
-  const usuario = await obtenerUsuario();
-  return Boolean(usuario && esAdministradorExpo(usuario));
+async function administrador() {
+  const resultado = await obtenerAdminExpo();
+  return resultado.ok ? resultado.credencial : null;
 }
 
 function enteroValido(valor) {

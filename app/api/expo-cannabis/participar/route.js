@@ -1,4 +1,4 @@
-import { registrarPartidaExpo, visitanteExpo } from "@/lib/expo-cannabis/admin";
+import { registrarPartidaExpo, visitanteExpo } from "@/lib/expo-cannabis/visitante";
 
 export const dynamic = "force-dynamic";
 

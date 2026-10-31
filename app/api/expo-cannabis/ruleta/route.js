@@ -1,4 +1,4 @@
-import { visitanteExpo } from "@/lib/expo-cannabis/admin";
+import { visitanteExpo } from "@/lib/expo-cannabis/visitante";
 import { atenderRuleta } from "@/lib/ruleta-420/servidor";
 
 export const dynamic = "force-dynamic";
