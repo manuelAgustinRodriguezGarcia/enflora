@@ -128,7 +128,7 @@ test("fallo del PUT: reintentos con espera, tope de intentos y alerta de agotami
   assert.equal(mp.estado.putsIntentados, 1, "no se satura a Mercado Pago");
 
   let t = t0;
-  for (const espera of [31, 121, 361]) {
+  for (const espera of [31, 121, 361, 721]) {
     t = new Date(t.getTime() + espera * MIN);
     await e.correr(t);
   }
@@ -306,13 +306,14 @@ test("la alerta que no se pudo enviar se reintenta y luego no se repite", async 
   assert.equal(sana.notificador.lotes.length, 1, "mismo nivel: sin repetir");
 });
 
-test("auditoría sin migrar: se avisa, no se bloquea el PUT y no se rompe el lote", async () => {
+test("auditoría sin migrar: fail-closed (ver también tests de hardening)", async () => {
   const mp = mpFalso({ importe: 6000 });
   const db = supabaseFalso([suscripcion()], { fallaAuditoria: true });
   const notificador = notificadorFalso();
   const r = await entorno({ db, mp, notificador }).correr(faltando(30));
-  assert.equal(r.auditoriaDisponible, false);
-  assert.equal(r.puts, 1);
+  assert.equal(r.ok, false);
+  assert.equal(r.codigo, "auditoria_no_disponible");
+  assert.equal(mp.estado.putsIntentados, 0);
   assert.equal(notificador.lotes[0][0].tipo, "sistema");
 });
 

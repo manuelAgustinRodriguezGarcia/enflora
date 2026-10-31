@@ -1,9 +1,17 @@
--- PLAN 420 — Seguridad operativa de renovaciones: auditoría por incidencia.
--- NO se ejecuta automáticamente. Revisar y correr a mano en el SQL Editor (primero sandbox).
--- Es aditivo e idempotente: no borra ni reescribe filas existentes de plus_cotizacion_auditoria.
--- El cron de renovación NO debe habilitarse en Vercel antes de aplicar esto.
+-- PLAN 420 — Seguridad operativa de renovaciones: auditoría por incidencia + heartbeat del cron.
+--
+-- NO se ejecuta automáticamente. Correr a mano en el SQL Editor de Supabase, UNA vez por proyecto
+-- Supabase (ver auditorias/PLAN-420-SEGURIDAD-OPERATIVA-RENOVACIONES.md, sección "Aplicar la migración").
+-- Si sandbox y producción comparten proyecto Supabase, se aplica una sola vez: las filas se separan
+-- por la columna `ambiente`, no por esquema.
+--
+-- Es aditivo e idempotente (se puede repetir sin efectos): no borra ni reescribe filas existentes.
+-- Sin esta migración el cron queda detenido (fail-closed): no hace ningún PUT a Mercado Pago.
+-- Después de ejecutarla, correr plus-auditoria-renovacion-verificacion.sql (solo lectura).
 
 begin;
+
+-- 1) Auditoría por incidencia ------------------------------------------------------------------
 
 alter table public.plus_cotizacion_auditoria
   add column if not exists clave_incidencia text,
@@ -22,10 +30,12 @@ alter table public.plus_cotizacion_auditoria
   add column if not exists resuelta_en timestamptz,
   add column if not exists actualizada_en timestamptz not null default now();
 
+-- Las restricciones se buscan por tabla (conrelid): el nombre solo es único por tabla.
 do $$
 begin
   if not exists (
-    select 1 from pg_constraint where conname = 'plus_cotizacion_estado_final'
+    select 1 from pg_constraint
+    where conrelid = 'public.plus_cotizacion_auditoria'::regclass and conname = 'plus_cotizacion_estado_final'
   ) then
     alter table public.plus_cotizacion_auditoria
       add constraint plus_cotizacion_estado_final check (
@@ -34,7 +44,8 @@ begin
       );
   end if;
   if not exists (
-    select 1 from pg_constraint where conname = 'plus_cotizacion_alerta_nivel'
+    select 1 from pg_constraint
+    where conrelid = 'public.plus_cotizacion_auditoria'::regclass and conname = 'plus_cotizacion_alerta_nivel'
   ) then
     alter table public.plus_cotizacion_auditoria
       add constraint plus_cotizacion_alerta_nivel check (
@@ -42,32 +53,71 @@ begin
       );
   end if;
   if not exists (
-    select 1 from pg_constraint where conname = 'plus_cotizacion_intentos_no_negativos'
+    select 1 from pg_constraint
+    where conrelid = 'public.plus_cotizacion_auditoria'::regclass and conname = 'plus_cotizacion_intentos_no_negativos'
   ) then
     alter table public.plus_cotizacion_auditoria
       add constraint plus_cotizacion_intentos_no_negativos check (intentos >= 0 and evaluaciones >= 0);
   end if;
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.plus_cotizacion_auditoria'::regclass and conname = 'plus_cotizacion_ambiente'
+  ) then
+    alter table public.plus_cotizacion_auditoria
+      add constraint plus_cotizacion_ambiente check (ambiente is null or ambiente in ('prueba', 'produccion'));
+  end if;
 end $$;
 
--- Una incidencia por (suscripción, renovación). Es lo que hace atómica la reserva del intento
--- y evita filas duplicadas por la misma incidencia. Filas legadas (clave null) no participan.
+-- Una incidencia por (suscripción, renovación). Es lo que hace atómica la reserva del primer
+-- intento (INSERT → 23505 para la corrida que pierde la carrera) y evita filas duplicadas.
+-- Las reservas siguientes son UPDATE ... WHERE id = ? AND intentos = ? (un solo statement, con
+-- bloqueo de fila): solo una corrida concurrente ve la fila con el valor esperado. Filas legadas
+-- (clave null) no participan del índice.
 create unique index if not exists plus_cotizacion_incidencia_unica
   on public.plus_cotizacion_auditoria (clave_incidencia)
   where clave_incidencia is not null;
 
-create index if not exists plus_cotizacion_incidencias_abiertas_idx
-  on public.plus_cotizacion_auditoria (ambiente, estado_final, renovacion_ref)
-  where clave_incidencia is not null;
-
+-- Usado por la carga de incidencias recientes: ambiente = ? and actualizada_en >= ?.
 create index if not exists plus_cotizacion_incidencias_recientes_idx
   on public.plus_cotizacion_auditoria (ambiente, actualizada_en desc)
   where clave_incidencia is not null;
 
+-- Monitoreo/runbook: incidencias abiertas por urgencia.
+create index if not exists plus_cotizacion_incidencias_abiertas_idx
+  on public.plus_cotizacion_auditoria (ambiente, estado_final, renovacion_ref)
+  where clave_incidencia is not null;
+
+-- 2) Heartbeat del cron ------------------------------------------------------------------------
+-- Una fila por job y ambiente (p. ej. 'renovacion-ars:prueba'). La escribe cada corrida real;
+-- GET /api/pagos/plus/heartbeat la evalúa para un monitor externo.
+
+create table if not exists public.plus_cron_heartbeat (
+  job text primary key,
+  ultima_ejecucion_en timestamptz not null,
+  ultimo_ok_en timestamptz,
+  ultimo_estado text not null,
+  resumen jsonb,
+  actualizada_en timestamptz not null default now(),
+  constraint plus_cron_heartbeat_estado check (ultimo_estado in ('ok', 'parcial', 'fallida'))
+);
+
+-- 3) Permisos y RLS (se reafirman; las tablas ya tenían RLS y grants solo para service_role) -----
+-- Sin políticas para anon/authenticated: solo el cliente de servidor (service_role) accede.
+
+alter table public.plus_cotizacion_auditoria enable row level security;
+alter table public.plus_cron_heartbeat enable row level security;
+
+revoke all on public.plus_cotizacion_auditoria from anon, authenticated;
+revoke all on public.plus_cron_heartbeat from anon, authenticated;
+
+grant select, insert, update, delete on public.plus_cotizacion_auditoria to service_role;
+grant select, insert, update, delete on public.plus_cron_heartbeat to service_role;
+
 commit;
 
 -- ---------------------------------------------------------------------------
--- OPCIONAL (revisar antes): filas legadas generadas por el cron anterior, que insertaba una
--- fila por corrida y por incidencia. No se borra nada: solo se las marca como 'legado'.
+-- OPCIONAL (revisar antes; NO forma parte de la migración): filas legadas del cron anterior, que
+-- insertaba una fila por corrida y por incidencia. No se borra nada: solo se las marca 'legado'.
 -- ---------------------------------------------------------------------------
 
 -- 1) Diagnóstico: duplicados históricos por suscripción + detalle + día.
@@ -90,14 +140,4 @@ commit;
 -- ---------------------------------------------------------------------------
 -- update public.plus_cotizacion_auditoria
 --   set intentos = 0, estado_final = 'pendiente', proximo_intento_en = null
--- where clave_incidencia = '<renov:SUSCRIPCION_UUID:FECHA_ISO>' and estado_final = 'agotado';
-
--- ---------------------------------------------------------------------------
--- Consulta de monitoreo: incidencias abiertas, más urgentes primero.
--- ---------------------------------------------------------------------------
--- select suscripcion_id, renovacion_ref, estado_final, codigo_error, intentos,
---        importe_ars_nuevo as esperado, importe_remoto_ars as remoto,
---        ultimo_intento_en, proximo_intento_en, alerta_nivel
--- from public.plus_cotizacion_auditoria
--- where clave_incidencia is not null and estado_final in ('pendiente', 'bloqueado', 'agotado')
--- order by renovacion_ref asc;
+-- where clave_incidencia = 'renov:<SUSCRIPCION_UUID>:<FECHA_ISO_UTC>' and estado_final = 'agotado';
