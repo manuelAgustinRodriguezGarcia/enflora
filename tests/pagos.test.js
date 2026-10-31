@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import test from "node:test";
-import { correoPayerOrden, leerAmbientePagos, leerRecepcionPagos, urlPublica } from "../lib/pagos/ambiente.js";
+import { autorizarCompraPiloto, correoPayerOrden, leerAmbientePagos, leerRecepcionPagos, urlPublica } from "../lib/pagos/ambiente.js";
 import { claveIdempotenciaOrden, cuerpoOrdenLicencia, fechaRegistroPagadorIso8601 } from "../lib/pagos/cuerpo-orden.js";
 import { parsearBilleteVendedor, evaluarCotizacion } from "../lib/pagos/cotizacion-bna.js";
 import {
@@ -455,4 +455,31 @@ test("sin PAYMENTS_LIVE_ENABLED no hay cobro real y desarrollo exige prueba", ()
   assert.equal(urlPublica({ NODE_ENV: "production" }), "https://enflora.com.ar");
   assert.equal(siguientePermitido("https://malicioso"), "");
   assert.equal(siguientePermitido("/pagos/licencia"), "/pagos/licencia");
+});
+
+test("autorizarCompraPiloto restringe checkouts nuevos solo en Production con lista definida", () => {
+  const piloto = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
+  const otro = "dddddddd-dddd-4ddd-8ddd-dddddddddddd";
+  const produccion = { NODE_ENV: "production", PAYMENTS_PILOT_USER_IDS: ` ${piloto.toUpperCase()} , ${"x"} ` };
+
+  assert.equal(autorizarCompraPiloto(piloto, produccion).ok, true);
+  assert.equal(autorizarCompraPiloto(otro, produccion).codigo, "piloto_no_autorizado");
+  assert.equal(autorizarCompraPiloto("", produccion).codigo, "piloto_no_autorizado");
+  assert.equal(autorizarCompraPiloto(undefined, produccion).codigo, "piloto_no_autorizado");
+
+  // Sin variable (o vacía) se conserva el comportamiento comercial normal.
+  assert.equal(autorizarCompraPiloto(otro, { NODE_ENV: "production" }).ok, true);
+  assert.equal(autorizarCompraPiloto(otro, { NODE_ENV: "production", PAYMENTS_PILOT_USER_IDS: "  " }).ok, true);
+  // Fuera de Production no aplica.
+  assert.equal(autorizarCompraPiloto(otro, { ...produccion, NODE_ENV: "development" }).ok, true);
+  // Variable definida sin UUID válidos: nadie queda autorizado.
+  assert.equal(
+    autorizarCompraPiloto(otro, { NODE_ENV: "production", PAYMENTS_PILOT_USER_IDS: "basura" }).codigo,
+    "piloto_no_autorizado",
+  );
+  // Lista con varios UUID.
+  assert.equal(
+    autorizarCompraPiloto(otro, { NODE_ENV: "production", PAYMENTS_PILOT_USER_IDS: `${piloto};${otro}` }).ok,
+    true,
+  );
 });

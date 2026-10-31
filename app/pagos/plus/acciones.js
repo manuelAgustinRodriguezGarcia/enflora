@@ -23,6 +23,7 @@ const ERRORES = new Set([
   "pruebas_no_confirmadas",
   "cobros_reales_bloqueados",
   "cobros_reales_desactivados",
+  "piloto_no_autorizado",
   "ambiente_no_declarado",
   "ambiente_contradictorio",
   "plus_produccion_desactivado",
