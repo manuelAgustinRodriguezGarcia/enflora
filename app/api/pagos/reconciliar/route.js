@@ -1,3 +1,4 @@
+import { cronAutorizado } from "@/lib/cron-auth";
 import { leerRecepcionPagos } from "@/lib/pagos/ambiente";
 import { reconciliarPago } from "@/lib/pagos/aplicar";
 import { clientePagos } from "@/lib/pagos/datos";
@@ -5,15 +6,8 @@ import { clientePagos } from "@/lib/pagos/datos";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function autorizado(request) {
-  if (request.headers.get("x-vercel-cron") === "1") return true;
-  const secreto = process.env.CRON_SECRET;
-  if (!secreto) return process.env.NODE_ENV !== "production";
-  return request.headers.get("authorization") === `Bearer ${secreto}`;
-}
-
 export async function GET(request) {
-  if (!autorizado(request)) {
+  if (!cronAutorizado(request.headers.get("authorization"))) {
     return Response.json({ ok: false }, { status: 401 });
   }
 
