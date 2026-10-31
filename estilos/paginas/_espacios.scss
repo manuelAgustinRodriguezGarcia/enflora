@@ -768,9 +768,7 @@
 
   &__nav {
     position: sticky;
-    bottom: calc(
-      var(--enflora-anclaje-inferior, var(--enflora-altura-barra-inferior)) + var(--bottom-nav-margen-inferior, 0.75rem)
-    );
+    bottom: calc(var(--enflora-altura-barra-inferior) + var(--bottom-nav-margen-inferior, 0.75rem));
     z-index: 45;
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -779,6 +777,10 @@
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
     background: linear-gradient(180deg, transparent, var(--color-background) 28%);
+
+    :root[data-teclado="abierto"] & {
+      position: static;
+    }
 
     .boton {
       width: 100%;

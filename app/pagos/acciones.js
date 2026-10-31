@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
-import { correoPayerOrden, leerAmbientePagos } from "@/lib/pagos/ambiente";
+import { autorizarCompraPiloto, correoPayerOrden, leerAmbientePagos } from "@/lib/pagos/ambiente";
 import { clientePagos } from "@/lib/pagos/datos";
 import { centavosADecimal, escala4ADecimal, importeLicenciaCentavos } from "@/lib/pagos/dinero";
 import { obtenerCotizacionBilleteVendedor } from "@/lib/pagos/cotizacion-bna";
@@ -24,6 +24,7 @@ const ERRORES = new Set([
   "pruebas_no_confirmadas",
   "cobros_reales_bloqueados",
   "cobros_reales_desactivados",
+  "piloto_no_autorizado",
   "ambiente_no_declarado",
   "ambiente_contradictorio",
   "sin_servicio",
@@ -68,6 +69,9 @@ export async function iniciarCompra(formulario) {
 
   const ambiente = leerAmbientePagos();
   if (!ambiente.ok) volver(ambiente.codigo);
+
+  const piloto = autorizarCompraPiloto(usuario.id);
+  if (!piloto.ok) volver(piloto.codigo);
 
   const supabaseLectura = await crearClienteServidor();
   const { data: perfil } = await supabaseLectura
