@@ -38,13 +38,16 @@ const ERRORES = new Set([
   "suscripcion_ausente",
   "mp_cancel_fallido",
   "retorno_ambiguo",
+  "correo_pago_invalido",
+  "intento_pendiente",
+  "intento_no_cancelable",
 ]);
 
 function volver(codigo) {
   redirect(`/pagos/plus?error=${ERRORES.has(codigo) ? codigo : "checkout"}`);
 }
 
-export async function iniciarSuscripcionPlus() {
+export async function iniciarSuscripcionPlus(formulario) {
   const usuario = await obtenerUsuario();
   if (!usuario) redirect("/ingreso?siguiente=/pagos/plus");
 
@@ -57,6 +60,8 @@ export async function iniciarSuscripcionPlus() {
       supabase,
       usuarioId: usuario.id,
       emailUsuario: usuario.email || "",
+      correoPago: formulario?.get("correoPago") ?? undefined,
+      continuarPendiente: formulario?.get("continuar") === "1",
     });
   } catch {
     volver("checkout");
@@ -82,6 +87,7 @@ export async function cancelarPlus(formulario) {
     supabase,
     suscripcionId,
     usuarioId: usuario.id,
+    soloIntentoPendiente: formulario.get("intentoPendiente") === "1",
   });
   if (!resultado.ok) volver(resultado.codigo || "mp_cancel_fallido");
   redirect("/pagos/plus?cancelada=1");
