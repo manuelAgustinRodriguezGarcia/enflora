@@ -86,6 +86,68 @@ test("persistirPagoRecurrentePlus reutiliza fila por authorized_payment_id", asy
   );
 });
 
+test("persistirPagoRecurrentePlus recupera una inserción concurrente sin duplicar", async () => {
+  let lecturas = 0;
+  const almacen = new Map([
+    ["AUTH-R", { id: "pago-existente", authorized_payment_id: "AUTH-R", estado_interno: "pendiente" }],
+  ]);
+  const supabase = {
+    from(tabla) {
+      if (tabla !== "plus_pagos_recurrentes") throw new Error(tabla);
+      return {
+        select() {
+          return this;
+        },
+        eq(_col, valor) {
+          return {
+            maybeSingle: async () => {
+              lecturas += 1;
+              if (lecturas === 1) return { data: null, error: null };
+              const row = almacen.get(String(valor));
+              return { data: row ? { id: row.id } : null, error: null };
+            },
+          };
+        },
+        insert() {
+          return {
+            select: () => ({
+              maybeSingle: async () => ({
+                data: null,
+                error: { code: "23505", message: "duplicate key secreto-no-loguear" },
+              }),
+            }),
+          };
+        },
+        update(patch) {
+          return {
+            eq: async (_col, id) => {
+              for (const [clave, fila] of almacen.entries()) {
+                if (fila.id === id) almacen.set(clave, { ...fila, ...patch });
+              }
+              return { error: null };
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const resultado = await persistirPagoRecurrentePlus(supabase, {
+    suscripcion_id: SUB_ID,
+    usuario_id: USUARIO,
+    ambiente: "prueba",
+    authorized_payment_id: "AUTH-R",
+    estado_interno: "acreditado",
+    importe_ars: "6552",
+  });
+  assert.equal(resultado.ok, true);
+  assert.equal(resultado.reutilizado, true);
+  assert.equal(resultado.codigoDb, undefined);
+  assert.equal(almacen.get("AUTH-R").estado_interno, "acreditado");
+  assert.equal(lecturas, 2);
+  assert.equal(almacen.size, 1);
+});
+
 test("resolverSuscripcionIdRetornoPlus rechaza varias suscripciones abiertas", async () => {
   const supabase = {
     from: () => ({
