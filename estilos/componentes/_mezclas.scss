@@ -1,0 +1,151 @@
+.registros__catalogo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin: 0;
+}
+
+.mezclas {
+  &__enlace {
+    align-self: flex-start;
+    color: var(--color-primary);
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-body-small);
+    font-weight: var(--font-weight-label);
+    text-decoration: underline;
+  }
+
+  &__panel,
+  &__editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  &__formulario {
+    margin: 0;
+  }
+
+  &__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      padding: 0.85rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-card);
+      background: var(--color-surface);
+    }
+  }
+
+  &__item--archivado {
+    opacity: 0.72;
+  }
+
+  &__nombre {
+    margin: 0;
+    font-weight: var(--font-weight-label);
+  }
+
+  &__meta,
+  &__accesos {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+  }
+
+  &__accesos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  &__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  &__volumen,
+  &__dosis,
+  &__agregar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.45rem;
+    align-items: end;
+  }
+
+  &__agregar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+  }
+
+  &__componentes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    p {
+      margin: 0;
+    }
+  }
+
+  &__ajustada {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-body-small);
+    font-weight: var(--font-weight-label);
+  }
+
+  &__cta {
+    position: sticky;
+    bottom: var(--enflora-anclaje-inferior, var(--space-bottom-nav));
+    z-index: 4;
+    padding-top: 0.35rem;
+    background: linear-gradient(180deg, transparent, var(--color-background) 28%);
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 5.5rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    resize: vertical;
+  }
+}
+
+.historial__mezcla {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+
+  p,
+  ul {
+    margin: 0;
+  }
+
+  ul {
+    padding-left: 1rem;
+  }
+}

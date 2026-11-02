@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { cargarSeguimiento } from "@/lib/cargar-seguimiento";
+import { RUTA_INICIO } from "@/lib/navegacion";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -33,7 +34,7 @@ export default async function PaginaOnboarding() {
   }
 
   if (esTipoSeguimiento(perfil.tipo_seguimiento)) {
-    redirect("/espacios");
+    redirect(RUTA_INICIO);
   }
 
   const { data: espacio, error: errorEspacio } = await supabase
@@ -47,7 +48,7 @@ export default async function PaginaOnboarding() {
   }
 
   if (!espacio) {
-    redirect("/espacios");
+    redirect(RUTA_INICIO);
   }
 
   const seguimiento = await cargarSeguimiento(supabase, user.id, perfil.tipo_seguimiento);
@@ -71,7 +72,7 @@ export default async function PaginaOnboarding() {
           parametros={seguimiento.parametros}
           opcionesIniciales={seguimiento.opciones}
           textoGuardar="Guardar y continuar"
-          continuarEn="/espacios"
+          continuarEn={RUTA_INICIO}
         />
       </section>
     </TransicionVista>

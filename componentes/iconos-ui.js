@@ -1,8 +1,9 @@
 import {
   ArrowRight,
+  Box,
+  Boxes,
   Calendar,
   ChevronDown,
-  Package,
   Pause,
   Pencil,
   Play,
@@ -74,7 +75,11 @@ export function IconoInstagram({ className }) {
 }
 
 export function IconoCaja({ className }) {
-  return <Package className={className} strokeWidth={1.75} aria-hidden="true" />;
+  return <Box className={className} strokeWidth={1.75} aria-hidden="true" />;
+}
+
+export function IconoCajas({ className }) {
+  return <Boxes className={className} strokeWidth={1.75} aria-hidden="true" />;
 }
 
 export function IconoAmbiente({ className }) {

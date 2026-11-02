@@ -46,21 +46,9 @@ const SeccionPartners = dynamic(() =>
   import("@/componentes/landing/seccion-partners").then((modulo) => ({ default: modulo.SeccionPartners })),
 );
 
-const SeccionLanzamiento = dynamic(() =>
-  import("@/componentes/landing/seccion-lanzamiento").then((modulo) => ({
-    default: modulo.SeccionLanzamiento,
-  })),
-);
-
 const NavegacionFlotante = dynamic(() =>
   import("@/componentes/landing/navegacion-flotante").then((modulo) => ({
     default: modulo.NavegacionFlotante,
-  })),
-);
-
-const PillLanzamientoFlotante = dynamic(() =>
-  import("@/componentes/landing/pill-lanzamiento-flotante").then((modulo) => ({
-    default: modulo.PillLanzamientoFlotante,
   })),
 );
 
@@ -104,11 +92,9 @@ export function Landing({ cotizacion = null }) {
           <SeccionInstalacion textos={instalacion} />
           <SeccionContacto />
           <SeccionPartners />
-          <SeccionLanzamiento />
         </main>
         <Footer />
         <NavegacionFlotante />
-        <PillLanzamientoFlotante />
         <PillExpo />
         <BienvenidaExpo />
         <RedirigirAdminExpo />

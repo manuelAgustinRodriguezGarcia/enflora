@@ -5,14 +5,25 @@ import { editarPlanta } from "@/app/espacios/[id]/acciones";
 import { Boton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
+import { SelectorGenetica } from "@/componentes/selector-genetica";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
+import { camposGenetica } from "@/lib/geneticas/reglas";
 import { fechaHoy, fechaInicioPlanta } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
-export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados = [] }) {
+export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados = [], detalleGenetica = null }) {
   const [resultado, accion, pendiente] = useActionState(editarPlanta, null);
   const nombre = resultado?.nombre ?? planta.nombre ?? "";
-  const genetica = resultado?.genetica ?? planta.genetica ?? "";
+  const [genetica, setGenetica] = useState(() =>
+    camposGenetica({
+      nombre: resultado?.genetica ?? planta.genetica ?? "",
+      id: resultado?.geneticaId || detalleGenetica?.id || "",
+      detalle:
+        detalleGenetica && (!resultado?.geneticaId || detalleGenetica.id === resultado.geneticaId)
+          ? detalleGenetica
+          : null,
+    })
+  );
   const metodoInicial = resultado?.metodo ?? planta.metodo ?? "";
   const sustratoInicial = resultado?.sustrato ?? planta.sustrato ?? "";
   const [metodo, setMetodo] = useState(metodoInicial);
@@ -78,10 +89,14 @@ export function FormularioEditarPlanta({ planta, unidades, metodosPersonalizados
         opciones={opcionesUnidad}
         placeholder="Seleccionar"
       />
-      <label className="formulario__campo">
-        Genética
-        <input name="genetica" type="text" defaultValue={genetica || ""} />
-      </label>
+      <input type="hidden" name="genetica" value={genetica.genetica} />
+      <input type="hidden" name="genetica_id" value={genetica.geneticaId} />
+      <SelectorGenetica
+        id="genetica-editar"
+        nombre={genetica.genetica}
+        detalle={genetica.geneticaDetalle}
+        onChange={(seleccion) => setGenetica(camposGenetica(seleccion))}
+      />
       <SelectorMetodo
         metodosPersonalizados={metodosPersonalizados}
         valor={metodo}

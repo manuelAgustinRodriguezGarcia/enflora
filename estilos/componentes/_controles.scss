@@ -982,13 +982,6 @@ a.boton {
     color: var(--color-text);
   }
 
-  &__etiqueta {
-    margin: 0;
-    font-size: var(--font-size-body);
-    font-weight: var(--font-weight-label);
-    color: var(--color-primary);
-  }
-
   &__lista {
     display: flex;
     flex-direction: column;
@@ -1000,16 +993,30 @@ a.boton {
 
   &__item {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--color-surface);
+    border: 1px solid #e4e4e4;
+    border-radius: 999px;
+
+    &:has(.resumen-config__boton) {
+      padding: 0;
+    }
+  }
+
+  &__item-textos {
+    display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    padding: 0.55rem 0.7rem;
-    background: var(--color-background-neutral);
-    border-radius: var(--radius-control);
+    min-width: 0;
   }
 
   &__item-titulo {
     font-weight: var(--font-weight-label);
     color: var(--color-primary);
+    overflow-wrap: anywhere;
   }
 
   &__item-meta {
@@ -1017,22 +1024,43 @@ a.boton {
     color: var(--color-text-secondary);
   }
 
+  &__plantas {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 0.2rem;
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    background: var(--color-surface-secondary);
+    color: var(--color-primary);
+    font-size: var(--font-size-body-small);
+    font-weight: var(--font-weight-label);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  &__plantas-icono {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: 0 0 auto;
+  }
+
   &__boton {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
     width: 100%;
-    padding: 0.55rem 0.7rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-control);
-    background: var(--color-background-neutral);
+    padding: 0.4rem 0.75rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
     color: var(--color-text);
     text-align: left;
 
     &:hover:not(:disabled) {
       background: var(--color-surface-secondary);
       color: var(--color-primary);
-      border-color: var(--color-primary);
     }
   }
 }
@@ -1074,10 +1102,19 @@ a.boton {
   }
 
   &__titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     font-family: var(--font-identidad);
     font-size: var(--font-size-card);
     color: var(--color-primary);
     overflow-wrap: anywhere;
+  }
+
+  &__titulo-icono {
+    width: 1.15rem;
+    height: 1.15rem;
+    flex: 0 0 auto;
   }
 
   &__meta {

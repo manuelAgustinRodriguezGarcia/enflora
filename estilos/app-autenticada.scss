@@ -1,13 +1,17 @@
 @use "componentes/listas";
+@use "componentes/mezclas";
+@use "componentes/geneticas";
 @use "componentes/etapas";
 @use "componentes/seguimiento";
 @use "componentes/fotos";
 @use "componentes/carga-vista";
 @use "paginas/espacios";
+@use "paginas/inicio";
 @use "paginas/registros";
 @use "paginas/flora";
 @use "paginas/pagos";
 @use "paginas/ruleta-420";
 @use "paginas/expo-admin";
+@use "paginas/admin";
 @use "paginas/contactos";
 @use "paginas/demo";

@@ -1,0 +1,466 @@
+.genetica-buscador {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+
+  &__estado {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+    line-height: 1.35;
+  }
+
+  &__estado--error {
+    color: var(--color-error);
+  }
+}
+
+.genetica-lista {
+  position: fixed;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0.35rem;
+  overflow: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  box-shadow: 0 12px 28px rgb(11 61 42 / 14%);
+
+  &__vacio,
+  &__carga {
+    margin: 0;
+    padding: 0.55rem 0.7rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+  }
+
+  &__opcion,
+  &__crear {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: var(--touch-min);
+    margin: 0;
+    padding: 0.45rem 0.7rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: transparent;
+    color: var(--color-text);
+    font-family: var(--font-funcional);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: left;
+    cursor: pointer;
+
+    &[aria-selected="true"],
+    &:hover {
+      background: var(--color-surface-secondary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+
+  &__crear {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    justify-content: flex-start;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  &__marca {
+    flex: 0 0 auto;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+    font-weight: 600;
+  }
+}
+
+.genetica-tarjeta {
+  display: grid;
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.65rem;
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+
+  &__imagen,
+  &__placeholder {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 0.45rem;
+  }
+
+  &__imagen {
+    display: block;
+    object-fit: cover;
+    background: var(--color-surface);
+  }
+
+  &__placeholder {
+    display: grid;
+    place-items: center;
+    background: var(--color-surface);
+    color: var(--color-primary);
+
+    svg {
+      width: 1.45rem;
+      height: 1.45rem;
+    }
+  }
+
+  &__cuerpo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  &__nombre {
+    max-width: 100%;
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__origen {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+  }
+
+  &__datos {
+    align-self: flex-start;
+    min-height: 2.25rem;
+    margin-top: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: var(--color-accent-light);
+    color: var(--color-primary);
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-body-small);
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--color-accent);
+      color: var(--color-primary);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
+  }
+}
+
+.genetica-atribucion {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-body-small);
+  line-height: 1.4;
+
+  a {
+    color: var(--color-primary);
+  }
+}
+
+.modal__panel.genetica-modal {
+  align-items: stretch;
+  box-sizing: border-box;
+  width: min(26rem, 100%);
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  text-align: left;
+
+  > *:not(.genetica-modal__cerrar) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+.genetica-modal {
+  align-items: stretch;
+  width: min(26rem, 100%);
+  max-width: 100%;
+  min-width: 0;
+  text-align: left;
+
+  &__cerrar {
+    align-self: flex-end;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__titulo {
+    margin: 0;
+    color: var(--color-primary);
+    font-family: var(--font-identidad);
+    font-size: var(--font-size-h3);
+    text-align: left;
+  }
+
+  &__figura {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 14rem;
+    min-height: 14rem;
+    overflow: hidden;
+    background: var(--color-surface-secondary);
+    border-radius: var(--radius-control);
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(
+        to top,
+        rgb(0 0 0 / 78%) 0%,
+        rgb(0 0 0 / 46%) 34%,
+        rgb(0 0 0 / 0%) 64%
+      );
+      pointer-events: none;
+    }
+
+    .genetica-tarjeta__placeholder {
+      z-index: 0;
+      width: 4.5rem;
+      height: 4.5rem;
+
+      svg {
+        width: 2.25rem;
+        height: 2.25rem;
+      }
+    }
+  }
+
+  &__figura &__cerrar {
+    position: absolute;
+    top: 0.45rem;
+    right: 0.45rem;
+    z-index: 2;
+    color: #fff;
+    background: rgb(0 0 0 / 42%);
+  }
+
+  &__figura &__titulo {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    margin: 0;
+    padding: 2.6rem 0.95rem 0.85rem;
+    color: #fff;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  &__imagen {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+  }
+
+  &__lista {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+
+    div {
+      display: grid;
+      gap: 0.1rem;
+    }
+
+    dt {
+      color: var(--color-text-secondary);
+      font-size: var(--font-size-body-small);
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+}
+
+.modal__panel.genetica-modal .genetica-form {
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  text-align: left;
+}
+
+.genetica-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+
+  &__cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    min-width: 0;
+    margin: -0.15rem 0 0;
+    padding: 0.15rem 0 0.35rem;
+    background: var(--color-surface);
+
+    .genetica-modal__titulo {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .genetica-modal__cerrar {
+      align-self: center;
+    }
+  }
+
+  .formulario__campo {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  input:not([type="file"]) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .boton {
+    width: 100%;
+  }
+
+  &__fila {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.65rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  &__nota {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+    overflow-wrap: anywhere;
+  }
+
+  &__archivo {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-width: 0;
+    min-height: var(--touch-min);
+    padding: 0.3rem 0.7rem 0.3rem 0.3rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+
+    &:focus-within {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
+  }
+
+  &__archivo-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  &__archivo-boton {
+    flex: 0 0 auto;
+    padding: 0.4rem 0.7rem;
+    border-radius: calc(var(--radius-control) - 4px);
+    background: var(--color-surface-secondary);
+    color: var(--color-primary);
+    font-size: var(--font-size-body-small);
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  &__archivo-nombre {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-body-small);
+    font-weight: 500;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__vista {
+    display: block;
+    width: 4.5rem;
+    max-width: 100%;
+    height: 4.5rem;
+    object-fit: cover;
+    border-radius: 0.45rem;
+  }
+}

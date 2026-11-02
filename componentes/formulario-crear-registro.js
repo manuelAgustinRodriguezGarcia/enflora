@@ -16,6 +16,7 @@ export function FormularioCrearRegistro({
   registrosHoy = [],
   registroInicialId = "",
   usuarioId = "",
+  catalogoMezclas = null,
 }) {
   return (
     <FormularioRegistroCultivo
@@ -31,6 +32,7 @@ export function FormularioCrearRegistro({
       EditorSeguimiento={EditorSeguimiento}
       registroInicialId={registroInicialId}
       agendarTarea={agendarTarea}
+      catalogoMezclas={catalogoMezclas}
     />
   );
 }

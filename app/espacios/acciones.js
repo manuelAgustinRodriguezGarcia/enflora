@@ -6,6 +6,7 @@ import { cargarListadoEspacios } from "@/lib/cargar-listado-espacios";
 import { estadoPorEtapa, fechaHoy, filasDeHistorial, validarEtapaInicial } from "@/lib/etapas";
 import { guardarMetodosPersonalizados } from "@/lib/metodos-usuario";
 import { validarAltaPlantasEnUnidad } from "@/lib/flora-beneficios-plantas-servidor";
+import { aplicarVinculoGenetica, insertarPlantas } from "@/lib/geneticas/plantas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES, tipoUnidadPermitido } from "@/lib/unidades";
@@ -67,6 +68,7 @@ export async function crearCultivo(_estado, formulario) {
       if (errorEtapa) return { error: errorEtapa };
       filas.push({
         genetica: String(planta?.genetica || "").trim(),
+        geneticaId: String(planta?.geneticaId || "").trim(),
         metodo,
         sustrato: String(planta?.sustrato || "").trim(),
         etapa,
@@ -123,8 +125,18 @@ export async function crearCultivo(_estado, formulario) {
   const filasPlantas = [];
   const origenes = [];
   const hoy = fechaHoy();
+  const vinculadasPorUnidad = [];
 
-  plantasPorUnidad.forEach((plantas, indice) => {
+  for (const plantas of plantasPorUnidad) {
+    const vinculadas = await aplicarVinculoGenetica(supabase, user.id, plantas);
+    if (vinculadas.error) {
+      await supabase.from("espacios").delete().eq("id", espacio.id);
+      return { error: vinculadas.error };
+    }
+    vinculadasPorUnidad.push(vinculadas.plantas);
+  }
+
+  vinculadasPorUnidad.forEach((plantas, indice) => {
     const unidadId = porNumero.get(indice + 1);
     plantas.forEach((planta, posicion) => {
       const numero = posicion + 1;
@@ -133,6 +145,7 @@ export async function crearCultivo(_estado, formulario) {
         numero,
         nombre: `Planta ${numero}`,
         genetica: planta.genetica || null,
+        genetica_id: planta.genetica_id,
         metodo: planta.metodo || null,
         sustrato: planta.sustrato || null,
         etapa: planta.etapa,
@@ -148,10 +161,7 @@ export async function crearCultivo(_estado, formulario) {
     });
   });
 
-  const { data: plantasCreadas, error: errorPlantas } = await supabase
-    .from("plantas")
-    .insert(filasPlantas)
-    .select("id, unidad_cultivo_id, numero");
+  const { data: plantasCreadas, error: errorPlantas } = await insertarPlantas(supabase, filasPlantas);
 
   if (errorPlantas || !plantasCreadas?.length) {
     await supabase.from("espacios").delete().eq("id", espacio.id);

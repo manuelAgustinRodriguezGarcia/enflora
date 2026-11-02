@@ -8,7 +8,9 @@ import { ContadorCantidad } from "@/componentes/contador-cantidad";
 import { PlantaAccordion } from "@/componentes/planta-accordion";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
+import { SelectorGenetica } from "@/componentes/selector-genetica";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
+import { camposGenetica, clonarGeneticaCompartida } from "@/lib/geneticas/reglas";
 import { fechaHoy } from "@/lib/etapas";
 import { estadoTrasMetodo, muestraSustrato } from "@/lib/metodos";
 
@@ -44,6 +46,8 @@ function plantaNueva(fechaInicio) {
   return {
     nombre: "",
     genetica: "",
+    geneticaId: "",
+    geneticaDetalle: null,
     metodo: "",
     metodoNombre: "",
     usaSustrato: "",
@@ -69,7 +73,7 @@ function usaMetodo(modo) {
   return modo === "mismo_metodo" || modo === "misma_genetica_y_metodo";
 }
 
-function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, nombreEtapa, onChange }) {
+function CamposPlanta({ planta, idGenetica, metodosPersonalizados, mostrarEtapa, nombreEtapa, onChange }) {
   return (
     <>
       <label className="formulario__campo">
@@ -80,14 +84,12 @@ function CamposPlanta({ planta, metodosPersonalizados, mostrarEtapa, nombreEtapa
           onChange={(evento) => onChange("nombre", evento.target.value)}
         />
       </label>
-      <label className="formulario__campo">
-        Genética
-        <input
-          type="text"
-          value={planta.genetica}
-          onChange={(evento) => onChange("genetica", evento.target.value)}
-        />
-      </label>
+      <SelectorGenetica
+        id={idGenetica}
+        nombre={planta.genetica}
+        detalle={planta.geneticaDetalle}
+        onChange={(seleccion) => onChange("genetica", seleccion)}
+      />
       <SelectorMetodo
         metodosPersonalizados={metodosPersonalizados}
         valor={planta.metodo}
@@ -134,6 +136,8 @@ export function FormularioPlanta({
   const [abiertas, setAbiertas] = useState(() => new Set([0]));
   const [general, setGeneral] = useState({
     genetica: "",
+    geneticaId: "",
+    geneticaDetalle: null,
     metodo: "",
     metodoNombre: "",
     usaSustrato: "",
@@ -162,6 +166,8 @@ export function FormularioPlanta({
         extra.push({
           ...plantaNueva(fecha),
           genetica: usaGenetica(modo) ? general.genetica : "",
+          geneticaId: usaGenetica(modo) ? general.geneticaId || "" : "",
+          geneticaDetalle: usaGenetica(modo) ? general.geneticaDetalle || null : null,
           metodo: usaMetodo(modo) ? general.metodo : "",
           metodoNombre: usaMetodo(modo) ? general.metodoNombre : "",
           usaSustrato: usaMetodo(modo) ? general.usaSustrato : "",
@@ -193,8 +199,14 @@ export function FormularioPlanta({
     );
   }
 
+  function aplicarGenetica(seleccion) {
+    const campos = camposGenetica(seleccion);
+    setGeneral((actual) => ({ ...actual, ...campos }));
+    setPlantas((actuales) => actuales.map((planta) => ({ ...planta, ...campos })));
+  }
+
   function cambiarModo(nuevo) {
-    const genetica = usaGenetica(nuevo) ? valorDeLaPrimera(plantas, "genetica") || general.genetica : null;
+    const compartida = usaGenetica(nuevo) ? clonarGeneticaCompartida(plantas, general) : null;
     const metodo = usaMetodo(nuevo) ? valorDeLaPrimera(plantas, "metodo") || general.metodo : null;
     const metodoNombre = usaMetodo(nuevo)
       ? valorDeLaPrimera(plantas, "metodoNombre") || general.metodoNombre
@@ -205,10 +217,10 @@ export function FormularioPlanta({
     const sustrato = usaMetodo(nuevo) ? valorDeLaPrimera(plantas, "sustrato") || general.sustrato : null;
 
     setModo(nuevo);
-    if (genetica !== null || metodo !== null) {
+    if (compartida || metodo !== null) {
       setGeneral((actual) => ({
         ...actual,
-        ...(genetica !== null ? { genetica } : {}),
+        ...(compartida ? compartida : {}),
         ...(metodo !== null
           ? { metodo, metodoNombre: metodoNombre || "", usaSustrato: usaSustrato || "", sustrato: sustrato || "" }
           : {}),
@@ -217,7 +229,9 @@ export function FormularioPlanta({
     setPlantas((actuales) =>
       actuales.map((planta) => ({
         ...planta,
-        genetica: genetica === null ? planta.genetica : genetica,
+        genetica: compartida ? compartida.genetica : planta.genetica,
+        geneticaId: compartida ? compartida.geneticaId : planta.geneticaId,
+        geneticaDetalle: compartida ? compartida.geneticaDetalle : planta.geneticaDetalle,
         metodo: metodo === null ? planta.metodo : metodo,
         metodoNombre: metodoNombre === null ? planta.metodoNombre : metodoNombre || "",
         usaSustrato: usaSustrato === null ? planta.usaSustrato : usaSustrato || "",
@@ -277,6 +291,11 @@ export function FormularioPlanta({
       cambiarUsoSustrato(valor, indice);
       return;
     }
+    if (campo === "genetica") {
+      const campos = camposGenetica(valor);
+      setPlantas((actuales) => actuales.map((planta, i) => (i === indice ? { ...planta, ...campos } : planta)));
+      return;
+    }
 
     setPlantas((actuales) =>
       actuales.map((planta, i) => (i === indice ? { ...planta, [campo]: valor } : planta))
@@ -296,6 +315,7 @@ export function FormularioPlanta({
   const carga = plantas.map((planta) => ({
     nombre: planta.nombre,
     genetica: planta.genetica,
+    geneticaId: planta.geneticaId || "",
     metodo: planta.metodo === "otro" ? planta.metodoNombre.trim() : planta.metodo,
     metodoIncompleto: planta.metodo === "otro" && !planta.metodoNombre.trim(),
     sustrato: muestraSustrato(planta.metodo, planta.usaSustrato) ? planta.sustrato : "",
@@ -337,14 +357,12 @@ export function FormularioPlanta({
           </div>
           <p className="eleccion__nota">{MODOS.find((item) => item.valor === modo)?.descripcion}</p>
           <Aparecer visible={usaGenetica(modo)}>
-            <label className="formulario__campo">
-              Genética
-              <input
-                type="text"
-                value={general.genetica}
-                onChange={(evento) => aplicarCompartido("genetica", evento.target.value)}
-              />
-            </label>
+            <SelectorGenetica
+              id="genetica-alta-general"
+              nombre={general.genetica}
+              detalle={general.geneticaDetalle}
+              onChange={aplicarGenetica}
+            />
           </Aparecer>
           <Aparecer visible={usaMetodo(modo)}>
             <SelectorMetodo
@@ -414,6 +432,7 @@ export function FormularioPlanta({
           >
             <CamposPlanta
               planta={planta}
+              idGenetica={`genetica-alta-${numero}`}
               metodosPersonalizados={metodosPersonalizados}
               mostrarEtapa={!varias || modoEtapa === "individual"}
               nombreEtapa={`etapa-planta-${numero}`}

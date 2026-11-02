@@ -11,6 +11,7 @@ import { Selector } from "@/componentes/selector";
 import { VisorFotos } from "@/componentes/visor-fotos";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { formatearFecha } from "@/lib/etapas";
+import { detalleMezcla, mezclaDeRegistro, parametrosSinMedicionRepetida } from "@/lib/mezclas/presentacion";
 import {
   agruparHistorial,
   compararEventos,
@@ -175,12 +176,39 @@ function FotosRegistro({ registro }) {
   );
 }
 
+function BloqueMezcla({ mezcla }) {
+  return (
+    <div className="historial__mezcla">
+      <p>
+        <strong>{mezcla.titulo}</strong>
+        {mezcla.volumen ? ` · ${mezcla.volumen}` : ""}
+        {mezcla.ajustada ? " · Mezcla ajustada" : ""}
+      </p>
+      {mezcla.extras.length > 0 ? <p>{mezcla.extras.join(" · ")}</p> : null}
+      {mezcla.componentes.length > 0 ? (
+        <ul>
+          {mezcla.componentes.map((item) => (
+            <li key={item.id || item.texto}>{item.texto}</li>
+          ))}
+        </ul>
+      ) : (
+        <p>Sin productos.</p>
+      )}
+      {mezcla.mediciones.length > 0 ? (
+        <p>{mezcla.mediciones.map((item) => `${item.nombre} ${item.texto}`).join(" · ")}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function TarjetaRegistro({ registro, unidades, onEliminado }) {
   const hora = horaArgentina(registro.fecha_evento);
   const dia = diaArgentina(registro.fecha_evento);
   const ambiente = registro.aplica_a === "ambiente";
   const acciones = registro.registro_acciones || [];
   const parametros = registro.registro_parametros || [];
+  const mezcla = detalleMezcla(mezclaDeRegistro(registro));
+  const parametrosTarjeta = parametrosSinMedicionRepetida(parametros, mezclaDeRegistro(registro));
 
   return (
     <article className={`historial__tarjeta${ambiente ? " historial__tarjeta--ambiente" : ""}`}>
@@ -200,9 +228,10 @@ function TarjetaRegistro({ registro, unidades, onEliminado }) {
           ))}
         </ul>
       ) : null}
-      {parametros.length > 0 ? (
+      {mezcla ? <BloqueMezcla mezcla={mezcla} /> : null}
+      {parametrosTarjeta.length > 0 ? (
         <dl className="historial__parametros">
-          {parametros.map((parametro) => (
+          {parametrosTarjeta.map((parametro) => (
             <div key={parametro.id || `${parametro.origen}-${parametro.clave_nativa || parametro.opcion_id}`}>
               <dt>{parametro.nombre}</dt>
               <dd>{textoValorParametro(parametro)}</dd>
@@ -260,6 +289,12 @@ function TarjetaRegistro({ registro, unidades, onEliminado }) {
             ))}
           </ul>
         )}
+        {mezcla ? (
+          <>
+            <h3>Mezcla</h3>
+            <BloqueMezcla mezcla={mezcla} />
+          </>
+        ) : null}
         <h3>Parámetros</h3>
         {parametros.length === 0 ? (
           <p className="historial__vacio-inline">Sin parámetros.</p>

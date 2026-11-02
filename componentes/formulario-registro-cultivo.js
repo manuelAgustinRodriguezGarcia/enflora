@@ -8,6 +8,7 @@ import { Boton } from "@/componentes/boton";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { SeccionMezclaRegistro } from "@/componentes/seccion-mezcla-registro";
 import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
@@ -17,6 +18,14 @@ import { VisorFotos } from "@/componentes/visor-fotos";
 import { toque, transicionToque } from "@/lib/animaciones";
 import { MAX_FOTOS_POR_REGISTRO } from "@/lib/fotos";
 import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
+import { mezclaDeRegistro } from "@/lib/mezclas/presentacion";
+import {
+  borradorDesdeSnapshot,
+  construirPayloadMezcla,
+  firmaMezcla,
+  MEDICIONES_MEZCLA,
+  mezclaVacia,
+} from "@/lib/mezclas/reglas";
 import { planificarCreacionRegistros } from "@/lib/registro-formulario";
 import {
   agruparPlantasPorGenetica,
@@ -170,6 +179,7 @@ export function FormularioRegistroCultivo({
   borrarArchivos,
   obtenerUrlFoto,
   agendarTarea = null,
+  catalogoMezclas = null,
 }) {
   const inicial = partesFechaLocal();
   const reducido = useReducedMotion();
@@ -210,6 +220,9 @@ export function FormularioRegistroCultivo({
   const [mostrarMasParametrosPlantas, setMostrarMasParametrosPlantas] = useState(false);
   const [editorPlantas, setEditorPlantas] = useState(false);
   const [observacion, setObservacion] = useState("");
+  const [mezcla, setMezcla] = useState(() => mezclaVacia());
+  const firmaMezclaRef = useRef("");
+  const habiaMezclaRef = useRef(false);
   const [fecha, setFecha] = useState(inicial.fecha);
   const [configurar, setConfigurar] = useState(false);
   const [editandoId, setEditandoId] = useState("");
@@ -310,8 +323,31 @@ export function FormularioRegistroCultivo({
     setMostrarMasParametrosAmbiente(false);
     setMostrarMasParametrosPlantas(false);
     setMostrarMasAcciones(false);
+    setMezcla(mezclaVacia());
+    firmaMezclaRef.current = "";
+    habiaMezclaRef.current = false;
     creadoParcialRef.current = { ambiente: false, plantas: false };
     reiniciarFotos();
+  }
+
+  function cambiarValorParametro(clave, valor) {
+    setValoresParametros((actual) => ({ ...actual, [clave]: valor }));
+    const medicion = MEDICIONES_MEZCLA.find((item) => item.clave === clave);
+    if (!medicion) return;
+    setMezcla((actual) => (actual.incluir ? { ...actual, [medicion.campo]: valor } : actual));
+  }
+
+  function datosConMezcla(armado, acciones) {
+    if (armado.error) return armado;
+    const decision = construirPayloadMezcla({
+      borrador: mezcla,
+      firmaInicial: firmaMezclaRef.current,
+      acciones,
+      aplicaA: armado.datos.aplica_a,
+      habiaMezcla: habiaMezclaRef.current && armado.datos.aplica_a === "plantas",
+    });
+    if (decision.error) return { error: decision.error };
+    return { error: "", datos: { ...armado.datos, mezcla: decision.mezcla } };
   }
 
   function aplicarExitoGuardado(datos, registro) {
@@ -557,6 +593,25 @@ export function FormularioRegistroCultivo({
     setAccionesElegidas(acciones);
     setAccionesHistoricas(registro.registro_acciones || []);
     setValoresParametros(valoresDesdeRegistroParametros(registro.registro_parametros));
+    const borradorMezcla = borradorDesdeSnapshot(mezclaDeRegistro(registro));
+    if (borradorMezcla) {
+      setMezcla(borradorMezcla);
+      firmaMezclaRef.current = firmaMezcla(borradorMezcla);
+      habiaMezclaRef.current = true;
+      setValoresParametros((actual) => {
+        const siguiente = { ...actual };
+        for (const medicion of MEDICIONES_MEZCLA) {
+          if (borradorMezcla[medicion.campo] !== "" && !String(siguiente[medicion.clave] || "").trim()) {
+            siguiente[medicion.clave] = borradorMezcla[medicion.campo];
+          }
+        }
+        return siguiente;
+      });
+    } else {
+      setMezcla(mezclaVacia());
+      firmaMezclaRef.current = "";
+      habiaMezclaRef.current = false;
+    }
     setParamsHistoricos(registro.registro_parametros || []);
     setMostrarMasParametrosAmbiente(true);
     setMostrarMasParametrosPlantas(true);
@@ -750,12 +805,15 @@ export function FormularioRegistroCultivo({
         return { error: "Seleccioná al menos una planta." };
       }
 
-      const armado = armarDatosRegistro(aplicaA, parametrosOk.parametros, {
-        acciones,
-        observacion: observacionFinal,
-        fotos_quitar: [...fotosQuitar],
-        fotos_restantes: existentesRestantes,
-      });
+      const armado = datosConMezcla(
+        armarDatosRegistro(aplicaA, parametrosOk.parametros, {
+          acciones,
+          observacion: observacionFinal,
+          fotos_quitar: [...fotosQuitar],
+          fotos_restantes: existentesRestantes,
+        }),
+        acciones
+      );
       if (armado.error) return armado;
       return { error: "", payloads: [{ tipo: aplicaA, datos: armado.datos }] };
     }
@@ -788,12 +846,15 @@ export function FormularioRegistroCultivo({
         continue;
       }
 
-      const armado = armarDatosRegistro("plantas", plan.parametrosPlantas, {
-        acciones,
-        observacion: plan.observacionLimpia,
-        fotos_quitar: [],
-        fotos_restantes: existentesRestantes,
-      });
+      const armado = datosConMezcla(
+        armarDatosRegistro("plantas", plan.parametrosPlantas, {
+          acciones,
+          observacion: plan.observacionLimpia,
+          fotos_quitar: [],
+          fotos_restantes: existentesRestantes,
+        }),
+        acciones
+      );
       if (armado.error) return armado;
       payloads.push({ tipo: "plantas", datos: armado.datos });
     }
@@ -1145,9 +1206,7 @@ export function FormularioRegistroCultivo({
             prioritarias={catalogoAmbiente.prioritarias}
             secundarias={catalogoAmbiente.secundarias}
             valores={valoresParametros}
-            onChange={(clave, valor) =>
-              setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
-            }
+            onChange={cambiarValorParametro}
             mostrarMas={mostrarMasParametrosAmbiente}
             onToggleMas={() => setMostrarMasParametrosAmbiente((valor) => !valor)}
             pendiente={bloqueoAmbiente}
@@ -1173,9 +1232,7 @@ export function FormularioRegistroCultivo({
             prioritarias={catalogoPlantas.prioritarias}
             secundarias={catalogoPlantas.secundarias}
             valores={valoresParametros}
-            onChange={(clave, valor) =>
-              setValoresParametros((actual) => ({ ...actual, [clave]: valor }))
-            }
+            onChange={cambiarValorParametro}
             mostrarMas={mostrarMasParametrosPlantas}
             onToggleMas={() => setMostrarMasParametrosPlantas((valor) => !valor)}
             pendiente={bloqueoPlantas}
@@ -1258,6 +1315,20 @@ export function FormularioRegistroCultivo({
               </>
             ) : null}
           </section>
+
+        <SeccionMezclaRegistro
+          visible={
+            Boolean(catalogoMezclas) &&
+            aplicaEdicion !== "ambiente" &&
+            (accionesElegidas.has("nativa:riego") || accionesElegidas.has("nativa:fertilizacion"))
+          }
+          deshabilitado={bloqueoPlantas}
+          disponible={Boolean(catalogoMezclas?.disponible)}
+          productos={catalogoMezclas?.productos || []}
+          recetas={catalogoMezclas?.recetas || []}
+          mezcla={mezcla}
+          onChange={setMezcla}
+        />
 
         {permitirFotos ? (
           <section className="registro-crear__seccion" aria-labelledby="registro-fotos-titulo">

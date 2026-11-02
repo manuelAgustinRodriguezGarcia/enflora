@@ -1,6 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import { esRutaDemo } from "@/lib/acceso-prelanzamiento";
+import { destinoAdminPermitido, esRutaPanelAdmin, RUTA_ADMIN, RUTA_ADMIN_EXPO, RUTA_ADMIN_EXPO_LEGADO } from "@/lib/admin/secciones";
+import { RUTA_INICIO } from "@/lib/navegacion";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 
@@ -32,6 +34,13 @@ function continuar(request) {
 }
 
 export async function proxy(request) {
+  if (request.nextUrl.pathname.replace(/\/+$/, "") === RUTA_ADMIN_EXPO_LEGADO) {
+    const url = request.nextUrl.clone();
+    url.pathname = RUTA_ADMIN_EXPO;
+    url.search = "";
+    return NextResponse.redirect(url, 308);
+  }
+
   if (!configuracionLista()) {
     return continuar(request);
   }
@@ -95,8 +104,11 @@ export async function proxy(request) {
     ruta.startsWith("/expo-cannabis/") ||
     esRutaDemo(ruta);
 
-  if (ruta === "/expo-cannabis/admin") {
-    if (!user) return redirigir(request, "/ingreso", respuesta, "?siguiente=/expo-cannabis/admin");
+  if (esRutaPanelAdmin(ruta)) {
+    if (!user) {
+      const destino = destinoAdminPermitido(ruta) || RUTA_ADMIN;
+      return redirigir(request, "/ingreso", respuesta, `?siguiente=${encodeURIComponent(destino)}`);
+    }
     return respuesta;
   }
 
@@ -129,7 +141,7 @@ export async function proxy(request) {
     });
   }
   const pendiente = onboarding.pendiente;
-  const destino = pendiente ? "/onboarding" : "/espacios";
+  const destino = pendiente ? "/onboarding" : RUTA_INICIO;
 
   if (esRutaPublica) {
     return redirigir(request, destino, respuesta);
@@ -140,7 +152,7 @@ export async function proxy(request) {
   }
 
   if (!pendiente && ruta === "/onboarding") {
-    return redirigir(request, "/espacios", respuesta);
+    return redirigir(request, RUTA_INICIO, respuesta);
   }
 
   return respuesta;

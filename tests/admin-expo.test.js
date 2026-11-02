@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import * as acciones from "../app/expo-cannabis/admin/acciones.js";
+import * as acciones from "../app/admin/expo/acciones.js";
 import { ErrorAdminNoAutorizado, obtenerAdmin } from "../lib/admin/autorizacion.js";
 import { MOTIVOS_ADMIN } from "../lib/admin/reglas.js";
 import { crearClienteRestringido } from "../lib/admin/servicio.js";
@@ -205,7 +205,7 @@ const ACCIONES = {
 
 test("acciones: el listado de pruebas cubre exactamente las acciones exportadas", () => {
   assert.deepEqual(Object.keys(acciones).sort(), Object.keys(ACCIONES).sort());
-  const fuente = fs.readFileSync(path.join(RAIZ, "app/expo-cannabis/admin/acciones.js"), "utf8");
+  const fuente = fs.readFileSync(path.join(RAIZ, "app/admin/expo/acciones.js"), "utf8");
   assert.match(fuente, /^"use server";/);
   const cuerpos = fuente.split(/^export async function /m).slice(1);
   assert.equal(cuerpos.length, Object.keys(ACCIONES).length);
@@ -377,7 +377,11 @@ test("límites: solo autorizacion.js usa la fábrica del núcleo (el punto de in
 });
 
 test("límites: el cliente restringido solo lo reciben módulos de lib/ de Expo, nunca páginas ni componentes", () => {
-  assert.deepEqual(archivosQueImportan("lib/admin/servicio.js"), ["lib/expo-cannabis/admin.js", "lib/expo-cannabis/contactos-admin.js"]);
+  assert.deepEqual(archivosQueImportan("lib/admin/servicio.js"), [
+    "lib/admin/dashboard.js",
+    "lib/expo-cannabis/admin.js",
+    "lib/expo-cannabis/contactos-admin.js",
+  ]);
   for (const prohibido of ["lib/admin/servicio.js", "lib/admin/nucleo.js", "lib/admin/politica.js"]) {
     const intrusos = archivosQueImportan(prohibido).filter((ruta) => /^(app|componentes)\//.test(ruta) || ruta === "proxy.js");
     assert.deepEqual(intrusos, [], prohibido);
@@ -385,7 +389,7 @@ test("límites: el cliente restringido solo lo reciben módulos de lib/ de Expo,
 });
 
 test("límites: las acciones y la página administrativa no importan clientes ni datos privados directamente", () => {
-  for (const archivo of ["app/expo-cannabis/admin/acciones.js", "app/expo-cannabis/admin/page.js"]) {
+  for (const archivo of ["app/admin/expo/acciones.js", "app/admin/expo/page.js", "app/expo-cannabis/admin/page.js"]) {
     const especificadores = importaciones(path.join(RAIZ, archivo));
     assert.equal(especificadores.some((valor) => /lib\/admin\/(servicio|nucleo|politica)|lib\/contactos\/datos|supabase-js/.test(valor)), false, archivo);
   }

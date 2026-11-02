@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnlaceBoton } from "@/componentes/boton";
 import { FormularioCrearRegistro } from "@/componentes/formulario-crear-registro";
@@ -9,6 +10,7 @@ import {
   seguimientoDesdeLectura,
 } from "@/lib/cargar-seguimiento";
 import { esUuid } from "@/lib/historial-registros";
+import { cargarCatalogoMezclas } from "@/lib/mezclas/cargar";
 import { rangoDiaLocal } from "@/lib/registros";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -43,6 +45,7 @@ export default async function PaginaRegistros({ searchParams }) {
     plantasRespuesta,
     lecturaSeguimiento,
     hoy,
+    catalogoMezclas,
   ] = await Promise.all([
     supabase.from("perfiles").select("tipo_seguimiento").eq("id", user.id).maybeSingle(),
     supabase.from("espacios").select("id, nombre").order("nombre"),
@@ -60,6 +63,7 @@ export default async function PaginaRegistros({ searchParams }) {
       hasta: dia.hasta,
       limite: 30,
     }),
+    cargarCatalogoMezclas(supabase),
   ]);
 
   if (
@@ -126,6 +130,14 @@ export default async function PaginaRegistros({ searchParams }) {
     <TransicionVista>
       <section className="registros">
         <h1>Registrar</h1>
+        <p className="registros__catalogo">
+          <Link className="mezclas__enlace" href="/registros/productos">
+            Mis productos
+          </Link>
+          <Link className="mezclas__enlace" href="/registros/recetas">
+            Mis recetas
+          </Link>
+        </p>
         {unidades.length === 0 ? (
           <div className="vacio">
             <p>Necesitás al menos una unidad de cultivo para registrar.</p>
@@ -143,6 +155,7 @@ export default async function PaginaRegistros({ searchParams }) {
             registrosHoy={hoy.error ? [] : hoy.registros}
             registroInicialId={registroInicialId}
             usuarioId={user.id}
+            catalogoMezclas={catalogoMezclas}
           />
         )}
       </section>

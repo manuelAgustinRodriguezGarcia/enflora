@@ -12,6 +12,8 @@
   pointer-events: none;
 
   &__capsula {
+    position: relative;
+    z-index: 2;
     pointer-events: auto;
     max-width: 32rem;
     margin-inline: auto;
@@ -51,11 +53,23 @@
     width: 100%;
     min-width: 0;
     min-height: var(--touch-min);
-    padding: 0.25rem 0.15rem 0.15rem;
+    padding: 0.25rem 0.1rem 0.15rem;
+    border: 0;
     border-radius: 999px;
+    background: transparent;
     color: var(--brand-medium);
+    font: inherit;
     font-weight: 500;
     text-decoration: none;
+    cursor: pointer;
+
+    &:is(button) {
+      appearance: none;
+      align-self: auto;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
 
     &:hover {
       color: var(--brand-dark);
@@ -123,13 +137,27 @@
   &__etiqueta {
     position: relative;
     z-index: 1;
+    width: 100%;
     max-width: 100%;
     overflow: hidden;
     font-family: var(--font-funcional);
     font-size: 0.6875rem;
     line-height: 1.15;
+    text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  @media (max-width: 26rem) {
+    &__etiqueta {
+      font-size: 0.625rem;
+    }
+  }
+
+  @media (max-width: 23.5rem) {
+    &__etiqueta {
+      font-size: 0.6rem;
+    }
   }
 
   .icono-navegacion {
@@ -178,6 +206,129 @@
     background: var(--brand-accent);
     color: var(--brand-dark);
     box-shadow: none;
+  }
+
+  &__item--abierto:not(.bottom-nav__item--activo) .bottom-nav__icono::before {
+    opacity: 0.45;
+  }
+
+  &__velo {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: rgb(11 61 42 / 22%);
+    pointer-events: auto;
+  }
+
+  &__panel {
+    position: absolute;
+    z-index: 1;
+    right: 0;
+    bottom: calc(100% + 0.45rem);
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: min(32rem, calc(100% - 2 * var(--bottom-nav-margen-lateral, 0.875rem)));
+    max-height: min(22rem, 48svh);
+    margin-inline: auto;
+    padding: 0.9rem 0.9rem 1rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    background: var(--surface);
+    box-shadow:
+      0 16px 40px rgb(11 61 42 / 14%),
+      0 4px 12px rgb(11 61 42 / 6%);
+    pointer-events: auto;
+  }
+
+  &__panel-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  &__panel-titulo {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+
+  &__cerrar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 50%;
+    background: var(--surface-green);
+    color: var(--brand-dark);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--brand-accent-light);
+    }
+  }
+
+  ul#{&}__grilla {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 0.65rem;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    list-style: none;
+
+    > li {
+      display: flex;
+      min-width: 0;
+    }
+  }
+
+  &__atajo {
+    display: flex;
+    aspect-ratio: 1;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.5rem;
+    border-radius: 1.125rem;
+    background: var(--surface-green);
+    color: var(--brand-dark);
+    font-family: var(--font-funcional);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    text-decoration: none;
+
+    .icono-navegacion {
+      width: 1.65rem;
+      height: 1.65rem;
+    }
+
+    &:hover {
+      background: var(--brand-accent-light);
+      color: var(--brand-dark);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--brand-accent);
+      outline-offset: 2px;
+    }
+
+    &--activo,
+    &--activo:hover {
+      background: var(--brand-accent);
+      color: var(--brand-dark);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {

@@ -1,6 +1,7 @@
 import { Fredoka, Inter } from "next/font/google";
 import { headers } from "next/headers";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
+import { EnlacePerfil } from "@/componentes/enlace-perfil";
 import { RegistroServiceWorker } from "@/componentes/registro-service-worker";
 import { MarcaEncabezado } from "@/componentes/marca-encabezado";
 import { AjusteTecladoViewport } from "@/componentes/ajuste-teclado-viewport";
@@ -10,6 +11,8 @@ import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzami
 import { ProveedorGuardSalidaFlora } from "@/componentes/flora/proveedor-guard-salida-flora";
 import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
+import { RUTA_INICIO } from "@/lib/navegacion";
+import { esRutaPanelAdmin } from "@/lib/admin/secciones";
 import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -77,6 +80,7 @@ export const viewport = {
 
 function claseInicial(ruta) {
   if (ruta === "/") return "landing-cuerpo";
+  if (esRutaPanelAdmin(ruta)) return "admin-cuerpo";
   if (ruta === "/expo-cannabis/admin") return "expo-admin-cuerpo";
   if (ruta.startsWith("/expo-cannabis/")) return "ruleta-cuerpo";
   return "";
@@ -85,7 +89,7 @@ function claseInicial(ruta) {
 export default async function Layout({ children }) {
   const ruta = (await headers()).get("x-enflora-ruta") || "";
   const esDemo = esRutaDemo(ruta);
-  const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/") || esDemo;
+  const esShellPublico = ruta === "/" || ruta.startsWith("/expo-cannabis/") || esDemo || esRutaPanelAdmin(ruta);
   const conSupabase = configuracionLista();
   const usuario = !esShellPublico && conSupabase ? await obtenerSesionRapida() : null;
   const bloqueado = usuarioBloqueadoPrelanzamiento(usuario, ruta);
@@ -102,9 +106,14 @@ export default async function Layout({ children }) {
           <header className="encabezado" inert={bloqueado || undefined}>
             <MarcaEncabezado
               alt={NOMBRE_MARCA}
-              confirmarSalida={Boolean(usuario && !bloqueado && !esDemo)}
+              href={usuario && !bloqueado && !esDemo ? RUTA_INICIO : "/"}
             />
-            {conSupabase ? <BotonNotificaciones oculto={bloqueado} /> : null}
+            <div className="encabezado__acciones">
+              {conSupabase ? <BotonNotificaciones oculto={bloqueado} /> : null}
+              {usuario && !bloqueado ? (
+                <EnlacePerfil usuarioId={usuario.id} email={usuario.email} />
+              ) : null}
+            </div>
           </header>
           <main className="pagina" inert={bloqueado || undefined}>
             {children}

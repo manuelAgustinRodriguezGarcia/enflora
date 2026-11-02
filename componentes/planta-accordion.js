@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { Aparecer } from "@/componentes/aparecer";
-import { IconoChevron } from "@/componentes/iconos-ui";
+import { IconoChevron, IconoPlanta } from "@/componentes/iconos-ui";
 import { transicionRapida } from "@/lib/animaciones";
 
 export function PlantaAccordion({
@@ -26,7 +26,10 @@ export function PlantaAccordion({
         onClick={onToggle}
       >
         <span className="planta-accordion__info">
-          <span className="planta-accordion__titulo">{titulo}</span>
+          <span className="planta-accordion__titulo">
+            <IconoPlanta className="planta-accordion__titulo-icono" />
+            {titulo}
+          </span>
           {detalle}
           {meta ? <span className="planta-accordion__meta">{meta}</span> : null}
         </span>

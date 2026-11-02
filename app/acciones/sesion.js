@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { RUTA_INICIO } from "@/lib/navegacion";
 import { siguientePermitido } from "@/lib/pagos/rutas";
 import { clienteContactos, registrarContacto } from "@/lib/contactos/datos";
 import { normalizarEmail, normalizarNombre, normalizarTelefono } from "@/lib/contactos/reglas";
@@ -126,7 +127,7 @@ export async function entrar(_estado, formulario) {
   }
 
   const siguiente = siguientePermitido(String(formulario.get("siguiente") || ""));
-  redirect(siguiente || "/espacios");
+  redirect(siguiente || RUTA_INICIO);
 }
 
 export async function registrar(_estado, formulario) {
@@ -225,7 +226,7 @@ export async function registrar(_estado, formulario) {
     redirect("/ingreso?correo=pendiente");
   }
 
-  redirect("/espacios");
+  redirect(RUTA_INICIO);
 }
 
 export async function salir() {

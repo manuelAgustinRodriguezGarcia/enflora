@@ -1,8 +1,12 @@
 import {
+  Beaker,
   Bell,
   ClipboardList,
   ClipboardPen,
+  Ellipsis,
+  FlaskConical,
   History,
+  House,
   Sparkles,
   Sprout,
   UserRound,
@@ -12,11 +16,15 @@ import {
 // Iconos de navegación y secciones. Lucide, trazo 1.75, color heredado.
 const ICONOS = {
   espacios: Warehouse,
+  inicio: House,
   cultivos: Sprout,
   historial: History,
   registro: ClipboardPen,
   flora: Sparkles,
   perfil: UserRound,
+  mas: Ellipsis,
+  productos: FlaskConical,
+  mezclas: Beaker,
   notificaciones: Bell,
   lista: ClipboardList,
 };

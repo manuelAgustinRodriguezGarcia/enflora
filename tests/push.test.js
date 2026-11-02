@@ -375,13 +375,20 @@ test("un envío aceptado registra la fecha de último envío y un error no", asy
   assert.deepEqual(marcadas, [SUSCRIPCION.id]);
 });
 
-test("el lanzamiento usa una sola fecha para tarjetas y acceso", () => {
+test("el lanzamiento usa una sola fecha para las tarjetas", () => {
   assert.equal(LANZAMIENTO_MS, Date.parse("2026-11-01T03:00:00.000Z"));
   assert.equal(lanzamientoPendiente(Date.parse("2026-10-31T23:59:59-03:00")), true);
   assert.equal(lanzamientoPendiente(Date.parse("2026-11-01T00:00:00-03:00")), false);
   assert.equal(lanzamientoPendiente(new Date("2026-11-02T00:00:00-03:00")), false);
-  assert.equal(gatePrelanzamientoActivo(new Date("2026-10-31T23:59:59-03:00")), true);
-  assert.equal(gatePrelanzamientoActivo(new Date("2026-11-01T00:00:00-03:00")), false);
+});
+
+test("el aviso de estamos trabajando sigue activo hasta apagarlo a mano", () => {
+  const despues = new Date("2026-11-02T00:00:00-03:00");
+  assert.equal(gatePrelanzamientoActivo(despues, {}), true);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "" }), true);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "true" }), true);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "false" }), false);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: " FALSE " }), false);
 });
 
 test("el texto del modal no habla de pagos en el plan gratuito", () => {

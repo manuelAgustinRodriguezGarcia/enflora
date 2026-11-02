@@ -13,7 +13,7 @@ import {
   leerContactoExpo,
   leerContactosExpo,
   retirarConsentimientoExpo,
-} from "@/app/expo-cannabis/admin/acciones";
+} from "@/app/admin/expo/acciones";
 import { Selector } from "@/componentes/selector";
 import { ETIQUETAS_ORIGEN, etiquetasOrigenes } from "@/lib/contactos/reglas";
 

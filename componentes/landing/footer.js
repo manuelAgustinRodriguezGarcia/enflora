@@ -35,7 +35,7 @@ const ENLACES = [
   },
   {
     id: "admin",
-    href: "/expo-cannabis/admin",
+    href: "/admin",
     etiqueta: "Administración",
     externo: false,
     Icono: Lock,

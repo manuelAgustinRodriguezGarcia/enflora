@@ -4,6 +4,7 @@ export default function robots() {
       userAgent: "*",
       allow: "/",
       disallow: [
+        "/inicio",
         "/espacios",
         "/registros",
         "/perfil",

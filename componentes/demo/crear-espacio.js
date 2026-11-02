@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContadorCantidad } from "@/componentes/contador-cantidad";
-import { IconoCaja } from "@/componentes/iconos-ui";
+import { IconoCaja, IconoCajas } from "@/componentes/iconos-ui";
 import { Selector } from "@/componentes/selector";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { AccionesDemo } from "@/componentes/demo/acciones-demo";
@@ -226,7 +226,7 @@ export function CrearEspacio() {
                 maximo={LIMITES_DEMO.unidades.maximo}
                 contexto={etiquetaUnidades(configuracion.tipoUnidad)}
                 ariaLabel={etiquetaUnidades(configuracion.tipoUnidad)}
-                icono={IconoCaja}
+                icono={configuracion.cantidadUnidades > 1 ? IconoCajas : IconoCaja}
                 onChange={(cantidad) => cambiar("cantidadUnidades", cantidad)}
               />
               {errores.cantidadUnidades ? (

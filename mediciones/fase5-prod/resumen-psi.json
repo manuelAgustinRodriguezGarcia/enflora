@@ -1,0 +1,90 @@
+{
+  "url": "https://enflora.com.ar/",
+  "when": "2026-10-30T01:35:00Z",
+  "tool": "PageSpeed Insights lab",
+  "lighthouse": "13.6.0",
+  "chrome": "HeadlessChromium 153.0.8010.36 with lr",
+  "mobile": {
+    "device": "Moto G Power",
+    "throttling": "Slow 4G",
+    "reports": [
+      "https://pagespeed.web.dev/analysis/https-enflora-com-ar/7nv00u9dxt?form_factor=mobile",
+      "https://pagespeed.web.dev/analysis/https-enflora-com-ar/qucotv9bta?form_factor=mobile",
+      "https://pagespeed.web.dev/analysis/https-enflora-com-ar/2zyi8m8r9b?form_factor=mobile"
+    ]
+  },
+  "localLighthouseBlocked": "FortiGuard Intrusion Prevention bloqueó https://enflora.com.ar/ como Unrated. Node TLS: UNABLE_TO_VERIFY_LEAF_SIGNATURE. Una respuesta HEAD inicial sí llegó a Vercel y sus hashes CSS coinciden con el laboratorio.",
+  "runs": [
+    {
+      "id": "7nv00u9dxt",
+      "captured": "2026-10-29T22:35:00-03:00",
+      "mobile": {
+        "performance": 34,
+        "fcpMs": 2300,
+        "lcpMs": 7600,
+        "tbtMs": 18160,
+        "siMs": 13200,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 20, "loadDelay": 280, "loadDuration": 180, "renderDelay": 1970 },
+        "mainThreadMs": { "other": 37159, "scriptEvaluation": 1770, "styleLayout": 638, "rendering": 463, "scriptParse": 117 }
+      },
+      "desktop": {
+        "performance": 60,
+        "fcpMs": 300,
+        "lcpMs": 700,
+        "tbtMs": 16000,
+        "siMs": 9200,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 20, "loadDelay": 330, "loadDuration": 260, "renderDelay": 190 },
+        "mainThreadMs": { "other": 31963, "scriptEvaluation": 1260, "styleLayout": 503, "rendering": 249, "scriptParse": 78 }
+      }
+    },
+    {
+      "id": "qucotv9bta",
+      "captured": "2026-10-29T22:41:00-03:00",
+      "mobile": {
+        "performance": 50,
+        "fcpMs": 900,
+        "lcpMs": 3700,
+        "tbtMs": 16890,
+        "siMs": 13200,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 10, "loadDelay": 270, "loadDuration": 90, "renderDelay": 2050 },
+        "mainThreadMs": { "other": 37152, "scriptEvaluation": 1347, "styleLayout": 499, "rendering": 344, "scriptParse": 91 }
+      },
+      "desktop": {
+        "performance": 60,
+        "fcpMs": 300,
+        "lcpMs": 700,
+        "tbtMs": 15930,
+        "siMs": 9000,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 20, "loadDelay": 190, "loadDuration": 60, "renderDelay": 200 }
+      }
+    },
+    {
+      "id": "2zyi8m8r9b",
+      "captured": "2026-10-29T22:44:00-03:00",
+      "mobile": {
+        "performance": 47,
+        "fcpMs": 1000,
+        "lcpMs": 4100,
+        "tbtMs": 9050,
+        "siMs": 10800,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 10, "loadDelay": 200, "loadDuration": 40, "renderDelay": 1080 },
+        "mainThreadMs": { "other": 38070, "scriptEvaluation": 1775, "styleLayout": 715, "rendering": 524, "scriptParse": 103, "gc": 197 }
+      },
+      "desktop": {
+        "performance": 60,
+        "fcpMs": 400,
+        "lcpMs": 500,
+        "tbtMs": 13410,
+        "siMs": 9700,
+        "cls": 0,
+        "lcpBreakdownMs": { "ttfb": 0, "loadDelay": 190, "loadDuration": 110, "renderDelay": 470 },
+        "mainThreadMs": { "other": 30904, "scriptEvaluation": 2008, "styleLayout": 782, "rendering": 325, "scriptParse": 120 }
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { RUTA_INICIO } from "@/lib/navegacion";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -128,7 +129,7 @@ export async function guardarPerfil(_estado, formulario) {
 
 export async function guardarTipoSeguimiento(_estado, formulario) {
   const tipo = String(formulario.get("tipo_seguimiento") || "");
-  const volver = formulario.get("destino") === "onboarding" ? "/espacios" : "/perfil";
+  const volver = formulario.get("destino") === "onboarding" ? RUTA_INICIO : "/perfil";
 
   if (!esTipoSeguimiento(tipo)) {
     return { error: "Seleccioná un tipo de seguimiento.", tipo };

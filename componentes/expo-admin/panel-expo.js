@@ -11,7 +11,7 @@ import {
   leerPanelExpo,
   registrarEntregaExpo,
   reiniciarParticipantesExpo,
-} from "@/app/expo-cannabis/admin/acciones";
+} from "@/app/admin/expo/acciones";
 import { SalirExpo } from "@/componentes/expo-admin/salir-expo";
 import { IlustracionRegalo } from "@/componentes/expo-cannabis/ilustraciones-expo";
 import { deltasEntregaExpo } from "@/lib/expo-cannabis/productos";

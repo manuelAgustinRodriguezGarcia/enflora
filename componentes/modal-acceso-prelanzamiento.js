@@ -57,9 +57,9 @@ export function ModalAccesoPrelanzamiento({ abierto }) {
                   priority
                 />
               </div>
-              <Dialog.Title className="modal__titulo">Estamos trabajando duro</Dialog.Title>
+              <Dialog.Title className="modal__titulo">Estamos puliendo detalles</Dialog.Title>
               <Dialog.Description className="modal__texto">
-                Estamos trabajando duro para darte la mejor experiencia. Tus cultivos están en
+                Estamos terminando los detalles para darte la mejor experiencia. Desde Enflora queremos que tu experiencia sea la mejor y sobre todo que sea sencilla de usar. Despreocupate, tus cultivos están en
                 buenas manos.
               </Dialog.Description>
               <div className="modal__acciones">

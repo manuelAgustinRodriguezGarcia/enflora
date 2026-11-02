@@ -2,7 +2,7 @@
 
 import { Aparecer } from "@/componentes/aparecer";
 import { Selector } from "@/componentes/selector";
-import { METODOS_BASE, metodoPreguntaSustrato, muestraSustrato } from "@/lib/metodos";
+import { METODOS_BASE, etiquetaMetodo, metodoPreguntaSustrato, muestraSustrato } from "@/lib/metodos";
 
 export function SelectorMetodo({
   metodosPersonalizados,
@@ -21,7 +21,7 @@ export function SelectorMetodo({
   const pregunta = metodoPreguntaSustrato(valor);
   const visible = muestraSustrato(valor, usaSustrato);
   const opciones = [
-    ...opcionesBase.map((metodo) => ({ valor: metodo, etiqueta: metodo })),
+    ...opcionesBase.map((metodo) => ({ valor: metodo, etiqueta: etiquetaMetodo(metodo) })),
     ...(extra ? [{ valor: extra, etiqueta: extra }] : []),
     { valor: "otro", etiqueta: "OTRO" },
   ];

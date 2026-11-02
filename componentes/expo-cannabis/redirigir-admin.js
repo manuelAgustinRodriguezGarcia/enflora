@@ -9,7 +9,7 @@ export function RedirigirAdminExpo() {
   useEffect(() => {
     const ir = () => {
       const hash = window.location.hash.replace(/^#/, "").replace(/\/+$/, "");
-      if (hash === "expo-cannabis/admin") router.replace("/expo-cannabis/admin");
+      if (hash === "expo-cannabis/admin" || hash === "admin/expo") router.replace("/admin/expo");
     };
 
     ir();

@@ -13,6 +13,7 @@ import {
   preferenciasValidas,
   unidadOpcionValida,
 } from "@/lib/seguimiento";
+import { RUTA_INICIO } from "@/lib/navegacion";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
@@ -208,8 +209,8 @@ export async function guardarConfiguracionSeguimiento(_estado, formulario) {
 
   revalidar();
 
-  if (continuarEn === "/espacios") {
-    redirect("/espacios");
+  if (continuarEn === RUTA_INICIO || continuarEn === "/espacios") {
+    redirect(RUTA_INICIO);
   }
 
   return { ok: true, ...base };

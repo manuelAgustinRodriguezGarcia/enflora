@@ -8,14 +8,16 @@ import { crearCultivo } from "@/app/espacios/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContadorCantidad } from "@/componentes/contador-cantidad";
+import { IconoCaja, IconoCajas } from "@/componentes/iconos-ui";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { PlantaAccordion } from "@/componentes/planta-accordion";
-import { ResumenConfiguracion } from "@/componentes/resumen-configuracion";
+import { PillPlantas, ResumenConfiguracion } from "@/componentes/resumen-configuracion";
 import { Selector } from "@/componentes/selector";
 import { SelectorEtapa } from "@/componentes/selector-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { SelectorMetodo } from "@/componentes/selector-metodo";
+import { SelectorGenetica } from "@/componentes/selector-genetica";
 import {
   PASOS_VISIBLES,
   abrirUnidad,
@@ -42,7 +44,6 @@ import {
   continuar,
   estadoInicial,
   estadoInicialUnidad,
-  estadoVisibleUnidad,
   irAVisible,
   metodosEnUso,
   payloadCultivo,
@@ -230,21 +231,14 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
     });
   }
   if (estado.unidades.length) {
-    const primera = estado.unidades[0];
-    gruposResumen.push({
-      id: "tipo_cultivo",
-      titulo: "Tipo de cultivo",
-      presentacion: "tipo_cultivo",
-      valor: etiquetaTipoUnidad(primera.tipo, primera.tipoPersonalizado),
-    });
-
     const itemsUnidades = estado.unidades.map((item, indice) => {
-      const marca = estadoVisibleUnidad(estado, indice);
-      const meta = marca === "completada" ? textoCantidad(item.plantas.length) : "";
+      const enCantidad =
+        estado.paso === "cantidad_plantas" && indice === estado.indice;
+      const cantidadPlantas = enCantidad ? estado.cantidadPlantas : item.plantas.length;
       return {
         id: item.numero,
         titulo: item.nombre,
-        meta,
+        cantidadPlantas,
         onClick:
           item.estado === "completada" && !estado.confirmacion
             ? () => retroceder(abrirUnidad, indice)
@@ -296,16 +290,6 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
       <Aparecer visible={Boolean(resultado?.error) && estado.paso === "resumen"}>
         <p className="formulario__error">{resultado?.error}</p>
       </Aparecer>
-
-      {unidad &&
-      estado.paso !== "espacio" &&
-      estado.paso !== "tipo_unidad" &&
-      estado.paso !== "cantidad_unidades" &&
-      estado.paso !== "resumen" ? (
-        <p className="asistente__actual">
-          Configurando: {unidad.nombre.trim() || "Unidad"}
-        </p>
-      ) : null}
 
       <AnimatePresence mode="wait" initial={false} custom={sentido}>
         <motion.div
@@ -388,6 +372,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 maximo={maximoUnidadesNueva}
                 contexto={preguntaCantidadUnidades(estado.tipoUnidad)}
                 ariaLabel="Cantidad de unidades"
+                icono={estado.cantidadUnidades > 1 ? IconoCajas : IconoCaja}
                 onChange={(cantidad) => aplicar(cambiarCantidadUnidades, cantidad)}
               />
               <ListaNombresUnidades
@@ -409,10 +394,11 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           ) : null}
 
           {unidad && estado.paso === "configuracion" ? (
-            <div className="bloque">
-              <p className="asistente__actual">
-                {unidad.nombre} — {textoCantidad(unidad.plantas.length)}
-              </p>
+            <div className="bloque bloque--plano">
+              <div className="asistente__unidad">
+                <p className="asistente__actual">{unidad.nombre.trim() || "Unidad"}</p>
+                <PillPlantas cantidad={unidad.plantas.length} />
+              </div>
               <div className="eleccion eleccion--modos">
                 {MODOS.map((modo) => (
                   <motion.button
@@ -432,14 +418,12 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 <TextoCambio>{MODOS.find((modo) => modo.valor === unidad.modo)?.descripcion}</TextoCambio>
               </p>
               <Aparecer visible={usaGenetica(unidad.modo)}>
-                <label className="formulario__campo">
-                  Genética
-                  <input
-                    type="text"
-                    value={unidad.general.genetica}
-                    onChange={(evento) => aplicar(cambiarGeneral, "genetica", evento.target.value)}
-                  />
-                </label>
+                <SelectorGenetica
+                  id={`genetica-general-${unidad.numero}`}
+                  nombre={unidad.general.genetica}
+                  detalle={unidad.general.geneticaDetalle}
+                  onChange={(seleccion) => aplicar(cambiarGeneral, "genetica", seleccion)}
+                />
               </Aparecer>
               <Aparecer visible={usaMetodo(unidad.modo)}>
                 <SelectorMetodo
@@ -465,16 +449,12 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                     abierto={abierta === indice}
                     onToggle={() => alternarPlanta(indice)}
                   >
-                    <label className="formulario__campo">
-                      Genética
-                      <input
-                        type="text"
-                        value={planta.genetica}
-                        onChange={(evento) =>
-                          aplicar(cambiarPlanta, indice, "genetica", evento.target.value)
-                        }
-                      />
-                    </label>
+                    <SelectorGenetica
+                      id={`genetica-planta-${unidad.numero}-${indice}`}
+                      nombre={planta.genetica}
+                      detalle={planta.geneticaDetalle}
+                      onChange={(seleccion) => aplicar(cambiarPlanta, indice, "genetica", seleccion)}
+                    />
                     <SelectorMetodo
                       metodosPersonalizados={metodos}
                       valor={planta.metodo}
@@ -645,7 +625,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                     items: estado.unidades.map((item) => ({
                       id: item.numero,
                       titulo: item.nombre,
-                      meta: textoCantidad(item.plantas.length),
+                      cantidadPlantas: item.plantas.length,
                     })),
                   },
                   {

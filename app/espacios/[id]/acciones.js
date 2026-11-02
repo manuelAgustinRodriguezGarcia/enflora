@@ -9,6 +9,7 @@ import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servid
 import { borrarArchivos } from "@/lib/fotos-servidor";
 import { rutaFotoValida, rutaPerteneceAUsuario } from "@/lib/fotos";
 import { validarAltaPlantasEnUnidad } from "@/lib/flora-beneficios-plantas-servidor";
+import { aplicarVinculoGenetica, actualizarPlanta, insertarPlantas } from "@/lib/geneticas/plantas";
 import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES } from "@/lib/unidades";
 
 const MAXIMO_PLANTAS_POR_ALTA = MAXIMO_PLANTAS;
@@ -66,6 +67,7 @@ export async function crearPlantas(_estado, formulario) {
     plantas.push({
       nombre: String(item?.nombre || "").trim(),
       genetica: String(item?.genetica || "").trim(),
+      geneticaId: String(item?.geneticaId || "").trim(),
       metodo,
       sustrato: String(item?.sustrato || "").trim(),
       etapa,
@@ -103,13 +105,16 @@ export async function crearPlantas(_estado, formulario) {
   );
   if (errorMetodos) return { error: "No se pudo guardar el método." };
 
+  const vinculadas = await aplicarVinculoGenetica(supabase, user.id, plantas);
+  if (vinculadas.error) return { error: vinculadas.error };
+
   let numero = 0;
   for (const fila of existentes || []) {
     if (fila.numero > numero) numero = fila.numero;
   }
 
   const origenes = [];
-  const filas = plantas.map((planta) => {
+  const filas = vinculadas.plantas.map((planta) => {
     numero += 1;
     origenes.push({
       unidad_cultivo_id: unidadId,
@@ -122,6 +127,7 @@ export async function crearPlantas(_estado, formulario) {
       numero,
       nombre: planta.nombre || `Planta ${numero}`,
       genetica: planta.genetica || null,
+      genetica_id: planta.genetica_id,
       metodo: planta.metodo || null,
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
@@ -130,10 +136,7 @@ export async function crearPlantas(_estado, formulario) {
     };
   });
 
-  const { data: creadas, error } = await supabase
-    .from("plantas")
-    .insert(filas)
-    .select("id, unidad_cultivo_id, numero");
+  const { data: creadas, error } = await insertarPlantas(supabase, filas);
   if (error || !creadas?.length) return { error: "No se pudieron crear las plantas." };
 
   const historial = filasDeHistorial(creadas, origenes);
@@ -160,11 +163,12 @@ export async function editarPlanta(_estado, formulario) {
   const unidadId = String(formulario.get("unidad_id") || "").trim();
   const nombre = String(formulario.get("nombre") || "").trim();
   const genetica = String(formulario.get("genetica") || "").trim();
+  const geneticaId = String(formulario.get("genetica_id") || "").trim();
   const metodo = String(formulario.get("metodo") || "").trim();
   const sustrato = String(formulario.get("sustrato") || "").trim();
   const fechaInicio = String(formulario.get("fecha_inicio") || "").trim() || fechaHoy();
   const estado = String(formulario.get("estado") || "").trim();
-  const datos = { nombre, genetica, metodo, sustrato, fechaInicio, estadoPlanta: estado, unidadId };
+  const datos = { nombre, genetica, geneticaId, metodo, sustrato, fechaInicio, estadoPlanta: estado, unidadId };
 
   if (!nombre) return { error: "El nombre de la planta es obligatorio.", ...datos };
   if (estado !== "activa" && estado !== "finalizada") {
@@ -227,21 +231,21 @@ export async function editarPlanta(_estado, formulario) {
   const errorMetodos = await guardarMetodosPersonalizados(supabase, user.id, [metodo]);
   if (errorMetodos) return { error: "No se pudo guardar el método.", ...datos };
 
-  const { data, error } = await supabase
-    .from("plantas")
-    .update({
-      nombre,
-      genetica: genetica || null,
-      metodo: metodo || null,
-      sustrato: sustrato || null,
-      fecha_inicio: fechaInicio,
-      estado,
-      unidad_cultivo_id: unidadId,
-      numero,
-    })
-    .eq("id", plantaId)
-    .eq("unidad_cultivo_id", unidadAnteriorId)
-    .select("id");
+  const vinculadas = await aplicarVinculoGenetica(supabase, user.id, [{ genetica, geneticaId }]);
+  if (vinculadas.error) return { error: vinculadas.error, ...datos };
+  const geneticaGuardada = vinculadas.plantas[0];
+
+  const { data, error } = await actualizarPlanta(supabase, plantaId, unidadAnteriorId, {
+    nombre,
+    genetica: geneticaGuardada.genetica,
+    genetica_id: geneticaGuardada.genetica_id,
+    metodo: metodo || null,
+    sustrato: sustrato || null,
+    fecha_inicio: fechaInicio,
+    estado,
+    unidad_cultivo_id: unidadId,
+    numero,
+  });
 
   if (error || !data?.length) return { error: "No se pudo editar la planta.", ...datos };
 
@@ -621,6 +625,7 @@ export async function agregarUnidad(_estado, formulario) {
     if (errorEtapa) return { error: errorEtapa };
     filas.push({
       genetica: String(planta?.genetica || "").trim(),
+      geneticaId: String(planta?.geneticaId || "").trim(),
       metodo,
       sustrato: String(planta?.sustrato || "").trim(),
       etapa,
@@ -649,8 +654,13 @@ export async function agregarUnidad(_estado, formulario) {
   }
 
   const hoy = fechaHoy();
+  const vinculadas = await aplicarVinculoGenetica(supabase, user.id, filas);
+  if (vinculadas.error) {
+    await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
+    return { error: vinculadas.error };
+  }
   const origenes = [];
-  const filasPlantas = filas.map((planta, posicion) => {
+  const filasPlantas = vinculadas.plantas.map((planta, posicion) => {
     const n = posicion + 1;
     origenes.push({
       unidad_cultivo_id: creada.id,
@@ -663,6 +673,7 @@ export async function agregarUnidad(_estado, formulario) {
       numero: n,
       nombre: `Planta ${n}`,
       genetica: planta.genetica || null,
+      genetica_id: planta.genetica_id,
       metodo: planta.metodo || null,
       sustrato: planta.sustrato || null,
       etapa: planta.etapa,
@@ -671,10 +682,7 @@ export async function agregarUnidad(_estado, formulario) {
     };
   });
 
-  const { data: plantasCreadas, error: errorPlantas } = await supabase
-    .from("plantas")
-    .insert(filasPlantas)
-    .select("id, unidad_cultivo_id, numero");
+  const { data: plantasCreadas, error: errorPlantas } = await insertarPlantas(supabase, filasPlantas);
   if (errorPlantas || !plantasCreadas?.length) {
     await supabase.from("unidades_cultivo").delete().eq("id", creada.id);
     return { error: "No se pudieron crear las plantas." };

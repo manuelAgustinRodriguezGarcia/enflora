@@ -14,7 +14,7 @@ import { operacionesContactosAdmin } from "@/lib/expo-cannabis/contactos-admin";
 import { deltasEntregaExpo, productoExpo } from "@/lib/expo-cannabis/productos";
 import { construirCsvContactos, esIdContacto, validarContactoManual } from "@/lib/contactos/reglas";
 
-const RUTA = "/expo-cannabis/admin";
+const RUTA = "/admin/expo";
 const NO_AUTORIZADO = { ok: false, error: "No autorizado." };
 const SIN_SERVICIO = { ok: false, error: "El servicio de contactos no está configurado." };
 const ERROR_CONTACTOS = { ok: false, error: "No pudimos completar la operación. Probá de nuevo." };

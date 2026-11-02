@@ -19,6 +19,7 @@ import { normalizarDescripcionTarea, tareaNoEsPasada } from "@/lib/tareas-progra
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { fechaHoy } from "@/lib/etapas";
+import { mensajeErrorMezcla } from "@/lib/mezclas/reglas";
 
 const FOTOS_YA_GUARDADAS = "Las fotos ya fueron guardadas.";
 
@@ -69,7 +70,7 @@ const MENSAJES = [
 
 function mensajeDe(error, reserva) {
   const texto = error?.message || "";
-  return MENSAJES.find((mensaje) => texto.includes(mensaje)) || reserva;
+  return mensajeErrorMezcla(error) || MENSAJES.find((mensaje) => texto.includes(mensaje)) || reserva;
 }
 
 async function sesion() {

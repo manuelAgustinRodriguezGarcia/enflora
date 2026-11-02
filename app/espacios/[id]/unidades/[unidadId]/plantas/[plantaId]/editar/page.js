@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { FormularioEditarPlanta } from "@/componentes/formulario-editar-planta";
 import { TransicionVista } from "@/componentes/transicion-vista";
+import { leerDetallePlanta } from "@/lib/geneticas/datos";
 import { configuracionLista } from "@/lib/supabase/configuracion";
-import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
 export default async function PaginaEditarPlanta({ params }) {
   const { id, unidadId, plantaId } = await params;
@@ -38,12 +39,15 @@ export default async function PaginaEditarPlanta({ params }) {
 
   if (!unidadActual) notFound();
 
-  const [unidadesRespuesta, metodosRespuesta] = await Promise.all([
+  const [unidadesRespuesta, metodosRespuesta, detalleGenetica] = await Promise.all([
     supabase
       .from("unidades_cultivo")
       .select("id, nombre, espacios(nombre)")
       .order("fecha_creacion", { ascending: true }),
     supabase.from("metodos_personalizados").select("nombre").order("nombre", { ascending: true }),
+    obtenerSesionRapida().then((user) =>
+      user?.id ? leerDetallePlanta(supabase, user.id, planta.id) : null
+    ),
   ]);
 
   if (unidadesRespuesta.error) return <p>No se pudieron cargar las unidades.</p>;
@@ -68,6 +72,7 @@ export default async function PaginaEditarPlanta({ params }) {
           planta={planta}
           unidades={unidades}
           metodosPersonalizados={metodosPersonalizados}
+          detalleGenetica={detalleGenetica}
         />
       </section>
     </TransicionVista>

@@ -1,3 +1,4 @@
+import { MODULOS_ADMIN } from "../../lib/admin/reglas.js";
 import { __fijarCookies, __restablecerCookies } from "../stubs/next-headers.js";
 
 /**
@@ -18,16 +19,7 @@ const CLAVES_ENTORNO = [
   "ADMIN_IDS",
   "EXPO_ADMIN_IDS",
   "EXPO_ADMIN_EMAILS",
-  ...[
-    "dashboard",
-    "usuarios",
-    "planes",
-    "flora_ia",
-    "almacenamiento",
-    "notificaciones",
-    "partners",
-    "expo",
-  ].map((modulo) => `ADMIN_IDS_${modulo.toUpperCase()}`),
+  ...MODULOS_ADMIN.map((modulo) => `ADMIN_IDS_${modulo.toUpperCase()}`),
 ];
 
 function base64url(texto) {
