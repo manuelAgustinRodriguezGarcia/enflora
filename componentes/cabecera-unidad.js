@@ -10,8 +10,9 @@ import { EliminarUnidad } from "@/componentes/eliminar-unidad";
 import { FormularioUnidad } from "@/componentes/formulario-unidad";
 import { IconoLapiz } from "@/componentes/iconos-ui";
 import { PortadaUnidad } from "@/componentes/portada-unidad";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
-import { etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
+import { etiquetaTipoUnidad } from "@/lib/unidades";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
@@ -47,7 +48,7 @@ export function CabeceraUnidad({
               <span className="detalle-cabecera__chip">
                 {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
               </span>
-              <span className="detalle-cabecera__meta">{textoCantidad(cantidadPlantas)}</span>
+              <PillPlantas cantidad={cantidadPlantas} mostrarCero />
             </div>
             <div className="detalle-cabecera__acciones">
               <Boton

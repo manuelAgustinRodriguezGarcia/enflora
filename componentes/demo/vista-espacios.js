@@ -2,13 +2,14 @@
 
 import { Boton } from "@/componentes/boton";
 import { ListaEntrada } from "@/componentes/lista-entrada";
+import { PillPlantas, PillUnidades } from "@/componentes/resumen-configuracion";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { AccionesDemo } from "@/componentes/demo/acciones-demo";
 import { GuiaDemo } from "@/componentes/demo/guia-demo";
 import { useDemo } from "@/componentes/demo/proveedor-demo";
 import { puedeCrearEspacio } from "@/lib/demo/estado-demo";
 import { LIMITES_DEMO } from "@/lib/demo/generar-cultivo";
-import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
+import { etiquetaTipoEspacio } from "@/lib/unidades";
 
 export function VistaEspacios() {
   const { estado, irACrear, verEspacio } = useDemo();
@@ -43,17 +44,9 @@ export function VistaEspacios() {
                     <span className="tarjeta__nombre">{espacio.nombre}</span>
                     <span className="tarjeta__tipo">{etiquetaTipoEspacio(espacio.tipo)}</span>
                   </span>
-                  <span className="tarjeta__metricas">
-                    <span className="tarjeta__dato">
-                      <span className="tarjeta__etiqueta">Unidades</span>
-                      <span className="tarjeta__valor">
-                        {unidades.length === 1 ? "1 unidad" : `${unidades.length} unidades`}
-                      </span>
-                    </span>
-                    <span className="tarjeta__dato">
-                      <span className="tarjeta__etiqueta">Plantas</span>
-                      <span className="tarjeta__valor">{textoCantidad(plantas)}</span>
-                    </span>
+                  <span className="tarjeta__metricas tarjeta__metricas--pills">
+                    <PillUnidades cantidad={unidades.length} />
+                    <PillPlantas cantidad={plantas} mostrarCero />
                   </span>
                 </button>
               </li>

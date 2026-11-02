@@ -2,10 +2,11 @@
 
 import { Aparecer } from "@/componentes/aparecer";
 import { ListaEntrada } from "@/componentes/lista-entrada";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { useDemo } from "@/componentes/demo/proveedor-demo";
 import { VolverDemo } from "@/componentes/demo/volver-demo";
-import { etiquetaTipoEspacio, etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
+import { etiquetaTipoEspacio, etiquetaTipoUnidad } from "@/lib/unidades";
 
 export function VistaEspacio() {
   const { estado, verUnidad } = useDemo();
@@ -21,7 +22,6 @@ export function VistaEspacio() {
       estado.plantas.filter((planta) => planta.unidad_cultivo_id === unidad.id).length,
     ])
   );
-  const total = Object.values(cantidades).reduce((suma, cantidad) => suma + cantidad, 0);
   const recienCreado = estado.aviso?.tipo === "espacio-creado" && estado.aviso.espacioId === espacio.id;
 
   return (
@@ -39,13 +39,8 @@ export function VistaEspacio() {
             <span className={`detalle-cabecera__chip detalle-cabecera__chip--${espacio.tipo}`}>
               {etiquetaTipoEspacio(espacio.tipo)}
             </span>
-            <span className="detalle-cabecera__meta">
-              {unidades.length === 1 ? "1 unidad" : `${unidades.length} unidades`}
-            </span>
-            <span className="detalle-cabecera__meta">{textoCantidad(total)}</span>
           </div>
         </header>
-        <h2>Unidades</h2>
         <ListaEntrada>
           {unidades.map((unidad) => (
             <li key={unidad.id}>
@@ -56,11 +51,8 @@ export function VistaEspacio() {
                     {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado || "")}
                   </span>
                 </span>
-                <span className="tarjeta__metricas">
-                  <span className="tarjeta__dato">
-                    <span className="tarjeta__etiqueta">Plantas</span>
-                    <span className="tarjeta__valor">{textoCantidad(cantidades[unidad.id] || 0)}</span>
-                  </span>
+                <span className="tarjeta__metricas tarjeta__metricas--pills">
+                  <PillPlantas cantidad={cantidades[unidad.id] || 0} mostrarCero />
                 </span>
               </button>
             </li>

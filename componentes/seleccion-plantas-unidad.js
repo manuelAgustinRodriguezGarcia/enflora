@@ -2,18 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { cambiarEtapaMasiva } from "@/app/espacios/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContenidoTarjetaPlanta as ContenidoTarjeta } from "@/componentes/contenido-tarjeta-planta";
+import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { TextoConMarca } from "@/componentes/marca-enflora";
 import { OpcionesEtapa } from "@/componentes/opciones-etapa";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import {
+  ETAPAS,
   datosEtapaActual,
   esEtapa,
   etiquetaEtapa,
@@ -49,6 +52,19 @@ export function SeleccionPlantasUnidad({
   const gruposGenetica = useMemo(() => agruparPlantasPorGenetica(plantas), [plantas]);
   const cantidad = ids.size;
   const idsLista = useMemo(() => [...ids], [ids]);
+  const etapasOrigen = useMemo(() => {
+    const orden = ETAPAS.map((item) => item.valor);
+    const presentes = new Set();
+    for (const planta of plantas) {
+      if (!ids.has(planta.id)) continue;
+      presentes.add(esEtapa(planta.etapa) ? planta.etapa : "");
+    }
+    return [...presentes].sort((a, b) => {
+      const indiceA = orden.indexOf(a);
+      const indiceB = orden.indexOf(b);
+      return (indiceA === -1 ? orden.length : indiceA) - (indiceB === -1 ? orden.length : indiceB);
+    });
+  }, [plantas, ids]);
 
   useEffect(() => {
     if (!resultado?.ok) return;
@@ -275,7 +291,7 @@ export function SeleccionPlantasUnidad({
                   <p className="seleccion-plantas__resumen">{textoSeleccion(cantidad)}</p>
                   <OpcionesEtapa nombre="etapa_ui" valor={etapa} onChange={setEtapa} />
                   <SelectorFecha
-                    etiqueta="Fecha efectiva"
+                    etiqueta="Fecha"
                     nombre="fecha_ui"
                     valor={fecha}
                     onChange={setFecha}
@@ -314,13 +330,26 @@ export function SeleccionPlantasUnidad({
         onCerrar={() => {
           if (!pendiente) setModalAbierto(false);
         }}
-        titulo={
-          <>
-            Vas a cambiar {cantidad} {cantidad === 1 ? "planta" : "plantas"} a{" "}
-            <TextoConMarca texto={etiquetaEtapa(etapa)} /> desde el {formatearFecha(fecha)}.
-          </>
+        titulo="Cambiando de etapa..."
+        descripcion={
+          <span className="cambio-etapa-aviso">
+            <span className="cambio-etapa-aviso__transicion">
+              {etapasOrigen.map((origen) => (
+                <IndicadorEtapa key={origen || "sin-etapa"} etapa={origen} tamano="compacto" />
+              ))}
+              <ArrowRight className="cambio-etapa-aviso__flecha" strokeWidth={1.75} aria-hidden="true" />
+              <IndicadorEtapa etapa={etapa} tamano="compacto" />
+            </span>
+            <span className="cambio-etapa-aviso__texto">
+              Vas a cambiar {cantidad} {cantidad === 1 ? "planta" : "plantas"} a{" "}
+              <TextoConMarca texto={etiquetaEtapa(etapa)} />.
+              <br />
+              Fecha: {formatearFecha(fecha)}
+            </span>
+          </span>
         }
-        textoConfirmar="Confirmar cambio"
+        className="modal--cambio-etapa"
+        textoConfirmar="Confirmar"
         pendiente={pendiente}
         error={errorForm}
         accion={accion}

@@ -5,13 +5,13 @@ import { salir } from "@/app/acciones/sesion";
 import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 
-export function CerrarSesion() {
+export function CerrarSesion({ className = "perfil__salir" }) {
   const [abierto, setAbierto] = useState(false);
   const [, accion, pendiente] = useActionState(salir, null);
 
   return (
     <>
-      <div className="perfil__salir">
+      <div className={className}>
         <Boton
           type="button"
           className="boton boton--destructivo boton--ancho"

@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { CabeceraUnidad } from "@/componentes/cabecera-unidad";
+import { RecordarUnidadHistorial } from "@/componentes/recordar-unidad-historial";
 import { EnlaceBoton } from "@/componentes/boton";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { GaleriaFotos } from "@/componentes/galeria-fotos";
@@ -87,6 +88,7 @@ export default async function PaginaUnidad({ params }) {
   return (
     <TransicionVista>
       <section className="espacio">
+        <RecordarUnidadHistorial unidadId={unidad.id} />
         <EnlaceVolver href={`/espacios/${unidad.espacio_id}`} etiqueta="Volver al espacio" />
         <CabeceraUnidad
           unidad={unidad}
@@ -118,7 +120,7 @@ export default async function PaginaUnidad({ params }) {
         <GaleriaFotos
           fotos={fotosRespuesta.fotos}
           titulo="Fotos de la unidad"
-          vacio="Todavía no hay fotos en los registros de esta unidad (incluye registros de ambiente)."
+          vacio="Todavía no hay fotos en los registros de esta unidad."
         />
         {fotosRespuesta.error ? (
           <p className="galeria-fotos__vacio" role="alert">

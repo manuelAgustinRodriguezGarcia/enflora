@@ -1,9 +1,15 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { PaginaHistorialCultivo } from "@/componentes/pagina-historial-cultivo";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { afirmarFiltrosHistorial } from "@/lib/cargar-registros";
 import { cargarHistorialVistaUnidad } from "@/lib/cargar-historial-vista";
-import { filtrosDesdeConsulta } from "@/lib/historial-registros";
+import {
+  COOKIE_UNIDAD_HISTORIAL,
+  filtrosDesdeConsulta,
+  hrefHistorial,
+  unidadInicialHistorial,
+} from "@/lib/historial-registros";
 import { agruparPlantasPorGenetica } from "@/lib/registros";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -75,6 +81,14 @@ export default async function PaginaHistorial({ searchParams }) {
   const plantas = plantasRespuesta.data || [];
 
   let mensajeFiltro = normalizado.error;
+
+  if (!mensajeFiltro && filtros && !filtros.unidadId && unidades.length > 0) {
+    const almacen = await cookies();
+    const recordada = almacen.get(COOKIE_UNIDAD_HISTORIAL)?.value || "";
+    const unidadId = unidadInicialHistorial(unidades, recordada);
+    if (unidadId) redirect(hrefHistorial({ ...filtros, unidadId }));
+  }
+
   let datosVista = null;
   let geneticas = [];
 
@@ -112,9 +126,6 @@ export default async function PaginaHistorial({ searchParams }) {
       <section className="historial historial--vista-cultivo">
         <header className="historial__cabecera">
           <h1>Historial</h1>
-          <p className="historial__intro">
-            Recorré el cultivo con fotos, etapas, mediciones y registros día a día. Podés editar o eliminar cada evento.
-          </p>
         </header>
         <PaginaHistorialCultivo
           unidades={unidades}

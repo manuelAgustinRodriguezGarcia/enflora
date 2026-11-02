@@ -6,6 +6,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
+import { IconoLapiz } from "@/componentes/iconos-ui";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionMezclaRegistro } from "@/componentes/seccion-mezcla-registro";
@@ -215,9 +216,6 @@ export function FormularioRegistroCultivo({
   const [valoresParametros, setValoresParametros] = useState({});
   const [paramsHistoricos, setParamsHistoricos] = useState([]);
   const [accionesHistoricas, setAccionesHistoricas] = useState([]);
-  const [mostrarMasAcciones, setMostrarMasAcciones] = useState(false);
-  const [mostrarMasParametrosAmbiente, setMostrarMasParametrosAmbiente] = useState(false);
-  const [mostrarMasParametrosPlantas, setMostrarMasParametrosPlantas] = useState(false);
   const [editorPlantas, setEditorPlantas] = useState(false);
   const [observacion, setObservacion] = useState("");
   const [mezcla, setMezcla] = useState(() => mezclaVacia());
@@ -298,7 +296,6 @@ export function FormularioRegistroCultivo({
     unidadNombre: unidad?.nombre || "",
   });
   const accionesVisibles = accionesOrdenadas.prioritarias;
-  const accionesExtra = accionesOrdenadas.secundarias;
 
   const onSeguimientoActualizado = useCallback((datos) => {
     if (datos.acciones) setAccionesPrioritarias(datos.acciones);
@@ -320,9 +317,6 @@ export function FormularioRegistroCultivo({
     setEditandoId("");
     setAplicaEdicion("");
     baseEdicion.current = null;
-    setMostrarMasParametrosAmbiente(false);
-    setMostrarMasParametrosPlantas(false);
-    setMostrarMasAcciones(false);
     setMezcla(mezclaVacia());
     firmaMezclaRef.current = "";
     habiaMezclaRef.current = false;
@@ -613,8 +607,6 @@ export function FormularioRegistroCultivo({
       habiaMezclaRef.current = false;
     }
     setParamsHistoricos(registro.registro_parametros || []);
-    setMostrarMasParametrosAmbiente(true);
-    setMostrarMasParametrosPlantas(true);
     setEditorPlantas(false);
     for (const foto of fotosNuevasRef.current) liberarVista(foto);
     subidasRef.current = new Map();
@@ -1207,19 +1199,18 @@ export function FormularioRegistroCultivo({
             secundarias={catalogoAmbiente.secundarias}
             valores={valoresParametros}
             onChange={cambiarValorParametro}
-            mostrarMas={mostrarMasParametrosAmbiente}
-            onToggleMas={() => setMostrarMasParametrosAmbiente((valor) => !valor)}
             pendiente={bloqueoAmbiente}
             deshabilitado={bloqueoAmbiente}
             accionCabecera={
               EditorSeguimiento ? (
                 <button
                   type="button"
-                  className="registro-crear__enlace"
+                  className="registro-crear__editar"
+                  aria-label={configurar ? "Cerrar" : "Editar"}
                   onClick={() => setConfigurar((valor) => !valor)}
                   disabled={bloqueoAmbiente}
                 >
-                  {configurar ? "Cerrar" : "Editar"}
+                  <IconoLapiz />
                 </button>
               ) : null
             }
@@ -1233,19 +1224,18 @@ export function FormularioRegistroCultivo({
             secundarias={catalogoPlantas.secundarias}
             valores={valoresParametros}
             onChange={cambiarValorParametro}
-            mostrarMas={mostrarMasParametrosPlantas}
-            onToggleMas={() => setMostrarMasParametrosPlantas((valor) => !valor)}
             pendiente={bloqueoPlantas}
             deshabilitado={bloqueoPlantas}
             accionCabecera={
               EditorSeguimiento ? (
                 <button
                   type="button"
-                  className="registro-crear__enlace"
+                  className="registro-crear__editar"
+                  aria-label={configurar ? "Cerrar" : "Editar"}
                   onClick={() => setConfigurar((valor) => !valor)}
                   disabled={bloqueoPlantas}
                 >
-                  {configurar ? "Cerrar" : "Editar"}
+                  <IconoLapiz />
                 </button>
               ) : null
             }
@@ -1286,34 +1276,6 @@ export function FormularioRegistroCultivo({
                 })}
               </div>
             )}
-            {accionesExtra.length > 0 ? (
-              <>
-                <button
-                  type="button"
-                  className="registro-crear__enlace"
-                  onClick={() => setMostrarMasAcciones((valor) => !valor)}
-                  disabled={bloqueoPlantas}
-                >
-                  {mostrarMasAcciones ? "Ocultar más acciones" : "Más acciones"}
-                </button>
-                <Aparecer visible={mostrarMasAcciones}>
-                  <div className="registro-crear__acciones-grid">
-                    {accionesExtra.map((item) => {
-                      const clave = claveAccion(item);
-                      return (
-                        <BotonAccion
-                          key={clave}
-                          item={item}
-                          activa={accionesElegidas.has(clave)}
-                          disabled={bloqueoPlantas}
-                          onClick={() => alternarAccion(item)}
-                        />
-                      );
-                    })}
-                  </div>
-                </Aparecer>
-              </>
-            ) : null}
           </section>
 
         <SeccionMezclaRegistro
@@ -1478,7 +1440,7 @@ export function FormularioRegistroCultivo({
           >
             <EditorSeguimiento
               modo="edicion"
-              encabezado="Configurar seguimiento"
+              encabezado="Elegí lo que querés registrar"
               tipoInicial={tipoSeguimiento}
               acciones={accionesPrioritarias}
               parametros={parametrosPrioritarios}

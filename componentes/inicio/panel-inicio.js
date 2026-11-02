@@ -35,26 +35,9 @@ function Aviso({ children, error = false }) {
   );
 }
 
-function ListaEventos({ datos, vacio, error }) {
-  if (datos.estado === "error") return <Aviso error>{error}</Aviso>;
-  if (datos.estado !== "listo") return <Aviso>{vacio}</Aviso>;
-  return (
-    <ul className="inicio__bloque">
-      {datos.items.map((item) => {
-        const lugar = [item.unidadNombre, item.espacioNombre].filter(Boolean).join(" · ");
-        return (
-          <li key={item.id}>
-            <Link className="inicio__evento" href={item.href}>
-              <span className="inicio__evento-titulo">{item.titulo}</span>
-              <span className="inicio__evento-meta">
-                {[lugar, item.textoFecha].filter(Boolean).join(" · ")}
-              </span>
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
+function claseTipoEspacio(tipo) {
+  if (tipo === "interior" || tipo === "exterior") return `tarjeta__tipo tarjeta__tipo--${tipo}`;
+  return "tarjeta__tipo";
 }
 
 function TarjetaUnidad({ unidad }) {
@@ -63,7 +46,9 @@ function TarjetaUnidad({ unidad }) {
       <Link className="tarjeta inicio__tarjeta" href={unidad.href}>
         <span className="tarjeta__cabecera">
           <span className="tarjeta__nombre">{unidad.nombre}</span>
-          {unidad.tipoEtiqueta ? <span className="tarjeta__tipo">{unidad.tipoEtiqueta}</span> : null}
+          {unidad.tipoEtiqueta ? (
+            <span className={claseTipoEspacio(unidad.tipoEspacio)}>{unidad.tipoEtiqueta}</span>
+          ) : null}
         </span>
         <span className="inicio__lugar">{unidad.espacioNombre}</span>
         {unidad.uniforme ? (
@@ -104,7 +89,6 @@ export function PanelInicio({ panel }) {
     <div className="inicio">
       <header className="inicio__cabecera">
         <h1>Inicio</h1>
-        <p className="inicio__intro">El estado de tus cultivos, lo que sigue y lo último que registraste.</p>
       </header>
 
       <section className="inicio__seccion" aria-labelledby="inicio-acciones">
@@ -135,7 +119,6 @@ export function PanelInicio({ panel }) {
         ) : null}
         {cultivos.estado === "listo" ? (
           <>
-            <p className="inicio__resumen">{cultivos.resumen}</p>
             {cultivos.avisoEtapas ? <Aviso>{cultivos.avisoEtapas}</Aviso> : null}
             <ul className="inicio__lista">
               {cultivos.unidades.map((unidad) => (
@@ -170,45 +153,6 @@ export function PanelInicio({ panel }) {
           </ul>
         ) : null}
       </Seccion>
-
-      <Seccion
-        id="inicio-actividad"
-        titulo="Actividad reciente"
-        enlace={{ href: "/registros/historial", etiqueta: "Abrir historial" }}
-      >
-        <h3 className="inicio__subtitulo">Últimos registros</h3>
-        <ListaEventos
-          datos={panel.actividad.recientes}
-          vacio="Todavía no hay registros."
-          error="No se pudo cargar la actividad reciente."
-        />
-        <h3 className="inicio__subtitulo">Riegos y fertilizaciones</h3>
-        <ListaEventos
-          datos={panel.actividad.cuidados}
-          vacio="Todavía no hay riegos ni fertilizaciones."
-          error="No se pudieron cargar los riegos y las fertilizaciones."
-        />
-      </Seccion>
-
-      {panel.exterior.estado === "listo" && panel.exterior.unidades.length > 0 ? (
-        <Seccion id="inicio-exterior" titulo="Exterior">
-          <ul className="inicio__lista">
-            {panel.exterior.unidades.map((unidad) => (
-              <li key={unidad.id}>
-                <Link className="inicio__evento inicio__evento--suelto" href={unidad.href}>
-                  <span className="inicio__evento-titulo">{unidad.nombre}</span>
-                  <span className="inicio__evento-meta">{unidad.espacioNombre}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {panel.clima.disponible ? null : (
-            <p className="inicio__nota">
-              El clima queda para cuando el cultivo tenga una ubicación y una fuente meteorológica.
-            </p>
-          )}
-        </Seccion>
-      ) : null}
     </div>
   );
 }

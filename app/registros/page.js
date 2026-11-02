@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EnlaceBoton } from "@/componentes/boton";
 import { FormularioCrearRegistro } from "@/componentes/formulario-crear-registro";
@@ -130,14 +129,6 @@ export default async function PaginaRegistros({ searchParams }) {
     <TransicionVista>
       <section className="registros">
         <h1>Registrar</h1>
-        <p className="registros__catalogo">
-          <Link className="mezclas__enlace" href="/registros/productos">
-            Mis productos
-          </Link>
-          <Link className="mezclas__enlace" href="/registros/recetas">
-            Mis recetas
-          </Link>
-        </p>
         {unidades.length === 0 ? (
           <div className="vacio">
             <p>Necesitás al menos una unidad de cultivo para registrar.</p>

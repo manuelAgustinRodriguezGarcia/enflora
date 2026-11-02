@@ -287,6 +287,13 @@ a.boton {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.45rem 0.75rem;
+
+    &--pills {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+    }
   }
 
   &__dato {
@@ -1062,6 +1069,28 @@ a.boton {
       background: var(--color-surface-secondary);
       color: var(--color-primary);
     }
+  }
+}
+
+.pill-unidades {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.2rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: #e8e8e8;
+  color: #1a1a1a;
+  font-size: var(--font-size-body-small);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+
+  &__icono {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex: 0 0 auto;
   }
 }
 

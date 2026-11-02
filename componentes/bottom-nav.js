@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
+import { CerrarSesion } from "@/componentes/cerrar-sesion";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { toque, transicionRapida, transicionToque } from "@/lib/animaciones";
 import { DESTINOS_MAS, DESTINOS_NAVEGACION, destinoActivo, esRutaApp } from "@/lib/navegacion";
@@ -18,7 +19,6 @@ export function BottomNav({ oculto = false }) {
   const [destinoPendiente, setDestinoPendiente] = useState(null);
   const [masAbierto, setMasAbierto] = useState(false);
   const panelId = useId();
-  const tituloId = useId();
   const masRef = useRef(null);
   const panelRef = useRef(null);
 
@@ -95,16 +95,13 @@ export function BottomNav({ oculto = false }) {
               className="bottom-nav__panel"
               role="dialog"
               aria-modal="true"
-              aria-labelledby={tituloId}
+              aria-label="Más"
               initial={reducido ? { opacity: 0 } : { opacity: 0, y: "100%" }}
               animate={reducido ? { opacity: 1 } : { opacity: 1, y: 0 }}
               exit={reducido ? { opacity: 0 } : { opacity: 0, y: "100%" }}
               transition={transicionPanel}
             >
               <div className="bottom-nav__panel-cabecera">
-                <h2 id={tituloId} className="bottom-nav__panel-titulo">
-                  Más
-                </h2>
                 <button
                   type="button"
                   className="bottom-nav__cerrar"
@@ -138,6 +135,7 @@ export function BottomNav({ oculto = false }) {
                   );
                 })}
               </ul>
+              <CerrarSesion className="bottom-nav__salir" />
             </motion.div>
           ) : null}
         </AnimatePresence>

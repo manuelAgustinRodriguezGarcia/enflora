@@ -2,7 +2,8 @@ import Link from "next/link";
 import { MenuAccionesTarjetaEspacio } from "@/componentes/espacios/menu-acciones-tarjeta-espacio";
 import { ImagenEspacio } from "@/componentes/imagen-espacio";
 import { ListaEntrada } from "@/componentes/lista-entrada";
-import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
+import { PillPlantas, PillUnidades } from "@/componentes/resumen-configuracion";
+import { etiquetaTipoEspacio } from "@/lib/unidades";
 
 export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPorEspacio }) {
   if (espacios.length === 0) {
@@ -30,19 +31,9 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
                 <span className="tarjeta__cabecera">
                   <span className="tarjeta__nombre">{espacio.nombre}</span>
                 </span>
-                <span className="tarjeta__metricas">
-                  <span className="tarjeta__dato">
-                    <span className="tarjeta__etiqueta">Unidades</span>
-                    <span className="tarjeta__valor">
-                      {cantidadUnidades === 1 ? "1 unidad" : `${cantidadUnidades} unidades`}
-                    </span>
-                  </span>
-                  <span className="tarjeta__dato">
-                    <span className="tarjeta__etiqueta">Plantas</span>
-                    <span className="tarjeta__valor">
-                      {textoCantidad(plantasPorEspacio[espacio.id] || 0)}
-                    </span>
-                  </span>
+                <span className="tarjeta__metricas tarjeta__metricas--pills">
+                  <PillUnidades cantidad={cantidadUnidades} />
+                  <PillPlantas cantidad={plantasPorEspacio[espacio.id] || 0} mostrarCero />
                 </span>
               </span>
             </Link>

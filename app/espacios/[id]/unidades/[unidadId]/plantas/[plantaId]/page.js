@@ -18,9 +18,6 @@ import {
   formatearFecha,
   textoDias,
 } from "@/lib/etapas";
-import { hrefHistorial } from "@/lib/historial-registros";
-import { GaleriaFotos } from "@/componentes/galeria-fotos";
-import { cargarFotosDePlanta } from "@/lib/cargar-fotos";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -69,18 +66,12 @@ export default async function PaginaPlanta({ params }) {
 
   if (errorPlanta || !planta) notFound();
 
-  const [historialRespuesta, fotosRespuesta] = await Promise.all([
-    supabase
-      .from("historial_etapas")
-      .select("id, etapa, fecha_inicio, fecha_fin")
-      .eq("planta_id", planta.id)
-      .order("fecha_inicio", { ascending: true })
-      .order("fecha_creacion", { ascending: true }),
-    cargarFotosDePlanta(supabase, planta.id),
-  ]);
-
-  const historial = historialRespuesta.data;
-  const errorHistorial = historialRespuesta.error;
+  const { data: historial, error: errorHistorial } = await supabase
+    .from("historial_etapas")
+    .select("id, etapa, fecha_inicio, fecha_fin")
+    .eq("planta_id", planta.id)
+    .order("fecha_inicio", { ascending: true })
+    .order("fecha_creacion", { ascending: true });
 
   const espacioNombre = unidad.espacios?.nombre || "—";
   const hoy = fechaHoy();
@@ -148,23 +139,6 @@ export default async function PaginaPlanta({ params }) {
           unidadId={unidad.id}
           espacioId={unidad.espacio_id}
         />
-        <EnlaceBoton
-          href={hrefHistorial({ unidadId: unidad.id, plantaId: planta.id })}
-          variante="secundario"
-          className="registros__historial"
-        >
-          Ver historial
-        </EnlaceBoton>
-        <GaleriaFotos
-          fotos={fotosRespuesta.fotos}
-          titulo="Fotos de la planta"
-          vacio="Todavía no hay fotos en los registros de esta planta."
-        />
-        {fotosRespuesta.error ? (
-          <p className="galeria-fotos__vacio" role="alert">
-            No se pudieron cargar las fotos de la planta.
-          </p>
-        ) : null}
         <h2>Historial de etapas</h2>
         {errorHistorial ? <p>No se pudo cargar el historial de etapas.</p> : null}
         {!errorHistorial && (historial || []).length === 0 ? (

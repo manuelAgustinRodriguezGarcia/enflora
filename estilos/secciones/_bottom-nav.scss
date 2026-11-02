@@ -230,7 +230,7 @@
     flex-direction: column;
     gap: 0.85rem;
     width: min(32rem, calc(100% - 2 * var(--bottom-nav-margen-lateral, 0.875rem)));
-    max-height: min(22rem, 48svh);
+    max-height: min(28rem, 70svh);
     margin-inline: auto;
     padding: 0.9rem 0.9rem 1rem;
     overflow: hidden;
@@ -245,14 +245,16 @@
   &__panel-cabecera {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 0.75rem;
   }
 
-  &__panel-titulo {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 600;
+  &__salir {
+    flex: none;
+
+    .boton {
+      min-height: var(--touch-min);
+    }
   }
 
   &__cerrar {

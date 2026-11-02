@@ -22,11 +22,8 @@
   gap: 0.35rem;
 }
 
-.inicio__intro,
-.inicio__resumen,
 .inicio__lugar,
-.inicio__vacio,
-.inicio__nota {
+.inicio__vacio {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: var(--font-size-body-small);
@@ -135,13 +132,6 @@
   border-bottom: 0;
 }
 
-.inicio__evento--suelto {
-  padding: 0.75rem 0.85rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-}
-
 .inicio__evento-meta {
   color: var(--color-text-secondary);
   font-size: var(--font-size-meta);
@@ -150,20 +140,6 @@
 .inicio__vencida {
   color: var(--color-destructive);
   font-weight: var(--font-weight-label);
-}
-
-.inicio__subtitulo {
-  margin: 0.35rem 0 0;
-  font-family: var(--font-funcional);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-label);
-  color: var(--color-text-secondary);
-}
-
-.inicio__nota {
-  padding: 0.75rem 0.85rem;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-card);
 }
 
 .inicio__sr {

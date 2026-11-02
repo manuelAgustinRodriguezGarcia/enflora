@@ -56,7 +56,6 @@ import {
   MAXIMO_UNIDADES,
   etiquetaTipoUnidad,
   preguntaCantidadUnidades,
-  textoCantidad,
   TEXTO_AYUDA_CANTIDAD_UNIDADES,
   tiposDeUnidad,
 } from "@/lib/unidades";
@@ -631,7 +630,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   {
                     id: "total",
                     titulo: "Total",
-                    valor: textoCantidad(totalPlantas(estado.unidades)),
+                    valor: <PillPlantas cantidad={totalPlantas(estado.unidades)} mostrarCero />,
                   },
                 ]}
               />
@@ -745,7 +744,13 @@ function CierreUnidad({ unidad }) {
         {
           id: "meta",
           titulo: "Unidad",
-          valor: `${etiquetaTipoUnidad(unidad.tipo, unidad.tipoPersonalizado)} · ${textoCantidad(resumen.plantas)}`,
+          valor: (
+            <>
+              {etiquetaTipoUnidad(unidad.tipo, unidad.tipoPersonalizado)}
+              {" · "}
+              <PillPlantas cantidad={resumen.plantas} mostrarCero />
+            </>
+          ),
         },
         { id: "genetica", titulo: "Genética", valor: resumen.genetica },
         { id: "metodo", titulo: "Método", valor: resumen.metodo },

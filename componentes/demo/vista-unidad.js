@@ -3,13 +3,14 @@
 import { Boton } from "@/componentes/boton";
 import { ContenidoTarjetaPlanta } from "@/componentes/contenido-tarjeta-planta";
 import { ListaEntrada } from "@/componentes/lista-entrada";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { ActividadDemo } from "@/componentes/demo/actividad-demo";
 import { useDemo } from "@/componentes/demo/proveedor-demo";
 import { VolverDemo } from "@/componentes/demo/volver-demo";
 import { registrosDeUnidad } from "@/lib/demo/registros-demo";
 import { datosEtapaActual, esEtapa, fechaHoy } from "@/lib/etapas";
-import { etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
+import { etiquetaTipoUnidad } from "@/lib/unidades";
 
 export function VistaUnidad() {
   const { estado, verPlanta, registrarDesde } = useDemo();
@@ -32,7 +33,7 @@ export function VistaUnidad() {
             <span className="detalle-cabecera__chip">
               {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado || "")}
             </span>
-            <span className="detalle-cabecera__meta">{textoCantidad(plantas.length)}</span>
+            <PillPlantas cantidad={plantas.length} mostrarCero />
             {espacio ? <span className="detalle-cabecera__meta">{espacio.nombre}</span> : null}
           </div>
         </header>

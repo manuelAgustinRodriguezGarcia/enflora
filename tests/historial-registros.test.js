@@ -11,6 +11,7 @@ import {
   fusionarPaginaHistorial,
   hrefHistorial,
   limitesFechaHistorial,
+  unidadInicialHistorial,
   ramasDeContenido,
   ramasDeGenetica,
   TAMANO_PAGINA_HISTORIAL,
@@ -50,6 +51,16 @@ test("un filtro de URL inválido no se convierte en una consulta", () => {
     "El período no es válido."
   );
   assert.equal(filtrosDesdeConsulta({ contenido: "fotos" }).error, "El tipo de contenido no es válido.");
+});
+
+test("sin unidad en la URL el historial abre la última vista, o la única disponible", () => {
+  const unidades = [{ id: UNIDAD }, { id: ID_A }];
+  assert.equal(unidadInicialHistorial(unidades, UNIDAD), UNIDAD);
+  assert.equal(unidadInicialHistorial(unidades, ID_A), ID_A);
+  assert.equal(unidadInicialHistorial(unidades, "ya-no-existe"), UNIDAD);
+  assert.equal(unidadInicialHistorial(unidades, ""), UNIDAD);
+  assert.equal(unidadInicialHistorial([{ id: ID_A }], ""), ID_A);
+  assert.equal(unidadInicialHistorial([], UNIDAD), null);
 });
 
 test("los filtros válidos viajan en la URL y se leen de nuevo", () => {

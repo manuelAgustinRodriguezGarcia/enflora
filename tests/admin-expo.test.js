@@ -379,6 +379,7 @@ test("límites: solo autorizacion.js usa la fábrica del núcleo (el punto de in
 test("límites: el cliente restringido solo lo reciben módulos de lib/ de Expo, nunca páginas ni componentes", () => {
   assert.deepEqual(archivosQueImportan("lib/admin/servicio.js"), [
     "lib/admin/dashboard.js",
+    "lib/admin/planes.js",
     "lib/expo-cannabis/admin.js",
     "lib/expo-cannabis/contactos-admin.js",
   ]);

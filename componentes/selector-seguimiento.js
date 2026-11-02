@@ -2,7 +2,6 @@
 
 import { motion } from "motion/react";
 import { TextoCambio } from "@/componentes/aparecer";
-import { IconoSeguimiento } from "@/componentes/icono-seguimiento";
 import { toque, transicionToque } from "@/lib/animaciones";
 import { TIPOS_SEGUIMIENTO } from "@/lib/seguimiento";
 
@@ -29,7 +28,14 @@ export function SelectorSeguimiento({ valor, onChange, nombre = "tipo_seguimient
                 checked={seleccionado}
                 onChange={() => onChange(tipo.valor)}
               />
-              <IconoSeguimiento tipo={tipo.valor} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                className="seguimiento__imagen"
+                src={tipo.imagen}
+                alt=""
+                width={tipo.imagenAncho}
+                height={tipo.imagenAlto}
+              />
               <span className="seguimiento__titulo">{tipo.etiqueta}</span>
             </motion.label>
           );

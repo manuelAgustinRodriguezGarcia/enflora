@@ -27,6 +27,29 @@
   background: color-mix(in srgb, #e85d04 16%, var(--color-surface));
 }
 
+.inicio__tarjeta {
+  .tarjeta__tipo--interior,
+  .tarjeta__tipo--exterior {
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .tarjeta__tipo--interior {
+    @include tipo-espacio-pill-interior;
+  }
+
+  .tarjeta__tipo--exterior {
+    @include tipo-espacio-pill-exterior;
+  }
+}
+
+.detalle-cabecera__chip.detalle-cabecera__chip--interior,
+.detalle-cabecera__chip.detalle-cabecera__chip--exterior {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .detalle-cabecera__chip.detalle-cabecera__chip--interior {
   @include tipo-espacio-pill-interior;
 }
@@ -1018,6 +1041,41 @@
     justify-content: space-between;
     gap: 0.75rem;
     width: 100%;
+  }
+
+  &--cambio-etapa {
+    .modal__texto {
+      text-align: left;
+      color: var(--color-text);
+      font-size: var(--font-size-body);
+      font-weight: var(--font-weight-body);
+      line-height: var(--line-height-body);
+    }
+
+    .cambio-etapa-aviso {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.75rem;
+      width: 100%;
+      text-align: left;
+
+      &__transicion {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        align-self: center;
+        justify-content: center;
+        gap: 0.45rem;
+      }
+
+      &__flecha {
+        width: 1.15rem;
+        height: 1.15rem;
+        flex: 0 0 auto;
+        color: var(--color-primary);
+      }
+    }
   }
 
   &--editar-unidad {

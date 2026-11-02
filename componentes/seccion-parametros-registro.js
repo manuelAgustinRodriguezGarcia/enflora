@@ -1,6 +1,5 @@
 "use client";
 
-import { Aparecer } from "@/componentes/aparecer";
 import { claveParametroRegistro } from "@/lib/registros";
 
 export function SeccionParametrosRegistro({
@@ -9,8 +8,6 @@ export function SeccionParametrosRegistro({
   secundarias = [],
   valores = {},
   onChange,
-  mostrarMas,
-  onToggleMas,
   pendiente = false,
   accionCabecera = null,
   deshabilitado = false,
@@ -19,8 +16,6 @@ export function SeccionParametrosRegistro({
   const extras = secundarias;
   const numericos = visibles.filter((item) => item.tipo_valor === "numero");
   const textos = visibles.filter((item) => item.tipo_valor === "texto");
-  const extrasNumericos = extras.filter((item) => item.tipo_valor === "numero");
-  const extrasTextos = extras.filter((item) => item.tipo_valor === "texto");
 
   function renderNumerico(item) {
     const clave = claveParametroRegistro(item);
@@ -94,33 +89,6 @@ export function SeccionParametrosRegistro({
       ) : null}
       {textos.length > 0 ? (
         <div className="registro-crear__params-texto">{textos.map(renderTexto)}</div>
-      ) : null}
-
-      {extras.length > 0 ? (
-        <>
-          <button
-            type="button"
-            className="registro-crear__enlace"
-            onClick={onToggleMas}
-            disabled={pendiente || deshabilitado}
-          >
-            {mostrarMas ? "Ocultar más parámetros" : "Más parámetros"}
-          </button>
-          <Aparecer visible={mostrarMas}>
-            <div className="registro-crear__params-extra">
-              {extrasNumericos.length > 0 ? (
-                <div className="registro-crear__params-grid">
-                  {extrasNumericos.map(renderNumerico)}
-                </div>
-              ) : null}
-              {extrasTextos.length > 0 ? (
-                <div className="registro-crear__params-texto">
-                  {extrasTextos.map(renderTexto)}
-                </div>
-              ) : null}
-            </div>
-          </Aparecer>
-        </>
       ) : null}
     </section>
   );

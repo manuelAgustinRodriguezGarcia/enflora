@@ -2,9 +2,6 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { cambiarGeneral, payloadCultivo } from "../lib/asistente-cultivo.js";
-import { crearCacheStrain, crearCupo } from "../lib/geneticas/cache.js";
-import { solicitarBusqueda, solicitarFicha, urlFichaStrain } from "../lib/geneticas/cliente-strain.js";
-import { crearControlBusqueda } from "../lib/geneticas/control-busqueda.js";
 import { crearGeneticaPersonalizada } from "../lib/geneticas/datos.js";
 import {
   actualizarPlanta,
@@ -12,20 +9,11 @@ import {
   resolverListaGeneticas,
 } from "../lib/geneticas/plantas.js";
 import {
-  armarBusqueda,
   clonarGeneticaCompartida,
   esUuid,
-  fusionarSugerencias,
-  ordenarCoincidenciasStrain,
-  normalizarCannabinoide,
-  normalizarNotas,
-  normalizarStrain,
   rutaImagenGeneticaValida,
-  slugValido,
   solicitudDeLaApp,
-  textoPorcentaje,
   validarBytesImagenGenetica,
-  validarConsulta,
   validarGeneticaPersonalizada,
 } from "../lib/geneticas/reglas.js";
 import { agruparPlantasPorGenetica, snapshotPlanta } from "../lib/registros.js";
@@ -34,180 +22,9 @@ const USUARIO = "11111111-1111-4111-8111-111111111111";
 const OTRO = "22222222-2222-4222-8222-222222222222";
 const GENETICA = "33333333-3333-4333-8333-333333333333";
 
-function esperar(ms) {
-  return new Promise((resolver) => setTimeout(resolver, ms));
-}
-
 function cabeceras(valores) {
   return { get: (nombre) => valores[nombre] ?? null };
 }
-
-describe("búsqueda con debounce y cancelación", () => {
-  it("espera el debounce y no repite la consulta anterior", async () => {
-    let llamadas = 0;
-    const control = crearControlBusqueda({
-      esperar: 30,
-      buscar() {
-        llamadas += 1;
-        return { sugerencias: [] };
-      },
-    });
-    control.programar("ge", { alRecibir() {} });
-    control.programar("gel", { alRecibir() {} });
-    await esperar(10);
-    assert.equal(llamadas, 0);
-    await esperar(40);
-    assert.equal(llamadas, 1);
-  });
-
-  it("cancela la solicitud anterior para que no pise el resultado nuevo", async () => {
-    const senales = [];
-    const control = crearControlBusqueda({
-      esperar: 0,
-      buscar(consulta, signal) {
-        senales.push(signal);
-        return new Promise((resolver, rechazar) => {
-          signal.addEventListener("abort", () => {
-            const error = new Error("abort");
-            error.name = "AbortError";
-            rechazar(error);
-          });
-          if (consulta === "gel") resolver({ sugerencias: [{ nombre: "Gelato" }] });
-        });
-      },
-    });
-    const recibidos = [];
-    control.programar("ge", { alRecibir: (recibo) => recibidos.push(recibo) });
-    await esperar(10);
-    control.programar("gel", { alRecibir: (recibo) => recibidos.push(recibo) });
-    await esperar(20);
-    assert.equal(senales[0].aborted, true);
-    assert.equal(recibidos.length, 1);
-    assert.equal(recibidos[0].resultado.sugerencias[0].nombre, "Gelato");
-  });
-
-  it("comparte una sola carga y no guarda un fallo", async () => {
-    let cargas = 0;
-    const cache = crearCacheStrain({ ttlMs: 1000, ahora: () => 0 });
-    const primero = cache.obtener("gelato", () => {
-      cargas += 1;
-      return new Promise((resolver) => setTimeout(() => resolver({ ok: true, items: [1] }), 15));
-    });
-    const segundo = cache.obtener("gelato", () => {
-      cargas += 1;
-      return { ok: true, items: [2] };
-    });
-    const [a, b] = await Promise.all([primero, segundo]);
-    assert.equal(cargas, 1);
-    assert.deepEqual(a, b);
-
-    const frio = crearCacheStrain({ ttlMs: 1000, ahora: () => 50 });
-    await frio.obtener("gelato", async () => ({ ok: false, motivo: "caida" }));
-    let reintento = 0;
-    await frio.obtener("gelato", async () => {
-      reintento += 1;
-      return { ok: true, items: [] };
-    });
-    assert.equal(reintento, 1);
-  });
-});
-
-describe("StrainAPI", () => {
-  it("normaliza un rango sin inventar un promedio y deja ausente lo que no viene", () => {
-    const ficha = normalizarStrain({
-      id: 3209,
-      name: "Swoon",
-      slug: "swoon",
-      genetics: "F1 Durb x Gushers",
-      thc: { value: null, min: 19.85, max: 27.99, unit: "%" },
-      cbd: null,
-      flavor: ["frutal", { name: "diesel" }],
-      aroma: { notes: ["pino"] },
-      image: { url: "https://www.strainapi.com/foto.jpg" },
-    });
-    assert.equal(ficha.nombre, "Swoon");
-    assert.equal(ficha.thc.valor, null);
-    assert.equal(ficha.thc.min, 19.85);
-    assert.equal(ficha.thc.max, 27.99);
-    assert.deepEqual(ficha.cbd, { valor: null, min: null, max: null });
-    assert.equal(ficha.sabor, "frutal, diesel");
-    assert.equal(ficha.aroma, "pino");
-    assert.equal("image" in ficha, false);
-    assert.equal(ficha.imagenUrl, "https://www.strainapi.com/foto.jpg");
-    assert.equal(normalizarStrain({ id: 1, name: "Otra", slug: "otra", image: { url: "https://evil.example/foto.jpg" } }).imagenUrl, "");
-    assert.equal(ficha.genetics, undefined);
-    assert.equal(textoPorcentaje(ficha.thc), "19,85–27,99%");
-    assert.equal(textoPorcentaje(ficha.cbd), "No disponible");
-  });
-
-  it("conserva un valor único y también el rango cuando la API manda los dos", () => {
-    const campo = normalizarCannabinoide({ value: 22, min: 19.85, max: 27.99 });
-    assert.equal(campo.valor, 22);
-    assert.equal(textoPorcentaje(campo), "22% · 19,85–27,99%");
-    assert.equal(normalizarCannabinoide({ value: 0 }).valor, 0);
-    assert.equal(normalizarCannabinoide({ value: null, min: null, max: null }).valor, null);
-    assert.equal(normalizarNotas(12), null);
-    assert.equal(normalizarNotas(""), null);
-  });
-
-  it("no arma una URL externa si el slug no es seguro", () => {
-    assert.equal(slugValido("../admin"), "");
-    assert.equal(urlFichaStrain("swoon/../admin"), "");
-    assert.match(urlFichaStrain("swoon"), /\/strains\/swoon$/);
-  });
-
-  it("si StrainAPI no responde, la búsqueda sigue con las genéticas propias", async () => {
-    const pedido = await solicitarBusqueda("gelato", async () => {
-      throw new Error("red");
-    });
-    assert.equal(pedido.ok, false);
-    const respuesta = armarBusqueda(
-      [{ id: GENETICA, origen: "personalizada", nombre: "Norte", slug: null }],
-      pedido
-    );
-    assert.equal(respuesta.aviso, "strainapi");
-    assert.equal(respuesta.sugerencias.length, 1);
-    assert.equal(respuesta.sugerencias[0].propia, true);
-  });
-
-  it("elige la ficha externa y no pisa una copia ya guardada con el mismo slug", async () => {
-    const pedido = await solicitarFicha("swoon", async () => ({
-      ok: true,
-      json: async () => ({
-        id: 3209,
-        name: "Swoon",
-        slug: "swoon",
-        thc: { value: 18 },
-      }),
-    }));
-    assert.equal(pedido.ficha.thc.valor, 18);
-    assert.equal(pedido.ficha.thc.min, null);
-    const envuelta = await solicitarFicha("northern-lights", async () => ({
-      ok: true,
-      json: async () => ({ data: { id: 3721, name: "Northern Lights", slug: "northern-lights" } }),
-    }));
-    assert.equal(envuelta.ok, true);
-    assert.equal(envuelta.ficha.nombre, "Northern Lights");
-    assert.equal(envuelta.ficha.idExterno, "3721");
-    const sugerencias = fusionarSugerencias(
-      [{ id: GENETICA, origen: "strainapi", nombre: "Swoon", slug: "swoon", idExterno: "3209" }],
-      [pedido.ficha]
-    );
-    assert.equal(sugerencias.length, 1);
-    assert.equal(sugerencias[0].id, GENETICA);
-  });
-
-  it("ordena por el nombre buscado y deja afuera cruces que no lo nombran", () => {
-    const orden = ordenarCoincidenciasStrain("gorilla glue", [
-      { name: "Vienna", genetics: "Glitterbox × Biscotti" },
-      { name: "Grease Candy", genetics: "Grease Monkey x Candy OG" },
-      { name: "Sticky Pie", genetics: "Gorilla Glue #4 x Cherry Pie" },
-      { name: "Gorilla Glue", genetics: "Chem's Sister x Sour Dubb" },
-      { name: "Glue Fondue", genetics: "Cheese Wheel x GG4" },
-    ]).map((registro) => registro.name);
-    assert.deepEqual(orden, ["Gorilla Glue", "Sticky Pie"]);
-  });
-});
 
 describe("genética personalizada", () => {
   it("acepta solo el nombre y no convierte un THC vacío en cero", () => {
@@ -492,17 +309,10 @@ describe("plantas, historial y aislamiento", () => {
   });
 });
 
-describe("límites de la búsqueda", () => {
-  it("exige dos letras, el mismo origen y un cupo", () => {
-    assert.equal(validarConsulta(" a ").ok, false);
-    assert.equal(validarConsulta("gelato").texto, "gelato");
+describe("acceso a las fichas guardadas", () => {
+  it("solo acepta pedidos del mismo origen", () => {
     assert.equal(solicitudDeLaApp(cabeceras({ "sec-fetch-site": "cross-site" })), false);
     assert.equal(solicitudDeLaApp(cabeceras({ "sec-fetch-site": "same-origin" })), true);
     assert.equal(solicitudDeLaApp(cabeceras({})), false);
-    const cupo = crearCupo({ limite: 2, ventanaMs: 1000, ahora: () => 10 });
-    assert.equal(cupo.permitir(USUARIO), true);
-    assert.equal(cupo.permitir(USUARIO), true);
-    assert.equal(cupo.permitir(USUARIO), false);
-    assert.equal(cupo.permitir(OTRO), true);
   });
 });

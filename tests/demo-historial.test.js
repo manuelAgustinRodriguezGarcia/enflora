@@ -350,6 +350,7 @@ test("los módulos del historial no dependen de Supabase, fetch ni del estado de
     "componentes/demo/historial-dia.js",
     "componentes/demo/historial-galeria.js",
     "componentes/demo/historial-metricas.js",
+    "componentes/grafico-evolucion.js",
   ];
   for (const archivo of archivos) {
     const fuente = leer(archivo);

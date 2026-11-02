@@ -1,6 +1,6 @@
 "use client";
 
-import { IconoPlanta } from "@/componentes/iconos-ui";
+import { IconoCaja, IconoCajas, IconoPlanta } from "@/componentes/iconos-ui";
 import { etiquetaTipoEspacio, textoCantidad } from "@/lib/unidades";
 
 function GrupoEspacioResumen({ grupo }) {
@@ -18,12 +18,27 @@ function GrupoEspacioResumen({ grupo }) {
   );
 }
 
-export function PillPlantas({ cantidad }) {
-  if (!Number.isInteger(cantidad) || cantidad <= 0) return null;
+export function PillPlantas({ cantidad, mostrarCero = false }) {
+  if (!Number.isInteger(cantidad) || cantidad < 0) return null;
+  if (cantidad === 0 && !mostrarCero) return null;
 
   return (
     <span className="resumen-config__plantas" aria-label={textoCantidad(cantidad)}>
       <IconoPlanta className="resumen-config__plantas-icono" />
+      <span aria-hidden="true">x{cantidad}</span>
+    </span>
+  );
+}
+
+export function PillUnidades({ cantidad }) {
+  if (!Number.isInteger(cantidad) || cantidad < 0) return null;
+  const plural = cantidad !== 1;
+  const Icono = plural ? IconoCajas : IconoCaja;
+  const etiqueta = cantidad === 1 ? "1 unidad" : `${cantidad} unidades`;
+
+  return (
+    <span className="pill-unidades" aria-label={etiqueta}>
+      <Icono className="pill-unidades__icono" />
       <span aria-hidden="true">x{cantidad}</span>
     </span>
   );

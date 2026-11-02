@@ -341,7 +341,7 @@ declare
   acciones_ordenadas text[] := '{}';
   parametros_ordenados text[] := '{}';
   item text;
-  catalogo_acciones text[] := array['riego', 'foto', 'nota', 'tarea', 'poda', 'fertilizacion'];
+  catalogo_acciones text[] := array['riego', 'foto', 'nota', 'tarea', 'poda', 'fertilizacion', 'defoliacion', 'trasplante', 'entrenamiento', 'limpieza', 'problema'];
   catalogo_parametros text[] := array['ph', 'ec', 'ppm', 'temperatura', 'humedad', 'vpd'];
 begin
   if usuario is null then

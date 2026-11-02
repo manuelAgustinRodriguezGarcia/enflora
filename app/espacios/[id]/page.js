@@ -5,12 +5,13 @@ import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { PortadaUnidad } from "@/componentes/portada-unidad";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { firmarPortadas } from "@/lib/cargar-fotos";
 import { listarUnidadesConPortada } from "@/lib/consultar-unidad";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { etiquetaTipoEspacio, etiquetaTipoUnidad, textoCantidad } from "@/lib/unidades";
+import { etiquetaTipoEspacio, etiquetaTipoUnidad } from "@/lib/unidades";
 
 export default async function PaginaEspacio({ params }) {
   const { id } = await params;
@@ -55,8 +56,6 @@ export default async function PaginaEspacio({ params }) {
     }
   }
 
-  const total = Object.values(cantidades).reduce((suma, cantidad) => suma + cantidad, 0);
-
   return (
     <TransicionVista>
       <section className="espacio">
@@ -72,13 +71,8 @@ export default async function PaginaEspacio({ params }) {
             <span className={`detalle-cabecera__chip detalle-cabecera__chip--${espacio.tipo}`}>
               {etiquetaTipoEspacio(espacio.tipo)}
             </span>
-            <span className="detalle-cabecera__meta">
-              {lista.length === 1 ? "1 unidad" : `${lista.length} unidades`}
-            </span>
-            <span className="detalle-cabecera__meta">{textoCantidad(total)}</span>
           </div>
         </header>
-        <h2>Unidades</h2>
         {lista.length === 0 ? (
           <div className="vacio">
             <p>Todavía no hay unidades en este espacio.</p>
@@ -102,11 +96,8 @@ export default async function PaginaEspacio({ params }) {
                         {etiquetaTipoUnidad(unidad.tipo, unidad.tipo_personalizado)}
                       </span>
                     </div>
-                    <div className="tarjeta__metricas">
-                      <span className="tarjeta__dato">
-                        <span className="tarjeta__etiqueta">Plantas</span>
-                        <span className="tarjeta__valor">{textoCantidad(cantidades[unidad.id] || 0)}</span>
-                      </span>
+                    <div className="tarjeta__metricas tarjeta__metricas--pills">
+                      <PillPlantas cantidad={cantidades[unidad.id] || 0} mostrarCero />
                     </div>
                   </div>
                 </Link>

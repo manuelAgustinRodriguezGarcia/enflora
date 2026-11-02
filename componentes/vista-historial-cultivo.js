@@ -367,13 +367,10 @@ export function SelectorUnidadHistorial({ unidades, valor, onChange, pendiente }
       etiqueta="Unidad de cultivo"
       valor={valor || ""}
       onChange={onChange}
-      opciones={[
-        { valor: "", etiqueta: "Seleccioná una unidad" },
-        ...unidades.map((unidad) => ({
-          valor: unidad.id,
-          etiqueta: unidad.espacioNombre ? `${unidad.nombre} · ${unidad.espacioNombre}` : unidad.nombre,
-        })),
-      ]}
+      opciones={unidades.map((unidad) => ({
+        valor: unidad.id,
+        etiqueta: unidad.espacioNombre ? `${unidad.nombre} · ${unidad.espacioNombre}` : unidad.nombre,
+      }))}
       disabled={pendiente}
     />
   );

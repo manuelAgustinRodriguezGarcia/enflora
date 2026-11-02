@@ -324,7 +324,7 @@ begin
 
     if origen = 'nativa' then
       if coalesce(item->>'clave_nativa', '') not in (
-        'riego', 'foto', 'nota', 'tarea', 'poda', 'fertilizacion'
+        'riego', 'foto', 'nota', 'tarea', 'poda', 'fertilizacion', 'defoliacion', 'trasplante', 'entrenamiento', 'limpieza', 'problema'
       ) then
         raise exception 'Hay una acción que no es válida.';
       end if;

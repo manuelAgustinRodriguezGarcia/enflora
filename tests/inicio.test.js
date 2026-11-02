@@ -3,14 +3,10 @@ import test from "node:test";
 import { cargarPanelInicio } from "../lib/inicio/cargar.js";
 import {
   ACCIONES_RAPIDAS,
-  CLIMA_DISPONIBLE,
-  LIMITE_CUIDADOS,
-  LIMITE_RECIENTES,
   LIMITE_TAREAS,
   MODULO_PRODUCTOS_DISPONIBLE,
   armarPanel,
   especificacionesInicio,
-  partesInstante,
   textoResumenCultivos,
 } from "../lib/inicio/resumen.js";
 import { DESTINOS_NAVEGACION, RUTA_INICIO, destinoActivo, esRutaApp } from "../lib/navegacion.js";
@@ -87,8 +83,6 @@ function base() {
       { planta_id: "p3", etapa: "enflora", fecha_inicio: "2026-10-25", fecha_fin: null },
       { planta_id: "p1b", etapa: "germinacion", fecha_inicio: "2026-10-28", fecha_fin: null },
     ]),
-    recientes: ok([]),
-    cuidados: ok([]),
     tareas: ok([]),
   };
 }
@@ -107,22 +101,15 @@ test("el inicio es el primer destino de la navegación inferior", () => {
 test("las consultas del inicio son un lote fijo, sin una consulta por unidad", () => {
   const specs = especificacionesInicio("usuario-1");
   const lista = Object.values(specs);
-  assert.equal(lista.length, 7);
+  assert.equal(lista.length, 5);
   assert.deepEqual(lista.map((spec) => spec.tabla), [
     "espacios",
     "unidades_cultivo",
     "plantas",
     "historial_etapas",
-    "registros",
-    "registros",
     "tareas_programadas",
   ]);
   assert.deepEqual(specs.plantas.eq, [["estado", "activa"]]);
-  assert.deepEqual(specs.recientes.eq, [["usuario_id", "usuario-1"]]);
-  assert.equal(specs.recientes.limite, LIMITE_RECIENTES);
-  assert.equal(specs.cuidados.select.includes("registro_acciones!inner"), true);
-  assert.deepEqual(specs.cuidados.in, [["filtro_cuidado.clave_nativa", ["riego", "fertilizacion"]]]);
-  assert.equal(specs.cuidados.limite, LIMITE_CUIDADOS);
   assert.deepEqual(specs.tareas.eq, [
     ["usuario_id", "usuario-1"],
     ["completada", false],
@@ -194,60 +181,6 @@ test("si fallan los cultivos no se inventan unidades", () => {
   const panel = armarPanel(entrada);
   assert.equal(panel.cultivos.estado, "error");
   assert.deepEqual(panel.cultivos.unidades, []);
-  assert.equal(panel.exterior.estado, "error");
-});
-
-test("la actividad separa registros de riegos y enlaza el historial real", () => {
-  const entrada = base();
-  entrada.recientes = ok([
-    {
-      id: "r-viejo",
-      fecha_evento: "2026-10-30T15:00:00.000Z",
-      unidad_cultivo_id: "u1",
-      observacion: "nota suelta",
-      registro_acciones: [],
-    },
-    {
-      id: "r-nuevo",
-      fecha_evento: "2026-11-01T15:30:00.000Z",
-      unidad_cultivo_id: null,
-      espacio_id: "e1",
-      observacion: "",
-      registro_acciones: [{ clave_nativa: "poda", nombre: "Poda" }],
-    },
-  ]);
-  entrada.cuidados = ok([
-    {
-      id: "c1",
-      fecha_evento: "2026-10-31T18:00:00.000Z",
-      unidad_cultivo_id: "u2",
-      filtro_cuidado: [
-        { clave_nativa: "riego", nombre: "Riego" },
-        { clave_nativa: "fertilizacion", nombre: "Fertilización" },
-      ],
-    },
-    {
-      id: "c2",
-      fecha_evento: "2026-11-01T12:00:00.000Z",
-      filtro_cuidado: [{ clave_nativa: "poda", nombre: "Poda" }],
-    },
-  ]);
-  const panel = armarPanel(entrada);
-  assert.deepEqual(
-    panel.actividad.recientes.items.map((item) => item.titulo),
-    ["Poda", "Nota"]
-  );
-  assert.equal(panel.actividad.recientes.items[0].href, "/registros/historial");
-  assert.equal(panel.actividad.recientes.items[1].href, "/registros/historial?unidad=u1");
-  assert.equal(panel.actividad.recientes.items[1].unidadNombre, "Carpa 1");
-  assert.deepEqual(
-    panel.actividad.cuidados.items.map((item) => [item.titulo, item.unidadNombre]),
-    [["Riego, Fertilización", "Sector"]]
-  );
-  const partes = partesInstante("2026-11-01T15:30:00.000Z");
-  assert.equal(partes.hour, "12");
-  assert.equal(partes.minute, "30");
-  assert.match(panel.actividad.recientes.items[0].textoFecha, /12:30/);
 });
 
 test("las tareas pendientes se ordenan por vencimiento y no se simulan", () => {
@@ -291,17 +224,8 @@ test("las tareas pendientes se ordenan por vencimiento y no se simulan", () => {
   assert.equal(armarPanel(entrada).tareas.estado, "vacio");
 });
 
-test("no hay clima ni productos inventados", () => {
+test("las acciones rápidas no inventan productos ni recetas", () => {
   const panel = armarPanel(base());
-  assert.equal(CLIMA_DISPONIBLE, false);
-  assert.equal(panel.clima.disponible, false);
-  assert.equal(panel.clima.motivo, "sin_ubicacion_ni_fuente");
-  assert.equal("temperatura" in panel.clima, false);
-  assert.equal("pronostico" in panel.clima, false);
-  assert.deepEqual(
-    panel.exterior.unidades.map((unidad) => unidad.nombre),
-    ["Sector"]
-  );
   assert.equal(MODULO_PRODUCTOS_DISPONIBLE, false);
   assert.equal(panel.productosDisponibles, false);
   assert.deepEqual(
@@ -311,7 +235,7 @@ test("no hay clima ni productos inventados", () => {
   assert.equal(ACCIONES_RAPIDAS.some((accion) => /producto|receta/i.test(accion.href)), false);
 });
 
-test("cargar el panel hace las siete consultas en paralelo", async () => {
+test("cargar el panel hace las cinco consultas en paralelo", async () => {
   const consultas = [];
   const supabase = {
     from(tabla) {
@@ -353,9 +277,10 @@ test("cargar el panel hace las siete consultas en paralelo", async () => {
   };
 
   const panel = await cargarPanelInicio(supabase, "usuario-1", { hoy: HOY });
-  assert.equal(consultas.length, 7);
+  assert.equal(consultas.length, 5);
   assert.equal(panel.cultivos.unidades.length, 2);
   assert.equal(consultas.filter((consulta) => consulta.tabla === "unidades_cultivo").length, 1);
+  assert.equal(consultas.some((consulta) => consulta.tabla === "registros"), false);
 });
 
 function claveDe(estado) {
@@ -364,6 +289,5 @@ function claveDe(estado) {
   if (estado.tabla === "plantas") return "plantas";
   if (estado.tabla === "historial_etapas") return "etapas";
   if (estado.tabla === "tareas_programadas") return "tareas";
-  if (estado.select.includes("!inner")) return "cuidados";
-  return "recientes";
+  return "";
 }

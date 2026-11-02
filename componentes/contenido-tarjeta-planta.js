@@ -31,10 +31,12 @@ export function ContenidoTarjetaPlanta({ planta, datos }) {
             {datos.dia === null ? formatearFecha(fechaInicioPlanta(planta)) : datos.dia}
           </span>
         </span>
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">Estado</span>
-          <span className="tarjeta__valor">{etiquetaEstadoPlanta(planta.estado)}</span>
-        </span>
+        {planta.estado && planta.estado !== "activa" ? (
+          <span className="tarjeta__dato">
+            <span className="tarjeta__etiqueta">Estado</span>
+            <span className="tarjeta__valor">{etiquetaEstadoPlanta(planta.estado)}</span>
+          </span>
+        ) : null}
         {planta.sustrato ? (
           <span className="tarjeta__dato">
             <span className="tarjeta__etiqueta">Sustrato</span>

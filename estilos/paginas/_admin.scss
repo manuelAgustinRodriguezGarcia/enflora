@@ -479,3 +479,95 @@ body:has(.admin-app) {
     }
   }
 }
+
+.admin-planes {
+  &__secciones,
+  &__paginacion {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.8rem;
+    align-items: center;
+    margin: 0.8rem 0 1rem;
+
+    a,
+    span {
+      color: var(--brand-dark);
+      font-weight: 600;
+    }
+  }
+
+  &__secciones a[aria-current="page"] {
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+
+  &__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+    margin-bottom: 1rem;
+  }
+
+  &__campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 10rem;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+
+    select,
+    input {
+      min-height: 2.5rem;
+      padding: 0.35rem 0.6rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.7rem;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font: inherit;
+    }
+  }
+
+  &__contexto,
+  &__caption,
+  &__incidencias {
+    color: var(--text-secondary);
+  }
+
+  &__contexto {
+    flex-basis: 100%;
+    margin: 0;
+  }
+
+  &__caption {
+    caption-side: bottom;
+    padding-top: 0.6rem;
+    text-align: left;
+  }
+
+  &__incidencias {
+    margin: 0.6rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  &__detalle {
+    display: grid;
+    grid-template-columns: minmax(8rem, 14rem) minmax(0, 1fr);
+    gap: 0.35rem 0.8rem;
+    margin: 0;
+
+    dt {
+      color: var(--text-secondary);
+    }
+
+    dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  code {
+    font-size: 0.82rem;
+  }
+}

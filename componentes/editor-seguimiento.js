@@ -293,9 +293,6 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
       }}
     >
       {encabezado ? <h2>{encabezado}</h2> : null}
-      <p>
-        Estas preferencias determinan qué herramientas aparecerán primero. No limitan las funciones disponibles.
-      </p>
       {errorLocal || estado?.error ? (
         <p className="formulario__error">{errorLocal || estado.error}</p>
       ) : null}

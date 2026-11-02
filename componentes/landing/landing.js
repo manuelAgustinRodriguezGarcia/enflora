@@ -24,10 +24,6 @@ const SeccionConoceFlora = dynamic(() =>
   })),
 );
 
-const SeccionRegalo = dynamic(() =>
-  import("@/componentes/landing/seccion-regalo").then((modulo) => ({ default: modulo.SeccionRegalo })),
-);
-
 const SeccionPrecios = dynamic(() =>
   import("@/componentes/landing/seccion-precios").then((modulo) => ({ default: modulo.SeccionPrecios })),
 );
@@ -87,7 +83,6 @@ export function Landing({ cotizacion = null }) {
           <ConEnflora />
           <Producto />
           <SeccionConoceFlora />
-          <SeccionRegalo />
           <SeccionPrecios cotizacion={cotizacion} />
           <SeccionInstalacion textos={instalacion} />
           <SeccionContacto />

@@ -892,11 +892,43 @@
     }
   }
 
-  &__svg {
+  &__svg,
+  &__lienzo {
     display: block;
     width: 100%;
     height: auto;
+    min-width: 0;
     overflow: visible;
+  }
+
+  &__lienzo--reserva {
+    aspect-ratio: 320 / 170;
+  }
+
+  &__superficie,
+  .recharts-wrapper,
+  .recharts-surface {
+    overflow: visible;
+  }
+
+  &__tooltip {
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: 0.65rem;
+    background: var(--surface);
+    color: var(--color-text);
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-meta);
+    line-height: 1.35;
+
+    p {
+      margin: 0;
+    }
+
+    strong {
+      color: var(--color-primary);
+      font-weight: var(--font-weight-label);
+    }
   }
 
   &__eje {
