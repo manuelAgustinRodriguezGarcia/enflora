@@ -42,7 +42,9 @@
 --
 -- Permiso: execute solo para service_role. El panel exige además la credencial del módulo dashboard.
 -- SECURITY DEFINER se ejecuta como el dueño de la función (quien corre este archivo; en Supabase, postgres).
--- search_path vacío: toda tabla y función va calificada. pg_catalog no queda tapado por objetos de public.
+-- search_path vacío: tablas y funciones reales van calificadas. pg_catalog no queda tapado por objetos de public.
+-- COALESCE, NULLIF, GREATEST y LEAST quedan sin esquema: son sintaxis del parser, no funciones del catálogo.
+-- El cast a entero de 8 bytes queda ::bigint: ese alias no es un tipo con nombre de catálogo.
 
 create or replace function public.resumen_dashboard_admin()
 returns jsonb
@@ -64,30 +66,30 @@ as $$
     select u.created_at
     from auth.users as u
     where u.deleted_at is null
-      and pg_catalog.coalesce(u.is_anonymous, false) = false
+      and coalesce(u.is_anonymous, false) = false
   ),
   usuarios_agg as (
     select
-      pg_catalog.count(*)::pg_catalog.bigint as total,
-      pg_catalog.count(*) filter (where u.created_at >= c.corte_7)::pg_catalog.bigint as nuevos_7,
-      pg_catalog.count(*) filter (where u.created_at >= c.corte_30)::pg_catalog.bigint as nuevos_30
+      pg_catalog.count(*)::bigint as total,
+      pg_catalog.count(*) filter (where u.created_at >= c.corte_7)::bigint as nuevos_7,
+      pg_catalog.count(*) filter (where u.created_at >= c.corte_30)::bigint as nuevos_30
     from usuarios as u
     cross join cortes as c
   ),
   registros_agg as (
     select
-      pg_catalog.count(*)::pg_catalog.bigint as total,
-      pg_catalog.count(*) filter (where r.fecha_creacion >= c.corte_7)::pg_catalog.bigint as registros_7,
-      pg_catalog.count(*) filter (where r.fecha_creacion >= c.corte_30)::pg_catalog.bigint as registros_30,
-      pg_catalog.count(distinct r.usuario_id) filter (where r.fecha_creacion >= c.corte_7)::pg_catalog.bigint as usuarios_7,
-      pg_catalog.count(distinct r.usuario_id) filter (where r.fecha_creacion >= c.corte_30)::pg_catalog.bigint as usuarios_30
+      pg_catalog.count(*)::bigint as total,
+      pg_catalog.count(*) filter (where r.fecha_creacion >= c.corte_7)::bigint as registros_7,
+      pg_catalog.count(*) filter (where r.fecha_creacion >= c.corte_30)::bigint as registros_30,
+      pg_catalog.count(distinct r.usuario_id) filter (where r.fecha_creacion >= c.corte_7)::bigint as usuarios_7,
+      pg_catalog.count(distinct r.usuario_id) filter (where r.fecha_creacion >= c.corte_30)::bigint as usuarios_30
     from public.registros as r
     cross join cortes as c
   ),
   fotos_agg as (
     select
-      pg_catalog.count(*)::pg_catalog.bigint as fotos,
-      pg_catalog.coalesce(pg_catalog.sum(f.tamano_bytes), 0)::pg_catalog.bigint as bytes_originales
+      pg_catalog.count(*)::bigint as fotos,
+      coalesce(pg_catalog.sum(f.tamano_bytes), 0)::bigint as bytes_originales
     from public.registro_fotos as f
   ),
   dias as (
@@ -102,7 +104,7 @@ as $$
   altas_dia as (
     select
       (u.created_at at time zone 'America/Argentina/Buenos_Aires')::pg_catalog.date as dia,
-      pg_catalog.count(*)::pg_catalog.bigint as cantidad
+      pg_catalog.count(*)::bigint as cantidad
     from usuarios as u
     cross join cortes as c
     where u.created_at >= (c.inicio_serie::pg_catalog.timestamp at time zone 'America/Argentina/Buenos_Aires')
@@ -112,7 +114,7 @@ as $$
   registros_dia as (
     select
       (r.fecha_creacion at time zone 'America/Argentina/Buenos_Aires')::pg_catalog.date as dia,
-      pg_catalog.count(*)::pg_catalog.bigint as cantidad
+      pg_catalog.count(*)::bigint as cantidad
     from public.registros as r
     cross join cortes as c
     where r.fecha_creacion >= (c.inicio_serie::pg_catalog.timestamp at time zone 'America/Argentina/Buenos_Aires')
@@ -122,8 +124,8 @@ as $$
   serie as (
     select
       d.dia,
-      pg_catalog.coalesce(a.cantidad, 0)::pg_catalog.bigint as usuarios_nuevos,
-      pg_catalog.coalesce(rd.cantidad, 0)::pg_catalog.bigint as registros
+      coalesce(a.cantidad, 0)::bigint as usuarios_nuevos,
+      coalesce(rd.cantidad, 0)::bigint as registros
     from dias as d
     left join altas_dia as a on a.dia = d.dia
     left join registros_dia as rd on rd.dia = d.dia
@@ -135,9 +137,9 @@ as $$
     'usuarios_total', u.total,
     'usuarios_nuevos_7', u.nuevos_7,
     'usuarios_nuevos_30', u.nuevos_30,
-    'espacios', (select pg_catalog.count(*)::pg_catalog.bigint from public.espacios),
-    'unidades', (select pg_catalog.count(*)::pg_catalog.bigint from public.unidades_cultivo),
-    'plantas', (select pg_catalog.count(*)::pg_catalog.bigint from public.plantas),
+    'espacios', (select pg_catalog.count(*)::bigint from public.espacios),
+    'unidades', (select pg_catalog.count(*)::bigint from public.unidades_cultivo),
+    'plantas', (select pg_catalog.count(*)::bigint from public.plantas),
     'registros_total', g.total,
     'registros_7', g.registros_7,
     'registros_30', g.registros_30,
@@ -145,7 +147,7 @@ as $$
     'usuarios_con_registros_30', g.usuarios_30,
     'fotos_registros', f.fotos,
     'bytes_fotos_originales', f.bytes_originales,
-    'serie', pg_catalog.coalesce((
+    'serie', coalesce((
       select pg_catalog.jsonb_agg(
         pg_catalog.jsonb_build_object(
           'dia', pg_catalog.to_char(s.dia, 'YYYY-MM-DD'),

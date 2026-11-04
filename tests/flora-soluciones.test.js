@@ -73,5 +73,5 @@ test("herramienta buscar soluciones valida consulta", async () => {
 
 test("lista gemini incluye buscar soluciones", () => {
   assert.ok(NOMBRES_HERRAMIENTAS_FLORA.includes("buscar_soluciones_guardadas"));
-  assert.equal(NOMBRES_HERRAMIENTAS_FLORA.length, 10);
+  assert.equal(NOMBRES_HERRAMIENTAS_FLORA.length, 14);
 });

@@ -15,6 +15,7 @@ import { RUTA_INICIO } from "@/lib/navegacion";
 import { esRutaPanelAdmin } from "@/lib/admin/secciones";
 import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
+import { muestraEstadoNotificaciones } from "@/lib/perfil/notificaciones-visibles";
 import { obtenerSesionRapida } from "@/lib/supabase/servidor";
 import "@/estilos/principal.scss";
 
@@ -27,7 +28,7 @@ const inter = Inter({
 
 const fredoka = Fredoka({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-fredoka",
   display: "swap",
 });
@@ -76,6 +77,8 @@ export const viewport = {
   initialScale: 1,
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
+  themeColor: "#0B3D2A",
+  colorScheme: "light",
 };
 
 function claseInicial(ruta) {
@@ -109,7 +112,12 @@ export default async function Layout({ children }) {
               href={usuario && !bloqueado && !esDemo ? RUTA_INICIO : "/"}
             />
             <div className="encabezado__acciones">
-              {conSupabase ? <BotonNotificaciones oculto={bloqueado} /> : null}
+              {conSupabase ? (
+                <BotonNotificaciones
+                  oculto={bloqueado}
+                  estadoTecnico={muestraEstadoNotificaciones(usuario?.email)}
+                />
+              ) : null}
               {usuario && !bloqueado ? (
                 <EnlacePerfil usuarioId={usuario.id} email={usuario.email} />
               ) : null}

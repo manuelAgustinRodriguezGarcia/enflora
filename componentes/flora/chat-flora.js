@@ -3,6 +3,7 @@
 import { BookOpen, Plus, Send, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BotonClipAdjuntoFlora,
@@ -12,7 +13,11 @@ import {
   liberarAdjuntosFlora,
   payloadImagenesParaApi,
 } from "@/componentes/flora/barra-adjunto-imagen-flora";
-import { FLORA_CHAT_MAX_IMAGENES, normalizarPreguntaConImagen } from "@/lib/flora-imagen-chat";
+import {
+  FLORA_CHAT_MAX_IMAGENES,
+  historialTextoParaEnvioFlora,
+  normalizarPreguntaConImagen,
+} from "@/lib/flora-imagen-chat";
 import { chatFloraTieneContenidoPerdible } from "@/lib/flora-chat-conversacion-pendiente";
 import {
   chatFloraPersistibleCompleto,
@@ -28,13 +33,28 @@ import {
   requiereModalSalidaChatFlora,
   tieneCambiosPendientesSync,
 } from "@/lib/flora-estado-persistencia-chat";
-import { sugerirTituloChat, mensajesClienteParaPersistencia } from "@/lib/flora-chats-guardados";
+import {
+  chatTieneFotoDispositivoSinRuta,
+  mensajesClienteParaPersistencia,
+  sugerirTituloChat,
+} from "@/lib/flora-chats-guardados";
 import {
   debeRecuperarChatGuardado,
   mensajeErrorRecuperacionChat,
   resultadoRecuperacionChatDesdeApi,
 } from "@/lib/flora-recuperacion-chat";
 import { MENSAJE_BIENVENIDA_FLORA } from "@/lib/flora-chat-etiquetas";
+import { tituloChatReporte } from "@/lib/reportes-problema";
+import {
+  iniciarDiagnosticoReporte,
+  mensajesDiagnosticoReporte,
+  olvidarCorridaDiagnostico,
+} from "@/lib/reportes-problema-cliente";
+import { vincularChatReporte } from "@/app/reportes/acciones";
+import {
+  UMBRAL_SCROLL_INFERIOR_CHAT,
+  anclajeTrasScrollUsuario,
+} from "@/lib/flora-chat-scroll";
 import { BotonGuardarChat } from "@/componentes/flora/boton-guardar-chat";
 import { ErrorRecuperacionChatFlora } from "@/componentes/flora/error-recuperacion-chat-flora";
 import {
@@ -51,7 +71,6 @@ import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { useGuardSalidaFloraChat } from "@/componentes/flora/proveedor-guard-salida-flora";
 
 const MAX_HISTORIAL_ENVIO = 8;
-const UMBRAL_SCROLL_INFERIOR = 96;
 
 function idMensaje() {
   return `m-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -68,8 +87,10 @@ function mensajesInicialesChat(continuarSolucionId) {
 
 export function ChatFlora({
   continuarSolucionId = "",
+  reporteId = "",
   personalidadInicial = PERSONALIDAD_FLORA_DEFAULT,
 }) {
+  const router = useRouter();
   const [mensajes, setMensajes] = useState(() => mensajesInicialesChat(continuarSolucionId));
   const [estadoRecuperacion, setEstadoRecuperacion] = useState(() =>
     debeRecuperarChatGuardado(continuarSolucionId) ? "cargando" : null,
@@ -96,8 +117,10 @@ export function ChatFlora({
   const adjuntoRef = useRef(null);
   const listaRef = useRef(null);
   const envioRef = useRef(false);
-  const cercaDelFinalRef = useRef(true);
-  const bloquearAutoScrollRef = useRef(false);
+  const ancladoAlFinalRef = useRef(true);
+  const scrollProgramaticoRef = useRef(false);
+  const scrollTopPrevioRef = useRef(0);
+  const scrollHeightPrevioRef = useRef(0);
   const touchScrollRef = useRef(null);
   const forzarScrollRef = useRef(false);
   const sesionRef = useRef(0);
@@ -109,6 +132,7 @@ export function ChatFlora({
   const cargandoRef = useRef(cargando);
   const montadoRef = useRef(true);
   const recuperacionGenRef = useRef(0);
+  const envioPendienteRef = useRef(null);
 
   useEffect(() => {
     montadoRef.current = true;
@@ -129,6 +153,7 @@ export function ChatFlora({
   const persistirConversacion = useCallback(
     async ({ titulo, silencioso = false } = {}) => {
       if (!claveSesion) return { ok: false, error: "No se puede guardar este chat todavía." };
+      if (envioPendienteRef.current) await envioPendienteRef.current;
       const mensajesVivos = mensajesRef.current;
       const esActualizacion = Boolean(chatGuardadoIdRef.current);
       const persistible = esActualizacion
@@ -151,20 +176,21 @@ export function ChatFlora({
       if (!silencioso) setGuardandoPersistencia(true);
 
       try {
+        const mensajesSnapshot = mensajesVivos;
         const { res, turno } = await colaPersistencia.encolar(async () =>
           persistirChatFloraEnApi(
             {
               titulo: tituloUsar,
               claveSesion,
               chatGuardadoId: chatGuardadoIdRef.current,
-              mensajes: mensajesRef.current,
+              mensajes: mensajesSnapshot,
             },
             { reintentos: 3 },
           ),
         );
 
         if (res.ok) {
-          const firmaViva = firmaMensajesChat(mensajesRef.current);
+          const firmaViva = firmaMensajesChat(mensajesSnapshot);
           if (turno === colaPersistencia.obtenerGeneracion()) {
             setFirmaSincronizada(firmaViva);
             firmaSincronizadaRef.current = firmaViva;
@@ -264,6 +290,7 @@ export function ChatFlora({
   useEffect(() => {
     if (recuperandoHistorial || falloRecuperacionHistorial) return undefined;
     if (!chatGuardadoId || guardandoPersistencia) return undefined;
+    if (chatTieneFotoDispositivoSinRuta(mensajes)) return undefined;
     if (!chatFloraPersistibleParaAutoguardado(mensajes)) return;
     const firma = firmaMensajesChat(mensajes);
     if (firma === firmaSincronizada) return;
@@ -315,6 +342,11 @@ export function ChatFlora({
     setEstadoRecuperacion("cargando");
     if (!esReintento) {
       setMensajes([]);
+      mensajesRef.current = [];
+      setAdjuntosImagen((prev) => {
+        liberarAdjuntosFlora(prev);
+        return [];
+      });
       setBannerContinuar(null);
       setChatGuardadoId(null);
       chatGuardadoIdRef.current = null;
@@ -343,6 +375,7 @@ export function ChatFlora({
         return;
       }
 
+      mensajesRef.current = resultado.mensajes;
       setMensajes(resultado.mensajes);
       const firma = firmaMensajesChat(resultado.mensajes);
       setFirmaSincronizada(firma);
@@ -359,7 +392,7 @@ export function ChatFlora({
       }
 
       setEstadoRecuperacion(null);
-      cercaDelFinalRef.current = true;
+      ancladoAlFinalRef.current = true;
       forzarScrollRef.current = true;
     } catch {
       if (!montadoRef.current || gen !== recuperacionGenRef.current) return;
@@ -382,29 +415,228 @@ export function ChatFlora({
     };
   }, [continuarSolucionId, ejecutarRecuperacionChat]);
 
+  const publicarConversacion = useCallback((lista, { chatId = "", clave = "", titulo = "" } = {}) => {
+    mensajesRef.current = lista;
+    setMensajes(lista);
+    if (clave) setClaveSesion(clave);
+    if (titulo) setTituloBiblioteca(titulo);
+    if (chatId) {
+      const firma = firmaMensajesChat(lista);
+      setFirmaSincronizada(firma);
+      firmaSincronizadaRef.current = firma;
+      setChatGuardadoId(chatId);
+      chatGuardadoIdRef.current = chatId;
+    }
+    forzarScrollRef.current = true;
+    ancladoAlFinalRef.current = true;
+  }, []);
+
+  const aplicarDiagnostico = useCallback(
+    async (resultado) => {
+      const leido = resultado?.lectura;
+      const data = resultado?.data;
+      if (!leido?.ok) {
+        setError(leido?.error || "No se encontró el reporte.");
+        setCargando(false);
+        setEsperaConImagen(false);
+        return;
+      }
+      if (data?.ok && data.yaEnviado && data.floraChatId) {
+        router.replace(`/flora?continuar=${data.floraChatId}`);
+        return;
+      }
+      const clave = data?.claveSesion || leido.claveSesion;
+      const titulo = tituloChatReporte(data?.unidadNombre || leido.unidadNombre);
+      if (data?.ok && data.respuesta && data.chatId) {
+        publicarConversacion(
+          mensajesDiagnosticoReporte({
+            mensaje: data.mensaje || leido.mensaje,
+            fotos: data.fotos || leido.fotos,
+            respuesta: data.respuesta,
+            idMensaje,
+            bienvenida: MENSAJE_BIENVENIDA_FLORA,
+          }),
+          { chatId: data.chatId, clave, titulo },
+        );
+        setError("");
+        setCargando(false);
+        setEsperaConImagen(false);
+        return;
+      }
+      if (data?.guardarEnCliente && data.respuesta) {
+        const lista = mensajesDiagnosticoReporte({
+          mensaje: data.mensaje || leido.mensaje,
+          fotos: data.fotos || leido.fotos,
+          respuesta: data.respuesta,
+          idMensaje,
+          bienvenida: MENSAJE_BIENVENIDA_FLORA,
+        });
+        mensajesRef.current = lista;
+        setMensajes(lista);
+        setClaveSesion(clave);
+        setTituloBiblioteca(titulo);
+        const guardado = await persistirChatFloraEnApi({
+          titulo,
+          claveSesion: clave,
+          chatGuardadoId: data.chatId || null,
+          mensajes: lista,
+        });
+        if (guardado.ok) {
+          const vinculo = await vincularChatReporte(reporteId, guardado.id);
+          if (vinculo.ok) {
+            publicarConversacion(lista, { chatId: guardado.id, clave, titulo });
+            setError("");
+            setCargando(false);
+            setEsperaConImagen(false);
+            return;
+          }
+          setError(vinculo.error || "No se pudo asociar la conversación al reporte.");
+        } else {
+          setError(guardado.error || data.error || "No se pudo guardar la conversación.");
+        }
+        setCargando(false);
+        setEsperaConImagen(false);
+        return;
+      }
+      publicarConversacion(
+        mensajesDiagnosticoReporte({
+          mensaje: leido.mensaje,
+          fotos: leido.fotos,
+          respuesta: "",
+          idMensaje,
+          bienvenida: MENSAJE_BIENVENIDA_FLORA,
+        }),
+        { clave },
+      );
+      setError(
+        resultado?.falloRed
+          ? "Falló la conexión. El reporte quedó guardado: reintentá el diagnóstico."
+          : data?.error || "Flora no pudo analizar el reporte. Quedó guardado en el historial: reintentá el diagnóstico.",
+      );
+      setCargando(false);
+      setEsperaConImagen(false);
+    },
+    [publicarConversacion, reporteId, router],
+  );
+
+  useEffect(() => {
+    if (!reporteId || continuarSolucionId) return undefined;
+    let cancelado = false;
+    const corrida = iniciarDiagnosticoReporte(reporteId);
+
+    corrida.lectura.then((leido) => {
+      if (cancelado || !montadoRef.current || !leido?.ok) return;
+      if (leido.estado === "enviado" && leido.floraChatId) return;
+      publicarConversacion(
+        mensajesDiagnosticoReporte({
+          mensaje: leido.mensaje,
+          fotos: leido.fotos,
+          respuesta: "",
+          idMensaje,
+          bienvenida: MENSAJE_BIENVENIDA_FLORA,
+        }),
+        { clave: leido.claveSesion },
+      );
+      setCargando(true);
+      setEsperaConImagen(Boolean(leido.fotos?.length));
+      setError("");
+    });
+
+    corrida.diagnostico.then((resultado) => {
+      if (cancelado || !montadoRef.current) return;
+      void aplicarDiagnostico(resultado);
+    });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [aplicarDiagnostico, continuarSolucionId, publicarConversacion, reporteId]);
+
+  const reintentarReporte = async () => {
+    if (!reporteId || envioRef.current) return;
+    const hayRespuesta = mensajesRef.current.some((m) => m.rol === "flora" && m.id !== "bienvenida");
+    if (hayRespuesta && claveSesion) {
+      setError("");
+      const titulo = tituloBiblioteca || tituloChatReporte("");
+      const guardado = await persistirChatFloraEnApi({
+        titulo,
+        claveSesion,
+        chatGuardadoId: chatGuardadoIdRef.current,
+        mensajes: mensajesRef.current,
+      });
+      if (!guardado.ok) {
+        setError(guardado.error || "No se pudo guardar la conversación.");
+        return;
+      }
+      const vinculo = await vincularChatReporte(reporteId, guardado.id);
+      if (!vinculo.ok) {
+        setError(vinculo.error || "No se pudo asociar la conversación al reporte.");
+        return;
+      }
+      publicarConversacion(mensajesRef.current, { chatId: guardado.id, clave: claveSesion, titulo });
+      return;
+    }
+
+    olvidarCorridaDiagnostico(reporteId);
+    envioRef.current = true;
+    setCargando(true);
+    setError("");
+    try {
+      const corrida = iniciarDiagnosticoReporte(reporteId);
+      const resultado = await corrida.diagnostico;
+      if (!montadoRef.current) return;
+      await aplicarDiagnostico(resultado);
+    } finally {
+      envioRef.current = false;
+    }
+  };
+
+  const soltarAnclaje = useCallback(() => {
+    ancladoAlFinalRef.current = false;
+  }, []);
+
   const desplazarAbajoSiCorresponde = useCallback((forzar = false) => {
     const el = listaRef.current;
     if (!el) return;
-    if (!forzar && bloquearAutoScrollRef.current) return;
-    if (!forzar && !cercaDelFinalRef.current) return;
-    el.scrollTop = el.scrollHeight;
+    if (!forzar && !ancladoAlFinalRef.current) return;
+    const destino = el.scrollHeight;
+    if (Math.abs(destino - el.scrollTop) < 1) return;
+    scrollProgramaticoRef.current = true;
+    el.scrollTop = destino;
+    scrollTopPrevioRef.current = el.scrollTop;
+    scrollHeightPrevioRef.current = el.scrollHeight;
+    queueMicrotask(() => {
+      scrollProgramaticoRef.current = false;
+    });
   }, []);
 
   const onScrollLista = useCallback(() => {
     const el = listaRef.current;
     if (!el) return;
-    const distancia = el.scrollHeight - el.scrollTop - el.clientHeight;
-    const cerca = distancia <= UMBRAL_SCROLL_INFERIOR;
-    cercaDelFinalRef.current = cerca;
-    bloquearAutoScrollRef.current = !cerca;
+    const scrollTop = el.scrollTop;
+    const scrollHeight = el.scrollHeight;
+    const scrollTopPrevio = scrollTopPrevioRef.current;
+    const scrollHeightPrevio = scrollHeightPrevioRef.current;
+    scrollTopPrevioRef.current = scrollTop;
+    scrollHeightPrevioRef.current = scrollHeight;
+    if (scrollProgramaticoRef.current) {
+      scrollProgramaticoRef.current = false;
+      return;
+    }
+    ancladoAlFinalRef.current = anclajeTrasScrollUsuario({
+      anclado: ancladoAlFinalRef.current,
+      scrollTopPrevio,
+      scrollTop,
+      distanciaAlFinal: scrollHeight - scrollTop - el.clientHeight,
+      scrollHeightPrevio,
+      scrollHeight,
+      umbral: UMBRAL_SCROLL_INFERIOR_CHAT,
+    });
   }, []);
 
   const onWheelLista = useCallback((evento) => {
-    if (evento.deltaY < 0) {
-      bloquearAutoScrollRef.current = true;
-      cercaDelFinalRef.current = false;
-    }
-  }, []);
+    if (evento.deltaY < 0) soltarAnclaje();
+  }, [soltarAnclaje]);
 
   const onTouchStartLista = useCallback((evento) => {
     const y = evento.touches[0]?.clientY;
@@ -415,11 +647,8 @@ export function ChatFlora({
     const y = evento.touches[0]?.clientY;
     const inicio = touchScrollRef.current;
     if (typeof y !== "number" || typeof inicio !== "number") return;
-    if (y - inicio > 8) {
-      bloquearAutoScrollRef.current = true;
-      cercaDelFinalRef.current = false;
-    }
-  }, []);
+    if (y - inicio > 8) soltarAnclaje();
+  }, [soltarAnclaje]);
 
   useEffect(() => {
     desplazarAbajoSiCorresponde(forzarScrollRef.current);
@@ -484,8 +713,7 @@ export function ChatFlora({
     setTituloBiblioteca("");
     ignorarContinuarRef.current = true;
     contextoContinuarEnviadoRef.current = false;
-    cercaDelFinalRef.current = true;
-    bloquearAutoScrollRef.current = false;
+    ancladoAlFinalRef.current = true;
     forzarScrollRef.current = true;
   };
 
@@ -523,6 +751,11 @@ export function ChatFlora({
 
     const sesionActiva = sesionRef.current;
     envioRef.current = true;
+    let resolverEnvio = () => {};
+    const envioPendiente = new Promise((resolve) => {
+      resolverEnvio = resolve;
+    });
+    envioPendienteRef.current = envioPendiente;
     setError("");
     const textoEnviado = texto;
     const adjuntosSnapshot = adjuntosImagen;
@@ -539,14 +772,13 @@ export function ChatFlora({
     setEsperaConImagen(hayImagen);
     setCargando(true);
     forzarScrollRef.current = true;
-    cercaDelFinalRef.current = true;
-    bloquearAutoScrollRef.current = false;
+    ancladoAlFinalRef.current = true;
 
     const preguntaGuardada = textoEnviado || normalizarPreguntaConImagen("");
     const idUsuario = idMensaje();
     const ahora = new Date().toISOString();
-    setMensajes((prev) => [
-      ...prev,
+    const conUsuario = [
+      ...mensajesRef.current,
       {
         id: idUsuario,
         rol: "usuario",
@@ -554,17 +786,11 @@ export function ChatFlora({
         adjuntos: adjuntosEnviados,
         fecha: ahora,
       },
-    ]);
+    ];
+    mensajesRef.current = conUsuario;
+    setMensajes(conUsuario);
 
-    const historial = mensajes
-      .filter((m) => m.id !== "bienvenida")
-      .slice(-MAX_HISTORIAL_ENVIO)
-      .map((m) => ({
-        rol: m.rol === "flora" ? "flora" : "usuario",
-        texto:
-          m.texto ||
-          (m.adjuntos?.length || m.adjunto ? normalizarPreguntaConImagen("") : ""),
-      }));
+    const historial = historialTextoParaEnvioFlora(mensajes, MAX_HISTORIAL_ENVIO);
 
     const payload = { mensaje: textoEnviado, historial };
     if (imagenesPayload?.length) payload.imagenes = imagenesPayload;
@@ -588,7 +814,9 @@ export function ChatFlora({
 
       if (!res.ok || !data.ok) {
         if (!montadoRef.current) return;
-        setMensajes((prev) => prev.filter((m) => m.id !== idUsuario));
+        const sinIntento = mensajesRef.current.filter((m) => m.id !== idUsuario);
+        mensajesRef.current = sinIntento;
+        setMensajes(sinIntento);
         setEntrada(textoEnviado);
         if (adjuntosSnapshot.length) setAdjuntosImagen(adjuntosSnapshot);
         setError(data.error || "No pudimos enviar el mensaje. Probá de nuevo.");
@@ -608,8 +836,9 @@ export function ChatFlora({
         }
         return [];
       });
-      setMensajes((prev) =>
-        prev.map((m) => {
+      const idFlora = idMensaje();
+      const conRespuesta = [
+        ...mensajesRef.current.map((m) => {
           if (m.id !== idUsuario) return m;
           const adjuntos = (m.adjuntos || []).map((adj, indice) => {
             const guardada = persistidas[indice];
@@ -618,7 +847,7 @@ export function ChatFlora({
                 origen: "flora",
                 ruta: guardada.ruta,
                 vista: guardada.vista || adj.vista,
-                mimeType: guardada.mimeType,
+                mimeType: guardada.mimeType || adj.mimeType,
                 etiqueta: adj.etiqueta,
               };
             }
@@ -629,15 +858,6 @@ export function ChatFlora({
           });
           return { ...m, adjuntos };
         }),
-      );
-      if (aLiberar.length) {
-        window.setTimeout(() => liberarAdjuntosFlora(aLiberar), 1500);
-      }
-
-      const idFlora = idMensaje();
-      if (!montadoRef.current) return;
-      setMensajes((prev) => [
-        ...prev,
         {
           id: idFlora,
           rol: "flora",
@@ -648,15 +868,24 @@ export function ChatFlora({
           imagenTransitoriaEnConsulta: data.meta?.imagen?.transitoria || false,
           fecha: new Date().toISOString(),
         },
-      ]);
+      ];
+      mensajesRef.current = conRespuesta;
+      setMensajes(conRespuesta);
+      if (aLiberar.length) {
+        window.setTimeout(() => liberarAdjuntosFlora(aLiberar), 1500);
+      }
       forzarScrollRef.current = true;
     } catch {
       if (sesionActiva !== sesionRef.current || !montadoRef.current) return;
-      setMensajes((prev) => prev.filter((m) => m.id !== idUsuario));
+      const sinIntento = mensajesRef.current.filter((m) => m.id !== idUsuario);
+      mensajesRef.current = sinIntento;
+      setMensajes(sinIntento);
       setEntrada(textoEnviado);
       if (adjuntosSnapshot.length) setAdjuntosImagen(adjuntosSnapshot);
       setError("Falló la conexión. Revisá tu internet e intentá otra vez.");
     } finally {
+      resolverEnvio();
+      if (envioPendienteRef.current === envioPendiente) envioPendienteRef.current = null;
       if (sesionActiva === sesionRef.current && montadoRef.current) {
         setCargando(false);
         setEsperaConImagen(false);
@@ -823,9 +1052,14 @@ export function ChatFlora({
       </div>
 
       {error ? (
-        <p className="flora-chat-app__error" role="alert">
-          {error}
-        </p>
+        <div className="flora-chat-app__error" role="alert">
+          <p>{error}</p>
+          {reporteId && !cargando ? (
+            <button type="button" className="boton boton--secundario" onClick={reintentarReporte}>
+              Reintentar diagnóstico
+            </button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="flora-chat-app__dock">

@@ -8,8 +8,8 @@
   gap: 1rem;
   height: 4.5rem;
   padding: 0 1.5rem;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--brand-dark);
+  border-bottom: 1px solid rgb(255 255 255 / 0.08);
 
   &__marca {
     display: flex;
@@ -24,8 +24,12 @@
     max-width: min(10rem, 42vw);
   }
 
-  &__logo--claro {
+  &__logo--oscuro {
     display: none;
+  }
+
+  &__logo--claro {
+    display: block;
   }
 
   &__acciones {
@@ -40,6 +44,7 @@
   }
 
   &__perfil {
+    position: relative;
     display: inline-flex;
     flex: none;
     align-items: center;
@@ -75,6 +80,12 @@
       height: 100%;
       object-fit: cover;
     }
+
+    img[data-lista="false"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
   }
 
   &__notificaciones {
@@ -88,13 +99,13 @@
     border: 0;
     border-radius: 8px;
     background: transparent;
-    color: var(--color-primary);
+    color: #fff;
     cursor: pointer;
     box-shadow: none;
 
     &:hover:not(:disabled) {
-      background: transparent;
-      color: var(--color-primary-hover);
+      background: rgb(255 255 255 / 0.08);
+      color: #fff;
     }
 
     &:focus-visible {
@@ -110,8 +121,8 @@
 
   @media (max-width: 1023px) {
     justify-content: space-between;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--brand-dark);
+    border-bottom: 1px solid rgb(255 255 255 / 0.08);
     box-shadow: none;
 
     .encabezado__marca {

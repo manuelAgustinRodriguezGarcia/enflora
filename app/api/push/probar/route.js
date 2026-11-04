@@ -10,21 +10,26 @@ import {
   nuevoIdEnvio,
   registrarIntento,
 } from "@/lib/push/datos";
-import { leerJsonAcotado, respuestaPush } from "@/lib/push/http";
+import { leerJsonAcotado, respuestaPush, solicitudMismoOrigen } from "@/lib/push/http";
 import { ejecutarPrueba } from "@/lib/push/prueba";
-import { endpointPushValido } from "@/lib/push/reglas";
+import { endpointPushValido, puedeProbarSuscripcion } from "@/lib/push/reglas";
 import { claveLimiteIp, ipCliente, nuevoRecibo, salLimite } from "@/lib/push/secreto";
+import { obtenerUsuario } from "@/lib/supabase/servidor";
 import { configuracionVapid, despacharPush } from "@/lib/push/vapid";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
+  if (!solicitudMismoOrigen(request.headers)) {
+    return respuestaPush(403, { ok: false, error: "Solicitud inválida" });
+  }
   const cuerpo = await leerJsonAcotado(request, 4000);
   const endpoint = endpointPushValido(cuerpo?.endpoint);
-  if (!cuerpo || !endpoint || "todas" in cuerpo || "campana" in cuerpo) {
+  if (!cuerpo || !endpoint || "todas" in cuerpo || "campana" in cuerpo || "suscripciones" in cuerpo) {
     return respuestaPush(400, { ok: false, error: "Solicitud inválida" });
   }
+  const usuario = await obtenerUsuario();
 
   const supabase = clientePush();
   if (!supabase || !configuracionVapid()) {
@@ -42,7 +47,14 @@ export async function POST(request) {
       {
         consultarCupo: (limite) => consultarCupo(supabase, clave, limite),
         registrarIntento: () => registrarIntento(supabase, clave),
-        leerSuscripcion: () => leerSuscripcionPorEndpoint(supabase, endpoint),
+        leerSuscripcion: async () => {
+          const leida = await leerSuscripcionPorEndpoint(supabase, endpoint);
+          if (!leida.ok || !leida.suscripcion) return leida;
+          if (!puedeProbarSuscripcion(leida.suscripcion, usuario?.id || null)) {
+            return { ok: true, suscripcion: null };
+          }
+          return leida;
+        },
         nuevoId: nuevoIdEnvio,
         nuevoRecibo,
         crearEnvio: (id, suscripcionId, hash) => crearEnvioPrueba(supabase, id, suscripcionId, hash),

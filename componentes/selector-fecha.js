@@ -30,6 +30,8 @@ export function SelectorFecha({
   placeholder = "Elegir fecha",
   sinIcono = false,
   fechaMinima = "",
+  ancla = null,
+  alinear = "end",
 }) {
   const [abierto, setAbierto] = useState(false);
   const [interno, setInterno] = useState(valor || "");
@@ -70,9 +72,10 @@ export function SelectorFecha({
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Positioner
-            className="selector-fecha__positioner"
+            className={`selector-fecha__positioner${ancla ? " selector-fecha__positioner--ancla" : ""}`}
+            anchor={ancla || undefined}
             side="bottom"
-            align="end"
+            align={alinear}
             sideOffset={8}
           >
             <Popover.Popup className="selector-fecha__popup">

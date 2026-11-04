@@ -8,12 +8,14 @@ export function etiquetaEstadoPlanta(estado) {
 }
 
 export function ContenidoTarjetaPlanta({ planta, datos }) {
+  const dia = Number.isFinite(datos.dia) ? datos.dia : null;
+
   return (
     <>
       <div className="tarjeta__cabecera">
         <span className="tarjeta__nombre">{planta.nombre}</span>
         <span className="tarjeta__estado">
-          <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />
+          <IndicadorEtapa etapa={planta.etapa} tamano="compacto" dias={dia === null ? null : [dia]} />
         </span>
       </div>
       <div className="tarjeta__metricas">
@@ -25,12 +27,12 @@ export function ContenidoTarjetaPlanta({ planta, datos }) {
           <span className="tarjeta__etiqueta">Método</span>
           <span className="tarjeta__valor">{planta.metodo || "—"}</span>
         </span>
-        <span className="tarjeta__dato">
-          <span className="tarjeta__etiqueta">{datos.dia === null ? "Inicio" : "Día"}</span>
-          <span className="tarjeta__valor">
-            {datos.dia === null ? formatearFecha(fechaInicioPlanta(planta)) : datos.dia}
+        {dia === null ? (
+          <span className="tarjeta__dato">
+            <span className="tarjeta__etiqueta">Inicio</span>
+            <span className="tarjeta__valor">{formatearFecha(fechaInicioPlanta(planta))}</span>
           </span>
-        </span>
+        ) : null}
         {planta.estado && planta.estado !== "activa" ? (
           <span className="tarjeta__dato">
             <span className="tarjeta__etiqueta">Estado</span>

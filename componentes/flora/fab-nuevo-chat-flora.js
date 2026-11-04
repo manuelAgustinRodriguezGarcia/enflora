@@ -30,13 +30,14 @@ export function FabNuevoChatFlora({
   disabled = false,
   detrasCapas = false,
   ariaLabel = "Nuevo chat",
+  icono = null,
 }) {
   const montado = useSyncExternalStore(suscribirCliente, esCliente, esServidor);
 
   if (!montado) return null;
 
   const className = `flora-chat-app__fab-nuevo${detrasCapas ? " flora-chat-app__fab-nuevo--detras-capas" : ""}`;
-  const icono = <Plus strokeWidth={2.25} aria-hidden="true" />;
+  const iconoNodo = icono || <Plus strokeWidth={2.25} aria-hidden="true" />;
   const toque = disabled ? undefined : toqueFab;
 
   if (href) {
@@ -48,7 +49,7 @@ export function FabNuevoChatFlora({
         whileTap={toqueFab}
         transition={transicionToqueFab}
       >
-        {icono}
+        {iconoNodo}
       </FabEnlace>,
       document.body,
     );
@@ -64,7 +65,7 @@ export function FabNuevoChatFlora({
       whileTap={toque}
       transition={transicionToqueFab}
     >
-      {icono}
+      {iconoNodo}
     </motion.button>,
     document.body,
   );

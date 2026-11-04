@@ -9,7 +9,7 @@ import { IconoLapiz } from "@/componentes/iconos-ui";
 
 export function MenuAccionesTarjetaEspacio({ espacioId, lado = "top" }) {
   const [abierto, setAbierto] = useState(false);
-  const hrefEditar = `/espacios/${espacioId}/editar`;
+  const hrefEditar = `/cultivos/${espacioId}/editar`;
 
   return (
     <div className="tarjeta-acciones-menu acciones acciones--tarjeta">

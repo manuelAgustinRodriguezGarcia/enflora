@@ -99,6 +99,8 @@ test("la redirección legada es fija y las pantallas nuevas no leen datos privad
     "app/admin/notificaciones/page.js",
     "app/admin/partners/page.js",
     "app/admin/auditoria/page.js",
+    "app/admin/feedback/page.js",
+    "app/admin/feedback/[id]/page.js",
     "componentes/admin/cascaron-admin.js",
     "componentes/admin/navegacion-admin.js",
     "componentes/admin/estado-seccion.js",

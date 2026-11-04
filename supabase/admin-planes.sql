@@ -1,4 +1,4 @@
-﻿-- ENFLORA · Admin · Planes e ingresos (solo lectura).
+-- ENFLORA · Admin · Planes e ingresos (solo lectura).
 --
 -- ARCHIVO INCREMENTAL. NO se ejecuta automáticamente.
 -- Aplicarlo a mano en el SQL Editor después de pagos-licencias.sql y plus-suscripciones.sql.
@@ -20,7 +20,9 @@
 --
 -- Las dos funciones planes_admin_* arman el criterio y no se conceden a service_role.
 -- Las RPC de abajo sí, y el panel además exige la credencial del módulo planes.
--- search_path vacío: tablas y funciones van calificadas.
+-- search_path vacío: tablas y funciones reales van calificadas.
+-- COALESCE, NULLIF, GREATEST y LEAST quedan sin esquema: son sintaxis del parser, no funciones del catálogo.
+-- El cast a entero de 8 bytes queda ::bigint: ese alias no es un tipo con nombre de catálogo.
 
 create or replace function public.planes_admin_movimientos(p_ambiente text)
 returns table (
@@ -50,12 +52,12 @@ as $$
       'cultivo'::text as origen,
       p.usuario_id,
       p.estado,
-      pg_catalog.round(p.importe_ars * 100)::pg_catalog.bigint as importe_cobrado_centavos,
-      pg_catalog.round(p.importe_ars * 100)::pg_catalog.bigint as importe_lista_centavos,
+      pg_catalog.round(p.importe_ars * 100)::bigint as importe_cobrado_centavos,
+      pg_catalog.round(p.importe_ars * 100)::bigint as importe_lista_centavos,
       p.acreditado_en,
       p.creado_en,
-      nullif(pg_catalog.btrim(pg_catalog.coalesce(p.operacion_mp, '')), '') as clave_mp,
-      nullif(pg_catalog.btrim(pg_catalog.coalesce(p.operacion_mp, '')), '') as referencia_mp,
+      nullif(pg_catalog.btrim(coalesce(p.operacion_mp, '')), '') as clave_mp,
+      nullif(pg_catalog.btrim(coalesce(p.operacion_mp, '')), '') as referencia_mp,
       null::uuid as suscripcion_id,
       p.ciclo_cultivo_id as ciclo_id
     from public.pagos as p
@@ -70,16 +72,16 @@ as $$
       r.estado_interno,
       case
         when r.importe_cobrado_ars is null then null
-        else pg_catalog.round(r.importe_cobrado_ars * 100)::pg_catalog.bigint
+        else pg_catalog.round(r.importe_cobrado_ars * 100)::bigint
       end,
       case
         when r.importe_ars is null then null
-        else pg_catalog.round(r.importe_ars * 100)::pg_catalog.bigint
+        else pg_catalog.round(r.importe_ars * 100)::bigint
       end,
       r.acreditado_en,
       r.creado_en,
-      nullif(pg_catalog.btrim(pg_catalog.coalesce(r.payment_id, '')), ''),
-      nullif(pg_catalog.btrim(pg_catalog.coalesce(r.payment_id, '')), ''),
+      nullif(pg_catalog.btrim(coalesce(r.payment_id, '')), ''),
+      nullif(pg_catalog.btrim(coalesce(r.payment_id, '')), ''),
       r.suscripcion_id,
       null::uuid
     from public.plus_pagos_recurrentes as r
@@ -215,7 +217,7 @@ begin
     serie as (
       select
         d.dia,
-        pg_catalog.coalesce(pg_catalog.sum(i.centavos) filter (where i.centavos is not null), 0)::pg_catalog.bigint as centavos
+        coalesce(pg_catalog.sum(i.centavos) filter (where i.centavos is not null), 0)::bigint as centavos
       from dias as d
       left join ingresos as i on i.dia = d.dia
       group by d.dia
@@ -223,7 +225,7 @@ begin
     meses as (
       select
         pg_catalog.to_char(s.dia, 'YYYY-MM') as mes,
-        pg_catalog.sum(s.centavos)::pg_catalog.bigint as centavos
+        pg_catalog.sum(s.centavos)::bigint as centavos
       from serie as s
       group by 1
     ),
@@ -231,8 +233,8 @@ begin
       select mv.estado
       from public.planes_admin_movimientos(p_ambiente) as mv
       where mv.sobreviviente
-        and pg_catalog.coalesce(mv.acreditado_en, mv.creado_en) >= p_desde
-        and pg_catalog.coalesce(mv.acreditado_en, mv.creado_en) < p_hasta
+        and coalesce(mv.acreditado_en, mv.creado_en) >= p_desde
+        and coalesce(mv.acreditado_en, mv.creado_en) < p_hasta
     ),
     ancla as (
       select 1 as uno
@@ -245,32 +247,32 @@ begin
       'hasta', p_hasta,
       'moneda', 'ARS',
       'ingresos_acreditados_centavos', (
-        select pg_catalog.coalesce(pg_catalog.sum(i.centavos) filter (where i.centavos is not null), 0)::pg_catalog.bigint from ingresos as i
+        select coalesce(pg_catalog.sum(i.centavos) filter (where i.centavos is not null), 0)::bigint from ingresos as i
       ),
       'ingresos_plus_centavos', (
-        select pg_catalog.coalesce(pg_catalog.sum(i.centavos) filter (where i.producto = 'plus'), 0)::pg_catalog.bigint from ingresos as i
+        select coalesce(pg_catalog.sum(i.centavos) filter (where i.producto = 'plus'), 0)::bigint from ingresos as i
       ),
       'ingresos_cultivo_centavos', (
-        select pg_catalog.coalesce(pg_catalog.sum(i.centavos) filter (where i.producto = 'cultivo'), 0)::pg_catalog.bigint from ingresos as i
+        select coalesce(pg_catalog.sum(i.centavos) filter (where i.producto = 'cultivo'), 0)::bigint from ingresos as i
       ),
       'sin_importe', (
-        select pg_catalog.count(*) filter (where i.centavos is null and i.es_cruce = false)::pg_catalog.bigint from ingresos as i
+        select pg_catalog.count(*) filter (where i.centavos is null and i.es_cruce = false)::bigint from ingresos as i
       ),
       'cruces_importe', (
-        select pg_catalog.count(*) filter (where i.es_cruce)::pg_catalog.bigint from ingresos as i
+        select pg_catalog.count(*) filter (where i.es_cruce)::bigint from ingresos as i
       ),
       'acreditados_sin_fecha', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.planes_admin_movimientos(p_ambiente) as mv
         where mv.sobreviviente and mv.estado = 'acreditado' and mv.acreditado_en is null
       ),
       'suscripciones_activas', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.plus_suscripciones as s
         where s.ambiente = p_ambiente and s.estado_interno = 'activa'
       ),
       'suscripciones_habilitadas', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.plus_suscripciones as s
         where s.ambiente = p_ambiente
           and s.periodo_vigente_hasta >= pg_catalog.now()
@@ -287,12 +289,12 @@ begin
           )
       ),
       'suscripciones_canceladas', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.plus_suscripciones as s
         where s.ambiente = p_ambiente and s.estado_interno = 'cancelada'
       ),
       'suscripciones_activas_sin_pago', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.plus_suscripciones as s
         where s.ambiente = p_ambiente
           and s.estado_interno = 'activa'
@@ -304,7 +306,7 @@ begin
           )
       ),
       'licencias_habilitan_pago', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.licencias_cultivo as l
         join public.pagos as p on p.id = l.pago_id
         where p.ambiente = p_ambiente
@@ -314,7 +316,7 @@ begin
           and p.ciclo_cultivo_id = l.ciclo_cultivo_id
       ),
       'licencias_cobertura', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.licencias_cultivo as l
         join public.pagos as p on p.id = l.pago_id
         join public.ciclos_cultivo as c on c.id = l.ciclo_cultivo_id
@@ -327,7 +329,7 @@ begin
           and c.usuario_id = l.usuario_id
       ),
       'licencias_sin_cobro', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.licencias_cultivo as l
         join public.pagos as p on p.id = l.pago_id
         where p.ambiente = p_ambiente
@@ -339,20 +341,20 @@ begin
           )
       ),
       'licencias_sin_pago', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from public.licencias_cultivo as l
         where l.estado = 'activa'
           and not exists (select 1 from public.pagos as p where p.id = l.pago_id)
       ),
-      'pagos_pendientes', (select pg_catalog.count(*) filter (where e.estado = 'pendiente')::pg_catalog.bigint from estados as e),
-      'pagos_rechazados', (select pg_catalog.count(*) filter (where e.estado = 'rechazado')::pg_catalog.bigint from estados as e),
-      'pagos_acreditados', (select pg_catalog.count(*) filter (where e.estado = 'acreditado')::pg_catalog.bigint from estados as e),
-      'pagos_reembolsados', (select pg_catalog.count(*) filter (where e.estado = 'reembolsado')::pg_catalog.bigint from estados as e),
-      'pagos_contracargos', (select pg_catalog.count(*) filter (where e.estado = 'contracargo')::pg_catalog.bigint from estados as e),
-      'pagos_creados', (select pg_catalog.count(*) filter (where e.estado = 'creada')::pg_catalog.bigint from estados as e),
-      'pagos_cancelados', (select pg_catalog.count(*) filter (where e.estado = 'cancelado')::pg_catalog.bigint from estados as e),
+      'pagos_pendientes', (select pg_catalog.count(*) filter (where e.estado = 'pendiente')::bigint from estados as e),
+      'pagos_rechazados', (select pg_catalog.count(*) filter (where e.estado = 'rechazado')::bigint from estados as e),
+      'pagos_acreditados', (select pg_catalog.count(*) filter (where e.estado = 'acreditado')::bigint from estados as e),
+      'pagos_reembolsados', (select pg_catalog.count(*) filter (where e.estado = 'reembolsado')::bigint from estados as e),
+      'pagos_contracargos', (select pg_catalog.count(*) filter (where e.estado = 'contracargo')::bigint from estados as e),
+      'pagos_creados', (select pg_catalog.count(*) filter (where e.estado = 'creada')::bigint from estados as e),
+      'pagos_cancelados', (select pg_catalog.count(*) filter (where e.estado = 'cancelado')::bigint from estados as e),
       'clientes_pago_nuevos', (
-        select pg_catalog.count(*)::pg_catalog.bigint
+        select pg_catalog.count(*)::bigint
         from (
           select m.usuario_id
           from public.planes_admin_montos(p_ambiente) as m
@@ -365,14 +367,14 @@ begin
       'ingresos_netos_disponibles', false,
       'mrr_disponible', false,
       'reembolsos_importe_disponible', false,
-      'serie_dia', pg_catalog.coalesce((
+      'serie_dia', coalesce((
         select pg_catalog.jsonb_agg(
           pg_catalog.jsonb_build_object('dia', pg_catalog.to_char(s.dia, 'YYYY-MM-DD'), 'centavos', s.centavos)
           order by s.dia
         )
         from serie as s
       ), '[]'::pg_catalog.jsonb),
-      'serie_mes', pg_catalog.coalesce((
+      'serie_mes', coalesce((
         select pg_catalog.jsonb_agg(
           pg_catalog.jsonb_build_object('mes', m.mes, 'centavos', m.centavos)
           order by m.mes
@@ -423,12 +425,12 @@ begin
       select
         mv.id,
         mv.origen,
-        pg_catalog.coalesce(mv.acreditado_en, mv.creado_en) as fecha,
+        coalesce(mv.acreditado_en, mv.creado_en) as fecha,
         case when mv.origen = 'plus' then 'plus' else 'pago_unico' end as producto,
         mv.estado,
         case
           when mv.estado = 'acreditado' then mo.centavos
-          when mv.origen = 'plus' then pg_catalog.coalesce(mv.importe_cobrado_centavos, mv.importe_lista_centavos)
+          when mv.origen = 'plus' then coalesce(mv.importe_cobrado_centavos, mv.importe_lista_centavos)
           else mv.importe_cobrado_centavos
         end as importe_centavos,
         mv.referencia_mp,
@@ -436,8 +438,8 @@ begin
       from public.planes_admin_movimientos(p_ambiente) as mv
       left join montos as mo on mo.grupo = mv.grupo
       where mv.sobreviviente
-        and pg_catalog.coalesce(mv.acreditado_en, mv.creado_en) >= p_desde
-        and pg_catalog.coalesce(mv.acreditado_en, mv.creado_en) < p_hasta
+        and coalesce(mv.acreditado_en, mv.creado_en) >= p_desde
+        and coalesce(mv.acreditado_en, mv.creado_en) < p_hasta
         and (
           p_producto = 'todos'
           or (p_producto = 'plus' and mv.origen = 'plus')
@@ -447,10 +449,10 @@ begin
     )
     select pg_catalog.jsonb_build_object(
       'ok', true,
-      'total', (select pg_catalog.count(*)::pg_catalog.bigint from filtrados),
+      'total', (select pg_catalog.count(*)::bigint from filtrados),
       'limite', p_limite,
       'offset', p_offset,
-      'filas', pg_catalog.coalesce((
+      'filas', coalesce((
         select pg_catalog.jsonb_agg(
           pg_catalog.jsonb_build_object(
             'id', f.id,
@@ -521,16 +523,16 @@ begin
           'producto', 'pago_unico',
           'estado', p.estado,
           'estado_mp', case when p.mp_estado ~ '^[a-z0-9_]{1,40}$' then p.mp_estado else null end,
-          'importe_centavos', pg_catalog.coalesce(v_centavos, pg_catalog.round(p.importe_ars * 100)::pg_catalog.bigint),
+          'importe_centavos', coalesce(v_centavos, pg_catalog.round(p.importe_ars * 100)::bigint),
           'importe_cotizado_centavos', null,
           'moneda', 'ARS',
           'ambiente', p.ambiente,
           'usuario_id', p.usuario_id,
-          'referencia_mp', case when nullif(pg_catalog.btrim(pg_catalog.coalesce(p.operacion_mp, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
+          'referencia_mp', case when nullif(pg_catalog.btrim(coalesce(p.operacion_mp, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
             then nullif(pg_catalog.btrim(p.operacion_mp), '') else null end,
-          'orden_mp', case when nullif(pg_catalog.btrim(pg_catalog.coalesce(p.order_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
+          'orden_mp', case when nullif(pg_catalog.btrim(coalesce(p.order_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
             then nullif(pg_catalog.btrim(p.order_id), '') else null end,
-          'fecha', pg_catalog.coalesce(p.acreditado_en, p.creado_en),
+          'fecha', coalesce(p.acreditado_en, p.creado_en),
           'creado_en', p.creado_en,
           'acreditado_en', p.acreditado_en,
           'suscripcion_id', null,
@@ -554,22 +556,22 @@ begin
         'producto', 'plus',
         'estado', r.estado_interno,
         'estado_mp', case when r.estado_mp ~ '^[a-z0-9_]{1,40}$' then r.estado_mp else null end,
-        'importe_centavos', pg_catalog.coalesce(v_centavos, case
+        'importe_centavos', coalesce(v_centavos, case
           when r.importe_cobrado_ars is null then null
-          else pg_catalog.round(r.importe_cobrado_ars * 100)::pg_catalog.bigint
+          else pg_catalog.round(r.importe_cobrado_ars * 100)::bigint
         end),
         'importe_cotizado_centavos', case
           when r.importe_ars is null then null
-          else pg_catalog.round(r.importe_ars * 100)::pg_catalog.bigint
+          else pg_catalog.round(r.importe_ars * 100)::bigint
         end,
         'moneda', 'ARS',
         'ambiente', r.ambiente,
         'usuario_id', r.usuario_id,
-        'referencia_mp', case when nullif(pg_catalog.btrim(pg_catalog.coalesce(r.payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
+        'referencia_mp', case when nullif(pg_catalog.btrim(coalesce(r.payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
           then nullif(pg_catalog.btrim(r.payment_id), '') else null end,
-        'orden_mp', case when nullif(pg_catalog.btrim(pg_catalog.coalesce(r.authorized_payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
+        'orden_mp', case when nullif(pg_catalog.btrim(coalesce(r.authorized_payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
           then nullif(pg_catalog.btrim(r.authorized_payment_id), '') else null end,
-        'fecha', pg_catalog.coalesce(r.acreditado_en, r.creado_en),
+        'fecha', coalesce(r.acreditado_en, r.creado_en),
         'creado_en', r.creado_en,
         'acreditado_en', r.acreditado_en,
         'suscripcion_id', r.suscripcion_id,
@@ -621,13 +623,13 @@ begin
         s.vigente_hasta_fin_periodo,
         s.creada_en,
         (
-          select pg_catalog.count(*)::pg_catalog.bigint
+          select pg_catalog.count(*)::bigint
           from public.plus_pagos_recurrentes as r
           where r.suscripcion_id = s.id
             and r.ambiente = s.ambiente
             and r.estado_interno = 'acreditado'
         ) as pagos_acreditados,
-        pg_catalog.coalesce((
+        coalesce((
           s.periodo_vigente_hasta >= pg_catalog.now()
           and exists (
             select 1 from public.plus_pagos_recurrentes as r
@@ -647,10 +649,10 @@ begin
     )
     select pg_catalog.jsonb_build_object(
       'ok', true,
-      'total', (select pg_catalog.count(*)::pg_catalog.bigint from filas),
+      'total', (select pg_catalog.count(*)::bigint from filas),
       'limite', p_limite,
       'offset', p_offset,
-      'filas', pg_catalog.coalesce((
+      'filas', coalesce((
         select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
           'id', f.id,
           'usuario_id', f.usuario_id,
@@ -662,7 +664,7 @@ begin
           'vigente_hasta_fin_periodo', f.vigente_hasta_fin_periodo,
           'creada_en', f.creada_en,
           'pagos_acreditados', f.pagos_acreditados,
-          'renovaciones', pg_catalog.greatest(f.pagos_acreditados - 1, 0),
+          'renovaciones', greatest(f.pagos_acreditados - 1, 0),
           'habilitada', f.habilitada,
           'incidencia', case
             when f.estado_interno = 'activa' and f.pagos_acreditados = 0 then 'sin_pago_acreditado'
@@ -719,16 +721,16 @@ begin
         'vigente_hasta_fin_periodo', s.vigente_hasta_fin_periodo,
         'creada_en', s.creada_en,
         'pagos_acreditados', (
-          select pg_catalog.count(*)::pg_catalog.bigint
+          select pg_catalog.count(*)::bigint
           from public.plus_pagos_recurrentes as r
           where r.suscripcion_id = s.id and r.ambiente = s.ambiente and r.estado_interno = 'acreditado'
         ),
-        'renovaciones', pg_catalog.greatest((
-          select pg_catalog.count(*)::pg_catalog.bigint
+        'renovaciones', greatest((
+          select pg_catalog.count(*)::bigint
           from public.plus_pagos_recurrentes as r
           where r.suscripcion_id = s.id and r.ambiente = s.ambiente and r.estado_interno = 'acreditado'
         ) - 1, 0),
-        'habilitada', pg_catalog.coalesce((
+        'habilitada', coalesce((
           s.periodo_vigente_hasta >= pg_catalog.now()
           and exists (
             select 1 from public.plus_pagos_recurrentes as r
@@ -751,21 +753,21 @@ begin
           else null
         end
       ),
-      'pagos', pg_catalog.coalesce((
+      'pagos', coalesce((
         select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
           'id', r.id,
           'estado', r.estado_interno,
           'importe_centavos', case
             when r.estado_interno = 'acreditado' then
-              case when r.importe_cobrado_ars is null then null else pg_catalog.round(r.importe_cobrado_ars * 100)::pg_catalog.bigint end
+              case when r.importe_cobrado_ars is null then null else pg_catalog.round(r.importe_cobrado_ars * 100)::bigint end
             when r.importe_ars is null then null
-            else pg_catalog.round(r.importe_ars * 100)::pg_catalog.bigint
+            else pg_catalog.round(r.importe_ars * 100)::bigint
           end,
           'moneda', 'ARS',
           'acreditado_en', r.acreditado_en,
           'creado_en', r.creado_en,
           'referencia_mp', case
-            when nullif(pg_catalog.btrim(pg_catalog.coalesce(r.payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
+            when nullif(pg_catalog.btrim(coalesce(r.payment_id, '')), '') ~ '^[A-Za-z0-9_-]{1,64}$'
             then nullif(pg_catalog.btrim(r.payment_id), '')
             else null
           end,
@@ -846,10 +848,10 @@ begin
     )
     select pg_catalog.jsonb_build_object(
       'ok', true,
-      'total', (select pg_catalog.count(*)::pg_catalog.bigint from filas),
+      'total', (select pg_catalog.count(*)::bigint from filas),
       'limite', p_limite,
       'offset', p_offset,
-      'filas', pg_catalog.coalesce((
+      'filas', coalesce((
         select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
           'id', f.id,
           'usuario_id', f.usuario_id,
@@ -910,14 +912,14 @@ begin
         'ambiente', p.ambiente,
         'activada_en', l.activada_en,
         'revocada_en', l.revocada_en,
-        'habilita', pg_catalog.coalesce((
+        'habilita', coalesce((
           l.estado = 'activa'
           and p.estado = 'acreditado'
           and p.usuario_id = l.usuario_id
           and p.ciclo_cultivo_id = l.ciclo_cultivo_id
           and p.ambiente in ('prueba', 'produccion')
         ), false),
-        'cobertura', pg_catalog.coalesce((
+        'cobertura', coalesce((
           l.estado = 'activa'
           and p.estado = 'acreditado'
           and p.usuario_id = l.usuario_id

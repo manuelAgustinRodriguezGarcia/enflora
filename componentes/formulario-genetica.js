@@ -3,17 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { X } from "lucide-react";
-import { crearGeneticaPersonalizada } from "@/app/geneticas/acciones";
+import { actualizarGeneticaPersonalizada, crearGeneticaPersonalizada } from "@/app/geneticas/acciones";
 import { Boton } from "@/componentes/boton";
 import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
 import { MAX_BYTES_IMAGEN_GENETICA } from "@/lib/geneticas/reglas";
 
-function CamposGenetica({ nombreInicial, onCerrar, onCreada }) {
-  const [nombre, setNombre] = useState(nombreInicial || "");
-  const [thc, setThc] = useState("");
-  const [cbd, setCbd] = useState("");
-  const [sabor, setSabor] = useState("");
-  const [aroma, setAroma] = useState("");
+function textoPorcentajeInicial(campo) {
+  if (campo?.valor == null || !Number.isFinite(Number(campo.valor))) return "";
+  return String(campo.valor).replace(".", ",");
+}
+
+function CamposGenetica({ detalle, nombreInicial, onCerrar, onCreada, onGuardada }) {
+  const editando = Boolean(detalle?.id);
+  const [nombre, setNombre] = useState(detalle?.nombre || nombreInicial || "");
+  const [thc, setThc] = useState(textoPorcentajeInicial(detalle?.thc));
+  const [cbd, setCbd] = useState(textoPorcentajeInicial(detalle?.cbd));
+  const [sabor, setSabor] = useState(detalle?.sabor || "");
+  const [aroma, setAroma] = useState(detalle?.aroma || "");
   const [foto, setFoto] = useState(null);
   const [nombreArchivo, setNombreArchivo] = useState("");
   const [error, setError] = useState("");
@@ -64,19 +70,23 @@ function CamposGenetica({ nombreInicial, onCerrar, onCreada }) {
       const extension = foto.tipo_mime === "image/webp" ? "webp" : "jpg";
       datos.set("imagen", new File([foto.blob], `genetica.${extension}`, { type: foto.tipo_mime }));
     }
-    const resultado = await crearGeneticaPersonalizada(datos);
+    if (editando) datos.set("id", detalle.id);
+    const resultado = editando
+      ? await actualizarGeneticaPersonalizada(datos)
+      : await crearGeneticaPersonalizada(datos);
     setPendiente(false);
     if (resultado?.error) {
       setError(resultado.error);
       return;
     }
-    onCreada(resultado.detalle, resultado.reutilizada);
+    if (editando) onGuardada(resultado.detalle);
+    else onCreada(resultado.detalle, resultado.reutilizada);
   }
 
   return (
     <>
       <div className="genetica-form__cabecera">
-        <Dialog.Title className="genetica-modal__titulo">Crear genética</Dialog.Title>
+        <Dialog.Title className="genetica-modal__titulo">{editando ? "Editar genética" : "Crear genética"}</Dialog.Title>
         <button
           type="button"
           className="genetica-modal__cerrar"
@@ -91,7 +101,13 @@ function CamposGenetica({ nombreInicial, onCerrar, onCreada }) {
         {error ? <p className="formulario__error">{error}</p> : null}
         <label className="formulario__campo">
           Nombre de la genética
-          <input value={nombre} onChange={(evento) => setNombre(evento.target.value)} required maxLength={80} />
+          <input
+            value={nombre}
+            onChange={(evento) => setNombre(evento.target.value)}
+            required
+            maxLength={80}
+            placeholder="OG Kush, Gorilla Glue..."
+          />
         </label>
         <label className="formulario__campo">
           Imagen
@@ -108,9 +124,9 @@ function CamposGenetica({ nombreInicial, onCerrar, onCreada }) {
             </span>
           </span>
         </label>
-        {foto?.vista ? (
+        {foto?.vista || (!foto && detalle?.imagenUrl) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img className="genetica-form__vista" src={foto.vista} alt="" />
+          <img className="genetica-form__vista" src={foto?.vista || detalle.imagenUrl} alt="" />
         ) : null}
         <p className="genetica-form__nota">Opcional. JPG, PNG o WEBP, hasta 2&nbsp;MB.</p>
         <div className="genetica-form__fila">
@@ -144,14 +160,14 @@ function CamposGenetica({ nombreInicial, onCerrar, onCreada }) {
           <input value={aroma} onChange={(evento) => setAroma(evento.target.value)} maxLength={400} placeholder="Opcional" />
         </label>
         <Boton type="submit" disabled={pendiente}>
-          {pendiente ? "Guardando…" : "Guardar genética"}
+          {pendiente ? "Guardando…" : editando ? "Guardar cambios" : "Guardar genética"}
         </Boton>
       </form>
     </>
   );
 }
 
-export function FormularioGenetica({ abierto, nombreInicial, onCerrar, onCreada }) {
+export function FormularioGenetica({ abierto, nombreInicial, detalle = null, onCerrar, onCreada, onGuardada }) {
   return (
     <Dialog.Root
       open={abierto}
@@ -165,10 +181,12 @@ export function FormularioGenetica({ abierto, nombreInicial, onCerrar, onCreada 
           <Dialog.Popup className="modal__panel genetica-modal">
             {abierto ? (
               <CamposGenetica
-                key={nombreInicial || ""}
+                key={detalle?.id || nombreInicial || ""}
+                detalle={detalle}
                 nombreInicial={nombreInicial}
                 onCerrar={onCerrar}
                 onCreada={onCreada}
+                onGuardada={onGuardada}
               />
             ) : null}
           </Dialog.Popup>

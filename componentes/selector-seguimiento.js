@@ -36,7 +36,18 @@ export function SelectorSeguimiento({ valor, onChange, nombre = "tipo_seguimient
                 width={tipo.imagenAncho}
                 height={tipo.imagenAlto}
               />
-              <span className="seguimiento__titulo">{tipo.etiqueta}</span>
+              <span className="seguimiento__titulo">
+                {tipo.valor === "personalizado" ? (
+                  <>
+                    <span className="seguimiento__titulo-completo">{tipo.etiqueta}</span>
+                    <span className="seguimiento__titulo-corto" aria-hidden="true">
+                      Person.
+                    </span>
+                  </>
+                ) : (
+                  tipo.etiqueta
+                )}
+              </span>
             </motion.label>
           );
         })}
@@ -45,9 +56,11 @@ export function SelectorSeguimiento({ valor, onChange, nombre = "tipo_seguimient
         <p className="seguimiento__descripcion">
           <TextoCambio>{activo?.descripcion || ""}</TextoCambio>
         </p>
-        <p className="seguimiento__ejemplos">
-          <TextoCambio>{activo?.ejemplos || ""}</TextoCambio>
-        </p>
+        {activo?.ejemplos ? (
+          <p className="seguimiento__ejemplos">
+            <TextoCambio>{activo.ejemplos}</TextoCambio>
+          </p>
+        ) : null}
       </div>
     </fieldset>
   );

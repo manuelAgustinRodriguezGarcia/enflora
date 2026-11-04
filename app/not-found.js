@@ -4,7 +4,7 @@ export default function NoEncontrado() {
   return (
     <section className="auth">
       <h1>No se encontró la página.</h1>
-      <EnlaceVolver href="/espacios" etiqueta="Volver a espacios" />
+      <EnlaceVolver href="/cultivos" etiqueta="Volver a mis cultivos" />
     </section>
   );
 }

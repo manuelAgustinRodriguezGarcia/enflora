@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { EnlaceBoton } from "@/componentes/boton";
+import { ArrowUpDown, Images } from "lucide-react";
+import { IconoNavegacion } from "@/componentes/icono-navegacion";
+import { IconoPreferencia } from "@/componentes/icono-preferencia";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
+import { ResumenClimaInicio } from "@/componentes/clima/resumen-inicio";
+import { BotonReporteProblema } from "@/componentes/problemas/boton-reporte-problema";
+import { ACCIONES_CULTIVO, hrefAccionCultivo } from "@/lib/inicio/resumen";
 
 function textoDia(dia) {
   if (dia === null || dia === undefined) return "Sin día de inicio";
   return `Día ${dia}`;
-}
-
-function textoPlantas(cantidad) {
-  return cantidad === 1 ? "1 planta activa" : `${cantidad} plantas activas`;
 }
 
 function Seccion({ id, titulo, enlace, children }) {
@@ -40,82 +41,136 @@ function claseTipoEspacio(tipo) {
   return "tarjeta__tipo";
 }
 
+function IconoAccionCultivo({ clave }) {
+  switch (clave) {
+    case "registrar":
+      return <IconoNavegacion clave="registro" />;
+    case "foto":
+    case "problema":
+    case "riego":
+      return <IconoPreferencia clave={clave} />;
+    case "etapa":
+      return <ArrowUpDown className="icono-navegacion" strokeWidth={1.75} aria-hidden="true" />;
+    default:
+      return null;
+  }
+}
+
+function AccionesCultivo({ unidad }) {
+  return (
+    <div className="inicio__acciones inicio__acciones--cultivo" role="group" aria-label={`Acciones de ${unidad.nombre}`}>
+      {ACCIONES_CULTIVO.map((accion) =>
+        accion.clave === "problema" ? (
+          <BotonReporteProblema
+            key={accion.clave}
+            className="inicio__accion inicio__accion--problema"
+            origen="inicio"
+            unidadId={unidad.id}
+          >
+            <IconoAccionCultivo clave={accion.clave} />
+            <span>{accion.etiqueta}</span>
+          </BotonReporteProblema>
+        ) : (
+          <Link
+            key={accion.clave}
+            className="inicio__accion"
+            href={hrefAccionCultivo(unidad, accion.clave)}
+          >
+            <IconoAccionCultivo clave={accion.clave} />
+            <span>{accion.etiqueta}</span>
+          </Link>
+        ),
+      )}
+    </div>
+  );
+}
+
+function EtapasUnidad({ unidad }) {
+  if (unidad.uniforme) {
+    return (
+      <span className="inicio__etapas">
+        <IndicadorEtapa
+          etapa={unidad.etapaCodigo}
+          tamano="compacto"
+          conteo={unidad.plantasActivas}
+          dias={Number.isFinite(unidad.diaUnico) ? [unidad.diaUnico] : []}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span className="inicio__etapas inicio__etapas--filas">
+      {unidad.etapasConPlantas.map((item) => (
+        <span key={item.etapa || "sin-etapa"} className="inicio__etapa-fila">
+          <IndicadorEtapa etapa={item.etapa} tamano="compacto" conteo={item.cantidad} dias={item.dias} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function TarjetaUnidad({ unidad }) {
   return (
     <li>
-      <Link className="tarjeta inicio__tarjeta" href={unidad.href}>
-        <span className="tarjeta__cabecera">
-          <span className="tarjeta__nombre">{unidad.nombre}</span>
-          {unidad.tipoEtiqueta ? (
-            <span className={claseTipoEspacio(unidad.tipoEspacio)}>{unidad.tipoEtiqueta}</span>
-          ) : null}
-        </span>
-        <span className="inicio__lugar">{unidad.espacioNombre}</span>
-        {unidad.uniforme ? (
-          <span className="inicio__uniforme">
-            <IndicadorEtapa etapa={unidad.etapaCodigo} tamano="compacto" />
-            <span>{textoDia(unidad.diaUnico)}</span>
-            <span>{textoPlantas(unidad.plantasActivas)}</span>
-          </span>
-        ) : (
-          <>
-            <span className="inicio__lugar">{textoPlantas(unidad.plantasActivas)}</span>
-            <span className="inicio__lineas">
-              {unidad.lineas.map((linea) => (
-                <span className="inicio__linea" key={linea.id}>
-                  <span className="inicio__linea-nombre">{linea.nombre}</span>
-                  <IndicadorEtapa etapa={linea.etapa} tamano="compacto" />
-                  <span>{textoDia(linea.dia)}</span>
-                </span>
-              ))}
+      <article className="tarjeta inicio__tarjeta">
+        <div className="tarjeta__cuerpo inicio__cuerpo">
+          <span className="tarjeta__cabecera">
+            <span className="inicio__identidad">
+              <Link className="tarjeta__nombre inicio__nombre" href={unidad.href}>
+                {unidad.nombre}
+              </Link>
+              {unidad.espacioNombre ? (
+                <Link className="inicio__lugar" href={unidad.hrefEspacio}>
+                  {`en ${unidad.espacioNombre}`}
+                </Link>
+              ) : null}
+              {unidad.uniforme ? <EtapasUnidad unidad={unidad} /> : null}
             </span>
-            {unidad.lineasOcultas > 0 ? (
-              <span className="inicio__lugar">
-                {unidad.lineasOcultas === 1 ? "y 1 planta más" : `y ${unidad.lineasOcultas} plantas más`}
+            {unidad.tipoEtiqueta || Number.isFinite(unidad.diaUnidad) ? (
+              <span className="inicio__lateral">
+                {Number.isFinite(unidad.diaUnidad) ? (
+                  <span className="inicio__dia">{textoDia(unidad.diaUnidad)}</span>
+                ) : null}
+                {unidad.tipoEtiqueta ? (
+                  <span className={claseTipoEspacio(unidad.tipoEspacio)}>{unidad.tipoEtiqueta}</span>
+                ) : null}
               </span>
             ) : null}
-          </>
-        )}
-      </Link>
+          </span>
+          {unidad.uniforme ? null : <EtapasUnidad unidad={unidad} />}
+          <Link className="inicio__ficha" href={unidad.href} tabIndex={-1} aria-hidden="true" />
+        </div>
+        <AccionesCultivo unidad={unidad} />
+      </article>
     </li>
   );
 }
 
-export function PanelInicio({ panel }) {
+export function PanelInicio({ panel, saludo = "Inicio", clima = null }) {
   const cultivos = panel.cultivos;
-  const tareas = panel.tareas;
 
   return (
     <div className="inicio">
       <header className="inicio__cabecera">
-        <h1>Inicio</h1>
+        <h1 className="inicio__saludo">
+          <span className="inicio__saludo-texto">{saludo}</span>
+          <span className="inicio__saludo-flora" aria-hidden="true">
+            <img src="/images/flora-dashboard.png" alt="" />
+          </span>
+        </h1>
       </header>
 
-      <section className="inicio__seccion" aria-labelledby="inicio-acciones">
-        <h2 id="inicio-acciones" className="inicio__sr">
-          Acciones rápidas
-        </h2>
-        <div className="inicio__acciones">
-          {panel.acciones.map((accion) => (
-            <EnlaceBoton
-              key={accion.clave}
-              href={accion.href}
-              variante={accion.primaria ? undefined : "secundario"}
-              className="inicio__accion"
-            >
-              {accion.etiqueta}
-            </EnlaceBoton>
-          ))}
-        </div>
-      </section>
+      <ResumenClimaInicio clima={clima} />
 
-      <Seccion id="inicio-cultivos" titulo="Cultivos activos" enlace={{ href: "/espacios", etiqueta: "Ver cultivos" }}>
+      <Seccion id="inicio-cultivos" titulo="Tus cultivos">
         {cultivos.estado === "error" ? <Aviso error>No se pudieron cargar los cultivos.</Aviso> : null}
         {cultivos.estado === "vacio" ? (
-          <Aviso>
-            No hay cultivos activos.{" "}
-            <Link href="/espacios/nuevo">Crear un espacio</Link>
-          </Aviso>
+          <div className="inicio__vacio-accion">
+            <Link className="inicio__crear" href="/cultivos/nuevo">
+              Creá tu cultivo
+            </Link>
+          </div>
         ) : null}
         {cultivos.estado === "listo" ? (
           <>
@@ -129,30 +184,13 @@ export function PanelInicio({ panel }) {
         ) : null}
       </Seccion>
 
-      <Seccion id="inicio-tareas" titulo="Próximas tareas">
-        {tareas.estado === "no_disponible" ? (
-          <Aviso>Las tareas programadas no están disponibles en esta base.</Aviso>
-        ) : null}
-        {tareas.estado === "error" ? <Aviso error>No se pudieron cargar las tareas.</Aviso> : null}
-        {tareas.estado === "vacio" ? <Aviso>No hay tareas pendientes.</Aviso> : null}
-        {tareas.estado === "listo" ? (
-          <ul className="inicio__bloque">
-            {tareas.items.map((tarea) => (
-              <li key={tarea.id}>
-                <Link className="inicio__evento" href={tarea.href}>
-                  <span className="inicio__evento-titulo">{tarea.descripcion}</span>
-                  <span className="inicio__evento-meta">
-                    <span className={tarea.vencida ? "inicio__vencida" : undefined}>
-                      {tarea.vencida ? `Vencida · ${tarea.textoFecha}` : tarea.textoFecha}
-                    </span>
-                    {tarea.unidadNombre ? ` · ${tarea.unidadNombre}` : ""}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </Seccion>
+      <section className="inicio__fotos" aria-label="Galería de Flora">
+        <p>Mirá las fotos de tus plantas en</p>
+        <Link className="inicio__galeria" href="/galeria">
+          <Images strokeWidth={1.75} aria-hidden="true" />
+          <span>Galería de Flora</span>
+        </Link>
+      </section>
     </div>
   );
 }

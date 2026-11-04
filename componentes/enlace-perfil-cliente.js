@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserRound } from "lucide-react";
+import { AvatarUsuario } from "@/componentes/avatar-usuario";
 import { esRutaApp } from "@/lib/navegacion";
 
-export function EnlacePerfilCliente({ inicial = "" }) {
+export function EnlacePerfilCliente({ inicial = "", avatar = { url: "", expira: 0 } }) {
   const ruta = usePathname();
   if (!esRutaApp(ruta)) return null;
 
@@ -19,11 +20,13 @@ export function EnlacePerfilCliente({ inicial = "" }) {
       aria-label="Perfil"
       aria-current={activo ? "page" : undefined}
     >
-      {letra ? (
-        <span aria-hidden="true">{letra}</span>
-      ) : (
-        <UserRound size={18} strokeWidth={1.75} aria-hidden="true" />
-      )}
+      <AvatarUsuario url={avatar.url || ""} expira={avatar.expira || 0} alt="">
+        {letra ? (
+          <span aria-hidden="true">{letra}</span>
+        ) : (
+          <UserRound size={18} strokeWidth={1.75} aria-hidden="true" />
+        )}
+      </AvatarUsuario>
     </Link>
   );
 }

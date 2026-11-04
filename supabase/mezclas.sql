@@ -41,7 +41,7 @@ create table if not exists public.productos_cultivo (
   constraint productos_cultivo_fabricante_valido check (
     fabricante is null or char_length(btrim(fabricante)) between 1 and 80
   ),
-  constraint productos_cultivo_tipo_valido check (tipo in ('fertilizante', 'nutriente', 'aditivo')),
+  constraint productos_cultivo_tipo_valido check (char_length(btrim(tipo)) between 1 and 80),
   constraint productos_cultivo_caracteristicas_validas check (
     caracteristicas is null or char_length(caracteristicas) <= 2000
   )
@@ -165,7 +165,7 @@ create table if not exists public.registro_mezcla_componentes (
   constraint registro_mezcla_componentes_orden_valido check (orden >= 0),
   constraint registro_mezcla_componentes_nombre_valido check (char_length(btrim(nombre_producto)) between 1 and 80),
   constraint registro_mezcla_componentes_tipo_valido check (
-    tipo_producto in ('fertilizante', 'nutriente', 'aditivo')
+    char_length(btrim(tipo_producto)) between 1 and 80
   ),
   constraint registro_mezcla_componentes_aplicada_valida check (cantidad_aplicada > 0),
   constraint registro_mezcla_componentes_unidad_aplicada_valida check (unidad_aplicada in ('ml', 'g', 'L')),
@@ -576,7 +576,7 @@ begin
       and usuario_id = p_usuario;
 
     if not found then
-      raise exception 'No se puede usar una receta de otro usuario.';
+      raise exception 'No se puede usar una mezcla de otro usuario.';
     end if;
   end if;
 
@@ -773,6 +773,7 @@ declare
   guardado public.productos_cultivo;
   v_nombre text := btrim(coalesce(p_nombre, ''));
   v_fabricante text := nullif(btrim(coalesce(p_fabricante, '')), '');
+  v_tipo text := btrim(coalesce(p_tipo, ''));
   v_caracteristicas text := nullif(btrim(coalesce(p_caracteristicas, '')), '');
 begin
   if usuario is null then
@@ -783,7 +784,7 @@ begin
     raise exception 'El nombre del producto es obligatorio.';
   end if;
 
-  if p_tipo is null or p_tipo not in ('fertilizante', 'nutriente', 'aditivo') then
+  if char_length(v_tipo) < 1 or char_length(v_tipo) > 80 then
     raise exception 'El tipo de producto no es válido.';
   end if;
 
@@ -799,7 +800,7 @@ begin
     insert into public.productos_cultivo (
       usuario_id, nombre, fabricante, tipo, caracteristicas, activo
     ) values (
-      usuario, v_nombre, v_fabricante, p_tipo, v_caracteristicas, true
+      usuario, v_nombre, v_fabricante, v_tipo, v_caracteristicas, true
     )
     returning * into guardado;
     return guardado;
@@ -809,7 +810,7 @@ begin
   set
     nombre = v_nombre,
     fabricante = v_fabricante,
-    tipo = p_tipo,
+    tipo = v_tipo,
     caracteristicas = v_caracteristicas
   where id = p_id
     and usuario_id = usuario
@@ -845,6 +846,43 @@ begin
 
   update public.productos_cultivo
   set activo = p_activo
+  where id = p_id
+    and usuario_id = usuario;
+
+  if not found then
+    raise exception 'No se encontró el producto.';
+  end if;
+end;
+$$;
+
+create or replace function public.eliminar_producto_cultivo(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  usuario uuid := auth.uid();
+begin
+  if usuario is null then
+    raise exception 'No hay sesión.';
+  end if;
+
+  if p_id is null then
+    raise exception 'No se encontró el producto.';
+  end if;
+
+  if exists (
+    select 1
+    from public.receta_componentes as componente
+    join public.recetas_mezcla as receta on receta.id = componente.receta_id
+    where componente.producto_id = p_id
+      and receta.usuario_id = usuario
+  ) then
+    raise exception 'Este producto está en una mezcla. Sacalo de ahí antes de eliminarlo.';
+  end if;
+
+  delete from public.productos_cultivo
   where id = p_id
     and usuario_id = usuario;
 
@@ -894,13 +932,13 @@ begin
 
   v_nombre := btrim(coalesce(p_datos->>'nombre', ''));
   if char_length(v_nombre) < 1 or char_length(v_nombre) > 80 then
-    raise exception 'El nombre de la receta es obligatorio.';
+    raise exception 'El nombre de la mezcla es obligatorio.';
   end if;
 
   v_volumen := public.mezclas_numero(p_datos->'volumen_agua');
   v_unidad := p_datos->>'unidad_volumen';
   if v_volumen is null or v_volumen <= 0 or v_volumen > 1000000 or v_unidad not in ('L', 'ml') then
-    raise exception 'La receta necesita un volumen de agua.';
+    raise exception 'La mezcla necesita un volumen de agua.';
   end if;
   v_volumen := round(v_volumen, 4);
 
@@ -942,7 +980,7 @@ begin
 
   v_notas := nullif(btrim(coalesce(p_datos->>'notas', '')), '');
   if v_notas is not null and char_length(v_notas) > 2000 then
-    raise exception 'Las observaciones de la receta son demasiado largas.';
+    raise exception 'Las observaciones de la mezcla son demasiado largas.';
   end if;
 
   v_componentes := p_datos->'componentes';
@@ -950,7 +988,7 @@ begin
      or jsonb_typeof(v_componentes) <> 'array'
      or jsonb_array_length(v_componentes) < 1
      or jsonb_array_length(v_componentes) > 24 then
-    raise exception 'La receta necesita al menos un componente.';
+    raise exception 'La mezcla necesita al menos un componente.';
   end if;
 
   if v_id is not null then
@@ -959,7 +997,7 @@ begin
     where id = v_id;
 
     if v_dueno is null or v_dueno <> usuario then
-      raise exception 'No se encontró la receta.';
+      raise exception 'No se encontró la mezcla.';
     end if;
 
     update public.recetas_mezcla
@@ -1063,7 +1101,7 @@ begin
     and usuario_id = usuario;
 
   if not found then
-    raise exception 'No se encontró la receta.';
+    raise exception 'No se encontró la mezcla.';
   end if;
 
   v_nombre := left(btrim('Copia de ' || origen.nombre), 80);
@@ -1103,7 +1141,7 @@ begin
   end if;
 
   if p_activa is null then
-    raise exception 'No se encontró la receta.';
+    raise exception 'No se encontró la mezcla.';
   end if;
 
   update public.recetas_mezcla
@@ -1112,7 +1150,7 @@ begin
     and usuario_id = usuario;
 
   if not found then
-    raise exception 'No se encontró la receta.';
+    raise exception 'No se encontró la mezcla.';
   end if;
 end;
 $$;
@@ -1413,6 +1451,7 @@ revoke all on function public.aplicar_mezcla_registro(uuid, uuid, text, jsonb, j
 
 revoke all on function public.guardar_producto_cultivo(uuid, text, text, text, text) from public, anon;
 revoke all on function public.establecer_producto_cultivo_activo(uuid, boolean) from public, anon;
+revoke all on function public.eliminar_producto_cultivo(uuid) from public, anon;
 revoke all on function public.guardar_receta_mezcla(uuid, jsonb) from public, anon;
 revoke all on function public.duplicar_receta_mezcla(uuid) from public, anon;
 revoke all on function public.establecer_receta_mezcla_activa(uuid, boolean) from public, anon;
@@ -1421,6 +1460,7 @@ revoke all on function public.editar_registro(uuid, text, text, uuid, uuid, text
 
 grant execute on function public.guardar_producto_cultivo(uuid, text, text, text, text) to authenticated;
 grant execute on function public.establecer_producto_cultivo_activo(uuid, boolean) to authenticated;
+grant execute on function public.eliminar_producto_cultivo(uuid) to authenticated;
 grant execute on function public.guardar_receta_mezcla(uuid, jsonb) to authenticated;
 grant execute on function public.duplicar_receta_mezcla(uuid) to authenticated;
 grant execute on function public.establecer_receta_mezcla_activa(uuid, boolean) to authenticated;

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import { useActionState, useState } from "react";
-import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
+import { cambiarEtapa } from "@/app/cultivos/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { IconoChevron } from "@/componentes/iconos-ui";

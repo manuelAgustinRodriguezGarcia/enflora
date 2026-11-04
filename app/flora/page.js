@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { ChatFlora } from "@/componentes/flora/chat-flora";
 import { geminiConfigurado } from "@/lib/flora-chat-config";
+import { esUuid } from "@/lib/historial-registros";
 import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -22,6 +23,7 @@ export default async function PaginaFlora({ searchParams }) {
 
   const params = await searchParams;
   const continuar = typeof params?.continuar === "string" ? params.continuar : "";
+  const reporte = esUuid(params?.reporte) ? String(params.reporte) : "";
 
   const supabase = await crearClienteServidor();
   const personalidadFlora = await leerPersonalidadFloraUsuario(supabase);
@@ -38,7 +40,11 @@ export default async function PaginaFlora({ searchParams }) {
           <code>GEMINI_API_KEY</code> en las variables de entorno del servidor.
         </p>
       ) : null}
-      <ChatFlora continuarSolucionId={continuar} personalidadInicial={personalidadFlora} />
+      <ChatFlora
+        continuarSolucionId={continuar}
+        reporteId={reporte}
+        personalidadInicial={personalidadFlora}
+      />
     </section>
   );
 }

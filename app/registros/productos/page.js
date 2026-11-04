@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { EnlaceVolver } from "@/componentes/enlace-volver";
+import { InfoProductos } from "@/componentes/mezclas/info-productos";
 import { PanelProductos } from "@/componentes/mezclas/panel-productos";
 import { cargarCatalogoMezclas } from "@/lib/mezclas/cargar";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -28,9 +29,14 @@ export default async function PaginaProductos() {
 
   return (
     <section className="registros mezclas">
-      <EnlaceVolver href="/registros" etiqueta="Volver a registrar" />
+      <div className="mezclas__cabecera">
+        <EnlaceVolver href="/registros" etiqueta="Volver a registrar" />
+        <InfoProductos />
+      </div>
       <h1>Mis productos</h1>
-      <p className="registros__intro">Fertilizantes, nutrientes y aditivos de tu cultivo.</p>
+      <p className="registros__intro">
+        Anotá tus fertilizantes, estimulantes, o los productos que le ponés a tus plantas para poder registrar lo que tus plantas consumen.
+      </p>
       <PanelProductos productos={catalogo.productos} disponible={catalogo.disponible} />
     </section>
   );

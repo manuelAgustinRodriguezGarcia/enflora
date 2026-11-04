@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { editarPlanta } from "@/app/espacios/[id]/acciones";
+import { editarPlanta } from "@/app/cultivos/[id]/acciones";
 import { Boton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";

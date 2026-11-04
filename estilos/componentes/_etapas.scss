@@ -383,7 +383,7 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
 }
 
 @each $etapa in $etapas {
-  .tarjeta--#{$etapa} {
+  .tarjeta--#{$etapa}:not(.tarjeta--planta) {
     border-left-width: 3px;
     border-left-color: var(--etapa-#{$etapa}-borde);
   }
@@ -407,4 +407,48 @@ $etapas: germinacion, plantula, vegetativo, enflora, secado, finalizado;
       opacity: 0.78;
     }
   }
+}
+
+.indicador-etapa > span {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.indicador-etapa__grupo {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.indicador-etapa__sep {
+  margin-inline: 0.28rem;
+  font-weight: 600;
+}
+
+.indicador-etapa__dato {
+  font-weight: 600;
+}
+
+.indicador-etapa__conteo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  font-family: var(--font-identidad);
+  font-weight: 600;
+}
+
+.indicador-etapa__conteo-icono {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+}
+
+.indicador-etapa:not(.indicador-etapa--enflora) > span,
+.etapa-opcion:not(.etapa-opcion--enflora) > span,
+.fila-etapa:not(.fila-etapa--enflora) > .fila-etapa__texto,
+.ciclo-etapas__item:not(.ciclo-etapas__item--enflora) .ciclo-etapas__nombre {
+  font-family: var(--font-identidad);
+  font-weight: 600;
 }

@@ -356,7 +356,7 @@ export function SelectorUnidadHistorial({ unidades, valor, onChange, pendiente }
     return (
       <div className="vacio">
         <p>Todavía no tenés unidades de cultivo.</p>
-        <EnlaceBoton href="/espacios">Crear tu primer cultivo</EnlaceBoton>
+        <EnlaceBoton href="/cultivos">Crear tu primer cultivo</EnlaceBoton>
       </div>
     );
   }

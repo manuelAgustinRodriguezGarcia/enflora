@@ -8,6 +8,7 @@ const RUTAS = [
   { nombre: "reconciliar", ruta: "../app/api/pagos/reconciliar/route.js", url: "http://localhost/api/pagos/reconciliar" },
   { nombre: "cotizacion", ruta: "../app/api/cotizacion/actualizar/route.js", url: "http://localhost/api/cotizacion/actualizar" },
   { nombre: "push", ruta: "../app/api/push/lanzamiento/route.js", url: "http://localhost/api/push/lanzamiento" },
+  { nombre: "recordatorios", ruta: "../app/api/calendario/recordatorios/route.js", url: "http://localhost/api/calendario/recordatorios" },
   { nombre: "plus", ruta: "../app/api/pagos/plus/renovar-importe/route.js", url: "http://localhost/api/pagos/plus/renovar-importe" },
 ];
 

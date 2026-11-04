@@ -11,6 +11,7 @@ import {
 import {
   clonarGeneticaCompartida,
   esUuid,
+  filtrarGeneticasPropias,
   rutaImagenGeneticaValida,
   solicitudDeLaApp,
   validarBytesImagenGenetica,
@@ -38,6 +39,15 @@ describe("genética personalizada", () => {
     assert.equal(validarGeneticaPersonalizada({ nombre: "   " }).ok, false);
     assert.equal(validarGeneticaPersonalizada({ nombre: "Norte", cbd: "101" }).ok, false);
     assert.equal(validarGeneticaPersonalizada({ nombre: "Norte", thc: "abc" }).ok, false);
+  });
+
+  it("filtra las genéticas propias sin distinguir mayúsculas ni acentos", () => {
+    const lista = [{ nombre: "Norteña" }, { nombre: "Gorilla Glue" }];
+    assert.deepEqual(
+      filtrarGeneticasPropias(lista, "norte").map((item) => item.nombre),
+      ["Norteña"]
+    );
+    assert.equal(filtrarGeneticasPropias(lista, "  ").length, 2);
   });
 
   it("reutiliza la genética propia y no sube otra imagen", async () => {

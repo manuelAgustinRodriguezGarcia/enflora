@@ -5,6 +5,7 @@ import {
   FLORA_CHAT_MAX_BASE64,
   esUuidFotoFlora,
   mimeImagenFloraPermitido,
+  historialTextoParaEnvioFlora,
   normalizarPreguntaConImagen,
   parsearAdjuntoImagenCliente,
 } from "../lib/flora-imagen-chat.js";
@@ -12,7 +13,7 @@ import {
   construirPartesUsuarioGemini,
   textoContextoImagenEnflora,
 } from "../lib/flora-imagen-servidor.js";
-import { validarMensajeUsuario } from "../lib/flora-gemini.js";
+import { normalizarHistorialCliente, validarMensajeUsuario } from "../lib/flora-gemini.js";
 import {
   crearContextoGuardadoVacio,
   fusionarEntidadesImagenEnGuardado,
@@ -94,4 +95,37 @@ test("contexto texto enflora menciona ids de herramientas", () => {
 
 test("pregunta por defecto con solo imagen", () => {
   assert.ok(normalizarPreguntaConImagen("").length > 10);
+});
+
+test("el historial hacia Gemini no reenvía fotografías", () => {
+  const ruta = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/flora/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp";
+  const mensajes = [
+    { id: "bienvenida", rol: "flora", texto: "Hola" },
+    {
+      id: "u1",
+      rol: "usuario",
+      texto: "Mirá esta hoja",
+      adjuntos: [{ origen: "flora", ruta, vista: "blob:http://local/1", datosBase64: "aaaa" }],
+    },
+    { id: "f1", rol: "flora", texto: "Veo clorosis." },
+  ];
+  const historial = historialTextoParaEnvioFlora(mensajes, 8);
+  assert.deepEqual(historial, [
+    { rol: "usuario", texto: "Mirá esta hoja" },
+    { rol: "flora", texto: "Veo clorosis." },
+  ]);
+  const serializado = JSON.stringify(historial);
+  assert.equal(serializado.includes("blob:"), false);
+  assert.equal(serializado.includes("datosBase64"), false);
+  assert.equal(serializado.includes(ruta), false);
+
+  const normalizado = normalizarHistorialCliente([
+    {
+      rol: "usuario",
+      texto: "Mirá",
+      adjuntos: [{ datosBase64: "aaaa", vista: "blob:x" }],
+      imagen: { datosBase64: "bbbb" },
+    },
+  ]);
+  assert.deepEqual(normalizado, [{ rol: "user", texto: "Mirá" }]);
 });

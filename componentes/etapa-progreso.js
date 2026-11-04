@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { cambiarEtapa } from "@/app/espacios/[id]/acciones";
+import { cambiarEtapa } from "@/app/cultivos/[id]/acciones";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { IconoFlecha } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";

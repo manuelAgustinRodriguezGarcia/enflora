@@ -22,7 +22,7 @@ import {
   reiniciarCacheGuia,
 } from "../lib/flora-conocimiento.js";
 import { FUENTE_CULTIVO, FUENTE_GUIA, respuestaFlora } from "../lib/flora-contrato.js";
-import { normalizarPeriodo, periodoDesdePreset } from "../lib/flora-periodos.js";
+import { normalizarPeriodo, periodoDesdePreset, periodoExplicitoOPreset } from "../lib/flora-periodos.js";
 import { opcionesAmbiguas } from "../lib/flora-entidades.js";
 import {
   buscarAccionesHistoricas,
@@ -341,4 +341,13 @@ test("límite de fragmentos de guía", () => {
 test("normalizar período por defecto usa 7 días", () => {
   const p = normalizarPeriodo({});
   assert.equal(p.periodo.preset, "ultimos_7");
+});
+
+test("una comparación con fechas no las pisa con el preset por defecto", () => {
+  const explicito = periodoExplicitoOPreset("", "2026-10-06", "2026-10-12", "semana_actual");
+  const normalizado = normalizarPeriodo(explicito);
+  assert.equal(normalizado.periodo.desde, "2026-10-06");
+  assert.equal(normalizado.periodo.hasta, "2026-10-12");
+  assert.equal(periodoExplicitoOPreset("semana_actual", "2026-10-06", "2026-10-12", "semana_anterior").preset, "semana_actual");
+  assert.equal(periodoExplicitoOPreset("", "", "", "semana_anterior").preset, "semana_anterior");
 });

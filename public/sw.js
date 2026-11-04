@@ -1,9 +1,44 @@
+const CACHE = "enflora-estatico-v1";
+const OFFLINE = "/offline.html";
+const RECIENTES = new Map();
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    caches
+      .open(CACHE)
+      .then((cache) => cache.addAll([OFFLINE, "/icons/enflora-isotipo-192.png"]))
+      .catch(() => undefined),
+  );
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const claves = await caches.keys();
+      await Promise.all(claves.filter((clave) => clave !== CACHE).map((clave) => caches.delete(clave)));
+      await self.clients.claim();
+    })(),
+  );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.tipo === "enflora-activar") self.skipWaiting();
+});
+
+self.addEventListener("fetch", (event) => {
+  const pedido = event.request;
+  if (pedido.method !== "GET" || pedido.mode !== "navigate") return;
+  event.respondWith(
+    fetch(pedido).catch(async () => {
+      const cache = await caches.open(CACHE);
+      const pagina = await cache.match(OFFLINE);
+      if (pagina) return pagina;
+      return new Response("Sin conexión", {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      });
+    }),
+  );
 });
 
 function rutaSegura(valor) {
@@ -46,6 +81,23 @@ function leerAviso(event) {
   return { titulo, mensaje, url: rutaSegura(datos.url), etiqueta, prueba, recibo };
 }
 
+function duplicado(aviso) {
+  const clave = aviso.prueba || `${aviso.etiqueta}|${aviso.titulo}|${aviso.mensaje}`;
+  const ahora = Date.now();
+  const previo = RECIENTES.get(clave);
+  if (previo && ahora - previo < 8000) return true;
+  RECIENTES.set(clave, ahora);
+  if (RECIENTES.size > 30) {
+    const primero = RECIENTES.keys().next().value;
+    RECIENTES.delete(primero);
+  }
+  return false;
+}
+
+function enFoco(cliente) {
+  return cliente.focused === true && cliente.visibilityState !== "hidden";
+}
+
 async function avisarPestanas(prueba) {
   try {
     const clientes = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
@@ -74,14 +126,28 @@ async function confirmarPrueba(prueba, recibo) {
 }
 
 async function mostrarAviso(aviso) {
-  await self.registration.showNotification(aviso.titulo, {
-    body: aviso.mensaje,
-    icon: "/icons/enflora-isotipo-192.png",
-    badge: "/icons/enflora-isotipo-192.png",
-    lang: "es-AR",
-    tag: aviso.etiqueta,
-    data: { url: aviso.url },
-  });
+  if (duplicado(aviso)) return;
+  const clientes = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  const visibles = clientes.filter(enFoco);
+  if (visibles.length > 0) {
+    for (const cliente of visibles) {
+      cliente.postMessage({
+        tipo: "enflora-aviso",
+        titulo: aviso.titulo,
+        mensaje: aviso.mensaje,
+        url: aviso.url,
+      });
+    }
+  } else {
+    await self.registration.showNotification(aviso.titulo, {
+      body: aviso.mensaje,
+      icon: "/icons/enflora-isotipo-192.png",
+      badge: "/icons/enflora-isotipo-192.png",
+      lang: "es-AR",
+      tag: aviso.etiqueta,
+      data: { url: aviso.url },
+    });
+  }
   if (aviso.prueba) await confirmarPrueba(aviso.prueba, aviso.recibo);
 }
 

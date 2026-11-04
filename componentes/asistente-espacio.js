@@ -3,8 +3,8 @@
 import { useActionState, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Info, Pencil } from "lucide-react";
-import { agregarUnidad } from "@/app/espacios/[id]/acciones";
-import { crearCultivo } from "@/app/espacios/acciones";
+import { agregarUnidad } from "@/app/cultivos/[id]/acciones";
+import { crearCultivo } from "@/app/cultivos/acciones";
 import { Aparecer, TextoCambio } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContadorCantidad } from "@/componentes/contador-cantidad";
@@ -34,7 +34,6 @@ import {
   cambiarNombreUnidadPorIndice,
   cambiarPlanta,
   cambiarReplicar,
-  cambiarReplicarIndice,
   cambiarTipoEspacio,
   cambiarTipoPersonalizado,
   cambiarTipoUnidad,
@@ -45,21 +44,21 @@ import {
   estadoInicial,
   estadoInicialUnidad,
   irAVisible,
+  metodoDePlanta,
   metodosEnUso,
   payloadCultivo,
-  resumenUnidad,
   totalPlantas,
   visibleDe,
   volver,
 } from "@/lib/asistente-cultivo";
 import {
   MAXIMO_UNIDADES,
-  etiquetaTipoUnidad,
   preguntaCantidadUnidades,
   TEXTO_AYUDA_CANTIDAD_UNIDADES,
   tiposDeUnidad,
 } from "@/lib/unidades";
 import { toque, transicionRapida, transicionToque, variantesPaso } from "@/lib/animaciones";
+import { etiquetaMetodo } from "@/lib/metodos";
 
 const TIPOS_ESPACIO = [
   { valor: "interior", etiqueta: "Interior" },
@@ -178,13 +177,56 @@ function detalleEtapa(planta) {
   return <IndicadorEtapa etapa={planta.etapa} tamano="compacto" />;
 }
 
+function tintaSobre(hex) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const canales = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((canal) => {
+    const c = canal / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const luminancia = 0.2126 * canales[0] + 0.7152 * canales[1] + 0.0722 * canales[2];
+  return luminancia > 0.18 ? "#1a1a1a" : "#fff";
+}
+
+function PillsPlanta({ planta }) {
+  const genetica = String(planta.genetica || "").trim();
+  const metodo = metodoDePlanta(planta);
+  const color = colorPlanta(planta, "misma_genetica");
+  const conColor = Boolean(genetica) && color !== "transparent";
+
+  return (
+    <span className="planta-accordion__pills">
+      <span
+        className={`planta-accordion__pill planta-accordion__pill--genetica${conColor ? " planta-accordion__pill--color" : ""}${genetica ? "" : " planta-accordion__pill--vacia"}`}
+        style={
+          conColor
+            ? { backgroundColor: color, borderColor: color, color: tintaSobre(color) }
+            : undefined
+        }
+      >
+        {genetica || "Sin genética"}
+      </span>
+      <span className={`planta-accordion__pill${metodo ? "" : " planta-accordion__pill--vacia"}`}>
+        {metodo ? etiquetaMetodo(metodo) : "Sin método"}
+      </span>
+    </span>
+  );
+}
+
 export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null }) {
   const guardar = espacio ? agregarUnidad : crearCultivo;
   const [estado, setEstado] = useState(() => (espacio ? estadoInicialUnidad(espacio) : estadoInicial()));
   const [sentido, setSentido] = useState(1);
-  const [abierta, setAbierta] = useState(0);
+  const [abierta, setAbierta] = useState(null);
+  const [claveAcordeonVista, setClaveAcordeonVista] = useState(
+    () => `${estado.indice}:${estado.paso}`
+  );
   const [infoUnidadesAbierto, setInfoUnidadesAbierto] = useState(false);
   const [resultado, accion, pendiente] = useActionState(guardar, null);
+  const claveAcordeon = `${estado.indice}:${estado.paso}`;
+  if (claveAcordeonVista !== claveAcordeon) {
+    setClaveAcordeonVista(claveAcordeon);
+    setAbierta(null);
+  }
 
   function aplicar(funcion, ...args) {
     setEstado((actual) => funcion(actual, ...args));
@@ -192,7 +234,11 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   const unidad = estado.unidades[estado.indice];
   const visible = visibleDe(estado.paso);
   const metodos = metodosEnUso(estado.unidades, metodosPersonalizados);
-  const pasos = estado.soloUnidad ? PASOS_VISIBLES.filter((paso) => paso.id !== "espacio") : PASOS_VISIBLES;
+  const pasos = PASOS_VISIBLES.filter((paso) => {
+    if (estado.soloUnidad && paso.id === "espacio") return false;
+    if (paso.id === "unidad" && estado.unidades.length < 2) return false;
+    return true;
+  });
   const ordenVisible = pasos.findIndex((paso) => paso.id === visible);
   const puedeVolver = estado.paso !== "espacio" && !(estado.soloUnidad && estado.paso === "tipo_unidad");
   const tipos = tiposDeUnidad(estado.tipo);
@@ -441,10 +487,8 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 {unidad.plantas.map((planta, indice) => (
                   <PlantaAccordion
                     key={`${unidad.numero}-${indice}`}
-                    className="asistente__planta"
-                    style={{ borderLeftColor: colorPlanta(planta, unidad.modo) }}
-                    titulo={tituloPlanta(planta, indice)}
-                    detalle={detalleEtapa(planta)}
+                    titulo={`Planta ${indice + 1}`}
+                    detalle={<PillsPlanta planta={planta} />}
                     abierto={abierta === indice}
                     onToggle={() => alternarPlanta(indice)}
                   >
@@ -555,54 +599,37 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
             </div>
           ) : null}
 
-          {unidad && estado.paso === "cierre_unidad" ? (
+          {unidad && estado.paso === "cierre_unidad" && estado.indice === 0 && estado.unidades.length > 1 ? (
             <div className="bloque">
-              <CierreUnidad unidad={unidad} />
-              {estado.indice === 0 && estado.unidades.length > 1 ? (
-                <fieldset className="opciones">
-                  <legend>Replicar</legend>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={estado.replicar}
-                      onChange={(evento) => aplicar(cambiarReplicar, evento.target.checked)}
-                    />
-                    Replicar configuración de {unidad.nombre}
-                  </label>
-                  <Aparecer visible={estado.replicar}>
-                    <div>
-                      {estado.unidades.slice(1).map((item, desplazamiento) => {
-                        const indice = desplazamiento + 1;
-                        return (
-                          <label key={item.numero}>
-                            <input
-                              type="checkbox"
-                              checked={estado.replicarIndices.includes(indice)}
-                              onChange={(evento) =>
-                                aplicar(cambiarReplicarIndice, indice, evento.target.checked)
-                              }
-                            />
-                            {item.nombre}
-                          </label>
-                        );
-                      })}
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={
-                            estado.unidades.length > 1 &&
-                            estado.replicarIndices.length === estado.unidades.length - 1
-                          }
-                          onChange={(evento) =>
-                            aplicar(cambiarTodasSiguientes, evento.target.checked)
-                          }
-                        />
-                        Todas las siguientes
-                      </label>
-                    </div>
-                  </Aparecer>
-                </fieldset>
-              ) : null}
+              <fieldset className="opciones">
+                <legend>Replicar configuración?</legend>
+                <p className="opciones__texto">
+                  Querés repetir la misma configuración en todas tus unidades o preferís
+                  configurarla diferente?
+                </p>
+                <div
+                  className="eleccion eleccion--par eleccion--clara"
+                  role="group"
+                  aria-label="Replicar configuración"
+                >
+                  <button
+                    type="button"
+                    className={estado.replicar ? "eleccion__activa" : undefined}
+                    aria-pressed={estado.replicar}
+                    onClick={() => aplicar(cambiarTodasSiguientes, true)}
+                  >
+                    Replicar configuración
+                  </button>
+                  <button
+                    type="button"
+                    className={estado.replicar ? undefined : "eleccion__activa"}
+                    aria-pressed={!estado.replicar}
+                    onClick={() => aplicar(cambiarReplicar, false)}
+                  >
+                    Configurar diferente
+                  </button>
+                </div>
+              </fieldset>
             </div>
           ) : null}
 
@@ -658,6 +685,8 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
       <ModalConfirmacion
         abierto={infoUnidadesAbierto}
         onCerrar={() => setInfoUnidadesAbierto(false)}
+        className="modal--ayuda-unidades"
+        icono={<IconoCajas />}
         titulo="¿Qué son las unidades de cultivo?"
         descripcion={TEXTO_AYUDA_CANTIDAD_UNIDADES}
         textoConfirmar="Entendido"
@@ -735,27 +764,3 @@ function ListaNombresUnidades({ unidades, onCambiarNombre }) {
   );
 }
 
-function CierreUnidad({ unidad }) {
-  const resumen = resumenUnidad(unidad);
-  return (
-    <ResumenConfiguracion
-      titulo={unidad.nombre}
-      grupos={[
-        {
-          id: "meta",
-          titulo: "Unidad",
-          valor: (
-            <>
-              {etiquetaTipoUnidad(unidad.tipo, unidad.tipoPersonalizado)}
-              {" · "}
-              <PillPlantas cantidad={resumen.plantas} mostrarCero />
-            </>
-          ),
-        },
-        { id: "genetica", titulo: "Genética", valor: resumen.genetica },
-        { id: "metodo", titulo: "Método", valor: resumen.metodo },
-        { id: "etapa", titulo: "Etapa", valor: resumen.etapa },
-      ]}
-    />
-  );
-}

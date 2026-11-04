@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cargarPanelInicio } from "../lib/inicio/cargar.js";
+import { saludoInicio } from "../lib/inicio/saludo.js";
 import {
+  ACCIONES_CULTIVO,
   ACCIONES_RAPIDAS,
-  LIMITE_TAREAS,
   MODULO_PRODUCTOS_DISPONIBLE,
+  accionRegistroDesdeConsulta,
   armarPanel,
   especificacionesInicio,
+  hrefAccionCultivo,
   textoResumenCultivos,
 } from "../lib/inicio/resumen.js";
 import { DESTINOS_NAVEGACION, RUTA_INICIO, destinoActivo, esRutaApp } from "../lib/navegacion.js";
@@ -83,7 +86,6 @@ function base() {
       { planta_id: "p3", etapa: "enflora", fecha_inicio: "2026-10-25", fecha_fin: null },
       { planta_id: "p1b", etapa: "germinacion", fecha_inicio: "2026-10-28", fecha_fin: null },
     ]),
-    tareas: ok([]),
   };
 }
 
@@ -101,22 +103,31 @@ test("el inicio es el primer destino de la navegación inferior", () => {
 test("las consultas del inicio son un lote fijo, sin una consulta por unidad", () => {
   const specs = especificacionesInicio("usuario-1");
   const lista = Object.values(specs);
-  assert.equal(lista.length, 5);
+  assert.equal(lista.length, 4);
   assert.deepEqual(lista.map((spec) => spec.tabla), [
     "espacios",
     "unidades_cultivo",
     "plantas",
     "historial_etapas",
-    "tareas_programadas",
   ]);
   assert.deepEqual(specs.plantas.eq, [["estado", "activa"]]);
-  assert.deepEqual(specs.tareas.eq, [
-    ["usuario_id", "usuario-1"],
-    ["completada", false],
-  ]);
-  assert.deepEqual(specs.tareas.orden[0], ["fecha_programada", { ascending: true }]);
-  assert.equal(specs.tareas.limite, LIMITE_TAREAS);
+  assert.equal(JSON.stringify(specs).includes("tareas_programadas"), false);
   assert.equal(JSON.stringify(specs).includes("unidad_cultivo_id.eq"), false);
+});
+
+test("las acciones de un cultivo apuntan a esa unidad", () => {
+  const unidad = { id: "u1", href: "/cultivos/e1/unidades/u1" };
+  assert.deepEqual(
+    ACCIONES_CULTIVO.map((item) => item.etiqueta),
+    ["Registrar", "Foto", "Riego", "Etapa", "Problema"]
+  );
+  assert.equal(hrefAccionCultivo(unidad, "registrar"), "/registros?unidad=u1");
+  assert.equal(hrefAccionCultivo(unidad, "foto"), "/registros?unidad=u1&accion=foto");
+  assert.equal(hrefAccionCultivo(unidad, "problema"), "/registros?unidad=u1&accion=problema");
+  assert.equal(hrefAccionCultivo(unidad, "riego"), "/registros?unidad=u1&accion=riego");
+  assert.equal(hrefAccionCultivo(unidad, "etapa"), "/cultivos/e1/unidades/u1?accion=etapa");
+  assert.equal(accionRegistroDesdeConsulta("riego"), "riego");
+  assert.equal(accionRegistroDesdeConsulta("etapa"), "");
 });
 
 test("el resumen usa la etapa abierta y deja afuera plantas finalizadas", () => {
@@ -129,17 +140,23 @@ test("el resumen usa la etapa abierta y deja afuera plantas finalizadas", () => 
   assert.equal(panel.cultivos.avisoEtapas, "");
   const carpa = panel.cultivos.unidades[0];
   assert.equal(carpa.nombre, "Carpa 1");
-  assert.equal(carpa.href, "/espacios/e1/unidades/u1");
+  assert.equal(carpa.espacioNombre, "Indoor");
+  assert.equal(carpa.href, "/cultivos/e1/unidades/u1");
+  assert.equal(carpa.hrefEspacio, "/cultivos/e1");
   assert.equal(carpa.hrefHistorial, "/registros/historial?unidad=u1");
   assert.equal(carpa.plantasActivas, 2);
   assert.equal(carpa.uniforme, true);
   assert.equal(carpa.etapaCodigo, "vegetativo");
   assert.equal(carpa.diaUnico, 12);
+  assert.equal(carpa.diaUnidad, 31);
   const sector = panel.cultivos.unidades[1];
   assert.equal(sector.plantasActivas, 1);
   assert.equal(sector.etapaCodigo, "enflora");
   assert.equal(sector.diaUnico, 7);
+  assert.equal(sector.diaUnidad, 61);
   assert.equal(sector.tipoEtiqueta, "Exterior");
+  assert.equal(sector.espacioNombre, "Patio");
+  assert.equal(sector.hrefEspacio, "/cultivos/e2");
   assert.equal(panel.cultivos.unidades.some((unidad) => unidad.id === "u3"), false);
 });
 
@@ -150,6 +167,11 @@ test("si las plantas de una unidad no comparten etapa, lista cada una", () => {
   entrada.etapas.filas[1].fecha_inicio = "2026-10-28";
   const carpa = armarPanel(entrada).cultivos.unidades[0];
   assert.equal(carpa.uniforme, false);
+  assert.equal(carpa.diaUnidad, 31);
+  assert.deepEqual(carpa.etapasConPlantas, [
+    { etapa: "vegetativo", cantidad: 1, dias: [12] },
+    { etapa: "enflora", cantidad: 1, dias: [4] },
+  ]);
   assert.deepEqual(
     carpa.lineas.map((linea) => [linea.nombre, linea.etapa, linea.dia]),
     [
@@ -164,6 +186,7 @@ test("sin historial de etapa, el día sale de la fecha de inicio de la planta", 
   entrada.etapas = { ok: false, filas: [], ausente: true };
   const carpa = armarPanel(entrada).cultivos.unidades[0];
   assert.equal(carpa.diaUnico, 31);
+  assert.equal(carpa.diaUnidad, 31);
   assert.equal(armarPanel(entrada).cultivos.avisoEtapas, "");
 });
 
@@ -173,6 +196,7 @@ test("un error de etapas avisa y no inventa el día de la etapa", () => {
   const panel = armarPanel(entrada);
   assert.match(panel.cultivos.avisoEtapas, /fecha de inicio/);
   assert.equal(panel.cultivos.unidades[0].diaUnico, 31);
+  assert.equal(panel.cultivos.unidades[0].diaUnidad, 31);
 });
 
 test("si fallan los cultivos no se inventan unidades", () => {
@@ -183,45 +207,14 @@ test("si fallan los cultivos no se inventan unidades", () => {
   assert.deepEqual(panel.cultivos.unidades, []);
 });
 
-test("las tareas pendientes se ordenan por vencimiento y no se simulan", () => {
-  const entrada = base();
-  entrada.tareas = ok([
-    {
-      id: "t2",
-      descripcion: "Medir pH",
-      fecha_programada: "2026-11-03",
-      fecha_creacion: "2026-10-01T00:00:00.000Z",
-      unidad_cultivo_id: "u1",
-    },
-    {
-      id: "t1",
-      descripcion: "Regar",
-      fecha_programada: "2026-10-30",
-      fecha_creacion: "2026-10-01T00:00:00.000Z",
-      unidad_cultivo_id: "u2",
-    },
-    {
-      id: "t3",
-      descripcion: "Hoy",
-      fecha_programada: "2026-11-01",
-      fecha_creacion: "2026-10-02T00:00:00.000Z",
-      unidad_cultivo_id: "u1",
-    },
-  ]);
-  const panel = armarPanel(entrada);
-  assert.deepEqual(
-    panel.tareas.items.map((item) => [item.descripcion, item.vencida, item.href]),
-    [
-      ["Regar", true, "/espacios/e2/unidades/u2"],
-      ["Hoy", false, "/espacios/e1/unidades/u1"],
-      ["Medir pH", false, "/espacios/e1/unidades/u1"],
-    ]
-  );
-  entrada.tareas = { ok: false, filas: [], ausente: true };
-  assert.equal(armarPanel(entrada).tareas.estado, "no_disponible");
-  assert.deepEqual(armarPanel(entrada).tareas.items, []);
-  entrada.tareas = ok([]);
-  assert.equal(armarPanel(entrada).tareas.estado, "vacio");
+test("el saludo de inicio sigue la personalidad de Flora", () => {
+  assert.equal(saludoInicio("cercana_divertida", "Mati"), "¿Qué hacés Mati, todo bien?");
+  assert.equal(saludoInicio("cercana_natural", "Mati"), "Qué bueno verte, Mati");
+  assert.equal(saludoInicio("tecnica_profesional", "Mati"), "A la espera de sus órdenes Mati!");
+  assert.equal(saludoInicio("inexistente", "Mati"), "Qué bueno verte, Mati");
+  assert.equal(saludoInicio("cercana_divertida", "  "), "¿Qué hacés, todo bien?");
+  assert.equal(saludoInicio("cercana_natural", ""), "Qué bueno verte");
+  assert.equal(saludoInicio("tecnica_profesional", ""), "A la espera de sus órdenes!");
 });
 
 test("las acciones rápidas no inventan productos ni recetas", () => {
@@ -230,12 +223,12 @@ test("las acciones rápidas no inventan productos ni recetas", () => {
   assert.equal(panel.productosDisponibles, false);
   assert.deepEqual(
     ACCIONES_RAPIDAS.map((accion) => accion.href),
-    ["/registros", "/flora", "/espacios", "/registros/historial"]
+    ["/registros", "/flora", "/cultivos", "/registros/historial"]
   );
   assert.equal(ACCIONES_RAPIDAS.some((accion) => /producto|receta/i.test(accion.href)), false);
 });
 
-test("cargar el panel hace las cinco consultas en paralelo", async () => {
+test("cargar el panel hace las consultas en paralelo", async () => {
   const consultas = [];
   const supabase = {
     from(tabla) {
@@ -277,7 +270,7 @@ test("cargar el panel hace las cinco consultas en paralelo", async () => {
   };
 
   const panel = await cargarPanelInicio(supabase, "usuario-1", { hoy: HOY });
-  assert.equal(consultas.length, 5);
+  assert.equal(consultas.length, 4);
   assert.equal(panel.cultivos.unidades.length, 2);
   assert.equal(consultas.filter((consulta) => consulta.tabla === "unidades_cultivo").length, 1);
   assert.equal(consultas.some((consulta) => consulta.tabla === "registros"), false);
@@ -288,6 +281,5 @@ function claveDe(estado) {
   if (estado.tabla === "unidades_cultivo") return "unidades";
   if (estado.tabla === "plantas") return "plantas";
   if (estado.tabla === "historial_etapas") return "etapas";
-  if (estado.tabla === "tareas_programadas") return "tareas";
   return "";
 }

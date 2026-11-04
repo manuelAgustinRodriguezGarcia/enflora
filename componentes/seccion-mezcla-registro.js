@@ -1,14 +1,59 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { cantidadAplicada, textoMedida, UNIDADES_COMPONENTE, UNIDADES_VOLUMEN } from "@/lib/mezclas/calculo";
-import { borradorDesdeReceta, mezclaAjustada, mezclaVacia } from "@/lib/mezclas/reglas";
+import { useRef, useState } from "react";
+import { PackageOpen } from "lucide-react";
+import { Selector } from "@/componentes/selector";
+import { FilaDosisProducto } from "@/componentes/mezclas/fila-dosis-producto";
+import { UNIDADES_VOLUMEN, cantidadAplicada, esUnidadPorLitro, textoMedida } from "@/lib/mezclas/calculo";
+import {
+  aplicarRecetaEnBorrador,
+  componentesDeReceta,
+  componentesExtra,
+  mezclaAjustada,
+  mezclaVacia,
+} from "@/lib/mezclas/reglas";
 
 function nombreProducto(productos, id) {
   const producto = productos.find((item) => item.id === id);
   if (!producto) return "Producto";
-  return producto.fabricante ? `${producto.nombre} · ${producto.fabricante}` : producto.nombre;
+  const marca = producto.fabricante ? ` · ${producto.fabricante}` : "";
+  const archivo = producto.activo ? "" : " · archivado";
+  return `${producto.nombre}${marca}${archivo}`;
+}
+
+const SIN_MEZCLA = "__sin_mezcla__";
+
+function filaVacia() {
+  return { productoId: "", cantidad: "", unidad: "ml/L" };
+}
+
+function totalPreparado(componente, borrador) {
+  const aplicado = cantidadAplicada({
+    cantidad: componente.cantidad,
+    unidad: componente.unidad,
+    volumenAgua: borrador.volumen,
+    unidadVolumen: borrador.unidadVolumen,
+  });
+  if (!aplicado || !esUnidadPorLitro(componente.unidad) || aplicado.unidad === componente.unidad) return "";
+  return textoMedida(aplicado.cantidad, aplicado.unidad);
+}
+
+function muestraVolumen(borrador, filas) {
+  if (borrador.recetaId) return true;
+  if (String(borrador.volumen ?? "").trim() !== "") return true;
+  return filas.some(
+    (item) => esUnidadPorLitro(item.unidad) && (item.productoId || String(item.cantidad ?? "").trim() !== "")
+  );
+}
+
+function conInclusion(borrador) {
+  const tieneProductos = (borrador.componentes || []).length > 0;
+  const tieneVolumen = String(borrador.volumen || "").trim() !== "";
+  return {
+    ...borrador,
+    incluir: Boolean(borrador.recetaId) || tieneProductos || tieneVolumen,
+  };
 }
 
 export function SeccionMezclaRegistro({
@@ -20,44 +65,48 @@ export function SeccionMezclaRegistro({
   mezcla,
   onChange,
 }) {
-  const [productoNuevo, setProductoNuevo] = useState("");
+  const [aviso, setAviso] = useState("");
+  const anclaMezcla = useRef(null);
   if (!visible) return null;
 
   const borrador = mezcla || mezclaVacia();
   const recetasVisibles = recetas.filter((item) => item.activa || item.id === borrador.recetaId);
-  const productosElegibles = productos.filter(
-    (item) => item.activo || borrador.componentes.some((componente) => componente.productoId === item.id)
-  );
-  const ajustada = borrador.incluir && mezclaAjustada(borrador);
+  const deReceta = componentesDeReceta(borrador);
+  const extras = componentesExtra(borrador);
+  const idsReceta = new Set(deReceta.map((item) => item.productoId).filter(Boolean));
+  const filas = [...deReceta, ...extras];
+  const soloVolumen = !borrador.recetaId && filas.length === 0 && String(borrador.volumen || "").trim();
+  const verVolumen = muestraVolumen(borrador, filas);
+  const dosisDistinta = Boolean(borrador.recetaId) && mezclaAjustada({ ...borrador, componentes: deReceta });
+
+  function publicar(siguiente, mensaje = "") {
+    setAviso(mensaje);
+    onChange(conInclusion(siguiente));
+  }
 
   function elegirReceta(id) {
-    if (!id) {
-      onChange({ ...borrador, recetaId: "", origen: null, incluir: true });
+    const receta = id ? recetas.find((item) => item.id === id) : null;
+    if (id && !receta) return;
+    const aplicado = aplicarRecetaEnBorrador(borrador, receta || null);
+    publicar(aplicado.borrador, aplicado.aviso);
+  }
+
+  function cambiarExtra(indice, parcial) {
+    const ocupados = new Set([
+      ...idsReceta,
+      ...extras.flatMap((item, posicion) => (posicion === indice || !item.productoId ? [] : [item.productoId])),
+    ]);
+    if (parcial.productoId && ocupados.has(parcial.productoId)) {
+      setAviso("Ese producto ya está en la mezcla.");
       return;
     }
-    const receta = recetas.find((item) => item.id === id);
-    if (!receta) return;
-    onChange(borradorDesdeReceta(receta));
+    const siguientes = extras.map((item, posicion) => (posicion === indice ? { ...item, ...parcial } : item));
+    publicar({ ...borrador, componentes: [...deReceta, ...siguientes] });
   }
 
-  function cambiarComponente(indice, parcial) {
-    onChange({
-      ...borrador,
-      incluir: true,
-      componentes: borrador.componentes.map((item, posicion) =>
-        posicion === indice ? { ...item, ...parcial } : item
-      ),
-    });
-  }
-
-  function agregarProducto() {
-    if (!productoNuevo || borrador.componentes.some((item) => item.productoId === productoNuevo)) return;
-    onChange({
-      ...borrador,
-      incluir: true,
-      componentes: [...borrador.componentes, { productoId: productoNuevo, cantidad: "", unidad: "ml/L" }],
-    });
-    setProductoNuevo("");
+  function quitarExtra(indice) {
+    const siguientes = extras.filter((_, posicion) => posicion !== indice);
+    publicar({ ...borrador, componentes: [...deReceta, ...siguientes] });
   }
 
   return (
@@ -70,8 +119,8 @@ export function SeccionMezclaRegistro({
           <Link className="registro-crear__enlace" href="/registros/productos">
             Mis productos
           </Link>
-          <Link className="registro-crear__enlace" href="/registros/recetas">
-            Mis recetas
+          <Link className="registro-crear__enlace" href="/mezclas">
+            Mezclas
           </Link>
         </span>
       </div>
@@ -82,167 +131,128 @@ export function SeccionMezclaRegistro({
         </p>
       ) : (
         <>
-          <p className="registro-crear__ayuda">
-            El volumen es el total de agua de esta aplicación, no un volumen por planta.
-          </p>
-          {borrador.incluir ? (
-            <button
-              type="button"
-              className="registro-crear__enlace"
-              onClick={() => onChange({ ...borrador, incluir: false })}
-              disabled={deshabilitado}
-            >
-              Usar solo la acción, sin volumen
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="registro-crear__enlace"
-              onClick={() => onChange({ ...borrador, incluir: true })}
-              disabled={deshabilitado}
-            >
-              Agregar volumen o receta
-            </button>
-          )}
+          <div className="registro-crear__param registro-crear__param--texto" ref={anclaMezcla}>
+            <Selector
+              id="registro-mezcla"
+              etiqueta="Seleccionar mezcla"
+              valor={borrador.recetaId || SIN_MEZCLA}
+              onChange={(id) => elegirReceta(!id || id === SIN_MEZCLA ? "" : id)}
+              opciones={[
+                { valor: SIN_MEZCLA, etiqueta: "Sin mezcla" },
+                ...recetasVisibles.map((receta) => ({
+                  valor: receta.id,
+                  etiqueta: receta.activa ? receta.nombre : `${receta.nombre} · archivada`,
+                })),
+              ]}
+              deshabilitado={deshabilitado}
+              ancla={anclaMezcla}
+              alinear="start"
+            />
+          </div>
 
-          {borrador.incluir ? (
-            <div className="mezclas__editor">
-              <label className="registro-crear__param registro-crear__param--texto">
-                <span className="registro-crear__param-etiqueta">Receta</span>
-                <select
-                  value={borrador.recetaId}
-                  onChange={(evento) => elegirReceta(evento.target.value)}
+          {verVolumen ? (
+            <div className="registro-crear__param registro-crear__param--texto">
+              <span className="registro-crear__param-etiqueta mezclas__volumen-etiqueta">
+                Agua preparada
+                {soloVolumen ? (
+                  <button
+                    type="button"
+                    className="registro-crear__enlace"
+                    onClick={() => publicar(mezclaVacia())}
+                    disabled={deshabilitado}
+                  >
+                    Quitar
+                  </button>
+                ) : null}
+              </span>
+              <div className="mezclas__volumen">
+                <input
+                  inputMode="decimal"
+                  aria-label="Agua preparada"
+                  value={borrador.volumen}
+                  placeholder="Opcional"
+                  autoComplete="off"
                   disabled={deshabilitado}
+                  onChange={(evento) => publicar({ ...borrador, volumen: evento.target.value })}
+                />
+                <select
+                  aria-label="Unidad de agua"
+                  value={borrador.unidadVolumen || "L"}
+                  disabled={deshabilitado}
+                  onChange={(evento) => publicar({ ...borrador, unidadVolumen: evento.target.value })}
                 >
-                  <option value="">Sin receta</option>
-                  {recetasVisibles.map((receta) => (
-                    <option key={receta.id} value={receta.id}>
-                      {receta.nombre}
-                      {receta.activa ? "" : " · archivada"}
+                  {UNIDADES_VOLUMEN.map((unidad) => (
+                    <option key={unidad} value={unidad}>
+                      {unidad}
                     </option>
                   ))}
                 </select>
-              </label>
-
-              <div className="mezclas__volumen">
-                <label className="registro-crear__param">
-                  <span className="registro-crear__param-etiqueta">Agua preparada</span>
-                  <input
-                    className="registro-crear__param-input"
-                    inputMode="decimal"
-                    value={borrador.volumen}
-                    onChange={(evento) => onChange({ ...borrador, volumen: evento.target.value, incluir: true })}
-                    disabled={deshabilitado}
-                    placeholder="0"
-                    autoComplete="off"
-                  />
-                </label>
-                <label className="registro-crear__param">
-                  <span className="registro-crear__param-etiqueta">Unidad</span>
-                  <select
-                    value={borrador.unidadVolumen}
-                    onChange={(evento) =>
-                      onChange({ ...borrador, unidadVolumen: evento.target.value, incluir: true })
-                    }
-                    disabled={deshabilitado}
-                  >
-                    {UNIDADES_VOLUMEN.map((unidad) => (
-                      <option key={unidad} value={unidad}>
-                        {unidad}
-                      </option>
-                    ))}
-                  </select>
-                </label>
               </div>
-
-              <ul className="mezclas__componentes">
-                {borrador.componentes.map((componente, indice) => {
-                  const aplicado = cantidadAplicada({
-                    cantidad: componente.cantidad,
-                    unidad: componente.unidad,
-                    volumenAgua: borrador.volumen,
-                    unidadVolumen: borrador.unidadVolumen,
-                  });
-                  const total =
-                    aplicado && (componente.unidad === "ml/L" || componente.unidad === "g/L")
-                      ? textoMedida(aplicado.cantidad, aplicado.unidad)
-                      : "";
-                  return (
-                    <li key={`${componente.productoId}-${indice}`}>
-                      <p>{nombreProducto(productos, componente.productoId)}</p>
-                      <div className="mezclas__dosis">
-                        <input
-                          className="registro-crear__param-input"
-                          inputMode="decimal"
-                          aria-label={`Cantidad de ${nombreProducto(productos, componente.productoId)}`}
-                          value={componente.cantidad}
-                          onChange={(evento) => cambiarComponente(indice, { cantidad: evento.target.value })}
-                          disabled={deshabilitado}
-                        />
-                        <select
-                          aria-label={`Unidad de ${nombreProducto(productos, componente.productoId)}`}
-                          value={componente.unidad}
-                          onChange={(evento) => cambiarComponente(indice, { unidad: evento.target.value })}
-                          disabled={deshabilitado}
-                        >
-                          {UNIDADES_COMPONENTE.map((unidad) => (
-                            <option key={unidad} value={unidad}>
-                              {unidad}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          className="registro-crear__enlace"
-                          onClick={() =>
-                            onChange({
-                              ...borrador,
-                              componentes: borrador.componentes.filter((_, posicion) => posicion !== indice),
-                            })
-                          }
-                          disabled={deshabilitado}
-                        >
-                          Quitar
-                        </button>
-                      </div>
-                      {total ? <p className="registro-crear__ayuda">Total preparado: {total}</p> : null}
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className="mezclas__agregar">
-                <label className="registro-crear__param registro-crear__param--texto">
-                  <span className="registro-crear__param-etiqueta">Agregar producto</span>
-                  <select
-                    value={productoNuevo}
-                    onChange={(evento) => setProductoNuevo(evento.target.value)}
-                    disabled={deshabilitado || productosElegibles.length === 0}
-                  >
-                    <option value="">Elegir</option>
-                    {productosElegibles.map((producto) => (
-                      <option key={producto.id} value={producto.id}>
-                        {nombreProducto(productos, producto.id)}
-                        {producto.activo ? "" : " · archivado"}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  className="boton boton--secundario"
-                  onClick={agregarProducto}
-                  disabled={deshabilitado || !productoNuevo}
-                >
-                  Agregar
-                </button>
-              </div>
-
-              {ajustada ? <p className="mezclas__ajustada">Mezcla ajustada</p> : null}
             </div>
-          ) : (
-            <p className="registro-crear__ayuda">Se guarda el riego o la fertilización, sin productos ni volumen.</p>
-          )}
+          ) : null}
+
+          {deReceta.length > 0 ? (
+            <ul className="mezclas__resumen" aria-label="Productos de la mezcla">
+              {deReceta.map((componente) => {
+                const total = totalPreparado(componente, borrador);
+                return (
+                  <li key={componente.productoId || componente.orden}>
+                    <span>
+                      {nombreProducto(productos, componente.productoId)} —{" "}
+                      {textoMedida(componente.cantidad, componente.unidad)}
+                    </span>
+                    {total ? <span className="mezclas__resumen-total">Total: {total}</span> : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+
+          {dosisDistinta ? <p className="mezclas__ajustada">Mezcla ajustada</p> : null}
+
+          {extras.length > 0 ? (
+            <ul className="mezclas__componentes">
+              {extras.map((componente, indice) => (
+                <li key={`extra-${componente.productoId || "nuevo"}-${indice}`}>
+                  <FilaDosisProducto
+                    id={`riego-producto-${indice}`}
+                    productos={productos}
+                    ocupados={[
+                      ...idsReceta,
+                      ...extras.flatMap((item, posicion) =>
+                        posicion === indice || !item.productoId ? [] : [item.productoId]
+                      ),
+                    ]}
+                    productoId={componente.productoId}
+                    cantidad={componente.cantidad}
+                    unidad={componente.unidad}
+                    volumenAgua={borrador.volumen}
+                    unidadVolumen={borrador.unidadVolumen}
+                    deshabilitado={deshabilitado}
+                    onChange={(parcial) => cambiarExtra(indice, parcial)}
+                    onQuitar={() => quitarExtra(indice)}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {borrador.recetaId && extras.length > 0 ? (
+            <p className="registro-crear__ayuda">
+              Estos productos se suman a este riego y no cambian la mezcla guardada.
+            </p>
+          ) : null}
+          {aviso ? <p className="formulario__error">{aviso}</p> : null}
+
+          <button
+            type="button"
+            className="boton boton--secundario mezclas__sumar"
+            onClick={() => publicar({ ...borrador, componentes: [...borrador.componentes, filaVacia()] })}
+            disabled={deshabilitado}
+          >
+            <PackageOpen strokeWidth={1.75} aria-hidden="true" />
+            Agregar producto
+          </button>
         </>
       )}
     </section>

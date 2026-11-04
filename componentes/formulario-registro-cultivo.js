@@ -1,15 +1,16 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { CirclePile, PlantPot, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
-import { IconoLapiz } from "@/componentes/iconos-ui";
+import { IconoLapiz, IconoPlanta } from "@/componentes/iconos-ui";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionMezclaRegistro } from "@/componentes/seccion-mezcla-registro";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { SeccionParametrosRegistro } from "@/componentes/seccion-parametros-registro";
 import { Selector } from "@/componentes/selector";
 import { SelectorFecha } from "@/componentes/selector-fecha";
@@ -17,6 +18,7 @@ import { SeccionTareaProgramada } from "@/componentes/seccion-tarea-programada";
 import { SelectorFotos } from "@/componentes/selector-fotos";
 import { VisorFotos } from "@/componentes/visor-fotos";
 import { toque, transicionToque } from "@/lib/animaciones";
+import { aplicarPlantasIniciales, claveAccionPrecargada, itemPrecargaVisible } from "@/lib/calendario/modelo";
 import { MAX_FOTOS_POR_REGISTRO } from "@/lib/fotos";
 import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
 import { mezclaDeRegistro } from "@/lib/mezclas/presentacion";
@@ -43,8 +45,6 @@ import {
   seccionParametrosGrupoVisible,
   valoresDesdeRegistroParametros,
 } from "@/lib/registros";
-import { textoCantidad } from "@/lib/unidades";
-
 const MODOS_PLANTAS = [
   { valor: "unidad", etiqueta: "Todas" },
   { valor: "genetica", etiqueta: "Genética" },
@@ -68,58 +68,13 @@ function etiquetaHora(fechaIso) {
   return fecha.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
 }
 
-function resumenAlcance({ aplicaA, plantasSeleccionadas, plantasUnidad, unidadNombre }) {
-  if (aplicaA === "ambiente") {
-    return {
-      titulo: unidadNombre ? `Ambiente — ${unidadNombre}` : "Ambiente de la unidad",
-      detalle: "Condiciones de la unidad",
-    };
-  }
-
-  if (plantasSeleccionadas.length < 1) {
-    return {
-      titulo: "Sin plantas seleccionadas",
-      detalle: "Elegí al menos una planta",
-    };
-  }
-
-  const resuelto = resolverAlcanceRegistro({
-    aplicaA,
-    plantasSeleccionadas,
-    plantasUnidad,
-  });
-
-  if (resuelto?.alcance === "unidad") {
-    return {
-      titulo: "Toda la unidad",
-      detalle: textoCantidad(plantasSeleccionadas.length),
-    };
-  }
-
-  if (resuelto?.alcance === "genetica") {
-    return {
-      titulo: resuelto.genetica_etiqueta,
-      detalle: textoCantidad(plantasSeleccionadas.length),
-    };
-  }
-
-  if (resuelto?.alcance === "planta") {
-    const planta = plantasSeleccionadas[0];
-    return {
-      titulo: planta.nombre || "Planta",
-      detalle: planta.genetica || "1 planta",
-    };
-  }
-
-  const nombres = plantasSeleccionadas
-    .slice(0, 3)
-    .map((planta) => planta.nombre || `Planta ${planta.numero || ""}`.trim());
-  const resto = plantasSeleccionadas.length - nombres.length;
-
-  return {
-    titulo: resto > 0 ? `${nombres.join(", ")} +${resto}` : nombres.join(", "),
-    detalle: textoCantidad(plantasSeleccionadas.length),
-  };
+function TextoUnidadRegistro({ nombre, espacio }) {
+  return (
+    <span className="selector__opcion-texto">
+      <span className="registro-crear__unidad-nombre">{nombre}</span>
+      {espacio ? <span className="registro-crear__unidad-lugar">{` en ${espacio}`}</span> : null}
+    </span>
+  );
 }
 
 function BotonAccion({ item, activa, disabled, onClick }) {
@@ -171,6 +126,9 @@ export function FormularioRegistroCultivo({
   EditorSeguimiento = null,
   registrosHoyControlados = false,
   seleccionInicial = null,
+  plantaIdsIniciales = [],
+  accionInicial = "",
+  onReportarProblema = null,
   onGuardado = null,
   accionesOcultas = SIN_ACCIONES_OCULTAS,
   registroInicialId = "",
@@ -204,19 +162,29 @@ export function FormularioRegistroCultivo({
   const [visorIndice, setVisorIndice] = useState(null);
   const [subiendo, setSubiendo] = useState(false);
   // clave de foto nueva -> metadatos ya subidos a Storage (se reutilizan si hay que reintentar).
+  const anclaCultivo = useRef(null);
   const subidasRef = useRef(new Map());
   const fotosNuevasRef = useRef(fotosNuevas);
   const enviandoRef = useRef(false);
-  const [inicio] = useState(() => seleccionDeInicio(unidades, seleccionInicial));
+  const [inicio] = useState(() => {
+    const base = seleccionDeInicio(unidades, seleccionInicial);
+    const unidad = unidades.find((item) => item.id === base.unidadId);
+    return aplicarPlantasIniciales(base, plantaIdsIniciales, unidad?.plantas || []);
+  });
   const [unidadId, setUnidadId] = useState(inicio.unidadId);
   const [aplicaEdicion, setAplicaEdicion] = useState("");
   const [modoSeleccion, setModoSeleccion] = useState(inicio.modo);
   const [idsSeleccionados, setIdsSeleccionados] = useState(inicio.ids);
-  const [accionesElegidas, setAccionesElegidas] = useState(() => new Set());
+  const accionRapida =
+    accionInicial === "foto" || accionInicial === "problema" || accionInicial === "riego" ? accionInicial : "";
+  const clavePrecargada = claveAccionPrecargada(accionInicial);
+  const [accionesElegidas, setAccionesElegidas] = useState(
+    () => new Set(clavePrecargada ? [clavePrecargada] : [])
+  );
   const [valoresParametros, setValoresParametros] = useState({});
   const [paramsHistoricos, setParamsHistoricos] = useState([]);
   const [accionesHistoricas, setAccionesHistoricas] = useState([]);
-  const [editorPlantas, setEditorPlantas] = useState(false);
+  const [editorPlantas, setEditorPlantas] = useState(inicio.modo !== "unidad");
   const [observacion, setObservacion] = useState("");
   const [mezcla, setMezcla] = useState(() => mezclaVacia());
   const firmaMezclaRef = useRef("");
@@ -253,6 +221,14 @@ export function FormularioRegistroCultivo({
   }, [fotosNuevas]);
 
   useEffect(() => {
+    if (accionRapida !== "foto") return undefined;
+    const nodo = document.getElementById("registro-fotos");
+    if (!nodo) return undefined;
+    nodo.scrollIntoView({ behavior: reducido ? "auto" : "smooth", block: "center" });
+    return undefined;
+  }, [accionRapida, reducido]);
+
+  useEffect(() => {
     if (!configurar) return undefined;
     const nodo = seguimientoRef.current;
     if (!nodo) return undefined;
@@ -285,17 +261,18 @@ export function FormularioRegistroCultivo({
     () => catalogoParametrosGrupo(parametrosPrioritarios, opciones, paramsHistoricos, "plantas"),
     [parametrosPrioritarios, opciones, paramsHistoricos]
   );
-  const mostrarSeccionAmbiente = seccionParametrosGrupoVisible(catalogoAmbiente);
+  const mostrarSeccionAmbiente = catalogoAmbiente.prioritarias.length > 0;
   const mostrarSeccionPlantas = seccionParametrosGrupoVisible(catalogoPlantas);
 
   const plantasSeleccionadas = plantas.filter((planta) => idsSeleccionados.has(planta.id));
-  const resumen = resumenAlcance({
-    aplicaA: "plantas",
-    plantasSeleccionadas,
-    plantasUnidad: plantas,
-    unidadNombre: unidad?.nombre || "",
-  });
-  const accionesVisibles = accionesOrdenadas.prioritarias;
+  const todasLasPlantas = modoSeleccion === "unidad" && !editorPlantas;
+  const precarga = itemPrecargaVisible(accionInicial);
+  const precargaVisible =
+    precarga &&
+    !accionesOrdenadas.prioritarias.some((item) => claveAccion(item) === `nativa:${precarga.clave}`);
+  const accionesVisibles = precargaVisible
+    ? [{ origen: "nativa", clave: precarga.clave, etiqueta: precarga.etiqueta }, ...accionesOrdenadas.prioritarias]
+    : accionesOrdenadas.prioritarias;
 
   const onSeguimientoActualizado = useCallback((datos) => {
     if (datos.acciones) setAccionesPrioritarias(datos.acciones);
@@ -479,14 +456,26 @@ export function FormularioRegistroCultivo({
   function elegirUnidad(siguienteId) {
     setUnidadId(siguienteId);
     setErrorLocal("");
-    setEditorPlantas(false);
     const siguiente = unidades.find((item) => item.id === siguienteId);
     const lista = siguiente?.plantas || [];
     if (modoSeleccion === "unidad") {
+      setEditorPlantas(false);
       setIdsSeleccionados(new Set(lista.map((planta) => planta.id)));
       return;
     }
+    setEditorPlantas(true);
     setIdsSeleccionados(new Set());
+  }
+
+  function elegirTodasLasPlantas() {
+    setEditorPlantas(false);
+    aplicarModoSeleccion("unidad");
+  }
+
+  function abrirEleccionPlantas() {
+    setErrorLocal("");
+    setEditorPlantas(true);
+    if (modoSeleccion === "unidad") setModoSeleccion("manual");
   }
 
   function aplicarModoSeleccion(siguiente) {
@@ -553,6 +542,7 @@ export function FormularioRegistroCultivo({
     const idsUnidad = (unidadReg?.plantas || []).map((planta) => planta.id);
     const idsEnUnidad = idsSnapshot.filter((id) => idsUnidad.includes(id));
 
+    let mostrarEditor = false;
     if (aplica === "ambiente") {
       setModoSeleccion("unidad");
       setIdsSeleccionados(new Set());
@@ -566,9 +556,11 @@ export function FormularioRegistroCultivo({
     } else if (registro.alcance === "genetica") {
       setModoSeleccion("genetica");
       setIdsSeleccionados(new Set(idsEnUnidad));
+      mostrarEditor = true;
     } else {
       setModoSeleccion("manual");
       setIdsSeleccionados(new Set(idsEnUnidad));
+      mostrarEditor = true;
     }
     baseEdicion.current = registro;
 
@@ -607,7 +599,7 @@ export function FormularioRegistroCultivo({
       habiaMezclaRef.current = false;
     }
     setParamsHistoricos(registro.registro_parametros || []);
-    setEditorPlantas(false);
+    setEditorPlantas(mostrarEditor);
     for (const foto of fotosNuevasRef.current) liberarVista(foto);
     subidasRef.current = new Map();
     setFotosNuevas([]);
@@ -977,7 +969,10 @@ export function FormularioRegistroCultivo({
 
   const opcionesUnidad = unidades.map((item) => ({
     valor: item.id,
-    etiqueta: `${item.nombre} · ${item.espacio_nombre}`,
+    nombre: item.nombre,
+    espacio: item.espacio_nombre || "",
+    etiqueta: item.espacio_nombre ? `${item.nombre} en ${item.espacio_nombre}` : item.nombre,
+    cantidadPlantas: Array.isArray(item.plantas) ? item.plantas.length : 0,
   }));
 
   const bloqueado = pendiente || cargandoEdicion || subiendo;
@@ -1025,6 +1020,22 @@ export function FormularioRegistroCultivo({
       <form className="formulario registro-crear__formulario" action={enviar}>
         {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
         {errorLocal ? <p className="formulario__error">{errorLocal}</p> : null}
+        {onReportarProblema ? (
+          <button
+            type="button"
+            className="registro-crear__problema"
+            onClick={() =>
+              onReportarProblema({
+                unidadId,
+                plantaIds: todasLasPlantas ? [] : [...idsSeleccionados],
+              })
+            }
+            disabled={bloqueado}
+          >
+            <IconoPreferencia clave="problema" />
+            <span>Tengo un problema</span>
+          </button>
+        ) : null}
         <Aparecer visible={Boolean(estado?.ok) && !pendiente && !errorLocal && !estado?.error}>
           <p className="registro-crear__ok">Registro guardado. Podés cargar otro o editar uno de hoy.</p>
         </Aparecer>
@@ -1043,7 +1054,7 @@ export function FormularioRegistroCultivo({
         ) : null}
 
         <section className="registro-crear__seccion">
-          <div className="registro-crear__cultivo-fecha">
+          <div className="registro-crear__cultivo-fecha" ref={anclaCultivo}>
             <div className="registro-crear__cultivo">
               <h2 className="registro-crear__etiqueta" id="registro-unidad-titulo">
                 ¿Qué cultivo vas a registrar?
@@ -1054,6 +1065,17 @@ export function FormularioRegistroCultivo({
                 opciones={opcionesUnidad}
                 placeholder="Elegí un cultivo"
                 id="registro-unidad"
+                ancla={anclaCultivo}
+                alinear="start"
+                renderValor={(opcion) =>
+                  opcion ? <TextoUnidadRegistro nombre={opcion.nombre} espacio={opcion.espacio} /> : null
+                }
+                renderOpcion={(opcion) => (
+                  <>
+                    <TextoUnidadRegistro nombre={opcion.nombre} espacio={opcion.espacio} />
+                    <PillPlantas cantidad={opcion.cantidadPlantas} mostrarCero />
+                  </>
+                )}
               />
             </div>
             <div className="registro-crear__cuando">
@@ -1072,7 +1094,13 @@ export function FormularioRegistroCultivo({
         </section>
 
         <section className="registro-crear__seccion">
-            <h2 className="registro-crear__etiqueta">Plantas seleccionadas</h2>
+            <div className="registro-crear__seccion-texto">
+              <h2 className="registro-crear__etiqueta">¿Sobre qué plantas?</h2>
+              <p className="registro-crear__ayuda">
+                Podés elegir todo tu cultivo o algunas plantas en particular.
+              </p>
+            </div>
+            <div className={`registro-crear__eleccion${editorPlantas ? " registro-crear__eleccion--abierta" : ""}`}>
             <div className="registro-crear__resumen-wrap">
               <AnimatePresence>
                 {!unidadId ? (
@@ -1090,58 +1118,76 @@ export function FormularioRegistroCultivo({
               </AnimatePresence>
               <div
                 className={`registro-crear__resumen${!unidadId ? " registro-crear__resumen--bloqueado" : ""}`}
+                role="group"
+                aria-label="Sobre qué plantas"
                 inert={!unidadId || undefined}
                 aria-hidden={!unidadId}
               >
-              <div className="registro-crear__resumen-texto">
-                <p className="registro-crear__resumen-titulo">{resumen.titulo}</p>
-                <p className="registro-crear__resumen-detalle">{resumen.detalle}</p>
-              </div>
-              <button
-                type="button"
-                className="registro-crear__enlace"
-                onClick={() => setEditorPlantas((valor) => !valor)}
-                disabled={bloqueoPlantas || !unidadId}
-              >
-                {editorPlantas ? "Cerrar" : "Elegir plantas"}
-              </button>
+                <button
+                  type="button"
+                  className={`registro-crear__chip registro-crear__chip--alcance${todasLasPlantas ? " registro-crear__chip--activo" : ""}`}
+                  onClick={elegirTodasLasPlantas}
+                  disabled={bloqueoPlantas || !unidadId}
+                  aria-pressed={todasLasPlantas}
+                >
+                  <CirclePile strokeWidth={1.75} aria-hidden="true" />
+                  <span>Todas las plantas</span>
+                </button>
+                <button
+                  type="button"
+                  className={`registro-crear__chip registro-crear__chip--alcance${!todasLasPlantas ? " registro-crear__chip--activo" : ""}`}
+                  onClick={abrirEleccionPlantas}
+                  disabled={bloqueoPlantas || !unidadId}
+                  aria-pressed={!todasLasPlantas}
+                >
+                  <PlantPot strokeWidth={1.75} aria-hidden="true" />
+                  <span>Elegir las plantas</span>
+                </button>
               </div>
             </div>
 
             <Aparecer visible={editorPlantas}>
               <div className="registro-crear__editor-plantas">
-                <div className="registro-crear__chips">
-                  {MODOS_PLANTAS.map((item) => (
-                    <button
-                      key={item.valor}
-                      type="button"
-                      className={`registro-crear__chip${modoSeleccion === item.valor ? " registro-crear__chip--activo" : ""}`}
-                      onClick={() => aplicarModoSeleccion(item.valor)}
-                      disabled={bloqueoPlantas}
-                      aria-pressed={modoSeleccion === item.valor}
-                    >
-                      {item.etiqueta}
-                    </button>
-                  ))}
+                <div className="registro-crear__filtros">
+                  <p className="registro-crear__filtros-titulo">Filtrar por</p>
+                  <div className="registro-crear__chips" role="group" aria-label="Filtrar por">
+                    {MODOS_PLANTAS.filter((item) => item.valor !== "unidad").map((item) => (
+                      <button
+                        key={item.valor}
+                        type="button"
+                        className={`registro-crear__chip${modoSeleccion === item.valor ? " registro-crear__chip--activo" : ""}`}
+                        onClick={() => aplicarModoSeleccion(item.valor)}
+                        disabled={bloqueoPlantas}
+                        aria-pressed={modoSeleccion === item.valor}
+                      >
+                        {item.etiqueta}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <Aparecer visible={modoSeleccion === "genetica" && gruposGenetica.length > 0}>
-                  <div className="registro-crear__geneticas" role="group" aria-label="Genéticas de la unidad">
+                  <div className="registro-crear__plantas" role="group" aria-label="Genéticas de la unidad">
                     {gruposGenetica.map((grupo) => {
                       const activo =
                         plantasSeleccionadas.length === grupo.plantas.length &&
                         grupo.plantas.every((planta) => idsSeleccionados.has(planta.id));
+                      const cantidad = grupo.plantas.length;
                       return (
                         <button
                           key={grupo.clave}
                           type="button"
-                          className={`registro-crear__pill-genetica${activo ? " registro-crear__pill-genetica--activa" : ""}`}
+                          className={`registro-crear__planta${activo ? " registro-crear__planta--activa" : ""}`}
                           onClick={() => elegirGenetica(grupo.clave)}
                           disabled={bloqueoPlantas}
                           aria-pressed={activo}
                         >
-                          <span className="registro-crear__pill-genetica-nombre">{grupo.etiqueta}</span>
-                          <span className="registro-crear__pill-genetica-cuenta">{grupo.plantas.length}</span>
+                          <span className="registro-crear__planta-texto">
+                            <span className="registro-crear__planta-nombre">{grupo.etiqueta}</span>
+                            <span className="registro-crear__planta-meta">
+                              {cantidad === 1 ? "1 planta" : `${cantidad} plantas`}
+                            </span>
+                          </span>
                         </button>
                       );
                     })}
@@ -1156,9 +1202,6 @@ export function FormularioRegistroCultivo({
 
                 <Aparecer visible={plantas.length > 0}>
                   <div className="registro-crear__plantas-bloque">
-                    <p className="registro-crear__plantas-cabecera">
-                      {idsSeleccionados.size} de {plantas.length} plantas seleccionadas
-                    </p>
                     <div className="registro-crear__plantas">
                       {plantas.map((planta) => {
                         const activa = idsSeleccionados.has(planta.id);
@@ -1174,14 +1217,20 @@ export function FormularioRegistroCultivo({
                             whileTap={bloqueado ? undefined : toque}
                             transition={transicionToque}
                           >
-                            <span className="registro-crear__planta-nombre">{titulo}</span>
-                            {planta.genetica ? (
-                              <span className="registro-crear__planta-meta">{planta.genetica}</span>
-                            ) : null}
+                            <IconoPlanta className="registro-crear__planta-icono" />
+                            <span className="registro-crear__planta-texto">
+                              <span className="registro-crear__planta-nombre">{titulo}</span>
+                              {planta.genetica ? (
+                                <span className="registro-crear__planta-meta">{planta.genetica}</span>
+                              ) : null}
+                            </span>
                           </motion.button>
                         );
                       })}
                     </div>
+                    <p className="registro-crear__plantas-cabecera">
+                      {idsSeleccionados.size} de {plantas.length} plantas seleccionadas
+                    </p>
                   </div>
                 </Aparecer>
 
@@ -1190,6 +1239,7 @@ export function FormularioRegistroCultivo({
                 </Aparecer>
               </div>
             </Aparecer>
+            </div>
           </section>
 
         {mostrarSeccionAmbiente ? (
@@ -1293,7 +1343,7 @@ export function FormularioRegistroCultivo({
         />
 
         {permitirFotos ? (
-          <section className="registro-crear__seccion" aria-labelledby="registro-fotos-titulo">
+          <section className="registro-crear__seccion" id="registro-fotos" aria-labelledby="registro-fotos-titulo">
             <h2 className="registro-crear__etiqueta" id="registro-fotos-titulo">
               Fotos
             </h2>
@@ -1356,6 +1406,7 @@ export function FormularioRegistroCultivo({
           <label className="formulario__campo registro-crear__observacion">
             <span className="registro-crear__sr">Observación</span>
             <textarea
+              id="registro-observacion"
               value={observacion}
               onChange={(evento) => setObservacion(evento.target.value)}
               rows={4}
@@ -1470,7 +1521,6 @@ export function FormularioRegistroCultivo({
         varianteConfirmar="destructivo"
         onConfirmar={confirmarQuitarExistente}
       />
-
     </div>
   );
 }

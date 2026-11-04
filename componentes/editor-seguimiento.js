@@ -307,7 +307,7 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
       <Aparecer visible={Boolean(tipo)} desplazar={desplazarAlExpandir}>
         <div className="editor-seguimiento__grupos">
           <fieldset className="preferencias">
-            <legend>Acciones prioritarias</legend>
+            <legend>Elegí tus acciones</legend>
             <div className="preferencias__opciones">
               {ACCIONES_SEGUIMIENTO.map((item) => (
                 <OpcionPreferencia
@@ -346,7 +346,7 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
             </div>
           </fieldset>
           <fieldset className="preferencias">
-            <legend>Parámetros prioritarios</legend>
+            <legend>Elegí tus parámetros</legend>
             <div className="preferencias__opciones">
               {PARAMETROS_SEGUIMIENTO.map((item) => (
                 <OpcionPreferencia

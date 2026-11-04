@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Camera, Images, LoaderCircle, X } from "lucide-react";
+import { Camera, Images, LoaderCircle, RefreshCw, X } from "lucide-react";
 import { ACEPTAR_FOTOS } from "@/lib/fotos";
 
 // Selector reutilizable de imágenes: cámara, galería, previews y quitar.
@@ -17,16 +17,34 @@ export function SelectorFotos({
   onSeleccionar,
   onAbrir,
   onQuitar,
+  onReemplazar,
 }) {
   const camara = useRef(null);
   const galeria = useRef(null);
+  const reemplazo = useRef("");
   const lleno = items.length >= maximo;
 
   function alElegir(evento) {
     const archivos = [...(evento.target.files || [])];
+    const clave = reemplazo.current;
+    reemplazo.current = "";
     // Permite volver a elegir el mismo archivo después de quitarlo.
     evento.target.value = "";
+    if (clave && archivos[0]) {
+      onReemplazar?.(clave, archivos[0]);
+      return;
+    }
     if (archivos.length > 0) onSeleccionar?.(archivos);
+  }
+
+  function abrirGaleria() {
+    reemplazo.current = "";
+    galeria.current?.click();
+  }
+
+  function abrirCamara() {
+    reemplazo.current = "";
+    camara.current?.click();
   }
 
   return (
@@ -55,6 +73,20 @@ export function SelectorFotos({
               {item.nueva && item.estado !== "procesando" ? (
                 <span className="fotos-selector__nueva">Nueva</span>
               ) : null}
+              {onReemplazar && item.estado !== "procesando" ? (
+                <button
+                  type="button"
+                  className="fotos-selector__reemplazar"
+                  onClick={() => {
+                    reemplazo.current = item.clave;
+                    galeria.current?.click();
+                  }}
+                  disabled={disabled}
+                  aria-label="Reemplazar foto"
+                >
+                  <RefreshCw strokeWidth={2} aria-hidden="true" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="fotos-selector__quitar"
@@ -73,7 +105,7 @@ export function SelectorFotos({
         <button
           type="button"
           className="fotos-selector__boton"
-          onClick={() => camara.current?.click()}
+          onClick={abrirCamara}
           disabled={disabled || lleno}
         >
           <Camera strokeWidth={1.75} aria-hidden="true" />
@@ -82,7 +114,7 @@ export function SelectorFotos({
         <button
           type="button"
           className="fotos-selector__boton"
-          onClick={() => galeria.current?.click()}
+          onClick={abrirGaleria}
           disabled={disabled || lleno}
         >
           <Images strokeWidth={1.75} aria-hidden="true" />

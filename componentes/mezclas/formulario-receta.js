@@ -1,9 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Dialog } from "@base-ui/react/dialog";
+import { X } from "lucide-react";
 import { guardarRecetaMezcla } from "@/app/registros/mezclas-acciones";
-import { cantidadAplicada, textoMedida, UNIDADES_COMPONENTE, UNIDADES_VOLUMEN } from "@/lib/mezclas/calculo";
+import { FilaDosisProducto } from "@/componentes/mezclas/fila-dosis-producto";
+import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { textoCantidad, UNIDADES_VOLUMEN } from "@/lib/mezclas/calculo";
+import { validarReceta } from "@/lib/mezclas/reglas";
+
+function cantidadInicial(valor) {
+  if (valor === undefined || valor === null || valor === "") return "";
+  return textoCantidad(valor);
+}
 
 function estadoInicial(receta) {
   const componentes = [...(receta?.componentes || receta?.receta_componentes || [])].sort(
@@ -12,28 +22,50 @@ function estadoInicial(receta) {
   return {
     id: receta?.id || "",
     nombre: receta?.nombre || "",
-    volumen: receta?.volumen_agua === undefined || receta?.volumen_agua === null ? "" : String(receta.volumen_agua),
+    volumen: cantidadInicial(receta?.volumen_agua),
     unidadVolumen: receta?.unidad_volumen || "L",
     notas: receta?.notas || "",
     componentes: componentes.map((item) => ({
       productoId: item.producto_id,
-      cantidad: String(item.cantidad),
-      unidad: item.unidad,
+      cantidad: cantidadInicial(item.cantidad),
+      unidad: item.unidad || "ml/L",
     })),
   };
 }
 
-export function FormularioReceta({ receta = null, productos = [] }) {
+function filaVacia() {
+  return { productoId: "", cantidad: "", unidad: "ml/L" };
+}
+
+export function FormularioReceta({
+  receta = null,
+  productos = [],
+  titulo = "",
+  onCancelar = null,
+  onGuardado = null,
+  onEstado = null,
+}) {
   const router = useRouter();
+  const [inicial] = useState(() => JSON.stringify(estadoInicial(receta)));
   const [datos, setDatos] = useState(() => estadoInicial(receta));
-  const [productoNuevo, setProductoNuevo] = useState("");
   const [error, setError] = useState("");
   const [guardando, setGuardando] = useState(false);
-  const activos = productos.filter(
-    (item) => item.activo || datos.componentes.some((componente) => componente.productoId === item.id)
-  );
+  const [confirmarDescarte, setConfirmarDescarte] = useState(false);
+  const sucio = JSON.stringify(datos) !== inicial;
+
+  useEffect(() => {
+    onEstado?.({ sucio, guardando });
+  }, [sucio, guardando, onEstado]);
 
   function cambiarComponente(indice, parcial) {
+    const ocupados = new Set(
+      datos.componentes.flatMap((item, posicion) => (posicion === indice ? [] : item.productoId ? [item.productoId] : []))
+    );
+    if (parcial.productoId && ocupados.has(parcial.productoId)) {
+      setError("Ese producto ya está en la mezcla.");
+      return;
+    }
+    setError("");
     setDatos({
       ...datos,
       componentes: datos.componentes.map((item, posicion) =>
@@ -42,10 +74,44 @@ export function FormularioReceta({ receta = null, productos = [] }) {
     });
   }
 
+  function cerrarDeVerdad() {
+    if (onCancelar) onCancelar();
+    else router.push("/mezclas");
+  }
+
+  function solicitarCierre() {
+    if (guardando) return;
+    if (onCancelar) {
+      onCancelar();
+      return;
+    }
+    if (sucio) {
+      setConfirmarDescarte(true);
+      return;
+    }
+    cerrarDeVerdad();
+  }
+
   async function guardar(evento) {
     evento.preventDefault();
+    if (guardando) return;
     setGuardando(true);
     setError("");
+    const previo = validarReceta(
+      {
+        nombre: datos.nombre,
+        volumenAgua: datos.volumen,
+        unidadVolumen: datos.unidadVolumen,
+        notas: datos.notas,
+        componentes: datos.componentes,
+      },
+      productos
+    );
+    if (previo.error) {
+      setGuardando(false);
+      setError(previo.error);
+      return;
+    }
     const resultado = await guardarRecetaMezcla({
       id: datos.id,
       nombre: datos.nombre,
@@ -59,12 +125,25 @@ export function FormularioReceta({ receta = null, productos = [] }) {
       setError(resultado.error);
       return;
     }
-    router.push("/registros/recetas");
+    onEstado?.({ sucio: false, guardando: false });
+    if (onGuardado) {
+      onGuardado();
+      return;
+    }
+    router.push("/mezclas");
     router.refresh();
   }
 
   return (
     <form className="formulario mezclas__formulario" onSubmit={guardar}>
+      {titulo ? (
+        <div className="modal__barra">
+          <Dialog.Title className="mezclas__alta-titulo">{titulo}</Dialog.Title>
+          <Dialog.Close className="boton boton--ghost boton--icono" aria-label="Cerrar" disabled={guardando}>
+            <X strokeWidth={1.75} aria-hidden="true" />
+          </Dialog.Close>
+        </div>
+      ) : null}
       <label className="formulario__campo">
         Nombre
         <input
@@ -102,98 +181,47 @@ export function FormularioReceta({ receta = null, productos = [] }) {
         </label>
       </div>
 
-      <ul className="mezclas__componentes">
-        {datos.componentes.map((componente, indice) => {
-          const producto = productos.find((item) => item.id === componente.productoId);
-          const aplicado = cantidadAplicada({
-            cantidad: componente.cantidad,
-            unidad: componente.unidad,
-            volumenAgua: datos.volumen,
-            unidadVolumen: datos.unidadVolumen,
-          });
-          const total =
-            aplicado && (componente.unidad === "ml/L" || componente.unidad === "g/L")
-              ? textoMedida(aplicado.cantidad, aplicado.unidad)
-              : "";
-          return (
-            <li key={`${componente.productoId}-${indice}`}>
-              <p className="mezclas__nombre">
-                {producto?.nombre || "Producto"}
-                {producto && !producto.activo ? " · archivado" : ""}
-              </p>
-              <div className="mezclas__dosis">
-                <input
-                  inputMode="decimal"
-                  aria-label="Cantidad"
-                  value={componente.cantidad}
-                  onChange={(evento) => cambiarComponente(indice, { cantidad: evento.target.value })}
-                  disabled={guardando}
-                />
-                <select
-                  aria-label="Unidad"
-                  value={componente.unidad}
-                  onChange={(evento) => cambiarComponente(indice, { unidad: evento.target.value })}
-                  disabled={guardando}
-                >
-                  {UNIDADES_COMPONENTE.map((unidad) => (
-                    <option key={unidad} value={unidad}>
-                      {unidad}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="boton boton--ghost"
-                  onClick={() =>
+      <fieldset className="mezclas__productos">
+        <legend>Productos</legend>
+        {datos.componentes.length === 0 ? (
+          <p className="mezclas__meta">Agregá al menos un producto.</p>
+        ) : (
+          <ul className="mezclas__componentes">
+            {datos.componentes.map((componente, indice) => (
+              <li key={`${componente.productoId || "nuevo"}-${indice}`}>
+                <FilaDosisProducto
+                  id={`mezcla-producto-${indice}`}
+                  productos={productos}
+                  ocupados={datos.componentes.flatMap((item, posicion) =>
+                    posicion === indice || !item.productoId ? [] : [item.productoId]
+                  )}
+                  productoId={componente.productoId}
+                  cantidad={componente.cantidad}
+                  unidad={componente.unidad}
+                  volumenAgua={datos.volumen}
+                  unidadVolumen={datos.unidadVolumen}
+                  deshabilitado={guardando}
+                  onChange={(parcial) => cambiarComponente(indice, parcial)}
+                  onQuitar={() =>
                     setDatos({
                       ...datos,
                       componentes: datos.componentes.filter((_, posicion) => posicion !== indice),
                     })
                   }
-                  disabled={guardando}
-                >
-                  Quitar
-                </button>
-              </div>
-              {total ? <p className="mezclas__meta">Para este volumen: {total}</p> : null}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="mezclas__agregar">
-        <label className="formulario__campo">
-          Producto
-          <select
-            value={productoNuevo}
-            onChange={(evento) => setProductoNuevo(evento.target.value)}
-            disabled={guardando}
-          >
-            <option value="">Elegir</option>
-            {activos.map((producto) => (
-              <option key={producto.id} value={producto.id}>
-                {producto.nombre}
-                {producto.activo ? "" : " · archivado"}
-              </option>
+                />
+              </li>
             ))}
-          </select>
-        </label>
+          </ul>
+        )}
         <button
-          className="boton boton--secundario"
+          className="boton boton--secundario mezclas__sumar"
           type="button"
-          disabled={guardando || !productoNuevo}
-          onClick={() => {
-            if (datos.componentes.some((item) => item.productoId === productoNuevo)) return;
-            setDatos({
-              ...datos,
-              componentes: [...datos.componentes, { productoId: productoNuevo, cantidad: "", unidad: "ml/L" }],
-            });
-            setProductoNuevo("");
-          }}
+          disabled={guardando}
+          onClick={() => setDatos({ ...datos, componentes: [...datos.componentes, filaVacia()] })}
         >
-          Agregar
+          + Agregar producto
         </button>
-      </div>
+      </fieldset>
 
       <label className="formulario__campo">
         Observaciones
@@ -206,11 +234,26 @@ export function FormularioReceta({ receta = null, productos = [] }) {
         />
       </label>
       {error ? <p className="formulario__error">{error}</p> : null}
-      <div className="mezclas__cta">
-        <button className="boton boton--cta boton--ancho" type="submit" disabled={guardando}>
-          {guardando ? "Guardando..." : "Guardar receta"}
+      <div className="mezclas__acciones mezclas__acciones--alta">
+        <button className="boton boton--secundario" type="button" onClick={solicitarCierre} disabled={guardando}>
+          Cancelar
+        </button>
+        <button className="boton" type="submit" disabled={guardando}>
+          {guardando ? "Guardando..." : "Guardar mezcla"}
         </button>
       </div>
+      {onCancelar ? null : (
+        <ModalConfirmacion
+          abierto={confirmarDescarte}
+          onCerrar={() => setConfirmarDescarte(false)}
+          titulo="¿Descartar los cambios?"
+          descripcion="Si salís ahora, se pierde lo que modificaste en esta mezcla."
+          textoConfirmar="Descartar"
+          textoCancelar="Seguir editando"
+          varianteConfirmar="destructivo"
+          onConfirmar={cerrarDeVerdad}
+        />
+      )}
     </form>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MenuAccionesTarjetaEspacio } from "@/componentes/espacios/menu-acciones-tarjeta-espacio";
+import { IconoPlanta } from "@/componentes/iconos-ui";
 import { ImagenEspacio } from "@/componentes/imagen-espacio";
 import { ListaEntrada } from "@/componentes/lista-entrada";
 import { PillPlantas, PillUnidades } from "@/componentes/resumen-configuracion";
@@ -8,8 +9,12 @@ import { etiquetaTipoEspacio } from "@/lib/unidades";
 export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPorEspacio }) {
   if (espacios.length === 0) {
     return (
-      <div className="vacio">
+      <div className="espacios__vacio">
         <p>Todavía no hay espacios de cultivo.</p>
+        <Link className="espacios__crear" href="/cultivos/nuevo">
+          <IconoPlanta />
+          Creá tu cultivo
+        </Link>
       </div>
     );
   }
@@ -20,7 +25,7 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
         const cantidadUnidades = unidadesPorEspacio[espacio.id] || 0;
         return (
           <li className="tarjeta tarjeta--espacio" key={espacio.id}>
-            <Link className="tarjeta__cuerpo" href={`/espacios/${espacio.id}`}>
+            <Link className="tarjeta__cuerpo" href={`/cultivos/${espacio.id}`}>
               <span className="tarjeta__visual">
                 <ImagenEspacio tipo={espacio.tipo} className="imagen-espacio--miniatura" />
                 <span className={`tarjeta__tipo tarjeta__tipo--${espacio.tipo}`}>

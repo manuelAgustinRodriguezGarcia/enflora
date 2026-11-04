@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { EnlaceBoton } from "@/componentes/boton";
 import { CerrarSesion } from "@/componentes/cerrar-sesion";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { FormularioPerfil } from "@/componentes/formulario-perfil";
+import { PanelNotificaciones } from "@/componentes/panel-notificaciones";
 import { PerfilGuardarFlotante } from "@/componentes/perfil-guardar-flotante";
+import { SeccionClimaPerfil } from "@/componentes/perfil-clima";
 import { PreferenciasFlora } from "@/componentes/preferencias-flora";
+import { muestraEstadoNotificaciones } from "@/lib/perfil/notificaciones-visibles";
 
 function esRedireccion(error) {
   return typeof error?.digest === "string" && error.digest.startsWith("NEXT_REDIRECT");
@@ -24,8 +28,13 @@ function consumirIrPreferenciasFloraDesdeChat() {
   }
 }
 
+function irAClimaPerfil() {
+  document.getElementById("clima")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function irArribaPerfil() {
   if (typeof window === "undefined") return;
+  if (window.location.hash === "#clima") return;
   if (window.location.hash) {
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   }
@@ -49,8 +58,10 @@ function reforzarArribaPerfil() {
 export function PerfilVista({
   perfil,
   email,
+  avatar = { url: "", expira: 0 },
   seguimiento = null,
   personalidadFlora = "cercana_natural",
+  clima = null,
 }) {
   const ruta = usePathname();
   const perfilRef = useRef(null);
@@ -78,6 +89,16 @@ export function PerfilVista({
       return undefined;
     }
 
+    if (window.location.hash === "#clima") {
+      irAClimaPerfil();
+      const id = requestAnimationFrame(irAClimaPerfil);
+      const espera = window.setTimeout(irAClimaPerfil, 220);
+      return () => {
+        cancelAnimationFrame(id);
+        window.clearTimeout(espera);
+      };
+    }
+
     return reforzarArribaPerfil();
   }, [ruta]);
 
@@ -101,12 +122,13 @@ export function PerfilVista({
   }
 
   return (
-    <section className="perfil">
+    <section className="perfil" data-edicion-activa={sucio ? "true" : undefined}>
       <h1>Perfil</h1>
       <FormularioPerfil
         ref={perfilRef}
         perfil={perfil}
         email={email}
+        avatar={avatar}
         onSucioChange={alSucioPerfil}
         idFormulario="formulario-perfil"
       />
@@ -115,7 +137,7 @@ export function PerfilVista({
         <EditorSeguimiento
           ref={seguimientoRef}
           modo="edicion"
-          encabezado="Seguimiento"
+          encabezado="Elegí qué registrar"
           tipoInicial={perfil.tipo_seguimiento}
           acciones={seguimiento.acciones}
           parametros={seguimiento.parametros}
@@ -127,6 +149,11 @@ export function PerfilVista({
         />
       ) : null}
       <PreferenciasFlora personalidadInicial={personalidadFlora} />
+      <SeccionClimaPerfil clima={clima} />
+      {muestraEstadoNotificaciones(email) ? <PanelNotificaciones /> : null}
+      <EnlaceBoton href="/perfil/feedback" variante="secundario" className="boton--ancho">
+        Enviar feedback
+      </EnlaceBoton>
       <PerfilGuardarFlotante visible={sucio} onGuardar={guardar} />
       <CerrarSesion />
     </section>

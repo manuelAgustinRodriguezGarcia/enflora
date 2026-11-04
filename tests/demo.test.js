@@ -653,7 +653,9 @@ test("el formulario compartido no tiene persistencia propia y producción conser
   assert.match(produccion, /agendarTarea=\{agendarTarea\}/);
   assert.match(produccion, /cargarRegistro=\{obtenerRegistroCompleto\}/);
   assert.match(produccion, /EditorSeguimiento=\{EditorSeguimiento\}/);
-  assert.ok(!/registrosHoyControlados|seleccionInicial|accionesOcultas/.test(produccion));
+  assert.ok(!/registrosHoyControlados|accionesOcultas/.test(produccion));
+  assert.match(produccion, /seleccionInicial=\{unidadInicialId \? \{ unidadId: unidadInicialId \} : null\}/);
+  assert.match(produccion, /accionInicial=\{accionInicial\}/);
   assert.match(leer("app/registros/page.js"), /FormularioCrearRegistro/);
   const demo = leer("componentes/demo/vista-registros.js");
   assert.match(demo, /accionGuardar=\{guardarRegistroLocal\}/);
@@ -671,20 +673,20 @@ test("el alta de cuenta conserva su formulario y su acción", () => {
 
 test("las pantallas reales de cultivos conservan sus acciones de producción", () => {
   const seleccion = leer("componentes/seleccion-plantas-unidad.js");
-  assert.match(seleccion, /import \{ cambiarEtapaMasiva \} from "@\/app\/espacios\/\[id\]\/acciones"/);
+  assert.match(seleccion, /import \{ cambiarEtapaMasiva \} from "@\/app\/cultivos\/\[id\]\/acciones"/);
   assert.match(seleccion, /ContenidoTarjetaPlanta as ContenidoTarjeta/);
   assert.match(leer("componentes/etapa-progreso.js"), /useActionState\(cambiarEtapa, null\)/);
   assert.match(leer("componentes/cambiar-etapa.js"), /useActionState\(cambiarEtapa, null\)/);
-  const unidad = leer("app/espacios/[id]/unidades/[unidadId]/page.js");
+  const unidad = leer("app/cultivos/[id]/unidades/[unidadId]/page.js");
   assert.match(unidad, /<SeleccionPlantasUnidad/);
   assert.match(unidad, /<CabeceraUnidad/);
-  const planta = leer("app/espacios/[id]/unidades/[unidadId]/plantas/[plantaId]/page.js");
+  const planta = leer("app/cultivos/[id]/unidades/[unidadId]/plantas/[plantaId]/page.js");
   assert.match(planta, /<EtapaProgreso/);
   assert.match(planta, /<CambiarEtapa /);
-  assert.match(leer("app/espacios/page.js"), /ContenidoListaEspacios/);
+  assert.match(leer("app/cultivos/page.js"), /ContenidoListaEspacios/);
   assert.match(
     leer("componentes/espacios/contenido-lista-espacios.js"),
-    /href=\{`\/espacios\/\$\{espacio\.id\}`\}/,
+    /href=\{`\/cultivos\/\$\{espacio\.id\}`\}/,
   );
 });
 

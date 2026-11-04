@@ -5,26 +5,11 @@ import { Camera, ImagePlus, LoaderCircle, Paperclip, X } from "lucide-react";
 import { ACEPTAR_FOTOS } from "@/lib/fotos";
 import { FLORA_CHAT_MAX_IMAGENES } from "@/lib/flora-imagen-chat";
 import { prepararImagenDispositivoParaFlora, liberarAdjuntoFlora } from "@/lib/flora-imagen-cliente";
+import { ModalVisorAdjuntoFlora } from "@/componentes/flora/imagen-mensaje-flora";
 import { ModalFotosEnflora } from "@/componentes/flora/modal-fotos-enflora";
 
 function idAdjuntoLocal() {
   return `a-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function ModalVisorAdjuntoFlora({ adjunto, onCerrar }) {
-  if (!adjunto?.vista) return null;
-  return (
-    <div className="flora-adjunto-visor" role="dialog" aria-modal="true" aria-label="Vista ampliada">
-      <button type="button" className="flora-adjunto-visor__fondo" onClick={onCerrar} aria-label="Cerrar" />
-      <div className="flora-adjunto-visor__marco">
-        <button type="button" className="flora-adjunto-visor__cerrar" onClick={onCerrar} aria-label="Cerrar">
-          <X strokeWidth={2} aria-hidden="true" />
-        </button>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={adjunto.vista} alt="" className="flora-adjunto-visor__img" />
-      </div>
-    </div>
-  );
 }
 
 export function PreviewsAdjuntoFlora({ adjuntos = [], onQuitar, disabled = false }) {

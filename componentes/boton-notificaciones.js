@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
@@ -12,7 +13,7 @@ import { esRutaApp } from "@/lib/navegacion";
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
 
-export function BotonNotificaciones({ oculto = false }) {
+export function BotonNotificaciones({ oculto = false, estadoTecnico = false }) {
   const ruta = usePathname();
   const [abierto, setAbierto] = useState(false);
 
@@ -54,6 +55,11 @@ export function BotonNotificaciones({ oculto = false }) {
               Los avisos llegan al sistema del dispositivo, aunque Enflora no esté abierta.
             </Dialog.Description>
             <ControlNotificaciones />
+            {estadoTecnico ? (
+              <Link className="modal__enlace" href="/perfil#notificaciones">
+                Estado y pruebas de este dispositivo
+              </Link>
+            ) : null}
             <div className="modal__acciones">
               <Dialog.Close className="encabezado__cerrar-aviso">Cerrar</Dialog.Close>
             </div>

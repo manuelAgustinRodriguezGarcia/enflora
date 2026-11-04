@@ -14,6 +14,7 @@ import { ACCESO_DATOS_ADMIN, evaluarSolicitudAdmin } from "../lib/admin/politica
 import { evaluarAdmin, variableAdminDeModulo } from "../lib/admin/reglas.js";
 import { obtenerAdmin } from "../lib/admin/autorizacion.js";
 import { crearClienteRestringido } from "../lib/admin/servicio.js";
+import { afirmarSqlAdministrativo, hallazgosSqlAdministrativo, MUESTRAS_SQL_INVALIDAS } from "./ayudas/sintaxis-sql-admin.js";
 import { conSupabaseFalso } from "./ayudas/supabase-falso.js";
 
 const RAIZ = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -242,6 +243,21 @@ test("los ceros, la migración ausente y un error de Supabase no inventan cifras
     assert.equal(serializado.includes("observacion"), false);
     assert.equal(Object.hasOwn(resultado, "resumen"), false);
   });
+});
+
+test("las migraciones administrativas rechazan sintaxis de catálogo inválida", () => {
+  for (const archivo of ["supabase/admin-dashboard.sql", "supabase/admin-planes.sql", "supabase/admin-usuarios.sql", "supabase/admin-flora.sql", "supabase/admin-almacenamiento.sql"]) {
+    afirmarSqlAdministrativo(fs.readFileSync(path.join(RAIZ, archivo), "utf8"), archivo);
+  }
+  for (const [nombre, muestra] of MUESTRAS_SQL_INVALIDAS) {
+    const hallazgos = hallazgosSqlAdministrativo(muestra);
+    if (nombre === "comentario ignorado") assert.deepEqual(hallazgos, [], nombre);
+    else assert.deepEqual(hallazgos, [nombre], nombre);
+  }
+  assert.deepEqual(
+    hallazgosSqlAdministrativo("select greatest(1, 0), pg_catalog.count(*)::pg_catalog.int8, '[]'::pg_catalog.jsonb;"),
+    [],
+  );
 });
 
 test("la migración y el módulo de lectura no exponen columnas privadas ni otro cliente", () => {

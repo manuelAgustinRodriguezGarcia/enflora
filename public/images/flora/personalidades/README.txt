@@ -1,11 +1,7 @@
-Avatares cuadrados para Preferencias de Flora (perfil).
+Los avatares de Preferencias de Flora viven en public/images/ y se declaran en el catálogo:
 
-Colocá un WebP por personalidad con estos nombres exactos:
-
-  cercana_natural.webp
-  cercana_divertida.webp
-  tecnica_profesional.webp
-
-Tamaño sugerido: 256×256 px o más (se muestra ~68×68 px en pantalla).
+  cercana_natural      → /images/flora-natural.png
+  cercana_divertida    → /images/flora-confianzuda.png
+  tecnica_profesional  → /images/F.L.O.R.A.png
 
 Ruta usada en código: lib/flora-personalidad.js → rutaImagenPersonalidadFlora()

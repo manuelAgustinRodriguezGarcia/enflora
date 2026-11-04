@@ -378,8 +378,12 @@ test("límites: solo autorizacion.js usa la fábrica del núcleo (el punto de in
 
 test("límites: el cliente restringido solo lo reciben módulos de lib/ de Expo, nunca páginas ni componentes", () => {
   assert.deepEqual(archivosQueImportan("lib/admin/servicio.js"), [
+    "lib/admin/almacenamiento.js",
     "lib/admin/dashboard.js",
+    "lib/admin/feedback.js",
+    "lib/admin/flora.js",
     "lib/admin/planes.js",
+    "lib/admin/usuarios.js",
     "lib/expo-cannabis/admin.js",
     "lib/expo-cannabis/contactos-admin.js",
   ]);
@@ -419,8 +423,11 @@ test("límites: la clave de servicio solo aparece en los módulos que ya la usab
     .sort();
   assert.deepEqual(conClave, [
     "lib/admin/servicio.js",
+    // Caché y cupo meteorológicos: sin políticas para authenticated; solo service_role.
+    "lib/clima/almacen-servidor.js",
     "lib/contactos/datos.js",
     "lib/expo-cannabis/visitante.js",
+    "lib/flora-uso.js",
     "lib/pagos/datos.js",
     "lib/pagos/infra-diagnostico.js",
     "lib/push/datos.js",
@@ -435,7 +442,7 @@ test("límites: la autenticidad de las credenciales no usa símbolos globales y 
   }
   const esperadas = {
     "lib/admin/reglas.js": [],
-    "lib/admin/politica.js": ["./reglas.js"],
+    "lib/admin/politica.js": ["../feedback/reglas.js", "./reglas.js"],
     "lib/admin/nucleo.js": ["./reglas.js"],
     "lib/admin/respaldos.js": ["../expo-cannabis/admin-legado.js"],
     "lib/admin/autorizacion.js": ["./nucleo.js", "./respaldos.js", "@/lib/supabase/servidor", "server-only"],

@@ -17,6 +17,7 @@ import {
 import { ACCESO_DATOS_ADMIN, evaluarSolicitudAdmin } from "../lib/admin/politica.js";
 import { obtenerAdmin } from "../lib/admin/autorizacion.js";
 import { crearClienteRestringido } from "../lib/admin/servicio.js";
+import { afirmarSqlAdministrativo } from "./ayudas/sintaxis-sql-admin.js";
 import { conSupabaseFalso } from "./ayudas/supabase-falso.js";
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
@@ -303,7 +304,7 @@ test("un permiso de Expo o de dashboard no consulta planes, y planes no lee tabl
   const politica = ACCESO_DATOS_ADMIN.planes;
   assert.equal(Object.keys(politica.tablas).length, 0);
   assert.equal(politica.rpcs.includes(RPC_RESUMEN_PLANES), true);
-  assert.equal(Object.hasOwn(ACCESO_DATOS_ADMIN, "usuarios"), false);
+  assert.equal(politica.rpcs.some((nombre) => nombre.includes("usuario")), false);
   const destino = { origen: ORIGEN };
   const cuerpo = JSON.stringify(argumentosResumen(consulta7()));
   assert.equal(
@@ -394,6 +395,7 @@ test("con permiso de planes solo se llama la RPC y una función ausente no inven
 
 test("la migración es de solo lectura, con permisos mínimos, y la página no usa la clave de servicio", () => {
   const sql = fs.readFileSync(path.join(RAIZ, "supabase/admin-planes.sql"), "utf8");
+  afirmarSqlAdministrativo(sql, "supabase/admin-planes.sql");
   const cuerpo = sql.replace(/--.*$/gm, "");
   assert.match(sql, /security definer/);
   assert.match(sql, /set search_path = ''/);

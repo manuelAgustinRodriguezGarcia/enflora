@@ -23,7 +23,7 @@ function mensajeDe(error, reserva) {
 function revalidarCatalogo() {
   revalidatePath("/registros");
   revalidatePath("/registros/productos");
-  revalidatePath("/registros/recetas");
+  revalidatePath("/mezclas");
 }
 
 export async function guardarProductoCultivo(entrada) {
@@ -63,9 +63,20 @@ export async function establecerProductoActivo(id, activo) {
   return { ok: true };
 }
 
+export async function eliminarProductoCultivo(id) {
+  if (!esUuidMezcla(id)) return { error: "No se encontró el producto." };
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error };
+
+  const { error } = await acceso.supabase.rpc("eliminar_producto_cultivo", { p_id: id });
+  if (error) return { error: mensajeDe(error, "No se pudo eliminar el producto.") };
+  revalidarCatalogo();
+  return { ok: true };
+}
+
 export async function guardarRecetaMezcla(entrada) {
   const id = String(entrada?.id || "").trim();
-  if (id && !esUuidMezcla(id)) return { error: "No se encontró la receta." };
+  if (id && !esUuidMezcla(id)) return { error: "No se encontró la mezcla." };
 
   const acceso = await sesion();
   if (acceso.error) return { error: acceso.error };
@@ -86,24 +97,24 @@ export async function guardarRecetaMezcla(entrada) {
     p_id: id || null,
     p_datos: validado.receta,
   });
-  if (error) return { error: mensajeDe(error, "No se pudo guardar la receta.") };
+  if (error) return { error: mensajeDe(error, "No se pudo guardar la mezcla.") };
   revalidarCatalogo();
   return { ok: true, id: data };
 }
 
 export async function duplicarRecetaMezcla(id) {
-  if (!esUuidMezcla(id)) return { error: "No se encontró la receta." };
+  if (!esUuidMezcla(id)) return { error: "No se encontró la mezcla." };
   const acceso = await sesion();
   if (acceso.error) return { error: acceso.error };
 
   const { data, error } = await acceso.supabase.rpc("duplicar_receta_mezcla", { p_id: id });
-  if (error) return { error: mensajeDe(error, "No se pudo duplicar la receta.") };
+  if (error) return { error: mensajeDe(error, "No se pudo duplicar la mezcla.") };
   revalidarCatalogo();
   return { ok: true, id: data };
 }
 
 export async function establecerRecetaActiva(id, activa) {
-  if (!esUuidMezcla(id)) return { error: "No se encontró la receta." };
+  if (!esUuidMezcla(id)) return { error: "No se encontró la mezcla." };
   const acceso = await sesion();
   if (acceso.error) return { error: acceso.error };
 
@@ -111,7 +122,7 @@ export async function establecerRecetaActiva(id, activa) {
     p_id: id,
     p_activa: Boolean(activa),
   });
-  if (error) return { error: mensajeDe(error, "No se pudo actualizar la receta.") };
+  if (error) return { error: mensajeDe(error, "No se pudo actualizar la mezcla.") };
   revalidarCatalogo();
   return { ok: true };
 }

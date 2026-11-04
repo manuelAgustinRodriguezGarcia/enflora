@@ -17,6 +17,9 @@ export function Selector({
   renderOpcion,
   className = "",
   ariaLabel = "",
+  requerido = false,
+  ancla = null,
+  alinear = "end",
 }) {
   const valorActual = valor === undefined || valor === null || valor === "" ? null : valor;
 
@@ -32,6 +35,7 @@ export function Selector({
         onValueChange={(siguiente) => onChange?.(siguiente ?? "")}
         name={nombre}
         id={id}
+        required={requerido}
         disabled={deshabilitado}
       >
         <Select.Trigger
@@ -57,9 +61,10 @@ export function Selector({
         </Select.Trigger>
         <Select.Portal>
           <Select.Positioner
-            className="selector__positioner"
+            className={`selector__positioner${ancla ? " selector__positioner--ancla" : ""}`}
+            anchor={ancla || undefined}
             side="bottom"
-            align="end"
+            align={alinear}
             sideOffset={6}
             alignItemWithTrigger={false}
           >

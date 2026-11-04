@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ilustracionEspacio } from "../lib/imagenes-espacio.js";
 import { rutaFotoFloraChat, rutaFotoFloraChatValida, rutaPortadaUnidad, rutaFotoValida } from "../lib/fotos.js";
+import { indexarFirmasStorage } from "../lib/fotos-servidor.js";
 
 test("ilustraciones de espacio apuntan a las imágenes de cultivo", () => {
   assert.equal(ilustracionEspacio("interior"), "/images/app/interior-cultivos.png");
@@ -28,4 +29,17 @@ test("ruta de foto de Flora queda bajo la carpeta del usuario", () => {
   assert.equal(rutaFotoValida(ruta), true);
   assert.equal(rutaFotoValida(`${usuarioId}/flora/no-es-uuid.webp`), false);
   assert.equal(rutaFotoFloraChatValida(`${usuarioId}/registros/${archivoId}.webp`), false);
+});
+
+test("la firma se indexa por la ruta pedida aunque Storage devuelva otro path", () => {
+  const pedida = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/flora/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp";
+  const mapa = indexarFirmasStorage(
+    [pedida],
+    [{ path: "distinto.webp", signedURL: "https://firmada.example/a" }],
+  );
+  assert.equal(mapa.get(pedida), "https://firmada.example/a");
+  assert.equal(mapa.get("distinto.webp"), "https://firmada.example/a");
+
+  const vacio = indexarFirmasStorage([pedida], [{ path: pedida, error: "not found", signedUrl: "" }]);
+  assert.equal(vacio.has(pedida), false);
 });

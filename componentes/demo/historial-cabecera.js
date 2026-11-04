@@ -12,21 +12,6 @@ const CREDITO_CULTIVO = {
   url: "https://www.instagram.com/astutalaplanta/",
 };
 
-function EtapasActuales({ cultivo }) {
-  const varias = cultivo.etapasActuales?.length > 1;
-  if (varias) {
-    return (
-      <span className="historial-chip historial-chip--oscuro historial-chip--etapas">
-        Varias etapas
-      </span>
-    );
-  }
-  if (cultivo.etapaActual) {
-    return <IndicadorEtapa etapa={cultivo.etapaActual} tamano="compacto" />;
-  }
-  return null;
-}
-
 export function HistorialCabecera({ historial, modoApp = false }) {
   const { cultivo, fechaCorte } = historial;
   const plantas =
@@ -58,7 +43,7 @@ export function HistorialCabecera({ historial, modoApp = false }) {
         <div className="historial-portada__texto">
           <h1 className="historial-portada__titulo">{cultivo.nombre}</h1>
           {cultivo.espacioNombre ? (
-            <p className="historial-portada__espacio">{cultivo.espacioNombre}</p>
+            <p className="historial-portada__espacio">{`en ${cultivo.espacioNombre}`}</p>
           ) : null}
           {mostrarCredito ? (
             <a
@@ -76,7 +61,6 @@ export function HistorialCabecera({ historial, modoApp = false }) {
           <div className="historial-portada__chips">
             <span className="historial-chip historial-chip--oscuro">{textoEstadoCultivo(cultivo.estado)}</span>
             <span className="historial-chip historial-chip--oscuro">{textoDiaCultivo(cultivo.diaActual)}</span>
-            <EtapasActuales cultivo={cultivo} />
           </div>
         </div>
       </div>

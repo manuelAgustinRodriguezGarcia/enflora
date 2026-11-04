@@ -4,9 +4,9 @@ import {
   guardarSuscripcion,
   reemplazarSuscripcion,
   registrarIntento,
-  revocarSuscripcion,
+  revocarSuscripcionPropia,
 } from "@/lib/push/datos";
-import { leerJsonAcotado, respuestaPush } from "@/lib/push/http";
+import { leerJsonAcotado, respuestaPush, solicitudMismoOrigen } from "@/lib/push/http";
 import { LIMITE_ALTAS, endpointPushValido, normalizarSuscripcion } from "@/lib/push/reglas";
 import { claveLimiteIp, ipCliente, salLimite } from "@/lib/push/secreto";
 import { obtenerUsuario } from "@/lib/supabase/servidor";
@@ -35,6 +35,9 @@ function respuestaCupo(limite) {
 }
 
 export async function POST(request) {
+  if (!solicitudMismoOrigen(request.headers)) {
+    return respuestaPush(403, { ok: false, error: "Solicitud inválida" });
+  }
   const supabase = clientePush();
   if (!supabase) return respuestaPush(503, { ok: false, error: "No disponible" });
 
@@ -64,6 +67,9 @@ export async function POST(request) {
 }
 
 export async function DELETE(request) {
+  if (!solicitudMismoOrigen(request.headers)) {
+    return respuestaPush(403, { ok: false, error: "Solicitud inválida" });
+  }
   const supabase = clientePush();
   if (!supabase) return respuestaPush(503, { ok: false, error: "No disponible" });
 
@@ -73,7 +79,8 @@ export async function DELETE(request) {
   const limite = await cupo(request, supabase);
   if (limite.estado !== "ok") return respuestaCupo(limite);
 
-  const revocada = await revocarSuscripcion(supabase, endpoint);
-  if (!revocada) return respuestaPush(503, { ok: false, error: "No se pudo cancelar" });
+  const usuario = await obtenerUsuario();
+  const revocada = await revocarSuscripcionPropia(supabase, endpoint, usuario?.id || null);
+  if (!revocada.ok) return respuestaPush(404, { ok: false, error: "No encontrada" });
   return respuestaPush(200, { ok: true });
 }

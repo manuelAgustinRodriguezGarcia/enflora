@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { eliminarPlanta } from "@/app/espacios/[id]/acciones";
+import { eliminarPlanta } from "@/app/cultivos/[id]/acciones";
 import { Boton } from "@/componentes/boton";
 import { IconoBasura, IconoEliminarPlanta } from "@/componentes/iconos-ui";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";

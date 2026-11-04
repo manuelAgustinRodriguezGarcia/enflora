@@ -11,8 +11,8 @@ import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { LIMITES_FLORA_CHATS } from "@/lib/flora-chats-guardados";
-import { AVISO_IMAGEN_CHAT_NO_GUARDADA } from "@/lib/flora-imagen-chat";
-import { ImagenMensajeFlora } from "@/componentes/flora/imagen-mensaje-flora";
+import { adjuntosUiDesdeGuardado } from "@/lib/flora-mensajes-cliente-desde-guardado";
+import { AdjuntoMensajeChat } from "@/componentes/flora/imagen-mensaje-flora";
 
 function formatearFecha(iso) {
   try {
@@ -39,34 +39,6 @@ function textoBusquedaItem(item) {
   return [item.titulo, item.pregunta, item.extracto, item.respuesta].filter(Boolean).join(" ").toLowerCase();
 }
 
-function AdjuntoMensajeGuardado({ adj }) {
-  if (adj.tipo === "transitoria") {
-    return (
-      <p className="flora-soluciones-detalle__adjunto-transitorio" role="note">
-        {AVISO_IMAGEN_CHAT_NO_GUARDADA}
-      </p>
-    );
-  }
-  if (adj.tipo === "foto_flora" || adj.tipo === "foto_enflora") {
-    if (adj.vistaUrl) {
-      return (
-        <figure className="flora-soluciones-detalle__adjunto-foto">
-          <ImagenMensajeFlora key={adj.vistaUrl} src={adj.vistaUrl} />
-          {adj.etiqueta ? <figcaption>{adj.etiqueta}</figcaption> : null}
-        </figure>
-      );
-    }
-    return (
-      <p className="flora-soluciones-detalle__adjunto-transitorio" role="note">
-        {adj.tipo === "foto_flora"
-          ? "No se pudo mostrar la fotografía de esta conversación."
-          : "Foto de tu galería ENFLORA (no disponible o sin acceso)."}
-      </p>
-    );
-  }
-  return null;
-}
-
 export function SolucionesVista({ items = [], paginaInicial = 0 }) {
   const [consulta, setConsulta] = useState("");
   const [pagina, setPagina] = useState(paginaInicial);
@@ -88,6 +60,7 @@ export function SolucionesVista({ items = [], paginaInicial = 0 }) {
   return (
     <div className="flora-soluciones">
       <header className="flora-soluciones__cabecera">
+        <EnlaceVolver href="/flora" etiqueta="Volver al chat" />
         <h1 id="soluciones-titulo" className="flora-soluciones__titulo">
           Chats guardados
         </h1>
@@ -123,14 +96,15 @@ export function SolucionesVista({ items = [], paginaInicial = 0 }) {
               <li key={`${s.tipo}-${s.id}`}>
                 <Link href={`/flora/soluciones/${s.id}`} className="flora-soluciones__item">
                   <span className="flora-soluciones__item-titulo">{s.titulo}</span>
-                  <span className="flora-soluciones__item-pregunta">{s.pregunta}</span>
-                  <span className="flora-soluciones__item-meta">
-                    {s.cantidad_mensajes} mensajes
-                    {s.tipo === "solucion" ? " · solución anterior" : ""}
+                  <span className="flora-soluciones__item-pie">
+                    <span className="flora-soluciones__item-meta">
+                      {textoCantidadMensajes(s.cantidad_mensajes)}
+                      {s.tipo === "solucion" ? " · solución anterior" : ""}
+                    </span>
+                    <time className="flora-soluciones__item-fecha" dateTime={s.fecha}>
+                      {formatearFecha(s.fecha)}
+                    </time>
                   </span>
-                  <time className="flora-soluciones__item-fecha" dateTime={s.fecha}>
-                    {formatearFecha(s.fecha)}
-                  </time>
                 </Link>
               </li>
             ))}
@@ -401,9 +375,9 @@ export function ChatDetalleVista({ chat }) {
                 </time>
               ) : null}
             </h2>
-            {Array.isArray(m.adjuntos)
-              ? m.adjuntos.map((adj, j) => <AdjuntoMensajeGuardado key={j} adj={adj} />)
-              : null}
+            {(adjuntosUiDesdeGuardado(m.adjuntos) || []).map((adj, j) => (
+              <AdjuntoMensajeChat key={`${m.fecha || i}-adj-${j}`} adjunto={adj} />
+            ))}
             {m.texto ? (
               m.rol === "flora" ? (
                 <MensajeFloraMarkdown texto={m.texto} animar={false} />

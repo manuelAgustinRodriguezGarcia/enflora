@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ultimoFalloRegistroWorker } from "@/lib/push/fallo-registro";
 import {
   ESPERA_RECEPCION_MS,
+  clasificarFalloSuscripcion,
   clasificarSoporte,
   claveAplicacionABytes,
+  formatoClavePublicaVapid,
+  huellaClavePublica,
   segundosReintento,
   textoEspera,
   versionIosDesdeAgente,
@@ -19,16 +23,20 @@ export const TEXTOS_PUSH = {
   denegado: "El navegador bloqueó los avisos. Habilitalos en la configuración del sitio y volvé a intentar.",
   "no-compatible": "Este navegador no puede recibir notificaciones.",
   "requiere-instalacion":
-    "En iPhone, los avisos solo funcionan si Enflora está instalada en la pantalla de inicio. Seguí los pasos y después abrila desde ahí.",
+    "En iPhone o iPad, los avisos solo funcionan si Enflora está instalada en la pantalla de inicio. Seguí los pasos y después abrila desde ahí.",
   limite: "Hiciste varios intentos seguidos. Esperá unos minutos y probá de nuevo.",
   error: "No pudimos actualizar los avisos. Probá de nuevo en unos minutos.",
+  configuracion: "Falta la configuración de avisos en el servidor. Desde acá no se pueden activar.",
+  pendiente: "Estamos registrando este dispositivo.",
+  "sin-vincular": "Este dispositivo permite avisos, pero no está vinculado a tu cuenta.",
 };
 
 export const TEXTOS_PRUEBA = {
   enviando: "Enviando un aviso de prueba a este dispositivo.",
   aceptado:
     "El servicio de notificaciones aceptó el aviso. Esperando que este dispositivo confirme que lo recibió.",
-  recibido: "El aviso llegó a este dispositivo.",
+  recibido:
+    "Este dispositivo recibió el aviso. Si Enflora está abierta, se muestra adentro. Si está en segundo plano o cerrada, aparece en el sistema. Que el servidor lo haya aceptado no alcanza: esta confirmación sale del dispositivo.",
   sinConfirmar:
     "El servicio de notificaciones aceptó el aviso, pero este dispositivo todavía no confirmó que lo recibió. Si no aparece en unos minutos, revisá que el sistema permita las notificaciones del navegador.",
   inactiva: "Esta suscripción ya no está activa en Enflora. Volvé a activar los avisos.",
@@ -79,7 +87,7 @@ async function esperaDe(respuesta) {
   return Number(datos?.reintentarEn) || null;
 }
 
-async function activaEnServidor(endpoint) {
+async function estadoEnServidor(endpoint) {
   const respuesta = await fetch("/api/push/estado", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -89,31 +97,190 @@ async function activaEnServidor(endpoint) {
   if (!respuesta.ok) return null;
   const datos = await respuesta.json();
   if (typeof datos?.activa !== "boolean") return null;
-  return datos.activa;
+  return {
+    activa: datos.activa,
+    vinculada: datos.vinculada === true,
+    sesion: datos.sesion === true,
+  };
+}
+
+async function estadoWorker() {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return "sin-soporte";
+  const registro = await navigator.serviceWorker.getRegistration("/");
+  if (!registro) return "ausente";
+  if (registro.active) return "activo";
+  if (registro.installing) return "instalando";
+  if (registro.waiting) return "esperando";
+  return "ausente";
+}
+
+function conTiempo(promesa, ms, paso) {
+  return new Promise((resolver, rechazar) => {
+    const reloj = setTimeout(() => {
+      const error = new Error("La operación no respondió a tiempo.");
+      error.name = "TimeoutError";
+      error.paso = paso;
+      rechazar(error);
+    }, ms);
+    promesa.then(
+      (valor) => {
+        clearTimeout(reloj);
+        resolver(valor);
+      },
+      (error) => {
+        clearTimeout(reloj);
+        rechazar(error);
+      },
+    );
+  });
+}
+
+function ambitoDe(registro) {
+  if (!registro?.scope) return null;
+  try {
+    return new URL(registro.scope).pathname;
+  } catch {
+    return null;
+  }
+}
+
+async function compararVapid() {
+  const local = await huellaClavePublica(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "");
+  const respuesta = await fetch("/api/push/vapid", { cache: "no-store" });
+  if (!respuesta.ok) return "sin-confirmar";
+  const datos = await respuesta.json().catch(() => null);
+  if (!datos?.par) return "servidor-invalida";
+  if (!local || typeof datos.huella !== "string" || datos.huella !== local) return "difiere";
+  return "coincide";
+}
+
+async function prepararRegistro() {
+  let registro;
+  try {
+    registro = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  } catch (error) {
+    error.paso = "worker";
+    throw error;
+  }
+
+  const limite = Date.now() + 2000;
+  while (!registro.active && !registro.installing && !registro.waiting && Date.now() < limite) {
+    await new Promise((resolver) => {
+      setTimeout(resolver, 50);
+    });
+  }
+
+  if (registro.active) return registro;
+  if (registro.waiting) registro.waiting.postMessage({ tipo: "enflora-activar" });
+
+  const worker = registro.installing || registro.waiting;
+  if (!worker) {
+    const error = new Error("El service worker no llegó a activarse.");
+    error.name = "InvalidStateError";
+    error.paso = "ready";
+    throw error;
+  }
+
+  await conTiempo(
+    new Promise((resolver, rechazar) => {
+      const resolverSiActivo = () => {
+        if (registro.active) resolver();
+      };
+      resolverSiActivo();
+      worker.addEventListener("statechange", () => {
+        if (worker.state === "installed" && !registro.active) worker.postMessage({ tipo: "enflora-activar" });
+        if (worker.state === "activated" || registro.active) resolver();
+        else if (worker.state === "redundant" && registro.active) resolver();
+        else if (worker.state === "redundant" && !registro.active) {
+          const error = new Error("El service worker quedó inactivo.");
+          error.name = "InvalidStateError";
+          error.paso = "ready";
+          rechazar(error);
+        }
+      });
+    }),
+    15000,
+    "ready",
+  );
+
+  if (!registro.active) {
+    const error = new Error("El service worker no llegó a activarse.");
+    error.name = "InvalidStateError";
+    error.paso = "ready";
+    throw error;
+  }
+  return registro;
+}
+
+function permisoActual() {
+  if (typeof window === "undefined" || !("Notification" in window)) return "no-disponible";
+  return Notification.permission;
+}
+
+let vinculoEnCurso = null;
+
+function asegurarVinculo(suscripcion, origen, plataforma) {
+  if (!vinculoEnCurso) {
+    vinculoEnCurso = guardarEnServidor(suscripcion, origen, plataforma, null).finally(() => {
+      vinculoEnCurso = null;
+    });
+  }
+  return vinculoEnCurso;
 }
 
 async function guardarEnServidor(suscripcion, origen, plataforma, reemplaza) {
   const llaveP256 = suscripcion.getKey("p256dh");
   const llaveAuth = suscripcion.getKey("auth");
-  if (!llaveP256 || !llaveAuth) return { estado: "error" };
+  if (!llaveP256 || !llaveAuth) {
+    return {
+      estado: "error",
+      registroServidor: "no-intentado",
+      persistencia: "error",
+      fallo: clasificarFalloSuscripcion(
+        Object.assign(new Error("La suscripción no incluye las claves de cifrado."), { name: "InvalidStateError" }),
+        "suscripcion",
+      ),
+    };
+  }
 
-  const respuesta = await fetch("/api/push/suscripcion", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      endpoint: suscripcion.endpoint,
-      claves: {
-        p256dh: bytesABase64Url(llaveP256),
-        auth: bytesABase64Url(llaveAuth),
-      },
-      origen,
-      plataforma,
-      expiraEn: suscripcion.expirationTime ? new Date(suscripcion.expirationTime).toISOString() : null,
-      reemplaza: reemplaza || undefined,
-    }),
-  });
-  if (respuesta.status === 429) return { estado: "limite", espera: await esperaDe(respuesta) };
-  return { estado: respuesta.ok ? "activado" : "error" };
+  let respuesta;
+  try {
+    respuesta = await fetch("/api/push/suscripcion", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        endpoint: suscripcion.endpoint,
+        claves: {
+          p256dh: bytesABase64Url(llaveP256),
+          auth: bytesABase64Url(llaveAuth),
+        },
+        origen,
+        plataforma,
+        expiraEn: suscripcion.expirationTime ? new Date(suscripcion.expirationTime).toISOString() : null,
+        reemplaza: reemplaza || undefined,
+      }),
+    });
+  } catch (error) {
+    return {
+      estado: "error",
+      registroServidor: "sin-respuesta",
+      persistencia: "no-intentada",
+      fallo: clasificarFalloSuscripcion(error, "servidor"),
+    };
+  }
+
+  if (respuesta.status === 429) {
+    return {
+      estado: "limite",
+      espera: await esperaDe(respuesta),
+      registroServidor: "rechazado",
+      persistencia: "no-intentada",
+    };
+  }
+  if (!respuesta.ok) {
+    return { estado: "error", registroServidor: "rechazado", persistencia: "error" };
+  }
+  return { estado: "activado", registroServidor: "aceptado", persistencia: "guardada" };
 }
 
 let renovacionEnCurso = null;
@@ -123,15 +290,24 @@ function renovarSuscripcion(registro, previa, bytes, origen, plataforma) {
     renovacionEnCurso = (async () => {
       const anterior = previa?.endpoint || null;
       if (previa) await previa.unsubscribe().catch(() => false);
-      const nueva = await registro.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: bytes,
-      });
+      const nueva = await conTiempo(
+        registro.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: bytes.slice(),
+        }),
+        20000,
+        "suscripcion",
+      );
       const guardada = await guardarEnServidor(nueva, origen, plataforma, anterior);
       if (guardada.estado !== "activado") await nueva.unsubscribe().catch(() => false);
       return guardada;
     })()
-      .catch(() => ({ estado: "error" }))
+      .catch((error) => ({
+        estado: "error",
+        registroServidor: "no-intentado",
+        persistencia: "no-intentada",
+        fallo: clasificarFalloSuscripcion(error, "suscripcion"),
+      }))
       .finally(() => {
         renovacionEnCurso = null;
       });
@@ -202,7 +378,52 @@ export function useNotificacionesPush(origen) {
   const [ocupado, setOcupado] = useState(false);
   const [espera, setEspera] = useState(null);
   const [prueba, setPrueba] = useState(null);
+  const [diagnostico, setDiagnostico] = useState({
+    soporte: "cargando",
+    permiso: "default",
+    serviceWorker: "desconocido",
+    suscripcion: "ausente",
+    registro: "desconocido",
+    instalada: false,
+    error: null,
+    tecnico: null,
+  });
   const nombrePlataforma = plataformaNombre(plataforma);
+  const vapidEnvioRef = useRef("sin-confirmar");
+
+  const anotar = useCallback(
+    (siguiente, extra = {}) => {
+      if (extra.vapidEnvio) vapidEnvioRef.current = extra.vapidEnvio;
+      const fallo = extra.fallo || null;
+      setEstado(siguiente);
+      setDiagnostico({
+        soporte: siguiente,
+        permiso: permisoActual(),
+        serviceWorker: extra.sw || "desconocido",
+        suscripcion: extra.suscripcion || "ausente",
+        registro: extra.registro || "desconocido",
+        instalada,
+        error: extra.error || null,
+        tecnico: {
+          contextoSeguro: typeof window !== "undefined" ? window.isSecureContext === true : null,
+          pushManager: typeof window !== "undefined" && "PushManager" in window,
+          permiso: permisoActual(),
+          scope: extra.scope || null,
+          worker: extra.sw || "desconocido",
+          suscripcion: extra.suscripcion === "activa",
+          vapid: formatoClavePublicaVapid(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""),
+          vapidEnvio: extra.vapidEnvio || vapidEnvioRef.current,
+          registroServidor: extra.registroServidor || "no-intentado",
+          persistencia: extra.persistencia || "no-intentada",
+          paso: fallo?.paso || null,
+          errorNombre: fallo?.nombre || null,
+          errorMensaje: fallo?.mensaje || null,
+        },
+      });
+      return siguiente;
+    },
+    [instalada],
+  );
 
   const soporteActual = useCallback(() => {
     if (typeof window === "undefined") return "cargando";
@@ -220,33 +441,92 @@ export function useNotificacionesPush(origen) {
   const recargar = useCallback(
     async (servidor = true) => {
       const soporte = soporteActual();
+      const sw = await estadoWorker().catch(() => "desconocido");
+      const vapidEnvio = await compararVapid().catch(() => "sin-confirmar");
+      const registro = await registroExistente().catch(() => null);
+      const scope = ambitoDe(registro);
+      const falloRegistro = !registro && sw !== "activo" ? ultimoFalloRegistroWorker() : null;
+      if (!claveActual() && soporte !== "no-compatible" && soporte !== "requiere-instalacion" && soporte !== "denegado") {
+        return anotar("configuracion", { sw, scope, vapidEnvio, error: "configuracion" });
+      }
       if (soporte !== "con-permiso") {
-        setEstado(soporte);
-        return soporte;
+        return anotar(soporte, { sw, scope, vapidEnvio, fallo: falloRegistro, error: falloRegistro?.codigo || null });
       }
       try {
-        const registro = await registroExistente();
         const suscripcion = registro ? await registro.pushManager.getSubscription() : null;
         const bytes = claveActual();
         if (suscripcion && bytes && !mismaClave(suscripcion.options?.applicationServerKey, bytes)) {
           const renovada = await renovarSuscripcion(registro, suscripcion, bytes, origen, nombrePlataforma);
           const siguiente = renovada.estado === "activado" ? "activado" : "desactivado";
-          setEstado(siguiente);
-          return siguiente;
+          return anotar(siguiente, {
+            sw,
+            scope,
+            vapidEnvio,
+            suscripcion: siguiente === "activado" ? "activa" : "ausente",
+            registro: siguiente === "activado" ? "vinculada" : "desconocido",
+            error: renovada.fallo?.codigo || (renovada.estado === "error" ? "temporal" : null),
+            fallo: renovada.fallo || null,
+            registroServidor: renovada.registroServidor,
+            persistencia: renovada.persistencia,
+          });
         }
         let siguiente = suscripcion ? "activado" : "desactivado";
+        let registroCuenta = "desconocido";
+        let error = falloRegistro?.codigo || null;
+        let fallo = falloRegistro;
+        let registroServidor = "no-intentado";
+        let persistencia = "no-intentada";
         if (suscripcion && servidor) {
-          const activa = await activaEnServidor(suscripcion.endpoint).catch(() => null);
-          if (activa === false) siguiente = "desactivado";
+          const info = await estadoEnServidor(suscripcion.endpoint).catch(() => null);
+          if (!info) {
+            registroCuenta = "desconocido";
+            error = "temporal";
+            registroServidor = "sin-respuesta";
+          } else if (info.activa === false) {
+            siguiente = "desactivado";
+            registroCuenta = "inactiva";
+            registroServidor = "aceptado";
+            persistencia = "inactiva";
+            error = null;
+            fallo = null;
+          } else if (info.sesion && !info.vinculada) {
+            const guardada = await asegurarVinculo(suscripcion, origen, nombrePlataforma);
+            registroServidor = guardada.registroServidor || "no-intentado";
+            persistencia = guardada.persistencia || "no-intentada";
+            fallo = guardada.fallo || null;
+            if (guardada.estado === "activado") {
+              registroCuenta = "vinculada";
+              error = null;
+            } else {
+              siguiente = "sin-vincular";
+              registroCuenta = "sin-vincular";
+              error = guardada.fallo?.codigo || (guardada.estado === "limite" ? "limite" : "temporal");
+            }
+          } else {
+            registroCuenta = info.vinculada ? "vinculada" : "sin-vincular";
+            registroServidor = "aceptado";
+            persistencia = "guardada";
+            error = null;
+            fallo = null;
+          }
         }
-        setEstado(siguiente);
-        return siguiente;
-      } catch {
-        setEstado("error");
-        return "error";
+        return anotar(siguiente, {
+          sw,
+          scope,
+          vapidEnvio,
+          suscripcion: suscripcion ? "activa" : "ausente",
+          registro: registroCuenta,
+          error,
+          fallo,
+          registroServidor,
+          persistencia,
+        });
+      } catch (errorCapturado) {
+        const fallo = clasificarFalloSuscripcion(errorCapturado, "suscripcion");
+        return anotar("error", { sw, scope, vapidEnvio, error: fallo.codigo, fallo });
       }
     },
-    [nombrePlataforma, origen, soporteActual],
+    [anotar, nombrePlataforma, origen, soporteActual],
   );
 
   useEffect(() => {
@@ -257,57 +537,79 @@ export function useNotificacionesPush(origen) {
   const activar = useCallback(async () => {
     const soporte = soporteActual();
     if (soporte === "requiere-instalacion" || soporte === "no-compatible" || soporte === "denegado") {
-      setEstado(soporte);
-      return soporte;
+      return anotar(soporte, { sw: await estadoWorker().catch(() => "desconocido") });
     }
+    if (!claveActual()) return anotar("configuracion", { error: "configuracion" });
 
     setOcupado(true);
+    setEstado("pendiente");
+    let paso = "permiso";
+    let scope = null;
     try {
-      const permiso = await Notification.requestPermission();
-      if (permiso !== "granted") {
-        const siguiente = permiso === "denied" ? "denegado" : "disponible";
-        setEstado(siguiente);
-        return siguiente;
+      if (Notification.permission !== "granted") {
+        const permiso = await conTiempo(Notification.requestPermission(), 15000, "permiso");
+        if (permiso !== "granted") {
+          const siguiente = permiso === "denied" ? "denegado" : "disponible";
+          return anotar(siguiente, { sw: await estadoWorker().catch(() => "desconocido") });
+        }
       }
 
       const bytes = claveActual();
-      if (!bytes) {
-        setEstado("error");
-        return "error";
-      }
+      if (!bytes) return anotar("configuracion", { error: "configuracion" });
 
-      const registro = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      await navigator.serviceWorker.ready;
+      paso = "worker";
+      const registro = await prepararRegistro();
+      scope = ambitoDe(registro);
+      paso = "suscripcion";
       const previa = await registro.pushManager.getSubscription();
       let resultado;
       if (previa) {
         const vigente = mismaClave(previa.options?.applicationServerKey, bytes);
-        const activa = vigente ? await activaEnServidor(previa.endpoint).catch(() => null) : false;
-        if (vigente && activa === true) resultado = { estado: "activado" };
-        else if (vigente && activa === null) {
-          resultado = await guardarEnServidor(previa, origen, nombrePlataforma, null);
-        } else {
-          resultado = await renovarSuscripcion(registro, previa, bytes, origen, nombrePlataforma);
-        }
+        const info = vigente ? await estadoEnServidor(previa.endpoint).catch(() => null) : null;
+        const yaLista = info?.activa === true && (info.vinculada || !info.sesion);
+        if (vigente && yaLista) {
+          resultado = { estado: "activado", registroServidor: "aceptado", persistencia: "guardada" };
+        } else if (vigente) resultado = await guardarEnServidor(previa, origen, nombrePlataforma, null);
+        else resultado = await renovarSuscripcion(registro, previa, bytes, origen, nombrePlataforma);
       } else {
-        const nueva = await registro.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: bytes,
-        });
+        const nueva = await conTiempo(
+          registro.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: bytes.slice(),
+          }),
+          20000,
+          "suscripcion",
+        );
+        paso = "servidor";
         resultado = await guardarEnServidor(nueva, origen, nombrePlataforma, null);
         if (resultado.estado !== "activado") await nueva.unsubscribe().catch(() => false);
       }
 
       setEspera(resultado.estado === "limite" ? resultado.espera || null : null);
-      setEstado(resultado.estado);
-      return resultado.estado;
-    } catch {
-      setEstado("error");
-      return "error";
+      return anotar(resultado.estado, {
+        sw: "activo",
+        scope,
+        suscripcion: resultado.estado === "activado" ? "activa" : "ausente",
+        registro: resultado.estado === "activado" ? "vinculada" : "desconocido",
+        error: resultado.fallo?.codigo || (resultado.estado === "error" ? "temporal" : resultado.estado === "limite" ? "limite" : null),
+        fallo: resultado.fallo || null,
+        registroServidor: resultado.registroServidor,
+        persistencia: resultado.persistencia,
+      });
+    } catch (errorCapturado) {
+      const fallo = clasificarFalloSuscripcion(errorCapturado, paso);
+      return anotar("error", {
+        sw: await estadoWorker().catch(() => "desconocido"),
+        scope,
+        error: fallo.codigo,
+        fallo,
+        registroServidor: "no-intentado",
+        persistencia: "no-intentada",
+      });
     } finally {
       setOcupado(false);
     }
-  }, [nombrePlataforma, origen, soporteActual]);
+  }, [anotar, nombrePlataforma, origen, soporteActual]);
 
   const desactivar = useCallback(async () => {
     setOcupado(true);
@@ -321,29 +623,27 @@ export function useNotificacionesPush(origen) {
         });
         if (respuesta.status === 429) {
           setEspera(await esperaDe(respuesta));
-          setEstado("limite");
-          return "limite";
+          return anotar("limite", { error: "limite" });
         }
-        if (!respuesta.ok) {
-          setEstado("error");
-          return "error";
-        }
+        if (!respuesta.ok) return anotar("error", { error: "temporal" });
         await suscripcion.unsubscribe();
       }
       const soporte = soporteActual();
       const siguiente = soporte === "con-permiso" ? "desactivado" : soporte;
       setPrueba(null);
-      setEstado(siguiente);
-      return siguiente;
+      return anotar(siguiente, { sw: await estadoWorker().catch(() => "desconocido"), suscripcion: "ausente", registro: "inactiva" });
     } catch {
-      setEstado("error");
-      return "error";
+      return anotar("error", { error: "temporal" });
     } finally {
       setOcupado(false);
     }
-  }, [soporteActual]);
+  }, [anotar, soporteActual]);
 
   const probar = useCallback(async () => {
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+      setPrueba({ fase: "error", texto: TEXTOS_PUSH.denegado });
+      return "denegado";
+    }
     setOcupado(true);
     setPrueba({ fase: "enviando", texto: TEXTOS_PRUEBA.enviando });
     const escucha = escucharRecepciones();
@@ -423,5 +723,6 @@ export function useNotificacionesPush(origen) {
     recargar,
     resultadoPrueba: prueba?.texto || "",
     fasePrueba: prueba?.fase || null,
+    diagnostico,
   };
 }

@@ -46,12 +46,16 @@ export function MensajeFloraMarkdown({
   );
   const [terminado, setTerminado] = useState(() => !animar || reducido);
   const cancelarRef = useRef(null);
+  const onAnimacionCompletaRef = useRef(onAnimacionCompleta);
+  const onProgresoAnimacionRef = useRef(onProgresoAnimacion);
+  onAnimacionCompletaRef.current = onAnimacionCompleta;
+  onProgresoAnimacionRef.current = onProgresoAnimacion;
 
   const finalizar = useCallback(() => {
     setPalabrasVisibles(totalPalabras);
     setTerminado(true);
-    onAnimacionCompleta?.();
-  }, [onAnimacionCompleta, totalPalabras]);
+    onAnimacionCompletaRef.current?.();
+  }, [totalPalabras]);
 
   useEffect(() => {
     cancelarRef.current?.();
@@ -74,7 +78,7 @@ export function MensajeFloraMarkdown({
       const progreso = duracion <= 0 ? 1 : Math.min(1, (ahora - inicio) / duracion);
       const objetivo = Math.max(1, Math.ceil(progreso * totalPalabras));
       setPalabrasVisibles(objetivo);
-      onProgresoAnimacion?.();
+      onProgresoAnimacionRef.current?.();
 
       if (progreso >= 1) {
         finalizar();
@@ -90,7 +94,7 @@ export function MensajeFloraMarkdown({
       cancelAnimationFrame(frame);
       cancelarRef.current = null;
     };
-  }, [animar, reducido, texto, totalPalabras, finalizar, onProgresoAnimacion]);
+  }, [animar, reducido, texto, totalPalabras, finalizar]);
 
   const saltar = useCallback(() => {
     if (terminado) return;

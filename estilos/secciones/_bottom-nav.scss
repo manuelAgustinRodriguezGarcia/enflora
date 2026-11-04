@@ -443,7 +443,7 @@ body:has(.bottom-nav:not(.demo-nav)) .pagina {
 }
 
 body:has(.bottom-nav:not(.demo-nav))
-  .pagina:not(:has(.flora-chat-app-pagina)):not(:has(.flora-soluciones-pagina)):not(:has(.flora-soluciones-detalle)) {
+  .pagina:not(:has(.flora-chat-app-pagina)):not(:has(.flora-soluciones-pagina)):not(:has(.flora-soluciones-detalle)):not(:has(.galeria-flora)) {
   padding-inline: var(--app-padding-inline);
 }
 

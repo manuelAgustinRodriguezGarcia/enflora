@@ -32,8 +32,8 @@ test("chat guardado no cuenta como pendiente de modal", () => {
 });
 
 test("detecta salida desde /flora", () => {
-  assert.equal(esNavegacionSalidaChatFlora("/flora", "/espacios"), true);
+  assert.equal(esNavegacionSalidaChatFlora("/flora", "/cultivos"), true);
   assert.equal(esNavegacionSalidaChatFlora("/flora", "/flora/soluciones"), true);
   assert.equal(esNavegacionSalidaChatFlora("/flora", "/flora"), false);
-  assert.equal(esNavegacionSalidaChatFlora("/registros", "/espacios"), false);
+  assert.equal(esNavegacionSalidaChatFlora("/registros", "/cultivos"), false);
 });

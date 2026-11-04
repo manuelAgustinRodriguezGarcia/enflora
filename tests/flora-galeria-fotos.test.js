@@ -82,6 +82,16 @@ test("cursor keyset cita timestamps ISO para PostgREST", () => {
   });
   assert.match(cadena, /registro\.fecha_evento\.lt\."2026-01-15T03:00:00\.000Z"/);
   assert.match(cadena, /id\.lt\."550e8400-e29b-41d4-8716-446655440000"/);
+  assert.equal(
+    cadenaFiltroCursorKeysetGaleria({
+      fecha_evento: "2026-09-26T15:00:01+00:00",
+      id: "550e8400-e29b-41d4-8716-446655440000",
+    }),
+    cadenaFiltroCursorKeysetGaleria({
+      fecha_evento: "2026-09-26T15:00:01.000Z",
+      id: "550e8400-e29b-41d4-8716-446655440000",
+    }),
+  );
 });
 
 test("cursor de galería exige fecha e id válidos", () => {

@@ -91,12 +91,12 @@ async function sesion() {
 function revalidarContexto(datos) {
   revalidatePath("/registros");
   revalidatePath("/registros/historial");
-  revalidatePath("/espacios");
+  revalidatePath("/cultivos");
   if (datos?.espacio_id) {
-    revalidatePath(`/espacios/${datos.espacio_id}`);
+    revalidatePath(`/cultivos/${datos.espacio_id}`);
   }
   if (datos?.espacio_id && datos?.unidad_cultivo_id) {
-    revalidatePath(`/espacios/${datos.espacio_id}/unidades/${datos.unidad_cultivo_id}`);
+    revalidatePath(`/cultivos/${datos.espacio_id}/unidades/${datos.unidad_cultivo_id}`);
   }
 }
 
@@ -473,8 +473,8 @@ export async function agendarTarea(_estado, formulario) {
 
   revalidatePath("/registros");
   if (unidad?.espacio_id) {
-    revalidatePath(`/espacios/${unidad.espacio_id}`);
-    revalidatePath(`/espacios/${unidad.espacio_id}/unidades/${unidadId}`);
+    revalidatePath(`/cultivos/${unidad.espacio_id}`);
+    revalidatePath(`/cultivos/${unidad.espacio_id}/unidades/${unidadId}`);
   }
 
   return {

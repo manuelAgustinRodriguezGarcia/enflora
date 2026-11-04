@@ -6,7 +6,7 @@ import { Camera, Images, LoaderCircle, Trash2 } from "lucide-react";
 import {
   guardarPortadaUnidad,
   quitarPortadaUnidad,
-} from "@/app/espacios/[id]/acciones";
+} from "@/app/cultivos/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";

@@ -49,12 +49,22 @@ language sql
 immutable
 as $$
   select regexp_replace(
-    translate(
-      lower(trim(coalesce(valor, ''))),
-      'áéíóúüñàèìòùâêîôûäëïöÿ',
-      'aeiouunaeiouaeiouaeioy'
+    regexp_replace(
+      regexp_replace(
+        translate(
+          lower(trim(coalesce(valor, ''))),
+          'áéíóúüñàèìòùâêîôûäëïöÿ',
+          'aeiouunaeiouaeiouaeioy'
+        ),
+        '[^a-z0-9_.]',
+        '',
+        'g'
+      ),
+      '\.{2,}',
+      '.',
+      'g'
     ),
-    '[^a-z0-9_]',
+    '^\.+|\.+$',
     '',
     'g'
   );
@@ -252,9 +262,9 @@ begin
 
   if exists (
     select 1
-    from public.perfiles
-    where nombre_usuario = usuario_limpio
-      and id <> usuario
+    from public.perfiles as otro
+    where otro.nombre_usuario = usuario_limpio
+      and otro.id <> usuario
   ) then
     raise exception 'Ese nombre de usuario no está disponible.';
   end if;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { crearPlantas } from "@/app/espacios/[id]/acciones";
+import { crearPlantas } from "@/app/cultivos/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContadorCantidad } from "@/componentes/contador-cantidad";

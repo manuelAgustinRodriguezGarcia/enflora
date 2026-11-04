@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { ListChecks } from "lucide-react";
 import { Boton } from "@/componentes/boton";
+import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { SelectorFecha } from "@/componentes/selector-fecha";
 import { Aparecer } from "@/componentes/aparecer";
 import { fechaHoy } from "@/lib/etapas";
@@ -128,6 +129,7 @@ export function SeccionTareaProgramada({
           disabled={sinTexto}
           onClick={() => enviar(fecha)}
         >
+          <IconoNavegacion clave="calendario" />
           Agendar tarea
         </Boton>
       </div>

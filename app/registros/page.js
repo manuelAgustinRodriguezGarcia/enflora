@@ -9,6 +9,8 @@ import {
   seguimientoDesdeLectura,
 } from "@/lib/cargar-seguimiento";
 import { esUuid } from "@/lib/historial-registros";
+import { accionDeTarea, plantasDesdeConsulta } from "@/lib/calendario/modelo";
+import { accionRegistroDesdeConsulta } from "@/lib/inicio/resumen";
 import { cargarCatalogoMezclas } from "@/lib/mezclas/cargar";
 import { rangoDiaLocal } from "@/lib/registros";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
@@ -18,6 +20,9 @@ import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servid
 export default async function PaginaRegistros({ searchParams }) {
   const parametros = await searchParams;
   const registroInicialId = esUuid(parametros?.editar) ? String(parametros.editar).trim() : "";
+  const unidadPedida = esUuid(parametros?.unidad) ? String(parametros.unidad).trim() : "";
+  const accionPedida = accionRegistroDesdeConsulta(parametros?.accion) || accionDeTarea(parametros?.accion);
+  const plantasPedidas = plantasDesdeConsulta(parametros?.plantas);
   if (!configuracionLista()) {
     return (
       <section className="registros">
@@ -132,7 +137,7 @@ export default async function PaginaRegistros({ searchParams }) {
         {unidades.length === 0 ? (
           <div className="vacio">
             <p>Necesitás al menos una unidad de cultivo para registrar.</p>
-            <EnlaceBoton href="/espacios">Ir a espacios</EnlaceBoton>
+            <EnlaceBoton href="/cultivos">Ir a mis cultivos</EnlaceBoton>
           </div>
         ) : (
           <FormularioCrearRegistro
@@ -147,6 +152,9 @@ export default async function PaginaRegistros({ searchParams }) {
             registroInicialId={registroInicialId}
             usuarioId={user.id}
             catalogoMezclas={catalogoMezclas}
+            unidadInicialId={unidades.some((item) => item.id === unidadPedida) ? unidadPedida : ""}
+            plantaIdsIniciales={plantasPedidas}
+            accionInicial={accionPedida}
           />
         )}
       </section>

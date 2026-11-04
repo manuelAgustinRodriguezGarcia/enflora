@@ -13,6 +13,9 @@ export async function resolve(specifier, context, nextResolve) {
   if (specifier === "next/cache") {
     return nextResolve(pathToFileURL(path.join(raiz, "tests/stubs/next-cache.js")).href, context);
   }
+  if (specifier === "next/navigation") {
+    return nextResolve(pathToFileURL(path.join(raiz, "tests/stubs/next-navigation.js")).href, context);
+  }
   if (specifier.startsWith("@/")) {
     let relativo = specifier.slice(2);
     if (!path.extname(relativo)) relativo += ".js";

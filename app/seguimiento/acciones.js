@@ -38,7 +38,7 @@ function mensajeDe(error, reserva) {
 function revalidar() {
   revalidatePath("/perfil");
   revalidatePath("/onboarding");
-  revalidatePath("/espacios");
+  revalidatePath("/cultivos");
 }
 
 async function sesion() {
@@ -209,7 +209,7 @@ export async function guardarConfiguracionSeguimiento(_estado, formulario) {
 
   revalidar();
 
-  if (continuarEn === RUTA_INICIO || continuarEn === "/espacios") {
+  if (continuarEn === RUTA_INICIO || continuarEn === "/cultivos" || continuarEn === "/espacios") {
     redirect(RUTA_INICIO);
   }
 

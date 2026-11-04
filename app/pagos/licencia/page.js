@@ -155,7 +155,7 @@ export default async function PaginaLicencia({ searchParams }) {
       {!puedeNuevo && elegibles.length === 0 ? (
         <div className="vacio">
           <p>Todavía no tenés una unidad para anclar un ciclo.</p>
-          <EnlaceBoton href="/espacios/nuevo">Crear espacio</EnlaceBoton>
+          <EnlaceBoton href="/cultivos/nuevo">Crear espacio</EnlaceBoton>
         </div>
       ) : (
         <form className="formulario pago__formulario" action={iniciarCompra}>

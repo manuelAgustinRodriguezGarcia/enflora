@@ -26,11 +26,10 @@ export async function GET() {
   return json({
     ok: true,
     personalidad,
-    opciones: PERSONALIDADES_FLORA.map(({ id, nombre, descripcion, ejemplo }) => ({
+    opciones: PERSONALIDADES_FLORA.map(({ id, nombre, descripcion }) => ({
       id,
       nombre,
       descripcion,
-      ejemplo,
     })),
   });
 }

@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import {
   geminiConfigurado,
   modeloFloraGeminiPublico,
@@ -7,6 +8,8 @@ import { conversarConFlora } from "@/lib/flora-gemini";
 import { parsearAdjuntoImagenCliente } from "@/lib/flora-imagen-chat";
 import { verificarCuotaUsuario } from "@/lib/flora-chat-limites";
 import { crearIdSolicitudFlora } from "@/lib/flora-chat-telemetria";
+import { programarUsoFlora } from "@/lib/flora-uso";
+import { argumentosUsoFlora, eventoDesdeResultadoFlora } from "@/lib/flora-uso-reglas";
 import { motorGuiaFlora } from "@/lib/flora-rag-config";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerUsuario } from "@/lib/supabase/servidor";
@@ -16,6 +19,29 @@ export const maxDuration = 90;
 
 function json(body, status = 200) {
   return Response.json(body, { status });
+}
+
+function dejarUsoFlora(argumentos) {
+  if (!argumentos) return;
+  try {
+    after(() => programarUsoFlora(argumentos));
+  } catch {
+    // Una métrica fallida no cambia la respuesta de Flora.
+  }
+}
+
+function usoSinModelo({ usuarioId, operacion, categoria }) {
+  return argumentosUsoFlora({
+    solicitudId: crearIdSolicitudFlora(),
+    usuarioId,
+    modelo: modeloFloraGeminiPublico(),
+    operacion,
+    resultado: "error",
+    categoria,
+    duracionMs: null,
+    rondas: 0,
+    llamadas: [],
+  });
 }
 
 /** Mapeo HTTP: 502 solo para fallos del proveedor/servidor; 504 timeout; 400 validación. */
@@ -62,6 +88,7 @@ export async function POST(request) {
 
   const cuota = verificarCuotaUsuario(usuario.id);
   if (!cuota.ok) {
+    dejarUsoFlora(usoSinModelo({ usuarioId: usuario.id, operacion: "chat", categoria: "cuota" }));
     return json(
       { ok: false, error: cuota.error, reintentarEnSegundos: cuota.reintentarEnSegundos },
       429,
@@ -72,6 +99,7 @@ export async function POST(request) {
   try {
     body = await request.json();
   } catch {
+    dejarUsoFlora(usoSinModelo({ usuarioId: usuario.id, operacion: "chat", categoria: "validacion" }));
     return json({ ok: false, error: "El mensaje no es válido." }, 400);
   }
 
@@ -81,12 +109,14 @@ export async function POST(request) {
 
   const adjuntoParse = parsearAdjuntoImagenCliente(body);
   if (!adjuntoParse.ok) {
+    dejarUsoFlora(usoSinModelo({ usuarioId: usuario.id, operacion: "chat_imagen", categoria: "imagen" }));
     return json({ ok: false, error: adjuntoParse.error }, 400);
   }
 
   const supabase = await crearClienteServidor();
   const requestId = crearIdSolicitudFlora();
   const requestBodyBytes = JSON.stringify(body).length;
+  const inicio = Date.now();
   const resultado = await conversarConFlora(supabase, {
     mensaje,
     historial,
@@ -95,6 +125,15 @@ export async function POST(request) {
     requestId,
     requestBodyBytes,
   });
+  dejarUsoFlora(
+    eventoDesdeResultadoFlora({
+      solicitudId: requestId,
+      usuarioId: usuario.id,
+      resultado,
+      inicioMs: Date.now() - inicio,
+      modelo: modeloFloraGeminiPublico(),
+    }),
+  );
 
   if (resultado.telemetria) {
     console.info("[flora/chat]", JSON.stringify(resultado.telemetria));

@@ -15,10 +15,17 @@ import {
   claveAplicacionABytes,
   claveIdempotenciaCampana,
   clavePublicaVapidValida,
+  clasificarFalloSuscripcion,
+  formatoClavePublicaVapid,
+  huellaClavePublica,
+  sanearMensajePush,
   decisionCampana,
   endpointPushValido,
+  avisoAdministrativo,
   hostPushPermitido,
+  instruccionPlataforma,
   iosAceptaPush,
+  puedeProbarSuscripcion,
   mapaConcurrencia,
   normalizarSuscripcion,
   rutaDestino,
@@ -27,6 +34,7 @@ import {
   versionIosDesdeAgente,
 } from "../lib/push/reglas.js";
 import webpush from "web-push";
+import { enviarADispositivosPropios } from "../lib/push/propio.js";
 import { AVISO_PRUEBA, ejecutarPrueba, limitePrueba } from "../lib/push/prueba.js";
 import { solicitudMismoOrigen } from "../lib/push/http.js";
 import {
@@ -43,7 +51,7 @@ import {
   descripcionModalLanzamiento,
   lanzamientoPendiente,
 } from "../lib/lanzamiento.js";
-import { gatePrelanzamientoActivo } from "../lib/acceso-prelanzamiento.js";
+import { gatePrelanzamientoActivo, usuarioBloqueadoPrelanzamiento } from "../lib/acceso-prelanzamiento.js";
 
 const CAMPANA = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -138,6 +146,42 @@ test("la clave pública VAPID se puede convertir y el asunto se valida", () => {
   assert.equal(sujetoVapidValido("mailto:contacto@enflora.com.ar"), true);
   assert.equal(sujetoVapidValido("https://enflora.com.ar"), true);
   assert.equal(sujetoVapidValido("http://enflora.com.ar"), false);
+  assert.equal(formatoClavePublicaVapid(publica), "valida");
+  assert.equal(formatoClavePublicaVapid(""), "ausente");
+  assert.equal(formatoClavePublicaVapid("no-es-una-clave"), "invalida");
+});
+
+test("el fallo de suscripción conserva el error real y oculta urls", async () => {
+  const fallo = clasificarFalloSuscripcion(
+    Object.assign(new Error("Registration failed - push service not available en https://fcm.googleapis.com/fcm/send/secreto-largo-que-no-debe-verse-en-pantalla-nunca"), {
+      name: "AbortError",
+      paso: "suscripcion",
+    }),
+  );
+  assert.equal(fallo.codigo, "servicio-push");
+  assert.equal(fallo.nombre, "AbortError");
+  assert.equal(fallo.paso, "suscripcion");
+  assert.match(fallo.mensaje, /push service not available/);
+  assert.equal(fallo.mensaje.includes("https://"), false);
+  assert.equal(fallo.mensaje.includes("secreto-largo"), false);
+
+  const tiempo = clasificarFalloSuscripcion(Object.assign(new Error("La operación no respondió a tiempo."), { name: "TimeoutError", paso: "ready" }));
+  assert.equal(tiempo.codigo, "tiempo");
+  assert.equal(tiempo.paso, "ready");
+
+  const clave = clasificarFalloSuscripcion(Object.assign(new Error("key"), { name: "InvalidAccessError" }), "suscripcion");
+  assert.equal(clave.codigo, "configuracion");
+
+  const registro = clasificarFalloSuscripcion(Object.assign(new Error("Registration failed - push service not available"), { name: "AbortError" }), "worker");
+  assert.equal(registro.codigo, "temporal");
+  assert.equal(registro.paso, "worker");
+
+  const publica = clavePublica();
+  const huella = await huellaClavePublica(publica);
+  assert.equal(huella, await huellaClavePublica(publica));
+  assert.equal(huella?.length, 12);
+  assert.equal(await huellaClavePublica("corta"), null);
+  assert.equal(sanearMensajePush("ver https://enflora.com.ar/perfil"), "ver [url]");
 });
 
 test("iPhone sin instalación no pide permiso y uno viejo no es compatible", () => {
@@ -218,11 +262,16 @@ test("aceptar el envío no significa que el dispositivo lo haya mostrado", () =>
     expirada: false,
     credenciales: false,
     visualizado: false,
+    temporal: false,
   });
   assert.equal(clasificarResultadoPush(410).expirada, true);
+  assert.equal(clasificarResultadoPush(410).temporal, false);
   assert.equal(clasificarResultadoPush(404).estado, "expirado");
   assert.equal(clasificarResultadoPush(429).estado, "error");
+  assert.equal(clasificarResultadoPush(429).temporal, true);
   assert.equal(clasificarResultadoPush(500).visualizado, false);
+  assert.equal(clasificarResultadoPush(503).temporal, true);
+  assert.equal(clasificarResultadoPush(400).temporal, false);
 });
 
 test("la concurrencia no supera el límite", async () => {
@@ -382,13 +431,16 @@ test("el lanzamiento usa una sola fecha para las tarjetas", () => {
   assert.equal(lanzamientoPendiente(new Date("2026-11-02T00:00:00-03:00")), false);
 });
 
-test("el aviso de estamos trabajando sigue activo hasta apagarlo a mano", () => {
+test("el aviso de estamos trabajando está apagado para cualquier cuenta", () => {
   const despues = new Date("2026-11-02T00:00:00-03:00");
-  assert.equal(gatePrelanzamientoActivo(despues, {}), true);
-  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "" }), true);
-  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "true" }), true);
+  assert.equal(gatePrelanzamientoActivo(despues, {}), false);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "" }), false);
+  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "true" }), false);
   assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: "false" }), false);
-  assert.equal(gatePrelanzamientoActivo(despues, { PRELANZAMIENTO_ACTIVO: " FALSE " }), false);
+  assert.equal(
+    usuarioBloqueadoPrelanzamiento({ email: "otra@example.com" }, "/inicio", despues, { PRELANZAMIENTO_ACTIVO: "true" }),
+    false,
+  );
 });
 
 test("el texto del modal no habla de pagos en el plan gratuito", () => {
@@ -613,6 +665,81 @@ test("una suscripción inactiva en la base no recibe pruebas", async () => {
   assert.equal(resultado.status, 409);
   assert.equal(resultado.cuerpo.motivo, "inactiva");
   assert.ok(!llamadas.some(([nombre]) => nombre === "despachar"));
+});
+
+test("una prueba no puede dirigirse a la suscripción de otra cuenta", () => {
+  const propia = { ...SUSCRIPCION, activa: true, usuario_id: "11111111-1111-4111-8111-111111111111" };
+  assert.equal(puedeProbarSuscripcion(propia, propia.usuario_id), true);
+  assert.equal(puedeProbarSuscripcion(propia, "22222222-2222-4222-8222-222222222222"), false);
+  assert.equal(puedeProbarSuscripcion(propia, null), false);
+  assert.equal(puedeProbarSuscripcion({ ...propia, usuario_id: null }, null), true);
+  assert.equal(puedeProbarSuscripcion({ ...propia, activa: false }, propia.usuario_id), false);
+});
+
+test("el aviso administrativo rechaza envíos masivos y destinos externos", () => {
+  assert.equal(avisoAdministrativo({ titulo: "Hola", mensaje: "Chau", url: "/perfil", todas: true }), null);
+  assert.equal(avisoAdministrativo({ titulo: "Hola", mensaje: "Chau", url: "https://evil.example/x" }), null);
+  assert.deepEqual(avisoAdministrativo({ titulo: "  Hola ", mensaje: "Chau", url: "" }), {
+    titulo: "Hola",
+    mensaje: "Chau",
+    url: "/perfil",
+  });
+  assert.equal(AVISO_PRUEBA.titulo, "Enflora está conectada");
+  assert.match(AVISO_PRUEBA.mensaje, /funcionando correctamente/);
+});
+
+test("cada plataforma recibe una instrucción y no un permiso imposible", () => {
+  assert.match(instruccionPlataforma({ soporte: "requiere-instalacion", esIos: true, esFirefox: false }), /pantalla de inicio/);
+  assert.match(instruccionPlataforma({ soporte: "no-compatible", esIos: false, esFirefox: true }), /Firefox/);
+  assert.match(instruccionPlataforma({ soporte: "denegado", esIos: true, esFirefox: false }), /Ajustes/);
+  assert.equal(instruccionPlataforma({ soporte: "activado", esIos: false, esFirefox: false }), "");
+  assert.equal(hostPushPermitido("random.push.services.mozilla.com"), true);
+});
+
+test("la prueba de dispositivos propios no confirma entrega y no sale si no hay instalaciones", async () => {
+  const vacio = await enviarADispositivosPropios(
+    {
+      consultarCupo: async () => ({ permitido: true, reintentarEnSeg: 0 }),
+      registrarIntento: async () => true,
+      leerPropias: async () => ({ ok: true, suscripciones: [] }),
+      despachar: async () => {
+        throw new Error("no debía enviar");
+      },
+    },
+    AVISO_PRUEBA,
+  );
+  assert.equal(vacio.cuerpo.sinDispositivo, true);
+  assert.equal(vacio.cuerpo.entregado, false);
+
+  const enviados = [];
+  const resultado = await enviarADispositivosPropios(
+    {
+      consultarCupo: async () => ({ permitido: true, reintentarEnSeg: 0 }),
+      registrarIntento: async () => true,
+      leerPropias: async () => ({
+        ok: true,
+        suscripciones: [
+          { id: "a", endpoint: "https://fcm.googleapis.com/fcm/send/uno" },
+          { id: "b", endpoint: "https://fcm.googleapis.com/fcm/send/dos" },
+        ],
+      }),
+      despachar: async (suscripcion) => {
+        enviados.push(suscripcion.id);
+        if (suscripcion.id === "b") throw Object.assign(new Error("push"), { statusCode: 410 });
+        return { statusCode: 201 };
+      },
+      desactivar: async (id, motivo) => {
+        enviados.push(["baja", id, motivo]);
+      },
+    },
+    AVISO_PRUEBA,
+  );
+  assert.equal(resultado.cuerpo.aceptados, 1);
+  assert.equal(resultado.cuerpo.fallidos, 1);
+  assert.equal(resultado.cuerpo.entregado, false);
+  assert.deepEqual(resultado.cuerpo.errores, ["expirada"]);
+  assert.deepEqual(enviados[2], ["baja", "b", "expirada"]);
+  assert.equal(JSON.stringify(resultado).includes("fcm.googleapis.com"), false);
 });
 
 test("el par VAPID se valida para detectar claves cambiadas a medias", () => {

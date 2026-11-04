@@ -109,9 +109,9 @@ export function BotonGuardarChat({
         </button>
 
         {mostrarTitulo ? (
-          <div className="flora-guardar-chat__dialogo" role="dialog" aria-label="Título del chat">
+          <div className="flora-guardar-chat__dialogo" role="dialog" aria-label="Guardar chat como">
             <label className="flora-guardar-chat__etiqueta" htmlFor="flora-titulo-chat">
-              Título
+              Guardar chat como:
             </label>
             <input
               id="flora-titulo-chat"

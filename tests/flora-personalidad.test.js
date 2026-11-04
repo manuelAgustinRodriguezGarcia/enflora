@@ -5,6 +5,7 @@ import {
   normalizarPersonalidadFlora,
   PERSONALIDAD_FLORA_DEFAULT,
   PERSONALIDADES_FLORA,
+  rutaImagenPersonalidadFlora,
 } from "../lib/flora-personalidad.js";
 import {
   construirInstruccionSistemaFlora,
@@ -41,4 +42,11 @@ test("estilos difieren por personalidad", () => {
 
 test("catálogo tiene tres opciones", () => {
   assert.equal(PERSONALIDADES_FLORA.length, 3);
+});
+
+test("cada personalidad usa su imagen", () => {
+  assert.equal(rutaImagenPersonalidadFlora("cercana_natural"), "/images/flora-natural.png");
+  assert.equal(rutaImagenPersonalidadFlora("cercana_divertida"), "/images/flora-confianzuda.png");
+  assert.equal(rutaImagenPersonalidadFlora("tecnica_profesional"), "/images/F.L.O.R.A.png");
+  assert.equal(rutaImagenPersonalidadFlora("inexistente"), "/images/flora-natural.png");
 });

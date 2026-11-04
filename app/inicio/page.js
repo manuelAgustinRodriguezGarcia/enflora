@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { PanelInicio } from "@/componentes/inicio/panel-inicio";
 import { TransicionVista } from "@/componentes/transicion-vista";
+import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
+import { cargarClimaInicio } from "@/lib/clima/cargar";
 import { cargarPanelInicio } from "@/lib/inicio/cargar";
+import { saludoInicio } from "@/lib/inicio/saludo";
 import { fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida, sincronizarSesionParaLectura } from "@/lib/supabase/servidor";
@@ -40,8 +43,18 @@ export default async function PaginaInicioCultivo() {
   }
 
   let panel;
+  let saludo = "Inicio";
+  let clima = null;
   try {
-    panel = await cargarPanelInicio(supabase, sesion.userId, { hoy: fechaHoy() });
+    const [panelCargado, personalidad, perfilRes] = await Promise.all([
+      cargarPanelInicio(supabase, sesion.userId, { hoy: fechaHoy() }),
+      leerPersonalidadFloraUsuario(supabase),
+      supabase.from("perfiles").select("nombre_usuario, nombre").eq("id", sesion.userId).maybeSingle(),
+    ]);
+    panel = panelCargado;
+    const fila = perfilRes?.data;
+    const nombre = String(fila?.nombre_usuario || fila?.nombre || "").trim();
+    saludo = saludoInicio(personalidad, nombre);
   } catch {
     return (
       <section className="inicio">
@@ -53,9 +66,15 @@ export default async function PaginaInicioCultivo() {
     );
   }
 
+  try {
+    clima = await cargarClimaInicio(supabase, sesion.userId);
+  } catch {
+    clima = null;
+  }
+
   return (
     <TransicionVista>
-      <PanelInicio panel={panel} />
+      <PanelInicio panel={panel} saludo={saludo} clima={clima} />
     </TransicionVista>
   );
 }

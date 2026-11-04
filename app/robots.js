@@ -5,8 +5,10 @@ export default function robots() {
       allow: "/",
       disallow: [
         "/inicio",
+        "/cultivos",
         "/espacios",
         "/registros",
+        "/mezclas",
         "/perfil",
         "/onboarding",
         "/api/",

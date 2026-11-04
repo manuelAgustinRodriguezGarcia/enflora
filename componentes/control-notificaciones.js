@@ -12,7 +12,10 @@ export function ControlNotificaciones() {
   const [guia, setGuia] = useState(false);
   const activo = push.estado === "activado";
   const puedeAlternar =
-    push.estado === "activado" || push.estado === "desactivado" || push.estado === "disponible";
+    push.estado === "activado" ||
+    push.estado === "desactivado" ||
+    push.estado === "disponible" ||
+    push.estado === "sin-vincular";
 
   async function alternar() {
     if (push.ocupado || push.estado === "cargando") return;

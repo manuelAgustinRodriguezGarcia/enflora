@@ -9,9 +9,12 @@ export default function manifest() {
     start_url: "/",
     scope: "/",
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
     background_color: "#F4F8EE",
     theme_color: "#0B3D2A",
     lang: "es-AR",
+    categories: ["lifestyle"],
+    prefer_related_applications: false,
     icons: [
       {
         src: "/icons/enflora-isotipo-192.png",

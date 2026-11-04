@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useActionState, useEffect, useMemo, useState } from "react";
-import { cambiarEtapaMasiva } from "@/app/espacios/[id]/acciones";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { cambiarEtapaMasiva } from "@/app/cultivos/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { ContenidoTarjetaPlanta as ContenidoTarjeta } from "@/componentes/contenido-tarjeta-planta";
@@ -37,9 +37,11 @@ export function SeleccionPlantasUnidad({
   plantas,
   inicioPorPlanta = {},
   hoy = fechaHoy(),
+  iniciarEtapa = false,
 }) {
   const router = useRouter();
   const reducido = useReducedMotion();
+  const etapaInicial = useRef(false);
   const [seleccionando, setSeleccionando] = useState(false);
   const [modo, setModo] = useState("manual");
   const [ids, setIds] = useState(() => new Set());
@@ -65,6 +67,18 @@ export function SeleccionPlantasUnidad({
       return (indiceA === -1 ? orden.length : indiceA) - (indiceB === -1 ? orden.length : indiceB);
     });
   }, [plantas, ids]);
+
+  useEffect(() => {
+    if (!iniciarEtapa || etapaInicial.current || plantas.length === 0) return;
+    etapaInicial.current = true;
+    setSeleccionando(true);
+    setModo("unidad");
+    setIds(new Set(plantas.map((planta) => planta.id)));
+    setFormAbierto(true);
+    setModalAbierto(false);
+    setEtapa("");
+    setFecha(fechaHoy());
+  }, [iniciarEtapa, plantas]);
 
   useEffect(() => {
     if (!resultado?.ok) return;
@@ -233,7 +247,7 @@ export function SeleccionPlantasUnidad({
                 ? `tarjeta tarjeta--planta tarjeta--${planta.etapa}`
                 : "tarjeta tarjeta--planta";
               const seleccionada = ids.has(planta.id);
-              const href = `/espacios/${espacioId}/unidades/${unidadId}/plantas/${planta.id}`;
+              const href = `/cultivos/${espacioId}/unidades/${unidadId}/plantas/${planta.id}`;
 
               if (seleccionando) {
                 return (

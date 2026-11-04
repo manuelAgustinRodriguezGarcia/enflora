@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { editarUnidad } from "@/app/espacios/[id]/acciones";
+import { editarUnidad } from "@/app/cultivos/[id]/acciones";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
 import { Selector } from "@/componentes/selector";

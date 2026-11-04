@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Boton } from "@/componentes/boton";
-import { recargarListadoEspacios } from "@/app/espacios/acciones";
+import { recargarListadoEspacios } from "@/app/cultivos/acciones";
 
 const AUTO_REINTENTO_MS = 400;
 

@@ -440,6 +440,10 @@ a.boton {
   &__portada {
     position: relative;
 
+    .portada-unidad--vertical {
+      aspect-ratio: 4 / 3;
+    }
+
     &::before {
       content: "";
       position: absolute;
@@ -575,10 +579,16 @@ a.boton {
   }
 
   &__positioner {
-    z-index: 50;
+    z-index: 130;
     min-width: var(--anchor-width);
     width: max-content;
     max-width: var(--available-width);
+  }
+
+  &__positioner--ancla {
+    width: var(--anchor-width);
+    min-width: 0;
+    max-width: min(var(--anchor-width), var(--available-width));
   }
 
   &__popup {
@@ -611,6 +621,11 @@ a.boton {
     }
   }
 
+  &__positioner--ancla &__popup {
+    width: 100%;
+    min-width: 0;
+  }
+
   &__opcion {
     display: flex;
     align-items: center;
@@ -628,10 +643,27 @@ a.boton {
       background: var(--color-surface-secondary);
     }
 
+    &[data-disabled] {
+      opacity: 0.55;
+      cursor: default;
+    }
+
     &[data-selected] {
       background: var(--color-primary);
       color: var(--color-surface);
     }
+
+    &:has(.resumen-config__plantas) {
+      justify-content: space-between;
+      gap: 0.65rem;
+    }
+  }
+
+  &__opcion-texto {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+    line-height: 1.3;
   }
 
   &--error &__trigger {
@@ -705,6 +737,32 @@ a.boton {
   &__positioner {
     z-index: 50;
     min-width: var(--anchor-width);
+  }
+
+  &__positioner--ancla {
+    width: var(--anchor-width);
+    min-width: 0;
+    max-width: min(var(--anchor-width), var(--available-width));
+  }
+
+  &__positioner--ancla &__popup {
+    width: 100%;
+    max-width: none;
+
+    .rdp-root,
+    .rdp-months,
+    .rdp-month,
+    .rdp-month_grid {
+      width: 100%;
+    }
+
+    .rdp-month_grid {
+      table-layout: fixed;
+    }
+
+    .rdp-day {
+      width: auto;
+    }
   }
 
   &__popup {
@@ -1115,10 +1173,13 @@ a.boton {
     background: transparent;
     color: var(--color-text);
     text-align: left;
+    -webkit-tap-highlight-color: transparent;
 
-    &:hover:not(:disabled) {
-      background: var(--color-surface-secondary);
-      color: var(--color-text);
+    @media (hover: hover) and (pointer: fine) and (min-width: 48rem) {
+      &:hover:not(:disabled) {
+        background: var(--color-surface-secondary);
+        color: var(--color-text);
+      }
     }
   }
 
@@ -1144,6 +1205,41 @@ a.boton {
     width: 1.15rem;
     height: 1.15rem;
     flex: 0 0 auto;
+  }
+
+  &__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    max-width: 100%;
+  }
+
+  &__pill {
+    display: inline-block;
+    max-width: 100%;
+    min-height: 1.35rem;
+    padding: 0.12rem 0.55rem;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface-secondary);
+    color: var(--color-text);
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-meta);
+    font-weight: var(--font-weight-label);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+
+    &--color {
+      color: #fff;
+    }
+
+    &--vacia {
+      color: var(--color-text-secondary);
+      font-weight: var(--font-weight-body);
+    }
   }
 
   &__meta {
@@ -1385,8 +1481,9 @@ a.boton {
     appearance: none;
 
     &:focus {
-      outline: 2px solid var(--color-primary);
-      outline-offset: 2px;
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: inset 0 0 0 1px var(--color-primary);
     }
 
     &::placeholder {
