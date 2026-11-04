@@ -147,7 +147,57 @@ function TarjetaUnidad({ unidad }) {
   );
 }
 
-export function PanelInicio({ panel, saludo = "Inicio", clima = null }) {
+function FotosInicio({ fotos }) {
+  if (!fotos.length) {
+    return (
+      <section className="inicio__fotos" aria-label="Galería de Flora">
+        <p>Mirá las fotos de tus plantas en</p>
+        <Link className="inicio__galeria" href="/galeria">
+          <Images strokeWidth={1.75} aria-hidden="true" />
+          <span>Galería de Flora</span>
+        </Link>
+      </section>
+    );
+  }
+
+  const visibles = fotos.slice(0, 3);
+
+  return (
+    <section className="inicio__fotos inicio__fotos--muestra" aria-label="Galería de Flora">
+      <ul
+        className="inicio__fotos-fila"
+        style={{ gridTemplateColumns: `repeat(${visibles.length + 1}, minmax(0, 1fr))` }}
+      >
+        {visibles.map((foto) => (
+          <li key={foto.id}>
+            <Link className="inicio__foto" href="/galeria" aria-label={foto.etiqueta}>
+              {foto.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={foto.url} alt="" loading="lazy" decoding="async" />
+              ) : (
+                <span className="inicio__foto-vacia">Sin vista previa</span>
+              )}
+              {foto.unidad || foto.fecha ? (
+                <span className="inicio__foto-meta">
+                  {foto.unidad ? <span className="inicio__foto-unidad">{foto.unidad}</span> : null}
+                  {foto.fecha ? <span className="inicio__foto-fecha">{foto.fecha}</span> : null}
+                </span>
+              ) : null}
+            </Link>
+          </li>
+        ))}
+        <li>
+          <Link className="inicio__fotos-galeria" href="/galeria">
+            <Images strokeWidth={1.75} aria-hidden="true" />
+            <span>Galería de Flora</span>
+          </Link>
+        </li>
+      </ul>
+    </section>
+  );
+}
+
+export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = [] }) {
   const cultivos = panel.cultivos;
 
   return (
@@ -184,13 +234,7 @@ export function PanelInicio({ panel, saludo = "Inicio", clima = null }) {
         ) : null}
       </Seccion>
 
-      <section className="inicio__fotos" aria-label="Galería de Flora">
-        <p>Mirá las fotos de tus plantas en</p>
-        <Link className="inicio__galeria" href="/galeria">
-          <Images strokeWidth={1.75} aria-hidden="true" />
-          <span>Galería de Flora</span>
-        </Link>
-      </section>
+      <FotosInicio fotos={fotos} />
     </div>
   );
 }

@@ -69,7 +69,8 @@ function ContenidoAndroid({ onCerrar, pwa }) {
   const [indice, setIndice] = useState(0);
   const [sentido, setSentido] = useState(1);
   const [instalando, setInstalando] = useState(false);
-  const { instalada, puedeInstalarNativo, plataforma, solicitarInstalacion } = pwa;
+  const { yaInstalada, puedeInstalarNativo, plataforma, solicitarInstalacion } = pwa;
+  const instalada = Boolean(yaInstalada) && !plataforma.esDesktop;
 
   function ir(delta) {
     setSentido(delta);

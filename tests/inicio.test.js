@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cargarPanelInicio } from "../lib/inicio/cargar.js";
+import { LIMITE_FOTOS_INICIO, cargarFotosInicio, filasFotosInicio, presentarFotosInicio } from "../lib/inicio/fotos.js";
 import { saludoInicio } from "../lib/inicio/saludo.js";
 import {
   ACCIONES_CULTIVO,
@@ -283,3 +284,121 @@ function claveDe(estado) {
   if (estado.tabla === "historial_etapas") return "etapas";
   return "";
 }
+
+function filaFoto(dia, id) {
+  return {
+    id,
+    ruta_miniatura: `ruta-${id}`,
+    registro: {
+      id: `registro-${id}`,
+      fecha_evento: `2026-10-${String(dia).padStart(2, "0")}T15:00:00.000Z`,
+      unidad: { id: "u1", nombre: "Carpa hidro" },
+    },
+  };
+}
+
+test("las fotos del inicio quedan en las últimas 3, con unidad y fecha", () => {
+  const fotos = presentarFotosInicio(
+    [filaFoto(22, "a"), filaFoto(27, "b"), filaFoto(23, "c"), filaFoto(21, "d"), filaFoto(26, "e")],
+    new Map([
+      ["ruta-b", "https://fotos.test/b"],
+      ["ruta-e", "https://fotos.test/e"],
+    ]),
+  );
+
+  assert.equal(LIMITE_FOTOS_INICIO, 3);
+  assert.deepEqual(
+    fotos.map((foto) => foto.id),
+    ["b", "e", "c"],
+  );
+  assert.equal(fotos[0].unidad, "Carpa hidro");
+  assert.equal(fotos[0].fecha, "27/10/2026");
+  assert.equal(fotos[0].etiqueta, "Carpa hidro, 27/10/2026");
+  assert.equal(fotos[0].url, "https://fotos.test/b");
+  assert.equal(fotos[2].url, "");
+});
+
+test("varias fotos del mismo registro no desplazan a las más nuevas", () => {
+  const fotos = presentarFotosInicio(
+    filasFotosInicio([
+      {
+        id: "r-nuevo",
+        fecha_evento: "2026-10-27T15:00:00.000Z",
+        unidad: { nombre: "Carpa hidro" },
+        fotos: ["n1", "n2", "n3", "n4"].map((id) => ({ id, ruta_miniatura: id })),
+      },
+      {
+        id: "r-viejo",
+        fecha_evento: "2026-10-03T15:00:00.000Z",
+        unidad: { nombre: "Carpa hidro" },
+        fotos: [{ id: "v1", ruta_miniatura: "v1" }],
+      },
+    ]),
+  );
+
+  assert.equal(fotos.length, 3);
+  assert.equal(fotos.some((foto) => foto.id === "v1"), false);
+  assert.equal(fotos[0].fecha, "27/10/2026");
+  assert.equal(fotos[0].unidad, "Carpa hidro");
+});
+
+test("cargar las fotos del inicio pide los registros más recientes del usuario", async () => {
+  const consultas = [];
+  const supabase = {
+    from(tabla) {
+      const estado = { tabla, eq: [], limite: null };
+      consultas.push(estado);
+      const cadena = {
+        select() {
+          return cadena;
+        },
+        eq(columna, valor) {
+          estado.eq.push([columna, valor]);
+          return cadena;
+        },
+        order() {
+          return cadena;
+        },
+        limit(cantidad) {
+          estado.limite = cantidad;
+          return cadena;
+        },
+        then(resolver, rechazar) {
+          const registro = filaFoto(23, "a").registro;
+          return Promise.resolve({
+            data: [
+              {
+                ...registro,
+                fotos: [{ id: "a", ruta_miniatura: "ruta-a" }],
+              },
+            ],
+            error: null,
+          }).then(resolver, rechazar);
+        },
+      };
+      return cadena;
+    },
+    storage: {
+      from() {
+        return {
+          createSignedUrls(rutas) {
+            return Promise.resolve({
+              data: rutas.map((ruta) => ({ path: ruta, signedUrl: `https://fotos.test/${ruta}` })),
+              error: null,
+            });
+          },
+        };
+      },
+    },
+  };
+
+  const fotos = await cargarFotosInicio(supabase, "usuario-1");
+  assert.equal(consultas.length, 1);
+  assert.equal(consultas[0].tabla, "registros");
+  assert.equal(consultas[0].limite, 3);
+  assert.deepEqual(consultas[0].eq, [["usuario_id", "usuario-1"]]);
+  assert.equal(fotos[0].unidad, "Carpa hidro");
+  assert.equal(fotos[0].fecha, "23/10/2026");
+  assert.equal(fotos[0].url, "https://fotos.test/ruta-a");
+  assert.deepEqual(await cargarFotosInicio(supabase, ""), []);
+});

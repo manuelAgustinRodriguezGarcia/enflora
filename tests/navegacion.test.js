@@ -25,7 +25,7 @@ test("el menú Más abre historial, galería, productos, mezclas, genéticas y c
 
   assert.deepEqual(
     DESTINOS_MAS.map((item) => item.etiqueta),
-    ["Historial", "Galería de Flora", "Mis genéticas", "Mis mezclas", "Mis productos", "Calendario"]
+    ["Mi historial", "Mi galería", "Mis genéticas", "Mis mezclas", "Mis productos", "Mi calendario"]
   );
   assert.equal(historial?.href, "/registros/historial");
   assert.equal(calendario?.href, "/calendario");

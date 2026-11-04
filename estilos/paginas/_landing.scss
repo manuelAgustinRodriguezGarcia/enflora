@@ -5597,10 +5597,17 @@ a.producto-preview__cta {
     -webkit-tap-highlight-color: transparent;
     animation: instalacion-flotar 3.4s ease-in-out infinite;
 
-    .instalacion__imagen {
+    .instalacion__giro {
       flex: none;
       width: 112%;
       max-width: none;
+      pointer-events: none;
+      transform-style: preserve-3d;
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    .instalacion__imagen {
       pointer-events: none;
     }
 
@@ -5615,9 +5622,6 @@ a.producto-preview__cta {
     width: 100%;
     height: auto;
     object-fit: contain;
-    transform-style: preserve-3d;
-    transform-origin: center center;
-    will-change: transform;
   }
 
   &__bajada {
@@ -6319,7 +6323,7 @@ a.producto-preview__cta {
     animation: none;
   }
 
-  .instalacion__imagen {
+  .instalacion__giro {
     will-change: auto;
   }
 }

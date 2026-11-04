@@ -9,6 +9,7 @@ import { ParaQueSirve } from "@/componentes/landing/para-que-sirve";
 import { Revelar } from "@/componentes/landing/revelar";
 import { instanteExpo } from "@/lib/expo-cannabis/tiempo";
 import { textos } from "@/lib/landing";
+import { obtenerCotizacionComercial } from "@/lib/pagos/cotizacion-comercial";
 
 const ConEnflora = dynamic(() =>
   import("@/componentes/landing/con-enflora").then((modulo) => ({ default: modulo.ConEnflora })),
@@ -27,6 +28,17 @@ const SeccionConoceFlora = dynamic(() =>
 const SeccionPrecios = dynamic(() =>
   import("@/componentes/landing/seccion-precios").then((modulo) => ({ default: modulo.SeccionPrecios })),
 );
+
+const ESPERA_COTIZACION_MS = 2500;
+
+export function PreciosLandingFallback() {
+  return <SeccionPrecios cotizacion={null} />;
+}
+
+export async function PreciosLanding() {
+  const cotizacion = await obtenerCotizacionComercial(new Date(), { timeoutMs: ESPERA_COTIZACION_MS });
+  return <SeccionPrecios cotizacion={cotizacion} />;
+}
 
 const SeccionInstalacion = dynamic(() =>
   import("@/componentes/landing/seccion-instalacion").then((modulo) => ({
@@ -64,7 +76,7 @@ const RedirigirAdminExpo = dynamic(() =>
   })),
 );
 
-export function Landing({ cotizacion = null }) {
+export function Landing({ precios }) {
   const { instalacion } = textos;
   const expo = instanteExpo();
 
@@ -83,7 +95,7 @@ export function Landing({ cotizacion = null }) {
           <ConEnflora />
           <Producto />
           <SeccionConoceFlora />
-          <SeccionPrecios cotizacion={cotizacion} />
+          {precios}
           <SeccionInstalacion textos={instalacion} />
           <SeccionContacto />
           <SeccionPartners />

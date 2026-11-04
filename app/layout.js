@@ -13,6 +13,7 @@ import { ProveedorMotion } from "@/componentes/proveedor-motion";
 import { esRutaDemo, usuarioBloqueadoPrelanzamiento } from "@/lib/acceso-prelanzamiento";
 import { RUTA_INICIO } from "@/lib/navegacion";
 import { esRutaPanelAdmin } from "@/lib/admin/secciones";
+import { SCRIPT_ENTRADA_PWA } from "@/lib/pwa-entrada";
 import { DESCRIPCION_INICIO, NOMBRE_MARCA } from "@/lib/seo";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { muestraEstadoNotificaciones } from "@/lib/perfil/notificaciones-visibles";
@@ -100,6 +101,9 @@ export default async function Layout({ children }) {
 
   return (
     <html lang="es-AR" className={`${fredoka.variable} ${inter.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: SCRIPT_ENTRADA_PWA }} />
+      </head>
       <body className={claseCuerpo || undefined}>
         <ClaseCuerpo />
         <AjusteTecladoViewport />

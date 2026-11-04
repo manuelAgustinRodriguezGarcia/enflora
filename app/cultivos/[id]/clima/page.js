@@ -6,7 +6,6 @@ import { EnlaceVolver } from "@/componentes/enlace-volver";
 import { TransicionVista } from "@/componentes/transicion-vista";
 import { climaDeUbicacion, leerUbicacion } from "@/lib/clima/cargar";
 import { mensajeClima } from "@/lib/clima/constantes";
-import { etiquetaLocalidad } from "@/lib/clima/texto";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 
@@ -78,23 +77,12 @@ async function ClimaExterior({ supabase, espacio, usuarioId }) {
   }
 
   let clima = null;
-  let desdeCache = null;
   let errorClima = "";
   if (ubicacion.fila) {
     const resultado = await climaDeUbicacion(supabase, ubicacion.fila, usuarioId);
-    if (resultado.ok) {
-      clima = resultado.clima;
-      desdeCache = resultado.desdeCache === true;
-    } else errorClima = resultado.mensaje;
+    if (resultado.ok) clima = resultado.clima;
+    else errorClima = resultado.mensaje;
   }
-
-  const localidad = ubicacion.fila
-    ? etiquetaLocalidad({
-        nombre: ubicacion.fila.nombre,
-        region: ubicacion.fila.region,
-        pais: ubicacion.fila.pais,
-      })
-    : "";
 
   const controles = (
     <ControlesUbicacion espacioId={espacio.id} tieneLocalidad={Boolean(ubicacion.fila)} />
@@ -104,13 +92,7 @@ async function ClimaExterior({ supabase, espacio, usuarioId }) {
     <>
       {errorClima ? <p className="clima__error" role="alert">{errorClima}</p> : null}
       {clima ? (
-        <PanelClima
-          espacioNombre={espacio.nombre}
-          localidad={localidad}
-          clima={clima}
-          desdeCache={desdeCache}
-          menu={controles}
-        />
+        <PanelClima clima={clima} menu={controles} />
       ) : (
         <>
           <header className="clima__cabecera">

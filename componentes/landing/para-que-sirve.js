@@ -41,7 +41,7 @@ function ZonaIlustracion({ ilustracion }) {
           src={ilustracion.src}
           alt={ilustracion.alt || ""}
           fill
-          sizes="(min-width: 64rem) 18rem, (min-width: 48rem) 40vw, 70vw"
+          sizes="(min-width: 64rem) 16rem, (min-width: 40rem) 22vw, 46vw"
           className="para-que-sirve__img"
           draggable={false}
         />

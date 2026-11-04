@@ -1,7 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { DatosEstructurados } from "@/componentes/datos-estructurados";
-import { Landing } from "@/componentes/landing/landing";
-import { obtenerCotizacionComercial } from "@/lib/pagos/cotizacion-comercial";
+import { Landing, PreciosLanding, PreciosLandingFallback } from "@/componentes/landing/landing";
 import { DESCRIPCION_INICIO, metadatosPublicos, TITULO_INICIO } from "@/lib/seo";
 
 export const metadata = metadatosPublicos({
@@ -23,11 +23,16 @@ export default async function PaginaInicio({ searchParams }) {
     redirect(`/correo/confirmar?${consulta.toString()}`);
   }
 
-  const cotizacion = await obtenerCotizacionComercial();
   return (
     <>
       <DatosEstructurados />
-      <Landing cotizacion={cotizacion} />
+      <Landing
+        precios={
+          <Suspense fallback={<PreciosLandingFallback />}>
+            <PreciosLanding />
+          </Suspense>
+        }
+      />
     </>
   );
 }

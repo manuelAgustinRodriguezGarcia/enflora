@@ -47,7 +47,7 @@ const PASOS = [
   },
 ];
 
-function ContenidoIOS({ onCerrar, plataforma }) {
+function ContenidoIOS({ onCerrar, plataforma, instalada = false }) {
   const [indice, setIndice] = useState(0);
   const [sentido, setSentido] = useState(1);
 
@@ -92,24 +92,32 @@ function ContenidoIOS({ onCerrar, plataforma }) {
         </Dialog.Description>
       </div>
 
-      {avisoNavegador ? <p className="instalacion-modal__aviso">{avisoNavegador}</p> : null}
+      {instalada ? (
+        <p className="instalacion-modal__estado" role="status">
+          ¡Ya tenés <MarcaEnflora /> instalada!
+        </p>
+      ) : avisoNavegador ? (
+        <p className="instalacion-modal__aviso">{avisoNavegador}</p>
+      ) : null}
 
-      <div className="instalacion-modal__cuerpo">
-        <AnimatePresence mode="wait" initial={false} custom={sentido}>
-          <PasoTutorialInstalacion
-            key={indice + 1}
-            paso={indice + 1}
-            total={PASOS.length}
-            titulo={paso.titulo}
-            descripcion={paso.descripcion}
-            nota={paso.nota}
-            ilustracion={paso.ilustracion}
-            sentido={sentido}
-          />
-        </AnimatePresence>
-      </div>
+      {instalada ? null : (
+        <div className="instalacion-modal__cuerpo">
+          <AnimatePresence mode="wait" initial={false} custom={sentido}>
+            <PasoTutorialInstalacion
+              key={indice + 1}
+              paso={indice + 1}
+              total={PASOS.length}
+              titulo={paso.titulo}
+              descripcion={paso.descripcion}
+              nota={paso.nota}
+              ilustracion={paso.ilustracion}
+              sentido={sentido}
+            />
+          </AnimatePresence>
+        </div>
+      )}
 
-      {esUltimo ? (
+      {!instalada && esUltimo ? (
         <div className="instalacion-modal__cierre">
           <p className="instalacion-modal__cierre-titulo">
             ¡Listo! <MarcaEnflora /> ya puede estar en tu inicio.
@@ -121,10 +129,10 @@ function ContenidoIOS({ onCerrar, plataforma }) {
       ) : null}
 
       <div className="instalacion-modal__nav">
-        <Boton type="button" variante="ghost" onClick={() => ir(-1)} disabled={indice === 0}>
+        <Boton type="button" variante="ghost" onClick={() => ir(-1)} disabled={indice === 0 || instalada}>
           Anterior
         </Boton>
-        {esUltimo ? (
+        {esUltimo || instalada ? (
           <Boton type="button" onClick={onCerrar}>
             Entendido
           </Boton>
@@ -138,7 +146,7 @@ function ContenidoIOS({ onCerrar, plataforma }) {
   );
 }
 
-export function ModalInstalacionIOS({ abierto, onCerrar, plataforma, reinicio }) {
+export function ModalInstalacionIOS({ abierto, onCerrar, plataforma, reinicio, instalada = false }) {
   const acciones = useRef(null);
   const reducir = useReducedMotion();
 
@@ -186,7 +194,12 @@ export function ModalInstalacionIOS({ abierto, onCerrar, plataforma, reinicio })
             }
           >
             {abierto ? (
-              <ContenidoIOS key={reinicio} onCerrar={onCerrar} plataforma={plataforma} />
+              <ContenidoIOS
+                key={reinicio}
+                onCerrar={onCerrar}
+                plataforma={plataforma}
+                instalada={instalada}
+              />
             ) : null}
             <Dialog.Close className="instalacion-modal__cerrar" aria-label="Cerrar">
               ×

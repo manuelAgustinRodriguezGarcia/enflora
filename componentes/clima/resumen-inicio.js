@@ -1,32 +1,7 @@
 import Link from "next/link";
-import { CloudRain, Droplet, Wind } from "lucide-react";
 import { EnlaceBoton } from "@/componentes/boton";
-import { IconoClima } from "@/componentes/clima/icono-clima";
-import { IconoChevron } from "@/componentes/iconos-ui";
+import { TarjetaClima as TarjetaClimaVista } from "@/componentes/clima/tarjeta-clima";
 import { mensajeClima } from "@/lib/clima/constantes";
-import { iconoPronostico } from "@/lib/clima/iconos";
-import { temaClima } from "@/lib/clima/tema";
-import {
-  textoDiaCorto,
-  textoMilimetros,
-  textoPorcentaje,
-  textoTemperatura,
-  textoViento,
-} from "@/lib/clima/texto";
-
-function presente(texto) {
-  return texto || "Sin dato";
-}
-
-function variablesTema(paleta) {
-  return {
-    "--clima-fondo": paleta.fondo,
-    "--clima-fondo-fin": paleta.fondoFin,
-    "--clima-tinta": paleta.tinta,
-    "--clima-suave": paleta.tintaSuave,
-    "--clima-acento": paleta.acento,
-  };
-}
 
 function TarjetaConfigurar() {
   return (
@@ -54,97 +29,19 @@ function TarjetaSimple({ lugar }) {
 }
 
 function TarjetaClima({ lugar }) {
-  const actual = lugar.vista?.actual;
-  const dias = lugar.vista?.dias || [];
-  const tema = temaClima({
-    temperaturaC: actual?.temperaturaC ?? null,
-    esDia: actual?.esDia ?? null,
-    codigo: actual?.codigo ?? null,
-  });
-  const sensacion = textoTemperatura(actual?.sensacionC);
   const detalle = [lugar.region, lugar.pais].map((parte) => String(parte || "").trim()).filter(Boolean).join(", ");
 
   return (
     <li>
-      <article
-        className="clima-mini"
-        data-rango={tema.rango}
-        data-momento={tema.momento}
-        style={variablesTema(tema.paleta)}
-      >
-        <span className="clima-mini__brillo" aria-hidden="true" />
-        <Link className="clima-mini__enlace" href={lugar.href}>
-          <span className="clima-mini__ahora">
-            <span className="clima-mini__texto">
-              <span className="clima-mini__nombre">{lugar.lugarNombre || "Sin localidad"}</span>
-              {detalle ? <span className="clima-mini__lugar">{detalle}</span> : null}
-              <span className="clima-mini__condicion">{actual?.condicion || "Condición no informada"}</span>
-            </span>
-            <span className="clima-mini__lectura">
-              <span className="clima-mini__icono">
-                <IconoClima nombre={tema.icono} />
-              </span>
-              <span className="clima-mini__temp">{presente(textoTemperatura(actual?.temperaturaC))}</span>
-              <span className="clima-mini__sensacion">{sensacion ? `Sensación ${sensacion}` : "Sensación no informada"}</span>
-            </span>
-          </span>
-          <dl className="clima-mini__metricas">
-            <div>
-              <dt className="clima-sr">Humedad</dt>
-              <dd>
-                <Droplet aria-hidden="true" />
-                {presente(textoPorcentaje(actual?.humedad))}
-              </dd>
-            </div>
-            <div>
-              <dt className="clima-sr">Viento</dt>
-              <dd>
-                <Wind aria-hidden="true" />
-                {presente(textoViento(actual?.vientoKph))}
-              </dd>
-            </div>
-            <div>
-              <dt className="clima-sr">Precipitación actual</dt>
-              <dd>
-                <CloudRain aria-hidden="true" />
-                {presente(textoMilimetros(actual?.precipitacionMm))}
-              </dd>
-            </div>
-          </dl>
-          {lugar.avisoEnflora ? <span className="clima-mini__aviso">{lugar.avisoEnflora}</span> : null}
-          {lugar.avisoOficial ? <span className="clima-mini__aviso clima-mini__aviso--oficial">{lugar.avisoOficial}</span> : null}
-        </Link>
-        {dias.length ? (
-          <details className="clima-mini__pronostico">
-            <summary className="clima-mini__desplegar">
-              <span>Ver próximos días</span>
-              <IconoChevron className="clima-mini__chevron" />
-            </summary>
-            <div className="clima-mini__dias-cuerpo">
-              <ol className="clima-mini__dias">
-                {dias.map((dia) => (
-                  <li key={dia.fecha || `${dia.maximaC}-${dia.minimaC}`}>
-                    <span className="clima-mini__dia">{textoDiaCorto(dia.fecha) || "Día"}</span>
-                    <IconoClima nombre={iconoPronostico(dia.codigo)} />
-                    <span className="clima-mini__max">
-                      <span className="clima-sr">Máxima prevista</span>
-                      {presente(textoTemperatura(dia.maximaC))}
-                    </span>
-                    <span className="clima-mini__min">
-                      <span className="clima-sr">Mínima prevista</span>
-                      {presente(textoTemperatura(dia.minimaC))}
-                    </span>
-                    <span className="clima-mini__prob">
-                      <span className="clima-sr">Probabilidad de lluvia</span>
-                      {presente(textoPorcentaje(dia.probabilidadLluvia))}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </details>
-        ) : null}
-      </article>
+      <TarjetaClimaVista
+        nombre={lugar.lugarNombre}
+        detalle={detalle}
+        actual={lugar.vista?.actual}
+        dias={lugar.vista?.dias || []}
+        avisoEnflora={lugar.avisoEnflora}
+        avisoOficial={lugar.avisoOficial}
+        href={lugar.href}
+      />
     </li>
   );
 }

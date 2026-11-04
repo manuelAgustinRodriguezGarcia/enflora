@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import {
   motion,
   useMotionValue,
@@ -65,14 +66,8 @@ function ImagenPerspectiva({
       onPointerMove={mover}
       onPointerLeave={salir}
     >
-      <motion.img
-        className="instalacion__imagen"
-        src={src}
-        alt={alt}
-        width={width}
-        height={height}
-        loading="lazy"
-        decoding="async"
+      <motion.div
+        className="instalacion__giro"
         style={
           reducir
             ? undefined
@@ -83,7 +78,18 @@ function ImagenPerspectiva({
                 transformPerspective: 920,
               }
         }
-      />
+      >
+        <Image
+          className="instalacion__imagen"
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          sizes="(min-width: 64rem) 14rem, 42vw"
+          loading="lazy"
+          draggable={false}
+        />
+      </motion.div>
     </motion.div>
   );
 }
@@ -127,7 +133,7 @@ export function SeccionInstalacion({ textos }) {
             />
             <ImagenPerspectiva
               className="instalacion__telefono instalacion__telefono--ios"
-              src="/images/landing%20iphone.png"
+              src="/images/landing iphone.png"
               alt="Enflora instalada en un iPhone"
               width={1086}
               height={1448}
@@ -174,6 +180,7 @@ export function SeccionInstalacion({ textos }) {
         abierto={modal === "ios"}
         onCerrar={() => setModal(null)}
         plataforma={pwa.plataforma}
+        instalada={pwa.yaInstalada && pwa.plataforma.esIos}
         reinicio={reinicio}
       />
     </>

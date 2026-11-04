@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { convertirUsdAArs, mapearCotizacionComercial } from "../lib/pagos/cotizacion-comercial.js";
-import { parsearBilleteVendedor, evaluarCotizacion } from "../lib/pagos/cotizacion-bna.js";
+import { parsearBilleteVendedor, evaluarCotizacion, obtenerCotizacionBilleteVendedor } from "../lib/pagos/cotizacion-bna.js";
 import { importeLicenciaCentavos, importeUsdEnArsCentavos, textoArAEscala4 } from "../lib/pagos/dinero.js";
 
 const HTML = `
@@ -37,6 +37,30 @@ test("rechaza cotización silenciosa después de siete días", () => {
   const tarde = new Date("2026-10-30T20:03:00.000Z");
   assert.equal(evaluarCotizacion(cotizacion, tarde).codigo, "cotizacion_antigua");
   assert.equal(convertirUsdAArs(30, mapearCotizacionComercial({ ok: false, codigo: "cotizacion_antigua" })), null);
+});
+
+test("la landing puede cortar una lectura de Banco Nación que no responde", { timeout: 2000 }, async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = (_url, init) =>
+    new Promise((_resolve, reject) => {
+      const signal = init?.signal;
+      if (!signal) return;
+      if (signal.aborted) {
+        reject(signal.reason);
+        return;
+      }
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    });
+
+  try {
+    const inicio = Date.now();
+    const lectura = await obtenerCotizacionBilleteVendedor(new Date(), { timeoutMs: 40 });
+    assert.equal(lectura.ok, false);
+    assert.equal(lectura.codigo, "cotizacion_no_disponible");
+    assert.ok(Date.now() - inicio < 1000);
+  } finally {
+    globalThis.fetch = original;
+  }
 });
 
 test("centavos USD 4,20 alineados con half-up", () => {

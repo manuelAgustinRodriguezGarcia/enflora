@@ -4,6 +4,7 @@ import { TransicionVista } from "@/componentes/transicion-vista";
 import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
 import { cargarClimaInicio } from "@/lib/clima/cargar";
 import { cargarPanelInicio } from "@/lib/inicio/cargar";
+import { cargarFotosInicio } from "@/lib/inicio/fotos";
 import { saludoInicio } from "@/lib/inicio/saludo";
 import { fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -45,13 +46,16 @@ export default async function PaginaInicioCultivo() {
   let panel;
   let saludo = "Inicio";
   let clima = null;
+  let fotos = [];
   try {
-    const [panelCargado, personalidad, perfilRes] = await Promise.all([
+    const [panelCargado, personalidad, perfilRes, fotosCargadas] = await Promise.all([
       cargarPanelInicio(supabase, sesion.userId, { hoy: fechaHoy() }),
       leerPersonalidadFloraUsuario(supabase),
       supabase.from("perfiles").select("nombre_usuario, nombre").eq("id", sesion.userId).maybeSingle(),
+      cargarFotosInicio(supabase, sesion.userId).catch(() => []),
     ]);
     panel = panelCargado;
+    fotos = fotosCargadas;
     const fila = perfilRes?.data;
     const nombre = String(fila?.nombre_usuario || fila?.nombre || "").trim();
     saludo = saludoInicio(personalidad, nombre);
@@ -74,7 +78,7 @@ export default async function PaginaInicioCultivo() {
 
   return (
     <TransicionVista>
-      <PanelInicio panel={panel} saludo={saludo} clima={clima} />
+      <PanelInicio panel={panel} saludo={saludo} clima={clima} fotos={fotos} />
     </TransicionVista>
   );
 }

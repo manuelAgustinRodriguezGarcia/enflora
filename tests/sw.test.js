@@ -179,6 +179,24 @@ test("el destino externo no sale del sitio y una ventana existente se reutiliza"
   assert.deepEqual(visitas, ["https://enflora.com.ar/perfil", "foco"]);
 });
 
+test("la navegación de la aplicación pide su propia ruta y no la landing cacheada", async () => {
+  const pedidos = [];
+  const sw = cargarSw({
+    fetchImpl: async (pedido) => {
+      pedidos.push(pedido.url);
+      return { url: pedido.url, ok: true };
+    },
+  });
+  const respuesta = await sw.navegar({
+    method: "GET",
+    mode: "navigate",
+    url: "https://enflora.com.ar/inicio",
+  });
+  assert.deepEqual(pedidos, ["https://enflora.com.ar/inicio"]);
+  assert.equal(respuesta.url, "https://enflora.com.ar/inicio");
+  assert.doesNotMatch(CODIGO, /caches\.match\(\s*["']\/["']\s*\)/);
+});
+
 test("la actualización espera al usuario y la navegación sin red usa la pantalla offline", async () => {
   const sw = cargarSw({
     fetchImpl: async () => {

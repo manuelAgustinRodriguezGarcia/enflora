@@ -1,3 +1,4 @@
+import { ID_PWA, RUTA_ARRANQUE_PWA, SCOPE_PWA, urlManifiestoPwa } from "@/lib/pwa-entrada";
 import { NOMBRE_MARCA } from "@/lib/seo";
 
 export default function manifest() {
@@ -5,9 +6,9 @@ export default function manifest() {
     name: NOMBRE_MARCA,
     short_name: NOMBRE_MARCA,
     description: "Seguimiento de cultivos de cannabis",
-    id: "/",
-    start_url: "/",
-    scope: "/",
+    id: ID_PWA,
+    start_url: RUTA_ARRANQUE_PWA,
+    scope: SCOPE_PWA,
     display: "standalone",
     display_override: ["standalone", "minimal-ui"],
     background_color: "#F4F8EE",
@@ -15,6 +16,12 @@ export default function manifest() {
     lang: "es-AR",
     categories: ["lifestyle"],
     prefer_related_applications: false,
+    related_applications: [
+      {
+        platform: "webapp",
+        url: urlManifiestoPwa(),
+      },
+    ],
     icons: [
       {
         src: "/icons/enflora-isotipo-192.png",

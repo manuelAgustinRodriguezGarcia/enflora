@@ -110,7 +110,8 @@ export function Hero() {
                 alt="Flora, la mascota de Enflora, tomando sol en una reposera"
                 width={1129}
                 height={1152}
-                priority
+                preload
+                fetchPriority="high"
                 draggable={false}
                 sizes="(min-width: 90rem) 34rem, (min-width: 64rem) 32rem, (min-width: 48rem) 26rem, 18rem"
               />
