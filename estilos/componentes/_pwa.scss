@@ -144,8 +144,7 @@
   font-weight: 600;
 }
 
-.mensaje-interno,
-.aviso-version {
+.mensaje-interno {
   position: fixed;
   z-index: 40;
   left: max(0.75rem, env(safe-area-inset-left));
@@ -189,19 +188,6 @@
     display: flex;
     gap: 0.5rem;
   }
-}
-
-.aviso-version {
-  bottom: calc(5.4rem + env(safe-area-inset-bottom, 0px));
-}
-
-.aviso-version p:first-child {
-  color: var(--brand-dark);
-  font-weight: 600;
-}
-
-.aviso-version__detalle {
-  color: var(--color-text-secondary);
 }
 
 .admin-prueba {

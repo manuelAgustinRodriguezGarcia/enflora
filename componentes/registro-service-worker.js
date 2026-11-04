@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { AvisoActualizacion } from "@/componentes/aviso-actualizacion";
 import { MensajeInterno } from "@/componentes/mensaje-interno";
 import { anotarFalloRegistroWorker } from "@/lib/push/fallo-registro";
 
@@ -24,10 +23,5 @@ export function RegistroServiceWorker() {
     };
   }, []);
 
-  return (
-    <>
-      <AvisoActualizacion />
-      <MensajeInterno />
-    </>
-  );
+  return <MensajeInterno />;
 }
