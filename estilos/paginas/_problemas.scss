@@ -46,10 +46,8 @@
   text-align: left;
 }
 
-.reporte-problema__intro,
 .reporte-problema__ayuda,
-.reporte-problema__unidad,
-.reporte-problema__conteo {
+.reporte-problema__unidad {
   margin: 0;
   color: var(--color-text-secondary);
   font-family: var(--font-funcional);
@@ -185,11 +183,6 @@
   font-size: var(--font-size-meta);
 }
 
-.reporte-problema__conteo {
-  color: var(--brand-dark);
-  font-weight: 650;
-}
-
 .reporte-problema__error {
   margin: 0;
 }
@@ -222,9 +215,15 @@
 
   svg,
   .icono-preferencia {
+    flex: 0 0 auto;
     width: 1.1rem;
     height: 1.1rem;
     color: var(--color-destructive);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
   }
 }
 

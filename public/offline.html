@@ -28,7 +28,17 @@
         background: #fff;
         text-align: center;
       }
-      img { width: 4.5rem; height: 4.5rem; }
+      .aviso {
+        display: grid;
+        place-items: center;
+        width: 4.5rem;
+        height: 4.5rem;
+        margin: 0 auto;
+        border-radius: 999px;
+        background: #f8edd4;
+        color: #9a5410;
+      }
+      .aviso svg { width: 2.4rem; height: 2.4rem; }
       h1 {
         margin: 0.8rem 0 0.4rem;
         color: #0b3d2a;
@@ -52,7 +62,18 @@
   </head>
   <body>
     <main>
-      <img src="/icons/enflora-isotipo-192.png" alt="" />
+      <div class="aviso" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z"
+          />
+          <path stroke="currentColor" stroke-width="1.7" stroke-linecap="round" d="M12 16.5h.008" />
+        </svg>
+      </div>
       <h1>Sin conexión</h1>
       <p>Enflora no puede cargar esta pantalla ahora. Tus cultivos siguen guardados: cuando vuelva la red, tocá reintentar.</p>
       <button type="button" id="reintentar">Reintentar</button>

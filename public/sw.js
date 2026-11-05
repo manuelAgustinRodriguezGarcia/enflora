@@ -1,12 +1,14 @@
-const CACHE = "enflora-estatico-v1";
+const CACHE = "enflora-estatico-v2";
 const OFFLINE = "/offline.html";
+const ICONO_NOTIFICACION = "/enflora-notification-icon.png";
+const BADGE_NOTIFICACION = "/enflora-notification-badge.png";
 const RECIENTES = new Map();
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
       .open(CACHE)
-      .then((cache) => cache.addAll([OFFLINE, "/icons/enflora-isotipo-192.png"]))
+      .then((cache) => cache.addAll([OFFLINE]))
       .catch(() => undefined),
   );
 });
@@ -141,8 +143,8 @@ async function mostrarAviso(aviso) {
   } else {
     await self.registration.showNotification(aviso.titulo, {
       body: aviso.mensaje,
-      icon: "/icons/enflora-isotipo-192.png",
-      badge: "/icons/enflora-isotipo-192.png",
+      icon: ICONO_NOTIFICACION,
+      badge: BADGE_NOTIFICACION,
       lang: "es-AR",
       tag: aviso.etiqueta,
       data: { url: aviso.url },

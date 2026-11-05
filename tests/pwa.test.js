@@ -94,6 +94,8 @@ test("la pantalla offline no guarda datos de cultivo y el worker no cachea respu
   const worker = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
   assert.match(offline, /Sin conexión/);
   assert.match(offline, /Reintentar/);
+  assert.doesNotMatch(offline, /<img/);
+  assert.match(offline, /class="aviso"/);
   assert.doesNotMatch(offline, /supabase|endpoint|token/i);
   assert.match(worker, /mode !== "navigate"/);
   assert.match(worker, /offline\.html/);

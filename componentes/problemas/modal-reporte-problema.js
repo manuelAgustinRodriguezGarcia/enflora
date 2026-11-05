@@ -8,6 +8,7 @@ import { motion } from "motion/react";
 import { cargarContextoReporte, crearReporteProblema } from "@/app/reportes/acciones";
 import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { Selector } from "@/componentes/selector";
 import { SelectorFotos } from "@/componentes/selector-fotos";
 import { MAX_FOTOS_REPORTE, descripcionReporteValida, plantasAfectadasReporte, seleccionInicialReporte } from "@/lib/reportes-problema";
@@ -21,9 +22,13 @@ const PLACEHOLDER =
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
 
-function textoConteo(cantidad) {
-  if (cantidad === 1) return "1 planta seleccionada";
-  return `${cantidad} plantas seleccionadas`;
+function TextoUnidad({ nombre, espacio }) {
+  return (
+    <span className="selector__opcion-texto">
+      <span className="registro-crear__unidad-nombre">{nombre}</span>
+      {espacio ? <span className="registro-crear__unidad-lugar">{` en ${espacio}`}</span> : null}
+    </span>
+  );
 }
 
 function tituloPlanta(planta) {
@@ -50,6 +55,7 @@ export function ModalReporteProblema({
   const descripcionRef = useRef("");
   const fotosRef = useRef([]);
   const estabaAbierto = useRef(false);
+  const anclaUnidad = useRef(null);
   const [lista, setLista] = useState(unidades || []);
   const [usuario, setUsuario] = useState(usuarioId);
   const [unidadActual, setUnidadActual] = useState(unidadId);
@@ -140,7 +146,6 @@ export function ModalReporteProblema({
   const unidad = lista.find((item) => item.id === unidadActual) || null;
   const plantas = unidad?.plantas || [];
   const unaPlanta = plantas.length === 1;
-  const cantidad = alcance === "unidad" ? plantas.length : ids.size;
 
   function liberarItem(item, { borrarStorage }) {
     const subida = subidasRef.current.get(item.clave);
@@ -332,7 +337,9 @@ export function ModalReporteProblema({
   const opcionesUnidad = lista.map((item) => ({
     valor: item.id,
     nombre: item.nombre,
-    etiqueta: item.espacio_nombre ? `${item.nombre} · ${item.espacio_nombre}` : item.nombre,
+    espacio: item.espacio_nombre || "",
+    etiqueta: item.espacio_nombre ? `${item.nombre} en ${item.espacio_nombre}` : item.nombre,
+    cantidadPlantas: Array.isArray(item.plantas) ? item.plantas.length : 0,
   }));
 
   return (
@@ -372,16 +379,15 @@ export function ModalReporteProblema({
               >
                 <X strokeWidth={2} aria-hidden="true" />
               </button>
-              <Dialog.Title className="modal__titulo reporte-problema__titulo">Contale a Flora</Dialog.Title>
-              <Dialog.Description className="reporte-problema__intro">
-                El reporte queda en el historial del cultivo y Flora lo analiza en el chat.
-              </Dialog.Description>
+              <Dialog.Title className="modal__titulo reporte-problema__titulo">
+                Contale a Flora tu problema
+              </Dialog.Title>
 
               <div className="reporte-problema__cuerpo">
                 {cargando ? <p className="reporte-problema__ayuda">Cargando plantas...</p> : null}
 
                 {!cargando && lista.length > 1 ? (
-                  <div className="reporte-problema__campo">
+                  <div className="reporte-problema__campo" ref={anclaUnidad}>
                     <h2 className="reporte-problema__pregunta" id="reporte-unidad-titulo">
                       ¿En qué unidad?
                     </h2>
@@ -391,10 +397,19 @@ export function ModalReporteProblema({
                       opciones={opcionesUnidad}
                       placeholder="Elegí una unidad"
                       id="reporte-unidad"
+                      ancla={anclaUnidad}
+                      alinear="start"
                       deshabilitado={enviando}
                       ariaLabel="Unidad del problema"
-                      renderValor={(opcion) => opcion?.etiqueta || opcion?.nombre}
-                      renderOpcion={(opcion) => opcion.etiqueta}
+                      renderValor={(opcion) =>
+                        opcion ? <TextoUnidad nombre={opcion.nombre} espacio={opcion.espacio} /> : null
+                      }
+                      renderOpcion={(opcion) => (
+                        <>
+                          <TextoUnidad nombre={opcion.nombre} espacio={opcion.espacio} />
+                          <PillPlantas cantidad={opcion.cantidadPlantas} mostrarCero />
+                        </>
+                      )}
                     />
                   </div>
                 ) : null}
@@ -427,7 +442,7 @@ export function ModalReporteProblema({
                             setIds(new Set(plantas.map((planta) => planta.id)));
                           }}
                         >
-                          Todas las plantas de la unidad
+                          Todas las plantas
                         </button>
                         <button
                           type="button"
@@ -468,12 +483,6 @@ export function ModalReporteProblema({
                         })}
                       </ul>
                     ) : null}
-
-                    <p className="reporte-problema__conteo" aria-live="polite">
-                      {alcance === "unidad" && !unaPlanta
-                        ? `Todas las plantas de la unidad (${plantas.length})`
-                        : textoConteo(cantidad)}
-                    </p>
                   </fieldset>
                 ) : null}
 

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+
+const ICONO = "/enflora-notification-icon.png";
+const BADGE = "/enflora-notification-badge.png";
 
 const CODIGO = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8");
 const PRUEBA = "33333333-3333-4333-8333-333333333333";
@@ -23,7 +26,14 @@ function cargarSw({ ventanas = [], mostrar, fetchImpl, cachesImpl } = {}) {
       showNotification:
         mostrar ||
         (async (titulo, opciones) => {
-          registro.push(["mostrar", titulo, opciones.tag, opciones.icon]);
+          registro.push([
+            "mostrar",
+            titulo,
+            opciones.tag,
+            opciones.icon,
+            opciones.badge,
+            Object.prototype.hasOwnProperty.call(opciones, "image"),
+          ]);
         }),
     },
     clients: {
@@ -96,7 +106,7 @@ test("sin pestañas abiertas el service worker muestra el aviso y registra la re
   const sw = cargarSw();
   await sw.push({ titulo: "Prueba de Enflora", mensaje: "Hola", url: "/", etiqueta: "push-prueba", prueba: PRUEBA, recibo: RECIBO });
   assert.deepEqual(sw.registro, [
-    ["mostrar", "Prueba de Enflora", "push-prueba", "/icons/enflora-isotipo-192.png"],
+    ["mostrar", "Prueba de Enflora", "push-prueba", ICONO, BADGE, false],
     ["fetch", "https://enflora.com.ar/api/push/recibido", { prueba: PRUEBA, recibo: RECIBO }, "omit"],
   ]);
 });
@@ -113,7 +123,7 @@ test("el aviso de campaña no confirma recepción ni cambia su presentación", a
   const sw = cargarSw();
   await sw.push({ titulo: "¡Enflora ya está disponible!", mensaje: "Flora te estaba esperando.", url: "https://enflora.com.ar/", etiqueta: "lanzamiento-2026-11" });
   assert.deepEqual(sw.registro, [
-    ["mostrar", "¡Enflora ya está disponible!", "lanzamiento-2026-11", "/icons/enflora-isotipo-192.png"],
+    ["mostrar", "¡Enflora ya está disponible!", "lanzamiento-2026-11", ICONO, BADGE, false],
   ]);
 });
 
@@ -177,6 +187,25 @@ test("el destino externo no sale del sitio y una ventana existente se reutiliza"
   });
   await propia.clic({ url: "/perfil" });
   assert.deepEqual(visitas, ["https://enflora.com.ar/perfil", "foco"]);
+});
+
+test("todas las notificaciones usan el isotipo y el badge, e ignoran iconos del payload", async () => {
+  assert.equal(existsSync(new URL(`../public${ICONO}`, import.meta.url)), true);
+  assert.equal(existsSync(new URL(`../public${BADGE}`, import.meta.url)), true);
+  assert.doesNotMatch(CODIGO, /enflora-isotipo-192/);
+  assert.doesNotMatch(CODIGO, /\bimage\s*:/);
+
+  const sw = cargarSw();
+  await sw.push({
+    titulo: "Regar",
+    mensaje: "Hoy toca riego",
+    url: "/calendario",
+    etiqueta: "tarea",
+    icon: "/icons/enflora-isotipo-192.png",
+    badge: "/icons/enflora-isotipo-192.png",
+    image: "/icons/enflora-isotipo-512.png",
+  });
+  assert.deepEqual(sw.registro, [["mostrar", "Regar", "tarea", ICONO, BADGE, false]]);
 });
 
 test("la navegación de la aplicación pide su propia ruta y no la landing cacheada", async () => {

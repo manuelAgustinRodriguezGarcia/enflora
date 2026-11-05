@@ -246,7 +246,7 @@ test("los ceros, la migración ausente y un error de Supabase no inventan cifras
 });
 
 test("las migraciones administrativas rechazan sintaxis de catálogo inválida", () => {
-  for (const archivo of ["supabase/admin-dashboard.sql", "supabase/admin-planes.sql", "supabase/admin-usuarios.sql", "supabase/admin-flora.sql", "supabase/admin-almacenamiento.sql"]) {
+  for (const archivo of ["supabase/admin-dashboard.sql", "supabase/admin-planes.sql", "supabase/admin-usuarios.sql", "supabase/admin-flora.sql", "supabase/admin-almacenamiento.sql", "supabase/admin-notificaciones.sql"]) {
     afirmarSqlAdministrativo(fs.readFileSync(path.join(RAIZ, archivo), "utf8"), archivo);
   }
   for (const [nombre, muestra] of MUESTRAS_SQL_INVALIDAS) {

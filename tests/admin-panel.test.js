@@ -97,6 +97,7 @@ test("la redirección legada es fija y las pantallas nuevas no leen datos privad
     "app/admin/flora/page.js",
     "app/admin/almacenamiento/page.js",
     "app/admin/notificaciones/page.js",
+    "app/admin/notificaciones/[id]/page.js",
     "app/admin/partners/page.js",
     "app/admin/auditoria/page.js",
     "app/admin/feedback/page.js",

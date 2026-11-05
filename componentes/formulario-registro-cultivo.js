@@ -1020,22 +1020,6 @@ export function FormularioRegistroCultivo({
       <form className="formulario registro-crear__formulario" action={enviar}>
         {estado?.error ? <p className="formulario__error">{estado.error}</p> : null}
         {errorLocal ? <p className="formulario__error">{errorLocal}</p> : null}
-        {onReportarProblema ? (
-          <button
-            type="button"
-            className="registro-crear__problema"
-            onClick={() =>
-              onReportarProblema({
-                unidadId,
-                plantaIds: todasLasPlantas ? [] : [...idsSeleccionados],
-              })
-            }
-            disabled={bloqueado}
-          >
-            <IconoPreferencia clave="problema" />
-            <span>Tengo un problema</span>
-          </button>
-        ) : null}
         <Aparecer visible={Boolean(estado?.ok) && !pendiente && !errorLocal && !estado?.error}>
           <p className="registro-crear__ok">Registro guardado. Podés cargar otro o editar uno de hoy.</p>
         </Aparecer>
@@ -1464,6 +1448,22 @@ export function FormularioRegistroCultivo({
         ) : null}
 
         <div className="registro-crear__cta">
+          {onReportarProblema ? (
+            <button
+              type="button"
+              className="registro-crear__problema"
+              onClick={() =>
+                onReportarProblema({
+                  unidadId,
+                  plantaIds: todasLasPlantas ? [] : [...idsSeleccionados],
+                })
+              }
+              disabled={bloqueado || !unidad}
+            >
+              <IconoPreferencia clave="problema" />
+              <span>Tengo un problema</span>
+            </button>
+          ) : null}
           <Boton
             type="submit"
             className="boton boton--cta boton--ancho"

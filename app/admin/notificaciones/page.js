@@ -1,34 +1,50 @@
-import { notFound, redirect } from "next/navigation";
 import { PruebaNotificacionesAdmin } from "@/componentes/admin/prueba-notificaciones";
-import { obtenerAdmin } from "@/lib/admin/autorizacion";
-import { MOTIVOS_ADMIN } from "@/lib/admin/reglas";
-import { destinoAdminPermitido, seccionAdmin } from "@/lib/admin/secciones";
-
-const seccion = seccionAdmin("notificaciones");
+import {
+  AvisoNotificaciones,
+  FormularioNotificaciones,
+  MarcoNotificaciones,
+  ResumenNotificaciones,
+} from "@/componentes/admin/notificaciones-marco";
+import { leerPanelNotificaciones } from "@/lib/admin/notificaciones";
+import { enlaceNotificaciones, prepararConsultaNotificaciones } from "@/lib/admin/notificaciones-reglas";
+import { credencialNotificaciones } from "./acceso";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: seccion.titulo,
+  title: "Notificaciones",
   robots: { index: false, follow: false },
 };
 
-export default async function PaginaNotificaciones() {
-  const resultado = await obtenerAdmin(seccion.modulo);
-  if (!resultado.ok) {
-    if (resultado.motivo === MOTIVOS_ADMIN.sinSesion) {
-      const destino = destinoAdminPermitido(seccion.href) || "/admin";
-      redirect(`/ingreso?siguiente=${encodeURIComponent(destino)}`);
-    }
-    notFound();
-  }
-
+export default async function PaginaNotificaciones({ searchParams }) {
+  const parametros = await searchParams;
+  const credencial = await credencialNotificaciones();
+  const { interpretado, consulta } = prepararConsultaNotificaciones(parametros);
+  const panel = interpretado.ok
+    ? await leerPanelNotificaciones(credencial, consulta)
+    : { ok: false, estado: "consulta", error: interpretado.error };
+  const anterior = consulta.offset > 0 ? enlaceNotificaciones(consulta, { offset: Math.max(0, consulta.offset - 20) }) : "";
+  const siguiente =
+    panel.estado === "listo" && consulta.offset + panel.lista.filas.length < panel.lista.total
+      ? enlaceNotificaciones(consulta, { offset: consulta.offset + 20 })
+      : "";
   return (
-    <section className="admin-estado">
-      <p className="admin-estado__etiqueta">Administración</p>
-      <h1>{seccion.titulo}</h1>
-      <p className="admin-estado__resumen">{seccion.resumen}</p>
+    <MarcoNotificaciones
+      titulo="Notificaciones"
+      intro="Suscripciones, envíos y campañas, en solo lectura. La prueba de abajo sigue limitada a tus dispositivos."
+      formulario={<FormularioNotificaciones consulta={consulta} />}
+      aviso={AvisoNotificaciones(panel)}
+    >
+      {panel.estado === "listo" ? (
+        <ResumenNotificaciones
+          resumen={panel.resumen}
+          lista={panel.lista}
+          enlace={(id) => enlaceNotificaciones(consulta, { id, offset: 0 })}
+          anterior={anterior}
+          siguiente={siguiente}
+        />
+      ) : null}
       <PruebaNotificacionesAdmin />
-    </section>
+    </MarcoNotificaciones>
   );
 }
