@@ -337,4 +337,19 @@ test("un error de guardado no confirma el cambio y la migración ausente no inve
       assert.match(gestion.error, /siguen acá/);
     },
   );
+
+  await conSupabaseFalso(
+    {
+      usuario: usuario(),
+      entorno: { ADMIN_IDS_FEEDBACK: ID_ADMIN },
+      rest: () => json({ code: "42501", message: "permission denied for function gestionar_feedback_admin" }, 403),
+    },
+    async () => {
+      const gestion = await guardarGestionFeedback(null, formularioGestion());
+      assert.equal(gestion.ok, false);
+      assert.match(gestion.error, /permiso/);
+      assert.match(gestion.error, /siguen acá/);
+      assert.equal(String(gestion.error).includes("Revisar en el próximo corte"), false);
+    },
+  );
 });

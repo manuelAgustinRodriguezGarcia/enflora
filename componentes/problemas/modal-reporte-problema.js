@@ -1,23 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
-import { X } from "lucide-react";
+import { CirclePile, PlantPot, X } from "lucide-react";
 import { motion } from "motion/react";
 import { cargarContextoReporte, crearReporteProblema } from "@/app/reportes/acciones";
+import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { EditorPlantasRegistro } from "@/componentes/editor-plantas-registro";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { PillPlantas } from "@/componentes/resumen-configuracion";
 import { Selector } from "@/componentes/selector";
 import { SelectorFotos } from "@/componentes/selector-fotos";
+import { agruparPlantasPorGenetica } from "@/lib/registros";
 import { MAX_FOTOS_REPORTE, descripcionReporteValida, plantasAfectadasReporte, seleccionInicialReporte } from "@/lib/reportes-problema";
 import { liberarVista, procesarFoto } from "@/lib/fotos-cliente";
 import { borrarArchivosSubidos, subirFotoRegistro } from "@/lib/fotos-subida";
 import { transicionRapida, transicionVista } from "@/lib/animaciones";
 
 const PLACEHOLDER =
-  "Contale a Flora qué estás observando. Por ejemplo: las hojas inferiores están amarillas, algunas tienen manchas marrones y el crecimiento parece más lento";
+  "Describí tu problema para que Flora pueda ayudarte, si sos específico o das detalles específicos Flora te va a entender mejor.";
 
 const panelAbierto = { opacity: 1, scale: 1, y: 0 };
 const panelCerrado = { opacity: 0, scale: 0.98, y: 8 };
@@ -29,12 +32,6 @@ function TextoUnidad({ nombre, espacio }) {
       {espacio ? <span className="registro-crear__unidad-lugar">{` en ${espacio}`}</span> : null}
     </span>
   );
-}
-
-function tituloPlanta(planta) {
-  const nombre = String(planta?.nombre || "").trim();
-  if (nombre) return nombre;
-  return planta?.numero ? `Planta ${planta.numero}` : "Planta";
 }
 
 export function ModalReporteProblema({
@@ -60,6 +57,7 @@ export function ModalReporteProblema({
   const [usuario, setUsuario] = useState(usuarioId);
   const [unidadActual, setUnidadActual] = useState(unidadId);
   const [alcance, setAlcance] = useState("unidad");
+  const [modo, setModo] = useState("manual");
   const [ids, setIds] = useState(() => new Set());
   const [descripcion, setDescripcion] = useState("");
   const [fotos, setFotos] = useState([]);
@@ -133,6 +131,7 @@ export function ModalReporteProblema({
         plantasUnidad,
       });
       setAlcance(seleccion.alcance);
+      setModo("manual");
       setIds(new Set(seleccion.ids));
       setCargando(false);
     })();
@@ -146,6 +145,7 @@ export function ModalReporteProblema({
   const unidad = lista.find((item) => item.id === unidadActual) || null;
   const plantas = unidad?.plantas || [];
   const unaPlanta = plantas.length === 1;
+  const gruposGenetica = useMemo(() => agruparPlantasPorGenetica(plantas), [plantas]);
 
   function liberarItem(item, { borrarStorage }) {
     const subida = subidasRef.current.get(item.clave);
@@ -173,7 +173,19 @@ export function ModalReporteProblema({
       plantasUnidad: plantasNuevas,
     });
     setAlcance(seleccion.alcance);
+    setModo("manual");
     setIds(new Set(seleccion.ids));
+  }
+
+  function aplicarModo(siguiente) {
+    setModo(siguiente);
+    setIds(new Set());
+  }
+
+  function elegirGenetica(clave) {
+    const grupo = gruposGenetica.find((item) => item.clave === clave);
+    if (!grupo) return;
+    setIds(new Set(grupo.plantas.map((planta) => planta.id)));
   }
 
   function alternarPlanta(id) {
@@ -183,6 +195,7 @@ export function ModalReporteProblema({
       else siguiente.add(id);
       return siguiente;
     });
+    if (modo === "genetica") setModo("manual");
   }
 
   async function incorporarArchivos(archivos, reemplazoClave = "") {
@@ -432,57 +445,48 @@ export function ModalReporteProblema({
                         Esta unidad tiene una sola planta. El reporte abarca toda la unidad.
                       </p>
                     ) : (
-                      <div className="reporte-problema__chips" role="group" aria-label="Alcance del problema">
-                        <button
-                          type="button"
-                          className={`reporte-problema__chip${alcance === "unidad" ? " reporte-problema__chip--activo" : ""}`}
-                          aria-pressed={alcance === "unidad"}
-                          onClick={() => {
-                            setAlcance("unidad");
-                            setIds(new Set(plantas.map((planta) => planta.id)));
-                          }}
-                        >
-                          Todas las plantas
-                        </button>
-                        <button
-                          type="button"
-                          className={`reporte-problema__chip${alcance === "seleccion" ? " reporte-problema__chip--activo" : ""}`}
-                          aria-pressed={alcance === "seleccion"}
-                          onClick={() => setAlcance("seleccion")}
-                        >
-                          Solo algunas plantas
-                        </button>
+                      <div className={`registro-crear__eleccion${alcance === "seleccion" ? " registro-crear__eleccion--abierta" : ""}`}>
+                        <div className="registro-crear__resumen" role="group" aria-label="Alcance del problema">
+                          <button
+                            type="button"
+                            className={`registro-crear__chip registro-crear__chip--alcance${alcance === "unidad" ? " registro-crear__chip--activo" : ""}`}
+                            aria-pressed={alcance === "unidad"}
+                            onClick={() => {
+                              setAlcance("unidad");
+                              setModo("manual");
+                              setIds(new Set(plantas.map((planta) => planta.id)));
+                            }}
+                          >
+                            <CirclePile strokeWidth={1.75} aria-hidden="true" />
+                            <span>Todas las plantas</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`registro-crear__chip registro-crear__chip--alcance${alcance === "seleccion" ? " registro-crear__chip--activo" : ""}`}
+                            aria-pressed={alcance === "seleccion"}
+                            onClick={() => {
+                              setAlcance("seleccion");
+                              if (alcance === "unidad") setModo("manual");
+                            }}
+                          >
+                            <PlantPot strokeWidth={1.75} aria-hidden="true" />
+                            <span>Elegir las plantas</span>
+                          </button>
+                        </div>
+                        <Aparecer visible={alcance === "seleccion"}>
+                          <EditorPlantasRegistro
+                            modo={modo}
+                            grupos={gruposGenetica}
+                            plantas={plantas}
+                            idsSeleccionados={ids}
+                            disabled={enviando}
+                            onModo={aplicarModo}
+                            onElegirGenetica={elegirGenetica}
+                            onAlternarPlanta={alternarPlanta}
+                          />
+                        </Aparecer>
                       </div>
                     )}
-
-                    {unaPlanta || alcance === "seleccion" ? (
-                      <ul className="reporte-problema__grilla">
-                        {plantas.map((planta) => {
-                          const activa = unaPlanta || ids.has(planta.id);
-                          return (
-                            <li key={planta.id}>
-                              <button
-                                type="button"
-                                className={`reporte-problema__planta${activa ? " reporte-problema__planta--activa" : ""}`}
-                                aria-pressed={activa}
-                                disabled={unaPlanta}
-                                onClick={() => alternarPlanta(planta.id)}
-                              >
-                                <span className="reporte-problema__numero" aria-hidden="true">
-                                  {planta.numero || "·"}
-                                </span>
-                                <span className="reporte-problema__planta-texto">
-                                  <span className="reporte-problema__planta-nombre">{tituloPlanta(planta)}</span>
-                                  {planta.genetica ? (
-                                    <span className="reporte-problema__planta-meta">{planta.genetica}</span>
-                                  ) : null}
-                                </span>
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    ) : null}
                   </fieldset>
                 ) : null}
 
@@ -503,7 +507,7 @@ export function ModalReporteProblema({
                 <div className="reporte-problema__campo">
                   <h2 className="reporte-problema__pregunta">Fotografías</h2>
                   <p className="reporte-problema__ayuda">
-                    Son opcionales. Ayudan a Flora a mirar el problema. Podés sacarlas con la cámara o elegirlas de la galería, y quitar o reemplazar cualquiera antes de enviar.
+                    Si necesitás, podés adjuntar fotos para que Flora pueda ver el problema.
                   </p>
                   <SelectorFotos
                     items={fotos}

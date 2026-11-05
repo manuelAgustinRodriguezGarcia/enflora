@@ -17,6 +17,7 @@ const SECCIONES = [
       "Cuando te sumás a la lista de novedades desde la landing guardamos tu correo electrónico y, si lo completás, tu nombre.",
       "Cuando participás de la Ruleta 420 guardamos tu nombre y al menos una forma de contacto: correo electrónico o teléfono.",
       "Si creás una cuenta en Enflora, guardamos los datos necesarios para que funcione tu espacio de cultivo, según se detalla al registrarte.",
+      "Si enviás una propuesta para asociar tu marca, guardamos el comercio, la persona de contacto, el correo, el medio de contacto y el mensaje. Esos datos no se mezclan con los contactos de Expo Cannabis ni con los cultivos.",
     ],
   },
   {
@@ -25,6 +26,7 @@ const SECCIONES = [
       "Para registrar tu interés en el lanzamiento y tu participación en la Ruleta 420, incluida la entrega de premios.",
       "Solo si marcaste la casilla correspondiente, para enviarte novedades, promociones y comunicaciones comerciales de Enflora por correo electrónico. Esa casilla es opcional y no condiciona tu participación.",
       "Nunca vendemos ni cedemos tus datos a terceros con fines publicitarios.",
+      "La propuesta de una marca se usa solo para responder ese acuerdo comercial. No autoriza a escribirle a esa persona por otros motivos.",
     ],
   },
   {

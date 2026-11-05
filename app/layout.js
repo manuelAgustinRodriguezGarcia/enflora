@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { Fredoka, Inter } from "next/font/google";
 import { headers } from "next/headers";
 import { BotonNotificaciones } from "@/componentes/boton-notificaciones";
 import { EnlacePerfil } from "@/componentes/enlace-perfil";
+import { EnlacePerfilCliente } from "@/componentes/enlace-perfil-cliente";
 import { RegistroServiceWorker } from "@/componentes/registro-service-worker";
 import { MarcaEncabezado } from "@/componentes/marca-encabezado";
 import { AjusteTecladoViewport } from "@/componentes/ajuste-teclado-viewport";
@@ -122,8 +124,14 @@ export default async function Layout({ children }) {
                   estadoTecnico={muestraEstadoNotificaciones(usuario?.email)}
                 />
               ) : null}
-              {usuario && !bloqueado ? (
-                <EnlacePerfil usuarioId={usuario.id} email={usuario.email} />
+              {conSupabase && !bloqueado ? (
+                usuario ? (
+                  <Suspense fallback={<EnlacePerfilCliente />}>
+                    <EnlacePerfil usuarioId={usuario.id} email={usuario.email} />
+                  </Suspense>
+                ) : (
+                  <EnlacePerfilCliente consultar />
+                )
               ) : null}
             </div>
           </header>

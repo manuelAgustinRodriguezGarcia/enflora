@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { guardarInteresClima, quitarLocalidadClima, quitarLocalidadUsuario } from "@/app/cultivos/[id]/clima/acciones";
+import { guardarInteresClima, quitarLocalidadUsuario } from "@/app/cultivos/[id]/clima/acciones";
 import { BusquedaLocalidad } from "@/componentes/clima/busqueda-localidad";
 import { mensajeClima } from "@/lib/clima/constantes";
 
@@ -10,7 +10,6 @@ export function SeccionClimaPerfil({ clima }) {
   const [verClima, setVerClima] = useState(verServidor);
   const [guardando, setGuardando] = useState(false);
   const [fallo, setFallo] = useState("");
-  const espacios = Array.isArray(clima?.espacios) ? clima.espacios : [];
 
   useEffect(() => {
     setVerClima(verServidor);
@@ -79,30 +78,6 @@ export function SeccionClimaPerfil({ clima }) {
               </form>
             ) : null}
           </div>
-
-          {espacios.length ? (
-            <ul className="perfil-clima__espacios">
-              {espacios.map((espacio) => (
-                <li key={espacio.id} className="perfil-clima__espacio">
-                  <h3>{espacio.nombre}</h3>
-                  <p className="perfil-clima__lugar">{espacio.localidad || "Sin localidad"}</p>
-                  <BusquedaLocalidad
-                    espacioId={espacio.id}
-                    tieneLocalidad={Boolean(espacio.localidad)}
-                    idCampo={`clima-localidad-${espacio.id}`}
-                  />
-                  {espacio.localidad ? (
-                    <form action={quitarLocalidadClima}>
-                      <input type="hidden" name="espacio_id" value={espacio.id} />
-                      <button type="submit" className="clima__texto">
-                        Quitar ubicación
-                      </button>
-                    </form>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          ) : null}
         </>
       ) : null}
     </section>

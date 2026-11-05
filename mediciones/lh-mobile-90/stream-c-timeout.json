@@ -1,0 +1,55 @@
+{
+  "url": "http://127.0.0.1:3456/",
+  "identidad": true,
+  "status": 200,
+  "location": null,
+  "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+  "encoding": null,
+  "cabecerasMs": 453,
+  "finMs": 2711,
+  "bytes": 186590,
+  "cortes": [
+    {
+      "t": 454,
+      "bytes": 65529
+    },
+    {
+      "t": 454,
+      "bytes": 65528
+    },
+    {
+      "t": 455,
+      "bytes": 28056
+    },
+    {
+      "t": 2697,
+      "bytes": 222
+    },
+    {
+      "t": 2710,
+      "bytes": 27241
+    },
+    {
+      "t": 2711,
+      "bytes": 14
+    },
+    {
+      "t": 2711,
+      "bytes": 0,
+      "fin": true
+    }
+  ],
+  "marcas": {
+    "flora-landing.png": 454,
+    "rel=\"preload\"": 454,
+    "Elegí tu mejor plan": 454,
+    "cotizacion_no_disponible": 2697
+  },
+  "offsetFlora": 501,
+  "offsetPrecios": -1,
+  "preload": "<link rel=\"preload\" as=\"image\" imageSrcSet=\"/_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=32&amp;q=75 32w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=48&amp;q=75 48w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=64&amp;q=75 64w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=96&amp;q=75 96w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=128&amp;q=75 128w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=256&amp;q=75 256w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=384&amp;q=75 384w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=640&amp;q=75 640w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=750&amp;q=75 750w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=828&amp;q=75 828w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1080&amp;q=75 1080w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1200&amp;q=75 1200w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1920&amp;q=75 1920w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=2048&amp;q=75 2048w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=3840&amp;q=75 3840w\" imageSizes=\"(min-width: 90rem) 34rem, (min-width: 64rem) 32rem, (min-width: 48rem) 26rem, 18rem\" fetchPriority=\"high\"/>",
+  "imagen": "<img alt=\"Flora, la mascota de Enflora, tomando sol en una reposera\" draggable=\"false\" fetchPriority=\"high\" width=\"1129\" height=\"1152\" decoding=\"async\" data-nimg=\"1\" style=\"color:transparent\" sizes=\"(min-width: 90rem) 34rem, (min-width: 64rem) 32rem, (min-width: 48rem) 26rem, 18rem\" srcSet=\"/_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=32&amp;q=75 32w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=48&amp;q=75 48w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=64&amp;q=75 64w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=96&amp;q=75 96w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=128&amp;q=75 128w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=256&amp;q=75 256w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=384&amp;q=75 384w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=640&amp;q=75 640w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=750&amp;q=75 750w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=828&amp;q=75 828w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1080&amp;q=75 1080w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1200&amp;q=75 1200w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=1920&amp;q=75 1920w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=2048&amp;q=75 2048w, /_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=3840&amp;q=75 3840w\" src=\"/_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=3840&amp;q=75\"/>",
+  "ars": 0,
+  "heroes": 31,
+  "seccionesPrecios": 2
+}

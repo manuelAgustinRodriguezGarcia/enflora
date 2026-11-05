@@ -1,0 +1,55 @@
+{
+  "build": "dOmYrCpz2CZb-NDVfkRfO",
+  "servidor": "next start 16.3.6, puerto 3456, Accept-Encoding identity",
+  "marcaHero": "flora-landing.png en el byte 501 del HTML",
+  "escenarios": {
+    "A_inmediata": {
+      "floraMs": 572,
+      "preciosDefinitivosMs": 574,
+      "finMs": 577,
+      "ars": 2
+    },
+    "B_dos_segundos": {
+      "floraMs": 514,
+      "tituloPreciosMs": 515,
+      "preciosDefinitivosMs": 2256,
+      "finMs": 2258,
+      "ars": 2,
+      "bytesAntesDeLaCotizacion": 159113
+    },
+    "C_supera_timeout": {
+      "floraMs": 454,
+      "sinCotizacionMs": 2697,
+      "finMs": 2711,
+      "ars": 0
+    },
+    "D_sin_respuesta": {
+      "floraMs": 570,
+      "sinCotizacionMs": 2736,
+      "finMs": 2744,
+      "ars": 0
+    },
+    "E_memoria": {
+      "floraMs": 71,
+      "preciosDefinitivosMs": 72,
+      "finMs": 75,
+      "llamadosBna": 1,
+      "nota": "El segundo pedido no volvió a consultar Banco Nación."
+    },
+    "redirect_code": {
+      "status": 307,
+      "location": "/correo/confirmar?code=abc",
+      "finMs": 36
+    }
+  },
+  "navegador_timeout": {
+    "responseStartMs": 351,
+    "heroRequestMs": 358,
+    "currentSrc": "w=384",
+    "preloads": 1,
+    "secciones": 1,
+    "tarjetas": 3,
+    "loading": null,
+    "fetchPriority": "high"
+  }
+}

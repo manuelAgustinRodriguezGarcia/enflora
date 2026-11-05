@@ -1,12 +1,13 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CirclePile, PlantPot, X } from "lucide-react";
+import { CirclePile, PlantPot, Save, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Aparecer } from "@/componentes/aparecer";
 import { Boton } from "@/componentes/boton";
+import { EditorPlantasRegistro } from "@/componentes/editor-plantas-registro";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
-import { IconoLapiz, IconoPlanta } from "@/componentes/iconos-ui";
+import { IconoLapiz } from "@/componentes/iconos-ui";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { SeccionMezclaRegistro } from "@/componentes/seccion-mezcla-registro";
@@ -45,12 +46,6 @@ import {
   seccionParametrosGrupoVisible,
   valoresDesdeRegistroParametros,
 } from "@/lib/registros";
-const MODOS_PLANTAS = [
-  { valor: "unidad", etiqueta: "Todas" },
-  { valor: "genetica", etiqueta: "Genética" },
-  { valor: "manual", etiqueta: "Manual" },
-];
-
 function claveAccion(item) {
   return item.origen === "nativa" ? `nativa:${item.clave}` : `personalizada:${item.clave}`;
 }
@@ -1131,97 +1126,16 @@ export function FormularioRegistroCultivo({
             </div>
 
             <Aparecer visible={editorPlantas}>
-              <div className="registro-crear__editor-plantas">
-                <div className="registro-crear__filtros">
-                  <p className="registro-crear__filtros-titulo">Filtrar por</p>
-                  <div className="registro-crear__chips" role="group" aria-label="Filtrar por">
-                    {MODOS_PLANTAS.filter((item) => item.valor !== "unidad").map((item) => (
-                      <button
-                        key={item.valor}
-                        type="button"
-                        className={`registro-crear__chip${modoSeleccion === item.valor ? " registro-crear__chip--activo" : ""}`}
-                        onClick={() => aplicarModoSeleccion(item.valor)}
-                        disabled={bloqueoPlantas}
-                        aria-pressed={modoSeleccion === item.valor}
-                      >
-                        {item.etiqueta}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <Aparecer visible={modoSeleccion === "genetica" && gruposGenetica.length > 0}>
-                  <div className="registro-crear__plantas" role="group" aria-label="Genéticas de la unidad">
-                    {gruposGenetica.map((grupo) => {
-                      const activo =
-                        plantasSeleccionadas.length === grupo.plantas.length &&
-                        grupo.plantas.every((planta) => idsSeleccionados.has(planta.id));
-                      const cantidad = grupo.plantas.length;
-                      return (
-                        <button
-                          key={grupo.clave}
-                          type="button"
-                          className={`registro-crear__planta${activo ? " registro-crear__planta--activa" : ""}`}
-                          onClick={() => elegirGenetica(grupo.clave)}
-                          disabled={bloqueoPlantas}
-                          aria-pressed={activo}
-                        >
-                          <span className="registro-crear__planta-texto">
-                            <span className="registro-crear__planta-nombre">{grupo.etiqueta}</span>
-                            <span className="registro-crear__planta-meta">
-                              {cantidad === 1 ? "1 planta" : `${cantidad} plantas`}
-                            </span>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </Aparecer>
-
-                <Aparecer visible={modoSeleccion === "genetica" && gruposGenetica.length === 0}>
-                  <p className="registro-crear__ayuda">
-                    No hay genéticas cargadas en esta unidad. Usá selección manual.
-                  </p>
-                </Aparecer>
-
-                <Aparecer visible={plantas.length > 0}>
-                  <div className="registro-crear__plantas-bloque">
-                    <div className="registro-crear__plantas">
-                      {plantas.map((planta) => {
-                        const activa = idsSeleccionados.has(planta.id);
-                        const titulo = planta.nombre || `Planta ${planta.numero || ""}`.trim();
-                        return (
-                          <motion.button
-                            key={planta.id}
-                            type="button"
-                            className={`registro-crear__planta${activa ? " registro-crear__planta--activa" : ""}`}
-                            onClick={() => alternarPlanta(planta.id)}
-                            disabled={bloqueoPlantas}
-                            aria-pressed={activa}
-                            whileTap={bloqueado ? undefined : toque}
-                            transition={transicionToque}
-                          >
-                            <IconoPlanta className="registro-crear__planta-icono" />
-                            <span className="registro-crear__planta-texto">
-                              <span className="registro-crear__planta-nombre">{titulo}</span>
-                              {planta.genetica ? (
-                                <span className="registro-crear__planta-meta">{planta.genetica}</span>
-                              ) : null}
-                            </span>
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                    <p className="registro-crear__plantas-cabecera">
-                      {idsSeleccionados.size} de {plantas.length} plantas seleccionadas
-                    </p>
-                  </div>
-                </Aparecer>
-
-                <Aparecer visible={plantas.length === 0}>
-                  <p className="registro-crear__ayuda">Esta unidad todavía no tiene plantas.</p>
-                </Aparecer>
-              </div>
+              <EditorPlantasRegistro
+                modo={modoSeleccion}
+                grupos={gruposGenetica}
+                plantas={plantas}
+                idsSeleccionados={idsSeleccionados}
+                disabled={bloqueoPlantas}
+                onModo={aplicarModoSeleccion}
+                onElegirGenetica={elegirGenetica}
+                onAlternarPlanta={alternarPlanta}
+              />
             </Aparecer>
             </div>
           </section>
@@ -1469,15 +1383,18 @@ export function FormularioRegistroCultivo({
             className="boton boton--cta boton--ancho"
             disabled={bloqueado || !unidad}
           >
-            {subiendo
-              ? "Subiendo fotos..."
-              : pendiente
-              ? "Guardando..."
-              : cargandoEdicion
-                ? "Cargando..."
-                : editandoId
-                  ? "Guardar cambios"
-                  : "Guardar registro"}
+            <Save size={22} strokeWidth={2.25} aria-hidden="true" />
+            <span>
+              {subiendo
+                ? "Subiendo fotos..."
+                : pendiente
+                ? "Guardando..."
+                : cargandoEdicion
+                  ? "Cargando..."
+                  : editandoId
+                    ? "Guardar cambios"
+                    : "Guardar registro"}
+            </span>
           </Boton>
         </div>
       </form>

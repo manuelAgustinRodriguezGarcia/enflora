@@ -1,3 +1,4 @@
+import { EnlaceBanner } from "@/componentes/enlace-banner";
 import { elegirRotacion, enlaceExternoSeguro } from "@/lib/publicidad";
 
 export function BannerPublicitario({ campañas = [] }) {
@@ -22,13 +23,12 @@ export function BannerPublicitario({ campañas = [] }) {
   return (
     <aside className="banner-publicitario" aria-label="Publicidad">
       <p className="banner-publicitario__etiqueta">Publicidad</p>
-      {enlace ? (
-        <a
-          className="banner-publicitario__enlace"
-          href={enlace}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-        >
+      {enlace && campaña.campanaId ? (
+        <EnlaceBanner href={enlace} campanaId={campaña.campanaId}>
+          {imagen}
+        </EnlaceBanner>
+      ) : enlace ? (
+        <a className="banner-publicitario__enlace" href={enlace} target="_blank" rel="noopener noreferrer sponsored">
           {imagen}
         </a>
       ) : (

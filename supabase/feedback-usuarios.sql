@@ -218,9 +218,9 @@ begin
     '',
     'g'
   );
+  -- text ya rechaza NUL. No comprobarlo en SQL: esa llamada falla al ejecutarse.
   if pg_catalog.char_length(v_mensaje) < 10
     or pg_catalog.char_length(v_mensaje) > 2000
-    or pg_catalog.strpos(v_mensaje, pg_catalog.chr(0)) > 0
   then
     return pg_catalog.jsonb_build_object('ok', false, 'codigo', 'mensaje_invalido');
   end if;
@@ -437,7 +437,6 @@ begin
     or p_prioridad not in ('baja', 'normal', 'alta')
     or p_nota is null
     or pg_catalog.char_length(p_nota) > 2000
-    or pg_catalog.strpos(p_nota, pg_catalog.chr(0)) > 0
   then
     return pg_catalog.jsonb_build_object('ok', false, 'codigo', 'consulta_invalida');
   end if;

@@ -50,12 +50,15 @@ function json(cuerpo, cabeceras = {}) {
 /** PostgREST falso con respuestas plausibles para cada operación del admin de Expo. */
 function restDeExpo({ metodo, url }) {
   const ruta = url.pathname;
-  if (ruta === "/rest/v1/rpc/registrar_entrega_expo" || ruta === "/rest/v1/rpc/guardar_inventario_expo") return json(FILA_STICKERS);
-  if (ruta === "/rest/v1/rpc/reiniciar_participantes_expo") return json({ participantes: 2, partidas: 3 });
+  if (ruta === "/rest/v1/rpc/entrega_expo_auditada" || ruta === "/rest/v1/rpc/inventario_expo_auditado") return json(FILA_STICKERS);
+  if (ruta === "/rest/v1/rpc/reinicio_expo_auditado") return json({ participantes: 2, partidas: 3 });
   if (ruta === "/rest/v1/rpc/resumen_participantes_expo") return json({ participantes: 4, partidas: 5 });
   if (ruta === "/rest/v1/rpc/resumen_contactos_enflora") return json([{ total: 1, landing: 0, ruleta: 0, con_consentimiento: 0, hoy: 1 }]);
-  if (ruta === "/rest/v1/rpc/registrar_contacto_enflora") return json([{ id_contacto: ID_CONTACTO, es_nuevo: true }]);
-  if (ruta === "/rest/v1/rpc/actualizar_consentimiento_contacto") return json(true);
+  if (ruta === "/rest/v1/rpc/contacto_expo_auditado") return json({ id_contacto: ID_CONTACTO, es_nuevo: true });
+  if (ruta === "/rest/v1/rpc/edicion_contacto_expo_auditada") return json({ ok: true, contacto: CONTACTO });
+  if (ruta === "/rest/v1/rpc/consentimiento_expo_auditado") return json({ ok: true });
+  if (ruta === "/rest/v1/rpc/eliminacion_contacto_expo_auditada") return json({ ok: true, eliminado: true });
+  if (ruta === "/rest/v1/rpc/exportacion_expo_auditada") return json({ ok: true });
   if (ruta === "/rest/v1/expo_inventario") return json([FILA_STICKERS]);
   if (ruta === "/rest/v1/contactos_enflora") {
     if (metodo === "DELETE") return json([{ id: ID_CONTACTO }]);
@@ -152,10 +155,10 @@ test("Expo: con credencial válida inventario y participantes conservan su compo
       const reinicio = await reiniciarParticipantesServicio(credencial);
       assert.deepEqual(reinicio, { ok: true, participantes: 2, partidas: 3 });
 
-      const cuerpoEntrega = entorno.rest.find((solicitud) => solicitud.url.pathname.endsWith("registrar_entrega_expo")).cuerpo;
-      assert.deepEqual(JSON.parse(cuerpoEntrega), { p_slug: "stickers", p_delta: 1 });
-      const cuerpoInventario = entorno.rest.find((solicitud) => solicitud.url.pathname.endsWith("guardar_inventario_expo")).cuerpo;
-      assert.deepEqual(JSON.parse(cuerpoInventario), { p_slug: "stickers", p_stock: 10, p_entregados: 2 });
+      const cuerpoEntrega = entorno.rest.find((solicitud) => solicitud.url.pathname.endsWith("entrega_expo_auditada")).cuerpo;
+      assert.deepEqual(JSON.parse(cuerpoEntrega), { p_admin: ID_ADMIN, p_slug: "stickers", p_delta: 1 });
+      const cuerpoInventario = entorno.rest.find((solicitud) => solicitud.url.pathname.endsWith("inventario_expo_auditado")).cuerpo;
+      assert.deepEqual(JSON.parse(cuerpoInventario), { p_admin: ID_ADMIN, p_slug: "stickers", p_stock: 10, p_entregados: 2 });
       assert.equal(avisos.filter((aviso) => aviso.includes("[admin]")).length, 0, "nada se bloqueó");
     });
   });
@@ -295,10 +298,13 @@ test("acciones: el administrador autorizado conserva el comportamiento de cada a
       assert.equal(avisos.filter((aviso) => aviso.includes("[admin]")).length, 0, "ninguna solicitud legítima se bloqueó");
       const usadas = new Set(rutas(entorno).map((ruta) => ruta.replace(/^(GET|POST|PATCH|DELETE) /, "")));
       for (const ruta of usadas) {
-        assert.match(ruta, /^\/rest\/v1\/(expo_inventario|contactos_enflora|rpc\/(registrar_entrega_expo|guardar_inventario_expo|resumen_participantes_expo|reiniciar_participantes_expo|registrar_contacto_enflora|actualizar_consentimiento_contacto|resumen_contactos_enflora))$/);
+        assert.match(ruta, /^\/rest\/v1\/(expo_inventario|contactos_enflora|rpc\/(entrega_expo_auditada|inventario_expo_auditado|resumen_participantes_expo|reinicio_expo_auditado|contacto_expo_auditado|edicion_contacto_expo_auditada|consentimiento_expo_auditado|eliminacion_contacto_expo_auditada|exportacion_expo_auditada|resumen_contactos_enflora))$/);
       }
       const metodos = new Set(entorno.rest.filter((solicitud) => solicitud.url.pathname === "/rest/v1/contactos_enflora").map((solicitud) => solicitud.metodo));
-      assert.deepEqual([...metodos].sort(), ["DELETE", "GET", "PATCH"]);
+      assert.deepEqual([...metodos].sort(), ["GET"]);
+      const exportacion = entorno.rest.find((solicitud) => solicitud.url.pathname.endsWith("exportacion_expo_auditada"));
+      assert.equal(JSON.parse(exportacion.cuerpo).p_admin, ID_ADMIN);
+      assert.equal(JSON.stringify(JSON.parse(exportacion.cuerpo)).includes("@"), false);
     });
   });
 });
@@ -379,10 +385,12 @@ test("límites: solo autorizacion.js usa la fábrica del núcleo (el punto de in
 test("límites: el cliente restringido solo lo reciben módulos de lib/ de Expo, nunca páginas ni componentes", () => {
   assert.deepEqual(archivosQueImportan("lib/admin/servicio.js"), [
     "lib/admin/almacenamiento.js",
+    "lib/admin/auditoria.js",
     "lib/admin/dashboard.js",
     "lib/admin/feedback.js",
     "lib/admin/flora.js",
     "lib/admin/notificaciones.js",
+    "lib/admin/partners.js",
     "lib/admin/planes.js",
     "lib/admin/usuarios.js",
     "lib/expo-cannabis/admin.js",

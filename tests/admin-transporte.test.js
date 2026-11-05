@@ -131,9 +131,15 @@ test("cliente restringido: una credencial vencida no entrega cliente", async () 
 
 test("cliente restringido: un módulo sin política de datos no recibe cliente", async () => {
   const contexto = await montar({ modulo: "auditoria" });
-  assert.throws(() => contexto.crearSimulado(contexto.credencial, "auditoria"), /modulo_sin_acceso_a_datos/);
+  const crear = crearServicioDatosAdmin({
+    verificar: () => ({ id: ID_ADMIN, modulo: "sin_politica", via: "uuid" }),
+    env: ENV,
+  });
+  assert.throws(() => crear(contexto.credencial, "auditoria"), /modulo_sin_acceso_a_datos/);
   assert.equal(contexto.creaciones.length, 0);
-  assert.equal(Object.hasOwn(ACCESO_DATOS_ADMIN, "auditoria"), false);
+  assert.equal(Object.hasOwn(ACCESO_DATOS_ADMIN, "sin_politica"), false);
+  assert.equal(Object.hasOwn(ACCESO_DATOS_ADMIN, "auditoria"), true);
+  assert.deepEqual(ACCESO_DATOS_ADMIN.auditoria.tablas, {});
   assert.equal(Object.hasOwn(ACCESO_DATOS_ADMIN, "__proto__"), false);
 });
 

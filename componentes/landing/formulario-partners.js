@@ -91,6 +91,10 @@ export function FormularioPartners({ planInicial = PLAN_INDEFINIDO }) {
         data = null;
       }
 
+      if (respuesta.status === 429) {
+        setError("Recibimos varios intentos seguidos. Esperá unos minutos.");
+        return;
+      }
       if (!respuesta.ok || !data?.ok) {
         setError(MENSAJES_PARTNERS.generico);
         return;
@@ -295,6 +299,7 @@ export function FormularioPartners({ planInicial = PLAN_INDEFINIDO }) {
         </p>
       ) : null}
 
+      <p className="partners__aclaracion">Usamos estos datos solo para responder tu propuesta comercial.</p>
       <button type="submit" className="partners__enviar" disabled={enviando} aria-busy={enviando}>
         {enviando ? (
           <>

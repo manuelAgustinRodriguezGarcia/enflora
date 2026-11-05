@@ -1,5 +1,6 @@
 import { Resend } from "resend";
-import { construirEmailPartners, MENSAJES_PARTNERS, validarPartners } from "@/lib/partners";
+import { construirEmailPartners, decidirEnvioSolicitud, MENSAJES_PARTNERS, validarPartners } from "@/lib/partners";
+import { cupoPartners, persistirSolicitudPartners } from "@/lib/partners-persistencia";
 
 const ERROR_GENERICO = MENSAJES_PARTNERS.generico;
 
@@ -23,6 +24,12 @@ export async function POST(request) {
 
   if (resultado.honeypot) {
     return json({ ok: true });
+  }
+
+  const persistencia = await persistirSolicitudPartners(resultado.datos, cupoPartners(request, "solicitud"));
+  const decision = decidirEnvioSolicitud(persistencia);
+  if (!decision.enviar) {
+    return json(decision.estado === 200 ? { ok: true } : { ok: false, error: ERROR_GENERICO }, decision.estado);
   }
 
   const apiKey = process.env.RESEND_API_KEY;

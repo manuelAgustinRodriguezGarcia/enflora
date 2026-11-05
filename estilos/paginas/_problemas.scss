@@ -55,8 +55,7 @@
   line-height: 1.45;
 }
 
-.reporte-problema__unidad strong,
-.reporte-problema__planta-nombre {
+.reporte-problema__unidad strong {
   color: var(--color-text);
   font-weight: 650;
 }
@@ -104,85 +103,6 @@
   resize: vertical;
 }
 
-.reporte-problema__chips {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.reporte-problema__chip,
-.reporte-problema__planta {
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-family: var(--font-funcional);
-  cursor: pointer;
-}
-
-.reporte-problema__chip {
-  flex: 1 1 0;
-  min-height: var(--touch-min);
-  padding: 0.55rem 0.7rem;
-  border-radius: 999px;
-  font-size: var(--font-size-body-small);
-  font-weight: 650;
-}
-
-.reporte-problema__chip--activo,
-.reporte-problema__planta--activa {
-  border-color: var(--color-primary);
-  background: var(--surface-green);
-  color: var(--brand-dark);
-}
-
-.reporte-problema__grilla {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.4rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.reporte-problema__planta {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: 0.65rem;
-  min-height: var(--touch-min);
-  padding: 0.45rem 0.6rem;
-  border-radius: var(--radius-control);
-  text-align: left;
-
-  &:disabled {
-    cursor: default;
-    opacity: 1;
-  }
-}
-
-.reporte-problema__numero {
-  display: grid;
-  flex: 0 0 auto;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--color-primary);
-  color: var(--color-surface);
-  font-family: var(--font-identidad);
-  font-size: 0.85rem;
-}
-
-.reporte-problema__planta-texto {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-}
-
-.reporte-problema__planta-meta {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-meta);
-}
-
 .reporte-problema__error {
   margin: 0;
 }
@@ -227,6 +147,18 @@
   }
 }
 
+.reporte-problema__panel .fotos-selector__boton {
+  border-color: var(--color-border);
+  background: var(--surface-green);
+  color: var(--brand-dark);
+
+  &:hover:not(:disabled) {
+    border-color: var(--brand-medium);
+    background: var(--brand-accent-light);
+    color: var(--brand-dark);
+  }
+}
+
 button.inicio__accion {
   width: 100%;
   border: 0;
@@ -236,9 +168,5 @@ button.inicio__accion {
 @media (min-width: 720px) {
   .reporte-problema__vista {
     align-items: center;
-  }
-
-  .reporte-problema__grilla {
-    grid-template-columns: 1fr 1fr;
   }
 }

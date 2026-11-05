@@ -11,8 +11,11 @@ import {
   VENTANA_DUPLICADO_MS,
   VENTANA_FEEDBACK_MS,
   aceptarEnvio,
+  clasificarErrorEnvioFeedback,
   crearCupoSerializable,
+  escucharFallosFeedback,
   evaluarCupoFeedback,
+  resumenTecnicoSupabase,
   validarEnvioFeedback,
 } from "../lib/feedback/reglas.js";
 import { afirmarSqlAdministrativo, cuerpoSql } from "./ayudas/sintaxis-sql-admin.js";
@@ -67,6 +70,38 @@ test("la migración deja el alta en una función y no abre la tabla", () => {
   const alta = cuerpo.split("function public.enviar_feedback_usuario")[1].split("function public.listar_feedback_admin")[0];
   assert.match(alta, /p_categoria text, p_mensaje text/);
   assert.equal(/usuario_id|p_estado|p_prioridad|nota_admin/.test(alta.split("begin")[0]), false);
+});
+
+test("las funciones no buscan un carácter nulo y el arreglo conserva el mismo cuerpo", () => {
+  const original = fs.readFileSync(path.join(RAIZ, "supabase/feedback-usuarios.sql"), "utf8");
+  const arreglo = fs.readFileSync(path.join(RAIZ, "supabase/feedback-usuarios-fix.sql"), "utf8");
+  for (const texto of [original, arreglo]) {
+    assert.equal(texto.includes("chr(0)"), false);
+    assert.equal(/pg_catalog\.chr\s*\(/.test(texto), false);
+  }
+  afirmarSqlAdministrativo(arreglo, "supabase/feedback-usuarios-fix.sql");
+  assert.equal(/drop table|delete from|truncate|drop policy/i.test(arreglo), false);
+  const cuerpo = (sql, nombre) => {
+    const inicio = sql.indexOf(`create or replace function public.${nombre}`);
+    const fin = sql.indexOf("$$;", inicio);
+    return sql.slice(inicio, fin + 3);
+  };
+  assert.equal(cuerpo(arreglo, "enviar_feedback_usuario"), cuerpo(original, "enviar_feedback_usuario"));
+  assert.equal(cuerpo(arreglo, "gestionar_feedback_admin"), cuerpo(original, "gestionar_feedback_admin"));
+  assert.match(arreglo, /grant execute on function public\.enviar_feedback_usuario\(text, text\) to authenticated/);
+  assert.match(arreglo, /revoke all on function public\.enviar_feedback_usuario\(text, text\) from public, anon, service_role/);
+  assert.match(arreglo, /grant execute on function public\.gestionar_feedback_admin\(uuid, uuid, text, text, text\) to service_role/);
+  assert.match(arreglo, /from public, anon, authenticated/);
+  assert.equal(clasificarErrorEnvioFeedback({ code: "PGRST202", message: "Could not find the function" }), "migracion");
+  assert.equal(clasificarErrorEnvioFeedback({ code: "42501", message: "permission denied" }), "permiso");
+  assert.equal(clasificarErrorEnvioFeedback({ code: "54000", message: "null character not permitted" }), "error");
+  const resumen = resumenTecnicoSupabase({
+    code: "54000",
+    message: "fallo persona@example.com bearer eyJaaaa.bbbbbbbbbb.cccccccccc",
+  });
+  assert.equal(resumen.codigo, "54000");
+  assert.equal(resumen.mensaje.includes("persona@"), false);
+  assert.equal(resumen.mensaje.includes("eyJ"), false);
 });
 
 test("valida categoría y largo, y no conserva campos administrativos", () => {
@@ -252,6 +287,36 @@ test("la acción real no manda identidad ni campos administrativos", async () =>
       assert.match(resultado.error, /sigue acá/);
     },
   );
+
+  const casos = [
+    [{ code: "PGRST202", message: "Could not find the function" }, 404, "migracion", /feedback-usuarios\.sql/],
+    [{ code: "42501", message: "permission denied for function" }, 401, "permiso", /sigue acá/],
+    [{ code: "54000", message: "null character not permitted persona@example.com" }, 500, "error", /sigue acá/],
+  ];
+  for (const [cuerpo, estado, codigo, patron] of casos) {
+    const lineas = [];
+    const dejar = escucharFallosFeedback((linea) => lineas.push(linea));
+    try {
+      await conSupabaseFalso(
+        {
+          usuario: { id: ID, email: "persona@example.com", is_anonymous: false },
+          rest: () => json(cuerpo, estado),
+        },
+        async () => {
+          const resultado = await enviarFeedback(null, formulario());
+          assert.equal(resultado.codigo, codigo);
+          assert.equal(resultado.mensaje, MENSAJE);
+          assert.match(resultado.error, patron);
+          assert.equal(resultado.error.includes("persona@"), false);
+          assert.equal(resultado.error.includes(MENSAJE), false);
+        },
+      );
+    } finally {
+      dejar();
+    }
+    assert.equal(lineas.some((linea) => linea.codigo === cuerpo.code && linea.ambito === "envio"), true);
+    assert.equal(lineas.some((linea) => linea.mensaje.includes(MENSAJE) || linea.mensaje.includes("persona@")), false);
+  }
 });
 
 test("dos altas simultáneas del mismo texto dejan una sola", async () => {

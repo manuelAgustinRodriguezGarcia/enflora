@@ -1,0 +1,475 @@
+{
+  "requestedUrl": "https://enflora.com.ar/",
+  "finalUrl": "https://enflora.com.ar/",
+  "fetchTime": "2026-11-05T19:19:33.444Z",
+  "lighthouseVersion": "12.8.2",
+  "warnings": [],
+  "runtimeError": null,
+  "formFactor": "mobile",
+  "throttlingMethod": "simulate",
+  "throttling": {
+    "rttMs": 150,
+    "throughputKbps": 1638.4,
+    "requestLatencyMs": 562.5,
+    "downloadThroughputKbps": 1474.5600000000002,
+    "uploadThroughputKbps": 675,
+    "cpuSlowdownMultiplier": 4
+  },
+  "screenEmulation": {
+    "mobile": true,
+    "width": 412,
+    "height": 823,
+    "deviceScaleFactor": 1.75,
+    "disabled": false
+  },
+  "categories": {
+    "performance": 80,
+    "accessibility": 96,
+    "best-practices": 100,
+    "seo": 100
+  },
+  "metrics": {
+    "fcp": 1241.182,
+    "lcp": 4032.182,
+    "tbt": 245.5,
+    "cls": 0,
+    "si": 4200.3298981463495,
+    "ttfb": 641,
+    "interactive": 4362.482,
+    "observed": {
+      "fcp": 1575,
+      "lcp": 1575,
+      "si": 1928,
+      "tbt": null,
+      "cls": 0
+    }
+  },
+  "lcpElement": {
+    "type": "list",
+    "items": [
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "node",
+            "valueType": "node",
+            "label": "Element"
+          }
+        ],
+        "items": [
+          {
+            "node": {
+              "type": "node",
+              "lhId": "page-1-IMG",
+              "path": "1,HTML,1,BODY,2,MAIN,1,DIV,1,MAIN,0,DIV,1,DIV,0,SECTION,2,DIV,0,DIV,1,DIV,0,FIGURE,1,DIV,0,DIV,0,IMG",
+              "selector": "figure.tilted-card > div.tilted-card__body > div.tilted-card__face > img",
+              "boundingRect": {
+                "top": 145,
+                "bottom": 418,
+                "left": 70,
+                "right": 342,
+                "width": 272,
+                "height": 272
+              },
+              "snippet": "<img alt=\"Flora, la mascota de Enflora, tomando sol en una reposera\" draggable=\"false\" fetchpriority=\"high\" width=\"1129\" height=\"1152\" decoding=\"async\" data-nimg=\"1\" style=\"color:transparent\" sizes=\"(min-width: 90rem) 34rem, (min-width: 64rem) 32rem, (min-width: 48rem) 26r…\" srcset=\"/_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=32&amp;q=75&amp;dpl=dpl_4PzQ4Lsqw…\" src=\"https://enflora.com.ar/_next/image?url=%2Fimages%2Fflora-landing.png&amp;w=640…\">",
+              "nodeLabel": "Flora, la mascota de Enflora, tomando sol en una reposera"
+            }
+          }
+        ]
+      },
+      {
+        "type": "table",
+        "headings": [
+          {
+            "key": "phase",
+            "valueType": "text",
+            "label": "Phase"
+          },
+          {
+            "key": "percent",
+            "valueType": "text",
+            "label": "% of LCP"
+          },
+          {
+            "key": "timing",
+            "valueType": "ms",
+            "label": "Timing"
+          }
+        ],
+        "items": [
+          {
+            "phase": "TTFB",
+            "timing": 641.182,
+            "percent": "16%"
+          },
+          {
+            "phase": "Load Delay",
+            "timing": 2411.0781025211363,
+            "percent": "60%"
+          },
+          {
+            "phase": "Load Time",
+            "timing": 187.96083981742868,
+            "percent": "5%"
+          },
+          {
+            "phase": "Render Delay",
+            "timing": 791.9610576614346,
+            "percent": "20%"
+          }
+        ]
+      }
+    ]
+  },
+  "longTasks": [
+    {
+      "url": "/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "start": 4423.182,
+      "duration": 284
+    },
+    {
+      "url": "/",
+      "start": 989.182,
+      "duration": 214
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "start": 3941.182,
+      "duration": 191
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z-698bbiwzal.js",
+      "start": 2741.182,
+      "duration": 108
+    }
+  ],
+  "bootup": [
+    {
+      "url": "/_next/static/immutable/chunks/0e9lk0ky0cx_i.js",
+      "total": 2542.047999999999,
+      "scripting": 444.86000000000433,
+      "parse": 5.343999999999999
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "total": 1943.715999999957,
+      "scripting": 1362.6719999999568,
+      "parse": 12.959999999999999
+    },
+    {
+      "url": "/",
+      "total": 818.320000000002,
+      "scripting": 15.411999999999997,
+      "parse": 5.803999999999998
+    },
+    {
+      "url": "/_next/static/immutable/chunks/14857v6yh1ogx.js",
+      "total": 457.47600000000045,
+      "scripting": 424.97200000000043,
+      "parse": 7.548
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1_57sjogp6gp0.js",
+      "total": 398.62399999999985,
+      "scripting": 148.16800000000006,
+      "parse": 5.784
+    },
+    {
+      "url": "Unattributable",
+      "total": 316.71600000000296,
+      "scripting": 8.235999999999997,
+      "parse": 0
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1v13slhryei5q.js",
+      "total": 168.13999999999996,
+      "scripting": 159.25999999999996,
+      "parse": 2.3280000000000003
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z-698bbiwzal.js",
+      "total": 136.58000000000018,
+      "scripting": 128.41600000000017,
+      "parse": 6.848
+    }
+  ],
+  "mainThread": [
+    {
+      "group": "scriptEvaluation",
+      "groupLabel": "Script Evaluation",
+      "duration": 2704.8919999999175
+    },
+    {
+      "group": "other",
+      "groupLabel": "Other",
+      "duration": 2559.0959999999554
+    },
+    {
+      "group": "styleLayout",
+      "groupLabel": "Style & Layout",
+      "duration": 1007.9960000000004
+    },
+    {
+      "group": "paintCompositeRender",
+      "groupLabel": "Rendering",
+      "duration": 434.54800000003775
+    },
+    {
+      "group": "scriptParseCompile",
+      "groupLabel": "Script Parsing & Compilation",
+      "duration": 71.19599999999998
+    },
+    {
+      "group": "parseHTML",
+      "groupLabel": "Parse HTML & CSS",
+      "duration": 32.184
+    },
+    {
+      "group": "garbageCollection",
+      "groupLabel": "Garbage Collection",
+      "duration": 26.979999999999993
+    }
+  ],
+  "renderBlocking": [
+    {
+      "url": "https://enflora.com.ar/_next/static/immutable/chunks/1rngzoftxs2b3.css",
+      "totalBytes": 45157,
+      "wastedMs": 300
+    }
+  ],
+  "legacy": [
+    {
+      "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "wastedBytes": 10728,
+      "subItems": {
+        "type": "subitems",
+        "items": [
+          {
+            "signal": "Array.prototype.at",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 1117
+            }
+          },
+          {
+            "signal": "Array.prototype.flat",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 505
+            }
+          },
+          {
+            "signal": "Array.prototype.flatMap",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 618
+            }
+          },
+          {
+            "signal": "Object.fromEntries",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 994
+            }
+          },
+          {
+            "signal": "Object.hasOwn",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 1252
+            }
+          },
+          {
+            "signal": "String.prototype.trimEnd",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 247
+            }
+          },
+          {
+            "signal": "String.prototype.trimStart",
+            "location": {
+              "type": "source-location",
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+              "urlProvider": "network",
+              "line": 0,
+              "column": 162
+            }
+          }
+        ]
+      },
+      "totalBytes": 0
+    }
+  ],
+  "dom": {
+    "type": "table",
+    "headings": [
+      {
+        "key": "statistic",
+        "valueType": "text",
+        "label": "Statistic"
+      },
+      {
+        "key": "node",
+        "valueType": "node",
+        "label": "Element"
+      },
+      {
+        "key": "value",
+        "valueType": "numeric",
+        "label": "Value"
+      }
+    ],
+    "items": [
+      {
+        "statistic": "Total DOM Elements",
+        "value": {
+          "type": "numeric",
+          "granularity": 1,
+          "value": 1148
+        }
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "1-55-path",
+          "path": "1,HTML,1,BODY,2,MAIN,1,DIV,1,MAIN,2,SECTION,0,DIV,0,DIV,2,DIV,0,DIV,1,DIV,0,DIV,0,DIV,0,DIV,1,DIV,0,DIV,0,SPAN,0,svg,0,path",
+          "selector": "div.magic-bento__header > span.magic-bento__icon > svg.lucide > path",
+          "boundingRect": {
+            "top": 3091,
+            "bottom": 3098,
+            "left": 51,
+            "right": 57,
+            "width": 6,
+            "height": 7
+          },
+          "snippet": "<path d=\"M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06…\">",
+          "nodeLabel": "div.magic-bento__header > span.magic-bento__icon > svg.lucide > path"
+        },
+        "statistic": "Maximum DOM Depth",
+        "value": {
+          "type": "numeric",
+          "granularity": 1,
+          "value": 18
+        }
+      },
+      {
+        "node": {
+          "type": "node",
+          "lhId": "1-56-UL",
+          "path": "1,HTML,1,BODY,2,MAIN,1,DIV,1,MAIN,3,SECTION,0,DIV,1,DIV,1,DIV,1,DIV,0,UL",
+          "selector": "div.flora__bloque > div.flora-galeria > div.flora-galeria__carrusel > ul.flora-galeria__pista",
+          "boundingRect": {
+            "top": 4445,
+            "bottom": 4862,
+            "left": -2283,
+            "right": 4750,
+            "width": 7033,
+            "height": 417
+          },
+          "snippet": "<ul class=\"flora-galeria__pista flora-galeria__pista--carrusel\" style=\"transform: translate3d(-2284.3px, 0px, 0px);\">",
+          "nodeLabel": "@enflora420\n\n#Laburando\n\n@enflora420\n\n#ConLasPlantas\n\n@enflora420\n\n#FacaContraL…"
+        },
+        "statistic": "Maximum Child Elements",
+        "value": {
+          "type": "numeric",
+          "granularity": 1,
+          "value": 24
+        }
+      }
+    ]
+  },
+  "chains": {
+    "type": "criticalrequestchain",
+    "chains": {
+      "DB4C7A0A268FDB4AAE0DF49EEE6A969B": {
+        "request": {
+          "url": "https://enflora.com.ar/",
+          "startTime": 225988.409063,
+          "endTime": 225991.165388,
+          "responseReceivedTime": 225989.588628,
+          "transferSize": 22980
+        },
+        "children": {
+          "39212.7": {
+            "request": {
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/2l91c2-y5xnoj.css",
+              "startTime": 225989.604713,
+              "endTime": 225989.673559,
+              "responseReceivedTime": 225989.672942,
+              "transferSize": 1344
+            }
+          },
+          "39212.8": {
+            "request": {
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/1rngzoftxs2b3.css",
+              "startTime": 225989.605087,
+              "endTime": 225989.670739,
+              "responseReceivedTime": 225989.6489,
+              "transferSize": 45157
+            }
+          },
+          "39212.9": {
+            "request": {
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/3z5jfcknvb4bb.css",
+              "startTime": 225989.605233,
+              "endTime": 225989.744811,
+              "responseReceivedTime": 225989.744501,
+              "transferSize": 1889
+            }
+          },
+          "39212.10": {
+            "request": {
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/2jxx252km028u.css",
+              "startTime": 225989.606284,
+              "endTime": 225989.650066,
+              "responseReceivedTime": 225989.649034,
+              "transferSize": 1317
+            }
+          },
+          "39212.11": {
+            "request": {
+              "url": "https://enflora.com.ar/_next/static/immutable/chunks/33iy-_3hrzk3z.css",
+              "startTime": 225989.606552,
+              "endTime": 225989.648803,
+              "responseReceivedTime": 225989.648453,
+              "transferSize": 1103
+            }
+          },
+          "39212.62": {
+            "request": {
+              "url": "https://enflora.com.ar/manifest.webmanifest",
+              "startTime": 225989.674691,
+              "endTime": 225989.798438,
+              "responseReceivedTime": 225989.79741899998,
+              "transferSize": 1155
+            }
+          }
+        }
+      }
+    },
+    "longestChain": {
+      "duration": 2756.324999988079,
+      "length": 1,
+      "transferSize": 22980
+    }
+  }
+}

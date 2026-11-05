@@ -1,0 +1,505 @@
+{
+  "navegacionMs": 0,
+  "lcp": [
+    {
+      "nombre": "NavStartToExperimentalLargestContentfulPaint::Invalidate::AllFrames::UKM",
+      "inicio": 1668.41
+    },
+    {
+      "nombre": "largestContentfulPaint::Candidate",
+      "inicio": 2506.26,
+      "size": 175841,
+      "node": "IMG"
+    },
+    {
+      "nombre": "NavStartToLargestContentfulPaint::Candidate::AllFrames::UKM",
+      "inicio": 2667.95,
+      "size": 175841
+    },
+    {
+      "nombre": "NavStartToExperimentalLargestContentfulPaint::Invalidate::AllFrames::UKM",
+      "inicio": 2667.96
+    },
+    {
+      "nombre": "NavStartToLargestContentfulPaint::Candidate::AllFrames::UKM",
+      "inicio": 2731.19,
+      "size": 175841
+    },
+    {
+      "nombre": "NavStartToExperimentalLargestContentfulPaint::Invalidate::AllFrames::UKM",
+      "inicio": 2731.2
+    }
+  ],
+  "documento": {
+    "url": "/",
+    "envio": 340.38,
+    "respuesta": 340.53,
+    "fin": 454.54,
+    "primerDato": 451.12,
+    "trozos": 1,
+    "bytesTrozos": 204669,
+    "transfer": 22874,
+    "decoded": 204669,
+    "mime": "text/html",
+    "prioridad": null
+  },
+  "flora": {
+    "url": "/_next/image?url=%2Fimages%2Fflora-landing.png&w=640&q=75&dpl=dpl_4PzQ4LsqwpSGvp2AAk66xrXyPdtG",
+    "envio": 452.79,
+    "respuesta": 506.46,
+    "fin": 526.11,
+    "primerDato": 506.49,
+    "trozos": 2,
+    "bytesTrozos": 81714,
+    "transfer": 82034,
+    "decoded": 81714,
+    "mime": "image/webp",
+    "prioridad": null
+  },
+  "parseHtml": [
+    {
+      "inicio": 528.89,
+      "dur": 7.61,
+      "fin": 536.5,
+      "rango": "0-"
+    }
+  ],
+  "primerosRecursos": [
+    {
+      "url": "/",
+      "envio": 340.38,
+      "respuesta": 340.53,
+      "primerDato": 451.12,
+      "fin": 454.54,
+      "transfer": 22874,
+      "decoded": 204669,
+      "mime": "text/html",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/media/5d52bd6c4cb3f315-s.p.12wv-xs8vggjn.woff2",
+      "envio": 341.55,
+      "respuesta": 397.5,
+      "primerDato": 397.53,
+      "fin": 397.58,
+      "transfer": 30027,
+      "decoded": 29704,
+      "mime": "font/woff2",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/media/83afe278b6a6bb3c-s.p.45535valc9rzk.woff2",
+      "envio": 341.8,
+      "respuesta": 402.02,
+      "primerDato": 402.1,
+      "fin": 402.2,
+      "transfer": 48716,
+      "decoded": 48432,
+      "mime": "font/woff2",
+      "prioridad": null
+    },
+    {
+      "url": "/logos/enflora-logo-apaisado.svg",
+      "envio": 452.65,
+      "respuesta": 499.07,
+      "primerDato": 499.1,
+      "fin": 501.14,
+      "transfer": 5264,
+      "decoded": 11832,
+      "mime": "image/svg+xml",
+      "prioridad": null
+    },
+    {
+      "url": "/logos/enflora-logo-apaisado-light.svg",
+      "envio": 452.75,
+      "respuesta": 501.34,
+      "primerDato": 501.37,
+      "fin": 502.93,
+      "transfer": 5206,
+      "decoded": 11832,
+      "mime": "image/svg+xml",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/image?url=%2Fimages%2Fflora-landing.png&w=640&q=75&dpl=dpl_4PzQ4LsqwpSGvp2AAk66xrXyPdtG",
+      "envio": 452.79,
+      "respuesta": 506.46,
+      "primerDato": 506.49,
+      "fin": 526.11,
+      "transfer": 82034,
+      "decoded": 81714,
+      "mime": "image/webp",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/2l91c2-y5xnoj.css",
+      "envio": 452.83,
+      "respuesta": 503.69,
+      "primerDato": 503.71,
+      "fin": 504.02,
+      "transfer": 1310,
+      "decoded": 11398,
+      "mime": "text/css",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1rngzoftxs2b3.css",
+      "envio": 452.86,
+      "respuesta": 504.51,
+      "primerDato": 504.52,
+      "fin": 505.97,
+      "transfer": 45158,
+      "decoded": 243070,
+      "mime": "text/css",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z5jfcknvb4bb.css",
+      "envio": 452.89,
+      "respuesta": 503.14,
+      "primerDato": 503.17,
+      "fin": 503.54,
+      "transfer": 1906,
+      "decoded": 6110,
+      "mime": "text/css",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/2jxx252km028u.css",
+      "envio": 452.93,
+      "respuesta": 504.22,
+      "primerDato": 504.24,
+      "fin": 504.39,
+      "transfer": 1362,
+      "decoded": 3518,
+      "mime": "text/css",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/33iy-_3hrzk3z.css",
+      "envio": 452.95,
+      "respuesta": 526.48,
+      "primerDato": 527.58,
+      "fin": 527.96,
+      "transfer": 1114,
+      "decoded": 875,
+      "mime": "text/css",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1k65agbqmlvg9.js",
+      "envio": 453.02,
+      "respuesta": 635.02,
+      "primerDato": 635.05,
+      "fin": 635.09,
+      "transfer": 4004,
+      "decoded": 12936,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3duts62o2xvm4.js",
+      "envio": 453.05,
+      "respuesta": 636.57,
+      "primerDato": 636.58,
+      "fin": 636.59,
+      "transfer": 9004,
+      "decoded": 26811,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z-698bbiwzal.js",
+      "envio": 453.08,
+      "respuesta": 636.21,
+      "primerDato": 636.23,
+      "fin": 636.25,
+      "transfer": 35605,
+      "decoded": 129058,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "envio": 453.1,
+      "respuesta": 638.15,
+      "primerDato": 638.17,
+      "fin": 638.2,
+      "transfer": 73469,
+      "decoded": 229535,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/0som5eihk6a36.js",
+      "envio": 453.14,
+      "respuesta": 637.18,
+      "primerDato": 637.2,
+      "fin": 637.21,
+      "transfer": 9169,
+      "decoded": 32128,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/turbopack-27u3m0oeol0a2.js",
+      "envio": 453.16,
+      "respuesta": 636.46,
+      "primerDato": 636.47,
+      "fin": 636.49,
+      "transfer": 4277,
+      "decoded": 9805,
+      "mime": "application/javascript",
+      "prioridad": null
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1sqqfi4outo7i.js",
+      "envio": 453.21,
+      "respuesta": 634.65,
+      "primerDato": 634.7,
+      "fin": 634.8,
+      "transfer": 4020,
+      "decoded": 14440,
+      "mime": "application/javascript",
+      "prioridad": null
+    }
+  ],
+  "tareasLargasAntesLcp": [
+    {
+      "inicio": 536.66,
+      "dur": 95.29
+    },
+    {
+      "inicio": 739.64,
+      "dur": 134.73
+    },
+    {
+      "inicio": 751.32,
+      "dur": 54.8
+    },
+    {
+      "inicio": 2537.68,
+      "dur": 85.78
+    },
+    {
+      "inicio": 2544.33,
+      "dur": 74.89
+    }
+  ],
+  "scriptsAntesLcp": [
+    {
+      "url": "/_next/static/immutable/chunks/3z48wtu91nj8v.js",
+      "dur": 24,
+      "veces": 1,
+      "inicio": 651.38
+    },
+    {
+      "url": "/",
+      "dur": 3,
+      "veces": 5,
+      "inicio": 528.07
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3z-698bbiwzal.js",
+      "dur": 2,
+      "veces": 1,
+      "inicio": 640.28
+    },
+    {
+      "url": "/_next/static/immutable/chunks/14857v6yh1ogx.js",
+      "dur": 2,
+      "veces": 1,
+      "inicio": 648.84
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1_57sjogp6gp0.js",
+      "dur": 2,
+      "veces": 1,
+      "inicio": 677.82
+    },
+    {
+      "url": "/_next/static/immutable/chunks/0pu8utjyppf-g.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 639.5
+    },
+    {
+      "url": "/_next/static/immutable/chunks/turbopack-27u3m0oeol0a2.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 642.69
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3duts62o2xvm4.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 644.06
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3y2vcosb1fbiv.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 644.63
+    },
+    {
+      "url": "/_next/static/immutable/chunks/0-vfipfhcnw_9.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 645.25
+    },
+    {
+      "url": "/_next/static/immutable/chunks/3qsj8pzfifs31.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 647.9
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1v13slhryei5q.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 650.72
+    },
+    {
+      "url": "/_next/static/immutable/chunks/0e9lk0ky0cx_i.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 676.42
+    },
+    {
+      "url": "/sw.js",
+      "dur": 1,
+      "veces": 1,
+      "inicio": 885.58
+    },
+    {
+      "url": "/_next/static/immutable/chunks/1sqqfi4outo7i.js",
+      "dur": 0,
+      "veces": 1,
+      "inicio": 638.8
+    }
+  ],
+  "layoutAntesLcp": [
+    {
+      "tipo": "Layout",
+      "inicio": 551.33,
+      "dur": 79.4,
+      "pila": []
+    },
+    {
+      "tipo": "UpdateLayoutTree",
+      "inicio": 536.78,
+      "dur": 14.24,
+      "pila": []
+    }
+  ],
+  "sumaLayoutAntesLcp": 94,
+  "sumaScriptsAntesLcp": 42,
+  "paints": [
+    {
+      "tipo": "Paint",
+      "inicio": 1418.01,
+      "dur": 4.23
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1418.08,
+      "dur": 0.02
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1418.1,
+      "dur": 0
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1418.1,
+      "dur": 0.05
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1418.44,
+      "dur": 0.01
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1418.59,
+      "dur": 0.02
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1418.65,
+      "dur": 0.36
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.03,
+      "dur": 0
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.03,
+      "dur": 0.01
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.04,
+      "dur": 0.01
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.06,
+      "dur": 0
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.06,
+      "dur": 0.01
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1419.11,
+      "dur": 0.64
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1419.45,
+      "dur": 0.06
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.46,
+      "dur": 0.05
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1419.51,
+      "dur": 0.02
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.51,
+      "dur": 0.01
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1419.53,
+      "dur": 0.01
+    },
+    {
+      "tipo": "PaintImage",
+      "inicio": 1419.53,
+      "dur": 0.01
+    },
+    {
+      "tipo": "Paint",
+      "inicio": 1419.55,
+      "dur": 0
+    }
+  ],
+  "trozosDocumento": [
+    {
+      "t": 451.12,
+      "bytes": 204669
+    }
+  ]
+}

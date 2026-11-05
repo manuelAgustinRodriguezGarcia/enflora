@@ -10,15 +10,16 @@ const ETIQUETAS_PLAN = {
 
 function TarjetaComercio({ comercio }) {
   const sitio = enlaceExternoSeguro(comercio.sitio_web);
+  const logo = enlaceExternoSeguro(comercio.logo_url);
   const plan = ETIQUETAS_PLAN[comercio.plan] || comercio.plan;
 
   return (
     <article className="directorio__tarjeta">
       <div className="directorio__logo-wrap">
-        {comercio.logo_url ? (
+        {logo ? (
           <img
             className="directorio__logo"
-            src={comercio.logo_url}
+            src={logo}
             alt=""
             width={96}
             height={96}

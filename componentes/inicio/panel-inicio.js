@@ -163,7 +163,11 @@ function FotosInicio({ fotos }) {
   const visibles = fotos.slice(0, 3);
 
   return (
-    <section className="inicio__fotos inicio__fotos--muestra" aria-label="Galería de Flora">
+    <section className="inicio__fotos inicio__fotos--muestra" aria-labelledby="inicio-fotos">
+      <header className="inicio__fotos-cabecera">
+        <h2 id="inicio-fotos">Tus últimas fotos</h2>
+        <p>Podés ver todas las fotos en tu galería</p>
+      </header>
       <ul
         className="inicio__fotos-fila"
         style={{ gridTemplateColumns: `repeat(${visibles.length + 1}, minmax(0, 1fr))` }}
