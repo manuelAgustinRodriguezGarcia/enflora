@@ -11,12 +11,13 @@
 --      null conserva la mezcla al editar y no crea nada en el alta.
 --      { "aplicar": false } la elimina.
 --      Un objeto la reemplaza en la misma transacción.
+--   4. eliminar_receta_mezcla borra la receta del catálogo.
+--      Los riegos ya cargados conservan su snapshot y receta_id queda en null.
 --
 -- Qué no hace:
 --   No crea un historial de mezclas aparte.
 --   No migra registros viejos: siguen sin mezcla.
 --   No modifica fotos, plantas, acciones ni la forma de los parámetros.
---   No hay RPC de borrado. Archivar deja la fila para las referencias.
 --
 -- Firma anterior que se reemplaza, solo para evitar una RPC ambigua:
 --   crear_registro(text, text, uuid, uuid, text, text, text, timestamptz, jsonb, jsonb, jsonb, jsonb)
@@ -1155,6 +1156,33 @@ begin
 end;
 $$;
 
+create or replace function public.eliminar_receta_mezcla(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  usuario uuid := auth.uid();
+begin
+  if usuario is null then
+    raise exception 'No hay sesión.';
+  end if;
+
+  if p_id is null then
+    raise exception 'No se encontró la mezcla.';
+  end if;
+
+  delete from public.recetas_mezcla
+  where id = p_id
+    and usuario_id = usuario;
+
+  if not found then
+    raise exception 'No se encontró la mezcla.';
+  end if;
+end;
+$$;
+
 -- ---------------------------------------------------------------------------
 -- 6. crear_registro / editar_registro
 --    Misma firma que registro-fotos.sql, con p_mezcla al final y default null.
@@ -1455,6 +1483,7 @@ revoke all on function public.eliminar_producto_cultivo(uuid) from public, anon;
 revoke all on function public.guardar_receta_mezcla(uuid, jsonb) from public, anon;
 revoke all on function public.duplicar_receta_mezcla(uuid) from public, anon;
 revoke all on function public.establecer_receta_mezcla_activa(uuid, boolean) from public, anon;
+revoke all on function public.eliminar_receta_mezcla(uuid) from public, anon;
 revoke all on function public.crear_registro(text, text, uuid, uuid, text, text, text, timestamptz, jsonb, jsonb, jsonb, jsonb, jsonb) from public, anon;
 revoke all on function public.editar_registro(uuid, text, text, uuid, uuid, text, text, text, timestamptz, jsonb, jsonb, jsonb, jsonb, jsonb, jsonb) from public, anon;
 
@@ -1464,5 +1493,6 @@ grant execute on function public.eliminar_producto_cultivo(uuid) to authenticate
 grant execute on function public.guardar_receta_mezcla(uuid, jsonb) to authenticated;
 grant execute on function public.duplicar_receta_mezcla(uuid) to authenticated;
 grant execute on function public.establecer_receta_mezcla_activa(uuid, boolean) to authenticated;
+grant execute on function public.eliminar_receta_mezcla(uuid) to authenticated;
 grant execute on function public.crear_registro(text, text, uuid, uuid, text, text, text, timestamptz, jsonb, jsonb, jsonb, jsonb, jsonb) to authenticated;
 grant execute on function public.editar_registro(uuid, text, text, uuid, uuid, text, text, text, timestamptz, jsonb, jsonb, jsonb, jsonb, jsonb, jsonb) to authenticated;

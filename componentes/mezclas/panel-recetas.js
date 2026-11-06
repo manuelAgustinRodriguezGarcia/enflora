@@ -4,11 +4,13 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "@base-ui/react/dialog";
 import { PackageOpen } from "lucide-react";
-import { duplicarRecetaMezcla, establecerRecetaActiva } from "@/app/registros/mezclas-acciones";
+import { eliminarRecetaMezcla } from "@/app/registros/mezclas-acciones";
 import { EnlaceBoton } from "@/componentes/boton";
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { FormularioReceta } from "@/componentes/mezclas/formulario-receta";
-import { textoMedida } from "@/lib/mezclas/calculo";
+import { MenuAccionesProducto } from "@/componentes/mezclas/menu-acciones-producto";
+import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
+import { textoResumenReceta } from "@/lib/mezclas/presentacion";
 
 export function PanelRecetas({
   recetas = [],
@@ -20,6 +22,8 @@ export function PanelRecetas({
   const [error, setError] = useState("");
   const [editor, setEditor] = useState(null);
   const [confirmarDescarte, setConfirmarDescarte] = useState(false);
+  const [porEliminar, setPorEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
   const estadoRef = useRef({ sucio: false, guardando: false });
 
   function recordarEstado(estado) {
@@ -33,7 +37,7 @@ export function PanelRecetas({
   }
 
   function pedirCierre(detalles) {
-    if (estadoRef.current.guardando) {
+    if (estadoRef.current.guardando || confirmarDescarte) {
       detalles?.cancel?.();
       return;
     }
@@ -50,23 +54,18 @@ export function PanelRecetas({
     pedirCierre(detalles);
   }
 
-  async function duplicar(id) {
+  async function confirmarEliminar() {
+    if (!porEliminar || eliminando) return;
+    setEliminando(true);
     setError("");
-    const resultado = await duplicarRecetaMezcla(id);
+    const resultado = await eliminarRecetaMezcla(porEliminar.id);
+    setEliminando(false);
     if (resultado.error) {
       setError(resultado.error);
       return;
     }
-    router.refresh();
-  }
-
-  async function cambiarActiva(receta) {
-    setError("");
-    const resultado = await establecerRecetaActiva(receta.id, !receta.activa);
-    if (resultado.error) {
-      setError(resultado.error);
-      return;
-    }
+    if (editor?.receta?.id === porEliminar.id) cerrarEditor();
+    setPorEliminar(null);
     router.refresh();
   }
 
@@ -107,24 +106,7 @@ export function PanelRecetas({
           <Dialog.Backdrop className="modal__fondo" />
           <Dialog.Viewport className="modal__vista">
             <Dialog.Popup className="modal__panel mezclas__modal">
-              {confirmarDescarte ? (
-                <div className="mezclas__descarte" role="alertdialog" aria-labelledby="mezcla-descarte-titulo">
-                  <p className="mezclas__alta-titulo" id="mezcla-descarte-titulo">
-                    ¿Descartar los cambios?
-                  </p>
-                  <p className="mezclas__meta">Si salís ahora, se pierde lo que modificaste en esta mezcla.</p>
-                  <div className="mezclas__acciones mezclas__acciones--alta">
-                    <button type="button" className="boton boton--secundario" onClick={() => setConfirmarDescarte(false)}>
-                      Seguir editando
-                    </button>
-                    <button type="button" className="boton boton--destructivo" onClick={cerrarEditor}>
-                      Descartar
-                    </button>
-                  </div>
-                </div>
-              ) : null}
               {editor ? (
-                <div inert={confirmarDescarte ? true : undefined}>
                 <FormularioReceta
                   key={editor.receta?.id || "nueva"}
                   receta={editor.receta}
@@ -137,46 +119,67 @@ export function PanelRecetas({
                     router.refresh();
                   }}
                 />
-                </div>
               ) : null}
             </Dialog.Popup>
           </Dialog.Viewport>
         </Dialog.Portal>
       </Dialog.Root>
-      {error ? <p className="formulario__error">{error}</p> : null}
       <ul className="mezclas__lista">
-        {recetas.map((receta) => (
+        {recetas.map((receta) => {
+          const resumen = textoResumenReceta(receta, productos);
+          return (
           <li key={receta.id} className={receta.activa ? "" : "mezclas__item--archivado"}>
-            <div>
+            <div className="mezclas__cuerpo">
               <p className="mezclas__nombre">{receta.nombre}</p>
-              <p className="mezclas__meta">
-                {textoMedida(receta.volumen_agua, receta.unidad_volumen)}
-                {` · ${(receta.componentes || receta.receta_componentes || []).length} componentes`}
-                {receta.activa ? "" : " · Archivada"}
-              </p>
+              {resumen || !receta.activa ? (
+                <div className="mezclas__resumen-fila">
+                  {resumen ? <span className="mezclas__resumen-pill">{resumen}</span> : null}
+                  {receta.activa ? null : <span className="mezclas__meta">Archivada</span>}
+                </div>
+              ) : null}
             </div>
-            <div className="mezclas__acciones">
-              <button
-                type="button"
-                className="boton boton--secundario"
-                onClick={() => {
-                  estadoRef.current = { sucio: false, guardando: false };
-                  setError("");
-                  setEditor({ receta });
-                }}
-              >
-                Editar
-              </button>
-              <button type="button" className="boton boton--secundario" onClick={() => duplicar(receta.id)}>
-                Duplicar
-              </button>
-              <button type="button" className="boton boton--ghost" onClick={() => cambiarActiva(receta)}>
-                {receta.activa ? "Archivar" : "Activar"}
-              </button>
-            </div>
+            <MenuAccionesProducto
+              etiqueta="Acciones de la mezcla"
+              onEditar={() => {
+                estadoRef.current = { sucio: false, guardando: false };
+                setError("");
+                setEditor({ receta });
+              }}
+              onEliminar={() => {
+                setError("");
+                setPorEliminar(receta);
+              }}
+            />
           </li>
-        ))}
+          );
+        })}
       </ul>
+      <ModalConfirmacion
+        abierto={confirmarDescarte}
+        encima
+        onCerrar={() => setConfirmarDescarte(false)}
+        titulo="¿Descartar los cambios?"
+        descripcion="Si salís ahora, se pierde lo que modificaste en esta mezcla."
+        textoConfirmar="Descartar"
+        textoCancelar="Seguir editando"
+        varianteConfirmar="destructivo"
+        onConfirmar={cerrarEditor}
+      />
+      <ModalConfirmacion
+        abierto={Boolean(porEliminar)}
+        onCerrar={() => {
+          if (eliminando) return;
+          setPorEliminar(null);
+          setError("");
+        }}
+        titulo="¿Eliminar esta mezcla?"
+        descripcion="Se borra de tu lista. Los riegos que ya cargaste siguen igual."
+        textoConfirmar="Eliminar"
+        varianteConfirmar="destructivo"
+        pendiente={eliminando}
+        error={error}
+        onConfirmar={confirmarEliminar}
+      />
     </div>
   );
 }

@@ -5,7 +5,11 @@ import { Ellipsis } from "lucide-react";
 import { useState } from "react";
 import { IconoBasura, IconoLapiz } from "@/componentes/iconos-ui";
 
-export function MenuAccionesProducto({ onEditar, onEliminar }) {
+export function MenuAccionesProducto({
+  onEditar,
+  onEliminar,
+  etiqueta = "Acciones del producto",
+}) {
   const [abierto, setAbierto] = useState(false);
 
   return (
@@ -14,7 +18,7 @@ export function MenuAccionesProducto({ onEditar, onEliminar }) {
         <Popover.Trigger
           type="button"
           className="tarjeta-acciones-menu__disparador boton boton--secundario boton--icono"
-          aria-label="Acciones del producto"
+          aria-label={etiqueta}
           aria-haspopup="menu"
           aria-expanded={abierto}
         >

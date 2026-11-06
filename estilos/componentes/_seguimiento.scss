@@ -134,19 +134,13 @@
   &__detalle {
     display: flex;
     flex-direction: column;
-    gap: 0.2rem;
-    min-height: 3.2rem;
+    min-height: 2.2rem;
   }
 
-  &__descripcion,
-  &__ejemplos {
+  &__descripcion {
     margin: 0;
     font-size: var(--font-size-body-small);
     line-height: 1.4;
-  }
-
-  &__ejemplos {
-    color: var(--color-text-secondary);
   }
 
   @media (prefers-reduced-motion: reduce) {

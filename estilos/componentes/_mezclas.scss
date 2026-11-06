@@ -237,6 +237,28 @@
     }
   }
 
+  &__resumen-fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  &__resumen-pill {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.22rem 0.65rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
   &__meta,
   &__accesos {
     margin: 0;
@@ -324,14 +346,16 @@
   }
 
   &__fila {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 4.15rem 5.15rem var(--touch-min);
-    gap: 0.35rem;
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    align-items: stretch;
+    min-width: 0;
   }
 
   &__fila-producto,
   &__producto-campo {
+    width: 100%;
     min-width: 0;
   }
 
@@ -376,19 +400,40 @@
     height: 1.1rem;
   }
 
-  &__fila-cantidad,
-  &__fila-unidad {
-    width: 100%;
+  &__cantidades {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
     min-width: 0;
-    padding-inline: 0.35rem;
   }
 
-  &__fila-unidad {
-    font-size: 0.8125rem;
+  &__cantidades-titulo {
+    margin: 0;
+    font-family: var(--font-funcional);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-label);
+    color: var(--color-text);
+  }
+
+  &__cantidades-campos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7.75rem, 9.5rem) var(--touch-min);
+    gap: 0.35rem;
+    align-items: center;
+
+    .selector {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+
+  &__fila-cantidad {
+    width: 100%;
+    min-width: 0;
   }
 
   &__fila-total {
-    grid-column: 1 / -1;
+    margin: 0;
   }
 
   &__producto-positioner {
@@ -438,19 +483,6 @@
     gap: 0.5rem;
   }
 
-  &__descarte {
-    position: sticky;
-    top: 0;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin: -1.25rem -1.25rem 0;
-    padding: 1rem 1.25rem;
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
-  }
-
   &__sumar {
     align-self: flex-start;
 
@@ -459,6 +491,11 @@
       height: 1.1rem;
       flex: 0 0 auto;
     }
+  }
+
+  &__formulario &__sumar {
+    align-self: stretch;
+    width: 100%;
   }
 
   &__volumen,
@@ -471,15 +508,13 @@
   }
 
   &__volumen {
+    grid-template-columns: minmax(0, 1fr) 6.75rem;
+
     input,
-    select {
+    .selector {
       width: 100%;
       min-width: 0;
       font-size: 1rem;
-    }
-
-    select {
-      width: 5.15rem;
     }
   }
 

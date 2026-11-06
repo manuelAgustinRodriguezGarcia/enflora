@@ -1,34 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
-import { CalendarPlus } from "lucide-react";
+import { CalendarPlus, Check } from "lucide-react";
 import { BotonEstado } from "@/componentes/calendario/boton-estado";
 import { FiltrosCalendario } from "@/componentes/calendario/filtros-calendario";
 import { FormularioTarea } from "@/componentes/calendario/formulario-tarea";
 import { TarjetaMes } from "@/componentes/calendario/tarjeta-mes";
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
-import {
-  cancelarTarea,
-  cargarVistaCalendario,
-  completarTarea,
-  eliminarTarea,
-  reabrirTarea,
-} from "@/app/calendario/acciones";
-import { formatearFecha } from "@/lib/etapas";
-import { etiquetaEstado, etiquetaTipo, hrefCalendario, hrefRegistroDesdeTarea, normalizarConsulta } from "@/lib/calendario/modelo";
+import { cargarVistaCalendario, completarTarea, reabrirTarea } from "@/app/calendario/acciones";
+import { hrefCalendario, normalizarConsulta } from "@/lib/calendario/modelo";
 
-function metaTarea(tarea, espacios, hoy) {
-  const partes = [];
-  if (tarea.estado === "pendiente" && hoy && tarea.fecha < hoy) partes.push("Vencida");
-  const cultivo = nombreCultivo(espacios, tarea.unidadId);
-  if (cultivo) partes.push(cultivo);
-  if (tarea.plantaIds.length) {
-    partes.push(tarea.plantaIds.length === 1 ? "1 planta" : `${tarea.plantaIds.length} plantas`);
-  }
-  const estado = etiquetaEstado(tarea.estado);
-  if (estado) partes.push(estado);
-  return partes.join(" · ");
+function textoCuando(fecha, hora) {
+  const partes = String(fecha || "").split("-");
+  const dia = partes.length === 3 ? `${partes[2]}/${partes[1]}` : "";
+  if (!dia) return hora || "";
+  return hora ? `${dia} · ${hora}` : dia;
 }
 
 function nombreCultivo(espacios, unidadId) {
@@ -51,16 +37,6 @@ function Retorno({ filtros, tarea }) {
       <input type="hidden" name="retorno_fecha" value={filtros.fecha} />
     </>
   );
-}
-
-function hrefSinTarea(filtros, extra = {}) {
-  return hrefCalendario({
-    mes: filtros.mes,
-    unidad: filtros.unidad,
-    estado: filtros.estado,
-    fecha: filtros.fecha,
-    ...extra,
-  });
 }
 
 function corteDe(filtros) {
@@ -197,7 +173,7 @@ export function VistaCalendario({ datos: iniciales }) {
   return (
     <div className="calendario">
       <header className="calendario__cabecera">
-        <h1>Calendario</h1>
+        <h1>Mi calendario</h1>
       </header>
       {unidades.length ? (
         <FabNuevoChatFlora
@@ -252,60 +228,29 @@ export function VistaCalendario({ datos: iniciales }) {
         {lista.length ? (
           <ul>
             {lista.map((tarea) => {
-              const pendiente = tarea.estado === "pendiente";
+              const hecha = tarea.estado === "completada";
               const foco = filtros.tarea === tarea.id;
+              const unidad = nombreCultivo(espacios, tarea.unidadId);
+              const cuando = textoCuando(tarea.fecha, tarea.hora);
+              const clase = ["calendario__item", foco ? "calendario__item--foco" : "", hecha ? "calendario__item--hecha" : ""]
+                .filter(Boolean)
+                .join(" ");
               return (
-                <li key={tarea.id} id={`tarea-${tarea.id}`} className={foco ? "calendario__item calendario__item--foco" : "calendario__item"}>
-                  <div className="calendario__item-texto">
-                    <span className="calendario__tipo">{etiquetaTipo(tarea.tipo)}</span>
-                    <span className="calendario__cuando">
-                      {formatearFecha(tarea.fecha)} · {tarea.hora}
-                    </span>
-                    <p>{tarea.descripcion}</p>
-                    <p className="calendario__meta">{metaTarea(tarea, espacios, filtros.hoy)}</p>
-                    {pendiente && tarea.avisoPush ? (
-                      <p className="calendario__meta">
-                        {tarea.avisoEnviadoEn ? "Aviso enviado" : `Aviso programado a las ${tarea.hora}, hora de Argentina`}
-                      </p>
-                    ) : null}
+                <li key={tarea.id} id={`tarea-${tarea.id}`} className={clase}>
+                  <BotonEstado
+                    action={hecha ? reabrirTarea : completarTarea}
+                    etiqueta={hecha ? <Check size={14} strokeWidth={2.75} aria-hidden="true" /> : null}
+                    ariaLabel={hecha ? "Volver a pendiente" : "Marcar como completada"}
+                    presionado={hecha}
+                    className={hecha ? "calendario__check calendario__check--hecha" : "calendario__check"}
+                  >
+                    <Retorno filtros={filtros} tarea={tarea} />
+                  </BotonEstado>
+                  <div className="calendario__item-cuerpo">
+                    <p className="calendario__titulo">{tarea.descripcion}</p>
+                    {cuando ? <span className="calendario__pill">{cuando}</span> : null}
+                    {unidad ? <p className="calendario__unidad">{unidad}</p> : null}
                   </div>
-                  <div className="calendario__acciones">
-                    {pendiente ? (
-                      <Link href={hrefRegistroDesdeTarea(tarea)}>Registrar</Link>
-                    ) : null}
-                    {pendiente ? (
-                      <BotonEstado action={completarTarea} etiqueta="Completar">
-                        <Retorno filtros={filtros} tarea={tarea} />
-                      </BotonEstado>
-                    ) : (
-                      <BotonEstado action={reabrirTarea} etiqueta="Volver a pendiente">
-                        <Retorno filtros={filtros} tarea={tarea} />
-                      </BotonEstado>
-                    )}
-                    {pendiente ? (
-                      <Link href={hrefSinTarea(filtros, { editar: tarea.id })}>Reprogramar</Link>
-                    ) : null}
-                    {pendiente ? (
-                      <BotonEstado action={cancelarTarea} etiqueta="Cancelar">
-                        <Retorno filtros={filtros} tarea={tarea} />
-                      </BotonEstado>
-                    ) : null}
-                    {filtros.confirmar === tarea.id ? (
-                      <BotonEstado action={eliminarTarea} etiqueta="Eliminar" className="boton boton--ghost calendario__peligro">
-                        <Retorno filtros={filtros} tarea={tarea} />
-                      </BotonEstado>
-                    ) : (
-                      <Link
-                        href={hrefSinTarea(filtros, { tarea: tarea.id, confirmar: tarea.id })}
-                        className="calendario__peligro"
-                      >
-                        Eliminar
-                      </Link>
-                    )}
-                  </div>
-                  {pendiente ? (
-                    <p className="calendario__ayuda">Completar no crea un registro de cultivo. Registrar abre el formulario con esta unidad.</p>
-                  ) : null}
                 </li>
               );
             })}

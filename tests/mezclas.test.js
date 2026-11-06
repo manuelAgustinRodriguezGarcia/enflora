@@ -7,7 +7,7 @@ import {
   litrosDe,
   mililitrosDe,
 } from "../lib/mezclas/calculo.js";
-import { detalleMezcla } from "../lib/mezclas/presentacion.js";
+import { detalleMezcla, textoResumenReceta } from "../lib/mezclas/presentacion.js";
 import {
   aplicarRecetaEnBorrador,
   borradorDesdeSnapshot,
@@ -578,6 +578,44 @@ describe("compatibilidad y aislamiento", () => {
   });
 });
 
+describe("resumen de la mezcla", () => {
+  it("junta el producto con el agua en mililitros o litros", () => {
+    const productos = [
+      { id: PRODUCTO, nombre: "Fish Mix" },
+      { id: PRODUCTO_B, nombre: "Calmag" },
+    ];
+    assert.equal(
+      textoResumenReceta(
+        {
+          volumen_agua: 2,
+          unidad_volumen: "L",
+          componentes: [{ producto_id: PRODUCTO, orden: 0, cantidad: 4, unidad: "ml/L" }],
+        },
+        productos
+      ),
+      "Fish Mix + 2 L agua"
+    );
+    assert.equal(
+      textoResumenReceta(
+        {
+          volumen_agua: 500,
+          unidad_volumen: "ml",
+          componentes: [
+            { producto_id: PRODUCTO, orden: 0, cantidad: 4, unidad: "ml" },
+            { producto_id: PRODUCTO_B, orden: 1, cantidad: 1, unidad: "g" },
+          ],
+        },
+        productos
+      ),
+      "Fish Mix, Calmag + 500 ml agua"
+    );
+    assert.equal(
+      textoResumenReceta({ volumen_agua: null, unidad_volumen: "L", componentes: [] }, productos),
+      ""
+    );
+  });
+});
+
 describe("volumen usado al preparar", () => {
   function recetaDeDiezLitros() {
     return {
@@ -881,6 +919,9 @@ describe("sql de mezclas", () => {
     assert.doesNotMatch(sql, /historial_mezclas/);
     assert.doesNotMatch(sql, /update\s+public\.registro_mezcla/i);
     assert.match(sql, /insert into public\.registro_mezcla_componentes/);
+    assert.match(sql, /create or replace function public\.eliminar_receta_mezcla\(p_id uuid\)/);
+    assert.match(sql, /grant execute on function public\.eliminar_receta_mezcla\(uuid\) to authenticated/);
+    assert.match(sql, /delete from public\.recetas_mezcla/);
   });
 });
 

@@ -808,18 +808,6 @@
     padding-inline: 0.7rem;
   }
 
-  &__etiqueta--icono {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-
-    svg {
-      width: 1.15rem;
-      height: 1.15rem;
-      color: var(--color-primary);
-    }
-  }
-
   &__etiqueta--campo {
     display: block;
     margin-bottom: 0.35rem;
@@ -1113,7 +1101,12 @@
 
   &__cta {
     position: sticky;
-    bottom: var(--enflora-anclaje-inferior, var(--space-bottom-nav));
+    /* El anclaje llega al borde de la cápsula. El margen y el padding del
+       formulario son el hueco que ya se ve bien al terminar el scroll. */
+    bottom: calc(
+      var(--enflora-anclaje-inferior, var(--space-bottom-nav)) + var(--bottom-nav-margen-inferior, 0.75rem) +
+        0.25rem
+    );
     z-index: 4;
     display: flex;
     align-items: stretch;
@@ -1123,10 +1116,11 @@
     background: linear-gradient(180deg, transparent, var(--color-background) 28%);
 
     .boton {
-      flex: 1 1 0;
+      flex: 1 1 auto;
       width: auto;
-      min-width: 0;
-      padding-inline: 0.7rem;
+      min-width: max-content;
+      padding-inline: 0.85rem;
+      white-space: nowrap;
 
       svg {
         flex: 0 0 auto;
@@ -1134,10 +1128,10 @@
     }
 
     .registro-crear__problema {
-      flex: 1.2 1 0;
+      flex: 0 0 auto;
       width: auto;
       min-width: 0;
-      padding-inline: 0.55rem;
+      padding-inline: 0.7rem;
       white-space: nowrap;
     }
 

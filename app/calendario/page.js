@@ -9,7 +9,7 @@ import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servid
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Calendario",
+  title: "Mi calendario",
   robots: { index: false, follow: false },
 };
 
@@ -18,7 +18,7 @@ export default async function PaginaCalendario({ searchParams }) {
   if (!configuracionLista()) {
     return (
       <section className="calendario">
-        <h1>Calendario</h1>
+        <h1>Mi calendario</h1>
         <p>Falta la configuración de Supabase.</p>
       </section>
     );
@@ -33,7 +33,7 @@ export default async function PaginaCalendario({ searchParams }) {
   if (!datos.disponible) {
     return (
       <section className="calendario">
-        <h1>Calendario</h1>
+        <h1>Mi calendario</h1>
         <p className="calendario__vacio">
           El calendario todavía no está en esta base. Aplicá la migración en el SQL Editor.
         </p>
@@ -48,7 +48,7 @@ export default async function PaginaCalendario({ searchParams }) {
   if (datos.error) {
     return (
       <section className="calendario">
-        <h1>Calendario</h1>
+        <h1>Mi calendario</h1>
         <p className="formulario__error" role="alert">
           No se pudieron cargar las tareas.
         </p>

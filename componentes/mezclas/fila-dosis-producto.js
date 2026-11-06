@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { ComboboxProducto } from "@/componentes/mezclas/combobox-producto";
+import { Selector } from "@/componentes/selector";
 import { cantidadAplicada, esUnidadPorLitro, textoCantidad, textoMedida, unidadesDosisVisibles } from "@/lib/mezclas/calculo";
 
 function cantidadVisible(cantidad) {
@@ -45,38 +46,37 @@ export function FilaDosisProducto({
           deshabilitado={deshabilitado}
         />
       </div>
-      <input
-        className="mezclas__fila-cantidad"
-        inputMode="decimal"
-        aria-label="Cantidad"
-        value={cantidadVisible(cantidad)}
-        placeholder="0"
-        autoComplete="off"
-        disabled={deshabilitado}
-        onChange={(evento) => onChange?.({ cantidad: evento.target.value })}
-      />
-      <select
-        className="mezclas__fila-unidad"
-        aria-label="Unidad"
-        value={unidad}
-        disabled={deshabilitado}
-        onChange={(evento) => onChange?.({ unidad: evento.target.value })}
-      >
-        {unidadesDosisVisibles(unidad).map((opcion) => (
-          <option key={opcion} value={opcion}>
-            {opcion}
-          </option>
-        ))}
-      </select>
-      <button
-        type="button"
-        className="boton boton--ghost boton--icono"
-        aria-label="Quitar producto"
-        onClick={onQuitar}
-        disabled={deshabilitado}
-      >
-        <X strokeWidth={1.75} aria-hidden="true" />
-      </button>
+      <div className="mezclas__cantidades">
+        <p className="mezclas__cantidades-titulo">Cantidades</p>
+        <div className="mezclas__cantidades-campos">
+          <input
+            className="mezclas__fila-cantidad"
+            inputMode="decimal"
+            aria-label="Cantidad"
+            value={cantidadVisible(cantidad)}
+            placeholder="0"
+            autoComplete="off"
+            disabled={deshabilitado}
+            onChange={(evento) => onChange?.({ cantidad: evento.target.value })}
+          />
+          <Selector
+            ariaLabel="Unidad"
+            valor={unidad}
+            onChange={(siguiente) => onChange?.({ unidad: siguiente })}
+            opciones={unidadesDosisVisibles(unidad).map((opcion) => ({ valor: opcion, etiqueta: opcion }))}
+            deshabilitado={deshabilitado}
+          />
+          <button
+            type="button"
+            className="boton boton--ghost boton--icono"
+            aria-label="Quitar producto"
+            onClick={onQuitar}
+            disabled={deshabilitado}
+          >
+            <X strokeWidth={1.75} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
       {total ? <p className="mezclas__meta mezclas__fila-total">Para este volumen: {total}</p> : null}
     </div>
   );

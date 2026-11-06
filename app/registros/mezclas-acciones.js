@@ -113,6 +113,17 @@ export async function duplicarRecetaMezcla(id) {
   return { ok: true, id: data };
 }
 
+export async function eliminarRecetaMezcla(id) {
+  if (!esUuidMezcla(id)) return { error: "No se encontró la mezcla." };
+  const acceso = await sesion();
+  if (acceso.error) return { error: acceso.error };
+
+  const { error } = await acceso.supabase.rpc("eliminar_receta_mezcla", { p_id: id });
+  if (error) return { error: mensajeDe(error, "No se pudo eliminar la mezcla.") };
+  revalidarCatalogo();
+  return { ok: true };
+}
+
 export async function establecerRecetaActiva(id, activa) {
   if (!esUuidMezcla(id)) return { error: "No se encontró la mezcla." };
   const acceso = await sesion();

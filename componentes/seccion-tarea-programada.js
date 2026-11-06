@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { ListChecks } from "lucide-react";
 import { Boton } from "@/componentes/boton";
 import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { SelectorFecha } from "@/componentes/selector-fecha";
@@ -71,8 +70,7 @@ export function SeccionTareaProgramada({
       className="registro-crear__seccion registro-crear__tarea"
       aria-labelledby="tarea-programada-titulo"
     >
-      <h2 id="tarea-programada-titulo" className="registro-crear__etiqueta registro-crear__etiqueta--icono">
-        <ListChecks strokeWidth={1.75} aria-hidden="true" />
+      <h2 id="tarea-programada-titulo" className="registro-crear__etiqueta">
         Tarea para otro día
       </h2>
 

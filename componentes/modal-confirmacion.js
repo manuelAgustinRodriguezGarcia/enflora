@@ -30,6 +30,7 @@ export function ModalConfirmacion({
   varianteIcono = "",
   varianteConfirmar,
   className = "",
+  encima = false,
   mostrarCancelar = true,
   mostrarCerrar = false,
   accionesEnColumna = false,
@@ -121,14 +122,14 @@ export function ModalConfirmacion({
         <Dialog.Backdrop
           render={
             <motion.div
-              className="modal__fondo"
+              className={encima ? "modal__fondo modal__fondo--encima" : "modal__fondo"}
               initial={{ opacity: 0 }}
               animate={{ opacity: abierto ? 1 : 0 }}
               transition={transicionRapida}
             />
           }
         />
-        <Dialog.Viewport className="modal__vista">
+        <Dialog.Viewport className={encima ? "modal__vista modal__vista--encima" : "modal__vista"}>
           <Dialog.Popup
             render={
               <motion.div

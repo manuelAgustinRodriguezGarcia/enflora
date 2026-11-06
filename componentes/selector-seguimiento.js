@@ -56,11 +56,6 @@ export function SelectorSeguimiento({ valor, onChange, nombre = "tipo_seguimient
         <p className="seguimiento__descripcion">
           <TextoCambio>{activo?.descripcion || ""}</TextoCambio>
         </p>
-        {activo?.ejemplos ? (
-          <p className="seguimiento__ejemplos">
-            <TextoCambio>{activo.ejemplos}</TextoCambio>
-          </p>
-        ) : null}
       </div>
     </fieldset>
   );

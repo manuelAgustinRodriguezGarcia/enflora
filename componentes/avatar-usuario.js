@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { renovarUrlAvatar } from "@/app/perfil/acciones-avatar";
 import { EVENTO_AVATAR, MARGEN_RENOVACION_AVATAR_MS } from "@/lib/perfil/avatar";
 
@@ -20,19 +20,25 @@ export function publicarAvatar(detalle) {
   window.dispatchEvent(new CustomEvent(EVENTO_AVATAR, { detail: detalle }));
 }
 
+function fotoLista(img) {
+  return Boolean(img?.complete && img.naturalWidth > 0);
+}
+
 export function AvatarUsuario({ url = "", expira = 0, alt = "", children }) {
   const [firma, setFirma] = useState({ url, expira });
   const [vistaProps, setVistaProps] = useState({ url, expira });
   const [cargada, setCargada] = useState(false);
   const firmaRef = useRef(firma);
+  const imagenRef = useRef(null);
   const fallos = useRef(0);
   const renovando = useRef(false);
   const renovarRef = useRef(async () => {});
 
   if (vistaProps.url !== url || vistaProps.expira !== expira) {
+    const cambioUrl = vistaProps.url !== url;
     setVistaProps({ url, expira });
     setFirma({ url, expira });
-    setCargada(false);
+    if (cambioUrl) setCargada(false);
   }
 
   useEffect(() => {
@@ -43,12 +49,24 @@ export function AvatarUsuario({ url = "", expira = 0, alt = "", children }) {
     fallos.current = 0;
   }, [url, expira]);
 
+  useLayoutEffect(() => {
+    const img = imagenRef.current;
+    if (!img || !firma.url) return;
+    if (!img.complete) return;
+    if (img.naturalWidth > 0) {
+      setCargada(true);
+      return;
+    }
+    renovarRef.current();
+  }, [firma.url]);
+
   useEffect(() => {
     function alPublicar(evento) {
       const detalle = evento.detail || {};
+      const siguienteUrl = detalle.url || "";
       fallos.current = 0;
-      setCargada(false);
-      setFirma({ url: detalle.url || "", expira: detalle.expira || 0 });
+      if (firmaRef.current.url !== siguienteUrl) setCargada(false);
+      setFirma({ url: siguienteUrl, expira: detalle.expira || 0 });
     }
     window.addEventListener(EVENTO_AVATAR, alPublicar);
     return () => window.removeEventListener(EVENTO_AVATAR, alPublicar);
@@ -99,11 +117,14 @@ export function AvatarUsuario({ url = "", expira = 0, alt = "", children }) {
         // Las URLs firmadas vencen y la vista previa es un blob local: no pasan por el optimizador.
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={imagenRef}
           src={firma.url}
           alt={alt}
           data-lista={mostrarFoto ? "true" : "false"}
           decoding="async"
-          onLoad={() => setCargada(true)}
+          onLoad={(evento) => {
+            if (fotoLista(evento.currentTarget)) setCargada(true);
+          }}
           onError={() => {
             setCargada(false);
             renovar();

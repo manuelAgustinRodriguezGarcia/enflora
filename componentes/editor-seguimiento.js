@@ -30,6 +30,26 @@ function alternar(lista, valor, activo) {
   return lista.filter((item) => item !== valor);
 }
 
+function mismasClaves(a, b) {
+  const izquierda = a || [];
+  const derecha = b || [];
+  if (izquierda.length !== derecha.length) return false;
+  const conjunto = new Set(izquierda);
+  return derecha.every((valor) => conjunto.has(valor));
+}
+
+function esPreset(tipo) {
+  return tipo === "relajado" || tipo === "profesional";
+}
+
+function seleccionInicial(tipo, acciones, parametros) {
+  if (esPreset(tipo)) return presetDe(tipo);
+  return {
+    acciones: acciones || [],
+    parametros: parametros || [],
+  };
+}
+
 function detalleDe(opcion) {
   const partes = ["Personalizado"];
   if (opcion.unidad) partes.push(opcion.unidad);
@@ -59,12 +79,17 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
   const [estadoCrear, accionCrear, pendienteCrear] = useActionState(crearOpcionSeguimiento, null);
   const [estadoEditar, accionEditar, pendienteEditar] = useActionState(editarOpcionSeguimiento, null);
   const [tipo, setTipo] = useState(tipoInicial || "");
-  const [elegidas, setElegidas] = useState({
-    acciones: acciones || [],
-    parametros: parametros || [],
-  });
+  const [elegidas, setElegidas] = useState(() =>
+    seleccionInicial(tipoInicial || "", acciones, parametros)
+  );
   const [opciones, setOpciones] = useState(opcionesIniciales || []);
-  const [editado, setEditado] = useState(false);
+  const [editado, setEditado] = useState(() => {
+    if (!esPreset(tipoInicial)) return false;
+    const preset = presetDe(tipoInicial);
+    return (
+      !mismasClaves(preset.acciones, acciones) || !mismasClaves(preset.parametros, parametros)
+    );
+  });
   const [borrador, setBorrador] = useState(null);
   const [marca, setMarca] = useState("");
   const [pendienteQuitar, setPendienteQuitar] = useState(false);
@@ -192,8 +217,8 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
     setTipo(siguiente);
     setEditado(true);
 
-    if (siguiente === "relajado" || siguiente === "profesional") {
-      const saleDePreset = tipo === "relajado" || tipo === "profesional";
+    if (esPreset(siguiente)) {
+      const saleDePreset = esPreset(tipo);
       if (!saleDePreset || !respaldoPersonalizado) {
         setRespaldoPersonalizado(capturarSeleccion());
       }
@@ -208,7 +233,7 @@ export const EditorSeguimiento = forwardRef(function EditorSeguimiento(
   }
 
   function pasarAPersonalizado(siguienteElegidas, siguientesOpciones) {
-    if (tipo !== "relajado" && tipo !== "profesional") return;
+    if (!esPreset(tipo)) return;
     setTipo("personalizado");
     setRespaldoPersonalizado({
       acciones: [...siguienteElegidas.acciones],

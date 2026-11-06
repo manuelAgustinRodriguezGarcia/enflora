@@ -1091,7 +1091,7 @@ export function FormularioRegistroCultivo({
                     exit={{ opacity: 0 }}
                     transition={reducido ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                   >
-                    <p className="registro-crear__overlay-texto">Primero seleccione un cultivo</p>
+                    <p className="registro-crear__overlay-texto">Primero seleccioná un cultivo</p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
@@ -1375,7 +1375,7 @@ export function FormularioRegistroCultivo({
               disabled={bloqueado || !unidad}
             >
               <IconoPreferencia clave="problema" />
-              <span>Tengo un problema</span>
+              <span>Problema</span>
             </button>
           ) : null}
           <Boton

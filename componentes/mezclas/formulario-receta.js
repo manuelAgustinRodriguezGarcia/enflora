@@ -7,7 +7,8 @@ import { X } from "lucide-react";
 import { guardarRecetaMezcla } from "@/app/registros/mezclas-acciones";
 import { FilaDosisProducto } from "@/componentes/mezclas/fila-dosis-producto";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
-import { textoCantidad, UNIDADES_VOLUMEN } from "@/lib/mezclas/calculo";
+import { Selector } from "@/componentes/selector";
+import { LIMITE_COMPONENTES, parsearCantidad, textoCantidad, UNIDADES_VOLUMEN } from "@/lib/mezclas/calculo";
 import { validarReceta } from "@/lib/mezclas/reglas";
 
 function cantidadInicial(valor) {
@@ -15,26 +16,36 @@ function cantidadInicial(valor) {
   return textoCantidad(valor);
 }
 
+function filaVacia() {
+  return { productoId: "", cantidad: "", unidad: "ml/L" };
+}
+
+function filaCompleta(fila) {
+  const cantidad = parsearCantidad(fila?.cantidad);
+  return Boolean(String(fila?.productoId || "").trim()) && cantidad !== null && cantidad > 0;
+}
+
+function puedeSumarProducto(filas) {
+  return filas.length > 0 && filas.length < LIMITE_COMPONENTES && filas.every(filaCompleta);
+}
+
 function estadoInicial(receta) {
   const componentes = [...(receta?.componentes || receta?.receta_componentes || [])].sort(
     (a, b) => (a.orden ?? 0) - (b.orden ?? 0)
   );
+  const filas = componentes.map((item) => ({
+    productoId: item.producto_id,
+    cantidad: cantidadInicial(item.cantidad),
+    unidad: item.unidad || "ml/L",
+  }));
   return {
     id: receta?.id || "",
     nombre: receta?.nombre || "",
     volumen: cantidadInicial(receta?.volumen_agua),
     unidadVolumen: receta?.unidad_volumen || "L",
     notas: receta?.notas || "",
-    componentes: componentes.map((item) => ({
-      productoId: item.producto_id,
-      cantidad: cantidadInicial(item.cantidad),
-      unidad: item.unidad || "ml/L",
-    })),
+    componentes: filas.length > 0 ? filas : [filaVacia()],
   };
-}
-
-function filaVacia() {
-  return { productoId: "", cantidad: "", unidad: "ml/L" };
 }
 
 export function FormularioReceta({
@@ -149,6 +160,7 @@ export function FormularioReceta({
         <input
           value={datos.nombre}
           onChange={(evento) => setDatos({ ...datos, nombre: evento.target.value })}
+          placeholder="Riego con fertilizante"
           maxLength={80}
           required
           disabled={guardando}
@@ -161,65 +173,57 @@ export function FormularioReceta({
             inputMode="decimal"
             value={datos.volumen}
             onChange={(evento) => setDatos({ ...datos, volumen: evento.target.value })}
+            placeholder="2 (L) o 1500 (ml)"
             disabled={guardando}
             required
           />
         </label>
-        <label className="formulario__campo">
-          Unidad
-          <select
-            value={datos.unidadVolumen}
-            onChange={(evento) => setDatos({ ...datos, unidadVolumen: evento.target.value })}
-            disabled={guardando}
-          >
-            {UNIDADES_VOLUMEN.map((unidad) => (
-              <option key={unidad} value={unidad}>
-                {unidad}
-              </option>
-            ))}
-          </select>
-        </label>
+        <Selector
+          etiqueta="Unidad"
+          ariaLabel="Unidad"
+          valor={datos.unidadVolumen}
+          onChange={(unidad) => setDatos({ ...datos, unidadVolumen: unidad })}
+          opciones={UNIDADES_VOLUMEN.map((unidad) => ({ valor: unidad, etiqueta: unidad }))}
+          deshabilitado={guardando}
+        />
       </div>
 
       <fieldset className="mezclas__productos">
         <legend>Productos</legend>
-        {datos.componentes.length === 0 ? (
-          <p className="mezclas__meta">Agregá al menos un producto.</p>
-        ) : (
-          <ul className="mezclas__componentes">
-            {datos.componentes.map((componente, indice) => (
-              <li key={`${componente.productoId || "nuevo"}-${indice}`}>
-                <FilaDosisProducto
-                  id={`mezcla-producto-${indice}`}
-                  productos={productos}
-                  ocupados={datos.componentes.flatMap((item, posicion) =>
-                    posicion === indice || !item.productoId ? [] : [item.productoId]
-                  )}
-                  productoId={componente.productoId}
-                  cantidad={componente.cantidad}
-                  unidad={componente.unidad}
-                  volumenAgua={datos.volumen}
-                  unidadVolumen={datos.unidadVolumen}
-                  deshabilitado={guardando}
-                  onChange={(parcial) => cambiarComponente(indice, parcial)}
-                  onQuitar={() =>
-                    setDatos({
-                      ...datos,
-                      componentes: datos.componentes.filter((_, posicion) => posicion !== indice),
-                    })
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="mezclas__componentes">
+          {datos.componentes.map((componente, indice) => (
+            <li key={`${componente.productoId || "nuevo"}-${indice}`}>
+              <FilaDosisProducto
+                id={`mezcla-producto-${indice}`}
+                productos={productos}
+                ocupados={datos.componentes.flatMap((item, posicion) =>
+                  posicion === indice || !item.productoId ? [] : [item.productoId]
+                )}
+                productoId={componente.productoId}
+                cantidad={componente.cantidad}
+                unidad={componente.unidad}
+                volumenAgua={datos.volumen}
+                unidadVolumen={datos.unidadVolumen}
+                deshabilitado={guardando}
+                onChange={(parcial) => cambiarComponente(indice, parcial)}
+                onQuitar={() => {
+                  const restantes = datos.componentes.filter((_, posicion) => posicion !== indice);
+                  setDatos({
+                    ...datos,
+                    componentes: restantes.length > 0 ? restantes : [filaVacia()],
+                  });
+                }}
+              />
+            </li>
+          ))}
+        </ul>
         <button
           className="boton boton--secundario mezclas__sumar"
           type="button"
-          disabled={guardando}
+          disabled={guardando || !puedeSumarProducto(datos.componentes)}
           onClick={() => setDatos({ ...datos, componentes: [...datos.componentes, filaVacia()] })}
         >
-          + Agregar producto
+          Agregar otro producto
         </button>
       </fieldset>
 
@@ -228,6 +232,7 @@ export function FormularioReceta({
         <textarea
           value={datos.notas}
           onChange={(evento) => setDatos({ ...datos, notas: evento.target.value })}
+          placeholder="Regar con esta mezcla durante vegetación..."
           maxLength={2000}
           rows={3}
           disabled={guardando}

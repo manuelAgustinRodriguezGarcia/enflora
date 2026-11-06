@@ -8,6 +8,7 @@ import {
   armarSugerenciasNombreUsuario,
   normalizarNombreUsuario,
 } from "@/lib/perfil/nombre-usuario";
+import { MENSAJE_TELEFONO_OBLIGATORIO, intentaBorrarTelefono } from "@/lib/perfil/telefono";
 import { esTipoSeguimiento } from "@/lib/seguimiento";
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
@@ -17,6 +18,7 @@ const MENSAJES = [
   "El nombre de usuario es obligatorio.",
   "Alcanzaste el límite de cambios de nombre de usuario.",
   MENSAJE_USUARIO_OCUPADO,
+  MENSAJE_TELEFONO_OBLIGATORIO,
   "No se encontró el perfil.",
   "El perfil ya existe.",
   "No hay sesión.",
@@ -121,7 +123,7 @@ export async function guardarPerfil(_estado, formulario) {
 
   const { data: perfil, error: errorPerfil } = await supabase
     .from("perfiles")
-    .select("nombre_usuario, cambios_nombre_usuario")
+    .select("nombre_usuario, cambios_nombre_usuario, telefono")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -133,6 +135,10 @@ export async function guardarPerfil(_estado, formulario) {
 
   if (!nombreUsuario) {
     return estadoPerfil("El nombre de usuario es obligatorio.", datos);
+  }
+
+  if (intentaBorrarTelefono(perfil.telefono, datos.telefono)) {
+    return estadoPerfil(MENSAJE_TELEFONO_OBLIGATORIO, datos);
   }
 
   if (nombreUsuario !== perfil.nombre_usuario) {

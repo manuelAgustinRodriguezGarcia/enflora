@@ -38,6 +38,10 @@ begin
     raise exception 'El nombre de usuario es obligatorio.';
   end if;
 
+  if nullif(trim(coalesce(actual.telefono, '')), '') is not null and telefono_limpio is null then
+    raise exception 'El teléfono no se puede dejar vacío.';
+  end if;
+
   if usuario_limpio = actual.nombre_usuario then
     update public.perfiles
     set

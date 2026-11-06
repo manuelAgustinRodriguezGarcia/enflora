@@ -175,18 +175,13 @@ export function SeccionMezclaRegistro({
                   disabled={deshabilitado}
                   onChange={(evento) => publicar({ ...borrador, volumen: evento.target.value })}
                 />
-                <select
-                  aria-label="Unidad de agua"
-                  value={borrador.unidadVolumen || "L"}
-                  disabled={deshabilitado}
-                  onChange={(evento) => publicar({ ...borrador, unidadVolumen: evento.target.value })}
-                >
-                  {UNIDADES_VOLUMEN.map((unidad) => (
-                    <option key={unidad} value={unidad}>
-                      {unidad}
-                    </option>
-                  ))}
-                </select>
+                <Selector
+                  ariaLabel="Unidad de agua"
+                  valor={borrador.unidadVolumen || "L"}
+                  onChange={(unidad) => publicar({ ...borrador, unidadVolumen: unidad })}
+                  opciones={UNIDADES_VOLUMEN.map((unidad) => ({ valor: unidad, etiqueta: unidad }))}
+                  deshabilitado={deshabilitado}
+                />
               </div>
             </div>
           ) : null}
