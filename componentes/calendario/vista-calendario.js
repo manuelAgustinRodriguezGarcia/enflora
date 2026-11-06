@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarPlus, Check } from "lucide-react";
 import { BotonEstado } from "@/componentes/calendario/boton-estado";
 import { FiltrosCalendario } from "@/componentes/calendario/filtros-calendario";
@@ -84,6 +84,11 @@ export function VistaCalendario({ datos: iniciales }) {
   const cache = useRef(new Map([[corteDe(iniciales.filtros), iniciales]]));
   const pedido = useRef(0);
   const { filtros, espacios, tareasMes, tareasDia, proximas, enfocada } = datos;
+
+  useEffect(() => {
+    if (!filtros.tarea) return;
+    document.getElementById(`tarea-${filtros.tarea}`)?.scrollIntoView({ block: "center" });
+  }, [filtros.tarea]);
 
   function aplicar(parcial) {
     const siguiente = normalizarConsulta(

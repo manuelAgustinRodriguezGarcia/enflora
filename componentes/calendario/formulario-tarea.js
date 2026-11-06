@@ -49,7 +49,11 @@ function valoresIniciales(espacios, filtros, tarea) {
 function EstadoAviso({ push }) {
   if (push.estado === "cargando") return null;
   if (push.estado === "activado") {
-    return <p className="calendario__ayuda">Aviso programado para esa hora.</p>;
+    return (
+      <p className="calendario__ayuda">
+        Aviso programado para esa hora. Puede llegar alrededor de un minuto después, cuando corre el proceso automático.
+      </p>
+    );
   }
 
   const puedeActivar = push.estado === "desactivado" || push.estado === "disponible";

@@ -17,10 +17,15 @@ import {
 } from "../lib/calendario/modelo.js";
 import {
   avisoDeTarea,
+  clasificarFalloRecordatorios,
   conservarAvisoEnviado,
   GRACIA_AVISO_MS,
   instanteProgramadoMs,
+  mensajeAvisoTarea,
   procesarRecordatorios,
+  proximaEjecucionEstimada,
+  resumenEjecucion,
+  suscripcionesDelUsuario,
   tareaListaParaAviso,
   ZONA_TAREA,
 } from "../lib/calendario/recordatorios.js";
@@ -197,9 +202,10 @@ test("el recordatorio usa el mismo aviso push y no sale sin configuración", asy
   assert.equal(tareaListaParaAviso({ ...base, avisoPush: false }, cuando + 1000), false);
 
   const aviso = avisoDeTarea(base);
-  assert.equal(aviso.titulo, "Riego");
+  assert.equal(aviso.titulo, "Flora te recuerda una tarea");
+  assert.equal(aviso.mensaje, "Es momento de realizar: Riego. Unidad: Carpa.");
   assert.equal(aviso.url, `/calendario?tarea=${TAREA}`);
-  assert.equal(aviso.etiqueta, "tarea-cultivo");
+  assert.equal(aviso.etiqueta, TAREA.replace(/-/g, ""));
 
   let reclamos = 0;
   let envios = 0;
@@ -207,7 +213,7 @@ test("el recordatorio usa el mismo aviso push y no sale sin configuración", asy
     configurado: false,
     reclamar: async () => {
       reclamos += 1;
-      return [];
+      return { examinadas: 0, tareas: [] };
     },
     despachar: async () => {
       envios += 1;
@@ -217,33 +223,43 @@ test("el recordatorio usa el mismo aviso push y no sale sin configuración", asy
   assert.equal(reclamos, 0);
   assert.equal(envios, 0);
 
-  const liberadas = [];
+  const cerradas = [];
   const fallo = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [{ ...base, suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] }],
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...base, reclamadoEn: "2026-11-02T12:00:00.000Z", suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] }],
+    }),
     despachar: async () => {
       throw new Error("vapid");
     },
-    liberar: async (id) => {
-      liberadas.push(id);
+    cerrar: async (id, reclamadoEn, resultado) => {
+      cerradas.push([id, resultado]);
     },
   });
   assert.equal(fallo.errores, 1);
-  assert.deepEqual(liberadas, [TAREA]);
+  assert.equal(fallo.aceptadas, 0);
+  assert.deepEqual(cerradas, [[TAREA, "reintentar"]]);
 
   const sinEquipo = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [{ ...base, suscripciones: [] }],
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...base, reclamadoEn: "2026-11-02T12:00:00.000Z", suscripciones: [] }],
+    }),
     despachar: async () => {
       envios += 1;
     },
-    liberar: async (id) => {
-      liberadas.push(id);
+    cerrar: async (id, reclamadoEn, resultado) => {
+      cerradas.push([id, resultado]);
     },
   });
   assert.equal(sinEquipo.sinDispositivo, 1);
   assert.equal(envios, 0);
-  assert.deepEqual(liberadas, [TAREA]);
+  assert.deepEqual(cerradas, [
+    [TAREA, "reintentar"],
+    [TAREA, "sin_dispositivo"],
+  ]);
 });
 
 test("la hora de la tarea es hora de Argentina, también en los bordes del día", () => {
@@ -279,24 +295,29 @@ test("cambiar la hora reprograma el aviso y cancelar o completar no lo deja list
   assert.match(sql, /America\/Argentina\/Buenos_Aires/);
 });
 
-test("un envío fallido se libera, un token vencido se da de baja y un duplicado no sale dos veces", async () => {
+test("un envío fallido se reintenta, un token vencido no se da por entregado y un duplicado sale una vez", async () => {
   const desactivadas = [];
-  const liberadas = [];
+  const cerradas = [];
   let envios = 0;
+  const reclamadoEn = "2026-11-02T12:00:00.000Z";
   const parcial = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [
-      {
-        id: TAREA,
-        tipo: "riego",
-        descripcion: "Riego",
-        unidadNombre: "Carpa",
-        suscripciones: [
-          { id: "equipo-ok", endpoint: "https://fcm.googleapis.com/fcm/send/a" },
-          { id: "equipo-viejo", endpoint: "https://fcm.googleapis.com/fcm/send/b" },
-        ],
-      },
-    ],
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        {
+          id: TAREA,
+          tipo: "riego",
+          descripcion: "Riego",
+          unidadNombre: "Carpa",
+          reclamadoEn,
+          suscripciones: [
+            { id: "equipo-ok", endpoint: "https://fcm.googleapis.com/fcm/send/a" },
+            { id: "equipo-viejo", endpoint: "https://fcm.googleapis.com/fcm/send/b" },
+          ],
+        },
+      ],
+    }),
     despachar: async (suscripcion) => {
       envios += 1;
       if (suscripcion.id === "equipo-viejo") {
@@ -309,27 +330,32 @@ test("un envío fallido se libera, un token vencido se da de baja y un duplicado
     desactivar: async (id) => {
       desactivadas.push(id);
     },
-    liberar: async (id) => {
-      liberadas.push(id);
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push([id, marca, resultado]);
     },
   });
   assert.equal(parcial.enviados, 1);
+  assert.equal(parcial.aceptadas, 1);
   assert.equal(parcial.errores, 0);
   assert.equal(envios, 2);
   assert.deepEqual(desactivadas, ["equipo-viejo"]);
-  assert.deepEqual(liberadas, []);
+  assert.deepEqual(cerradas, [[TAREA, reclamadoEn, "aceptado"]]);
 
   const vencidos = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [
-      {
-        id: TAREA,
-        tipo: "riego",
-        descripcion: "Riego",
-        unidadNombre: "Carpa",
-        suscripciones: [{ id: "equipo-viejo", endpoint: "https://fcm.googleapis.com/fcm/send/b" }],
-      },
-    ],
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        {
+          id: TAREA,
+          tipo: "riego",
+          descripcion: "Riego",
+          unidadNombre: "Carpa",
+          reclamadoEn,
+          suscripciones: [{ id: "equipo-viejo", endpoint: "https://fcm.googleapis.com/fcm/send/b" }],
+        },
+      ],
+    }),
     despachar: async () => {
       const error = new Error("gone");
       error.statusCode = 410;
@@ -338,46 +364,175 @@ test("un envío fallido se libera, un token vencido se da de baja y un duplicado
     desactivar: async (id) => {
       desactivadas.push(id);
     },
-    liberar: async (id) => {
-      liberadas.push(id);
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push([id, marca, resultado]);
     },
   });
   assert.equal(vencidos.enviados, 0);
+  assert.equal(vencidos.aceptadas, 0);
   assert.equal(vencidos.errores, 1);
-  assert.deepEqual(liberadas, [TAREA]);
+  assert.deepEqual(cerradas.at(-1), [TAREA, reclamadoEn, "sin_dispositivo"]);
 
   envios = 0;
   const duplicado = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [
-      { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] },
-      { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/b" }] },
-    ],
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", reclamadoEn, suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] },
+        { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", reclamadoEn, suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/b" }] },
+      ],
+    }),
     despachar: async () => {
       envios += 1;
       return { statusCode: 201 };
     },
+    cerrar: async () => {},
   });
   assert.equal(duplicado.enviados, 1);
   assert.equal(envios, 1);
 
   const cancelada = await procesarRecordatorios({
     configurado: true,
-    reclamar: async () => [
-      { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] },
-    ],
-    vigente: async () => false,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        { id: TAREA, tipo: "riego", descripcion: "Riego", unidadNombre: "Carpa", reclamadoEn, fecha: "2026-11-02", hora: "09:00", suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }] },
+      ],
+    }),
+    vigente: async () => ({ estado: "completada", aviso_push: true, fecha_programada: "2026-11-02", hora_programada: "09:00", aviso_reclamado_en: reclamadoEn }),
     despachar: async () => {
       envios += 1;
       return { statusCode: 201 };
     },
-    liberar: async (id) => {
-      liberadas.push(id);
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push([id, marca, resultado]);
     },
   });
   assert.equal(cancelada.omitidos, 1);
   assert.equal(envios, 1);
-  assert.deepEqual(liberadas, [TAREA]);
+  assert.deepEqual(cerradas.at(-1), [TAREA, reclamadoEn, "liberar"]);
+});
+
+test("reprogramar durante el envío no usa el horario anterior y un fallo temporal se puede retomar", async () => {
+  const reclamadoEn = "2026-11-06T17:00:00.000Z";
+  const cerradas = [];
+  let envios = 0;
+  const reprogramada = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        {
+          id: TAREA,
+          descripcion: "Regar",
+          unidadNombre: "Carpa",
+          fecha: "2026-11-06",
+          hora: "14:00",
+          reclamadoEn,
+          suscripciones: [{ endpoint: "https://fcm.googleapis.com/fcm/send/a" }],
+        },
+      ],
+    }),
+    vigente: async () => ({
+      estado: "pendiente",
+      aviso_push: true,
+      fecha_programada: "2026-11-06",
+      hora_programada: "16:20",
+      aviso_reclamado_en: null,
+    }),
+    despachar: async () => {
+      envios += 1;
+      return { statusCode: 201 };
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push([id, marca, resultado]);
+    },
+  });
+  assert.equal(envios, 0);
+  assert.equal(reprogramada.omitidos, 1);
+  assert.deepEqual(cerradas, [[TAREA, reclamadoEn, "liberar"]]);
+
+  envios = 0;
+  const recuperada = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        {
+          id: TAREA,
+          descripcion: "Regar",
+          unidadNombre: "Carpa",
+          reclamadoEn,
+          suscripciones: [
+            { endpoint: "https://fcm.googleapis.com/fcm/send/a" },
+            { endpoint: "https://fcm.googleapis.com/fcm/send/b" },
+          ],
+        },
+      ],
+    }),
+    despachar: async () => {
+      envios += 1;
+      if (envios === 1) {
+        const error = new Error("ocupado");
+        error.statusCode = 503;
+        throw error;
+      }
+      return { statusCode: 201 };
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push([id, marca, resultado]);
+    },
+  });
+  assert.equal(recuperada.enviados, 1);
+  assert.equal(recuperada.aceptadas, 1);
+  assert.equal(envios, 2);
+  assert.deepEqual(cerradas.at(-1), [TAREA, reclamadoEn, "aceptado"]);
+});
+
+test("una tarea a los 3 minutos en Buenos Aires no se corre 3 horas", () => {
+  const cuando = instanteProgramadoMs("2026-11-06", "14:03");
+  assert.equal(cuando, Date.UTC(2026, 10, 6, 17, 3, 0));
+  const pendiente = { estado: "pendiente", fecha: "2026-11-06", hora: "14:03", avisoPush: true };
+  assert.equal(tareaListaParaAviso(pendiente, cuando - 3 * 60 * 1000), false);
+  assert.equal(tareaListaParaAviso(pendiente, cuando + 60 * 1000), true);
+  assert.equal(tareaListaParaAviso(pendiente, cuando + 3 * 60 * 60 * 1000), false);
+  assert.equal(tareaListaParaAviso({ ...pendiente, estado: "completada" }, cuando + 1000), false);
+  assert.equal(tareaListaParaAviso({ ...pendiente, estado: "cancelada" }, cuando + 1000), false);
+  assert.equal(mensajeAvisoTarea({ descripcion: "Medir pH" }), "Es momento de realizar: Medir pH.");
+  assert.deepEqual(
+    suscripcionesDelUsuario(
+      [
+        { usuario_id: "dueno", endpoint: "propia" },
+        { usuario_id: "otra", endpoint: "ajena" },
+      ],
+      "dueno",
+    ).map((item) => item.endpoint),
+    ["propia"],
+  );
+  assert.deepEqual(suscripcionesDelUsuario([{ usuario_id: "dueño", endpoint: "propia" }], ""), []);
+
+  const reciente = proximaEjecucionEstimada("2026-11-06T17:03:10.000Z", Date.parse("2026-11-06T17:03:40.000Z"));
+  assert.equal(reciente.fiable, true);
+  assert.equal(proximaEjecucionEstimada(null, Date.parse("2026-11-06T17:03:40.000Z")).fiable, false);
+  assert.equal(
+    proximaEjecucionEstimada("2026-11-06T16:00:00.000Z", Date.parse("2026-11-06T17:03:40.000Z")).fiable,
+    false,
+  );
+  const resumen = resumenEjecucion({
+    estado: "ok",
+    examinadas: 2,
+    elegibles: 1,
+    procesadas: 1,
+    aceptadas: 1,
+    descripcion: "Medir pH",
+    endpoint: "https://fcm.googleapis.com/secreto",
+  });
+  assert.equal(Object.hasOwn(resumen, "descripcion"), false);
+  assert.equal(Object.hasOwn(resumen, "endpoint"), false);
+  assert.equal(resumen.aceptadas, 1);
+  assert.equal(clasificarFalloRecordatorios({ code: "PGRST202", message: "schema cache y endpoint secreto" }), "migracion");
+  assert.equal(clasificarFalloRecordatorios({ message: "otro" }), "excepcion");
 });
 
 test("el cron de recordatorios se suma sin tocar los crons que ya estaban", () => {
@@ -394,5 +549,18 @@ test("el cron de recordatorios se suma sin tocar los crons que ya estaban", () =
   );
   const ruta = fs.readFileSync("app/api/calendario/recordatorios/route.js", "utf8");
   assert.match(ruta, /cronAutorizado/);
+  assert.match(ruta, /clasificarFalloRecordatorios/);
   assert.equal(ruta.includes("SUPABASE_SERVICE_ROLE_KEY"), false);
+  assert.equal(ruta.includes("error.message"), false);
+  const sql = fs.readFileSync("supabase/calendario-recordatorios.sql", "utf8");
+  assert.match(sql, /interval '30 minutes'/);
+  assert.match(sql, /America\/Argentina\/Buenos_Aires/);
+  assert.match(sql, /for update skip locked/);
+  assert.match(sql, /aviso_intentos < 5/);
+  assert.equal(/delete from public\.tareas_programadas/i.test(sql), false);
+  assert.match(sql, /grant execute on function public\.reclamar_avisos_calendario\(integer\) to service_role/);
+  assert.equal(/grant execute on function public\.reclamar_avisos_calendario\(integer\) to authenticated/.test(sql), false);
+  assert.match(sql, /set aviso_enviado_en = clock_timestamp\(\)/);
+  const reclamo = sql.slice(sql.indexOf("function public.reclamar_avisos_calendario"), sql.indexOf("function public.cerrar_intento_aviso_calendario"));
+  assert.equal(/aviso_enviado_en =/.test(reclamo), false);
 });

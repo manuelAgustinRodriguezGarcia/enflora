@@ -3,9 +3,10 @@ import {
   AvisoNotificaciones,
   FormularioNotificaciones,
   MarcoNotificaciones,
+  RecordatoriosCalendario,
   ResumenNotificaciones,
 } from "@/componentes/admin/notificaciones-marco";
-import { leerPanelNotificaciones } from "@/lib/admin/notificaciones";
+import { leerPanelNotificaciones, leerRecordatoriosCalendario } from "@/lib/admin/notificaciones";
 import { enlaceNotificaciones, prepararConsultaNotificaciones } from "@/lib/admin/notificaciones-reglas";
 import { credencialNotificaciones } from "./acceso";
 
@@ -23,6 +24,7 @@ export default async function PaginaNotificaciones({ searchParams }) {
   const panel = interpretado.ok
     ? await leerPanelNotificaciones(credencial, consulta)
     : { ok: false, estado: "consulta", error: interpretado.error };
+  const recordatorios = await leerRecordatoriosCalendario(credencial);
   const anterior = consulta.offset > 0 ? enlaceNotificaciones(consulta, { offset: Math.max(0, consulta.offset - 20) }) : "";
   const siguiente =
     panel.estado === "listo" && consulta.offset + panel.lista.filas.length < panel.lista.total
@@ -35,6 +37,7 @@ export default async function PaginaNotificaciones({ searchParams }) {
       formulario={<FormularioNotificaciones consulta={consulta} />}
       aviso={AvisoNotificaciones(panel)}
     >
+      <RecordatoriosCalendario resultado={recordatorios} />
       {panel.estado === "listo" ? (
         <ResumenNotificaciones
           resumen={panel.resumen}

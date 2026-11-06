@@ -1,4 +1,5 @@
-import { enviarRecordatoriosConfigurados } from "@/lib/calendario/enviar-recordatorios";
+import { enviarRecordatoriosConfigurados, registrarFalloRecordatorios } from "@/lib/calendario/enviar-recordatorios";
+import { clasificarFalloRecordatorios } from "@/lib/calendario/recordatorios";
 import { cronAutorizado } from "@/lib/cron-auth";
 
 export const runtime = "nodejs";
@@ -16,15 +17,24 @@ export async function GET(request) {
     const resultado = await enviarRecordatoriosConfigurados();
     console.info("[calendario] recordatorios", {
       omitido: resultado.omitido,
+      examinadas: resultado.examinadas,
+      elegibles: resultado.elegibles,
       enviados: resultado.enviados,
+      aceptadas: resultado.aceptadas,
       errores: resultado.errores,
       sinDispositivo: resultado.sinDispositivo,
       expirados: resultado.expirados,
       omitidos: resultado.omitidos,
     });
     return Response.json(resultado);
-  } catch {
-    console.error("[calendario] recordatorios_error");
-    return Response.json({ ok: false, error: "No se pudo ejecutar" }, { status: 503 });
+  } catch (error) {
+    const motivo = clasificarFalloRecordatorios(error);
+    console.error("[calendario] recordatorios_error", motivo);
+    try {
+      await registrarFalloRecordatorios(motivo);
+    } catch {
+      // Sin la tabla de diagnóstico no hay otra constancia que este estado.
+    }
+    return Response.json({ ok: false, error: "No se pudo ejecutar", motivo }, { status: 503 });
   }
 }

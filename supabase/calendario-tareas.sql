@@ -3,13 +3,12 @@
 -- Aplicar manualmente en el SQL Editor. No ejecutar desde la app.
 --
 -- Recordatorios push:
---   Esta migración guarda el aviso y expone reclamar_avisos_tareas / liberar_aviso_tarea
---   solo para service_role. No programa ningún cron.
---   Para que un aviso salga al teléfono hace falta, además de esta migración:
---     1. Las claves VAPID que ya usa el push web (FCM) y SUPABASE_SERVICE_ROLE_KEY.
---     2. CRON_SECRET en el proyecto. vercel.json llama GET /api/calendario/recordatorios
---        cada minuto; Vercel manda Authorization: Bearer <CRON_SECRET>.
---   Sin eso la app guarda la tarea y no envía nada.
+--   Esta migración guarda el aviso. El envío automático vigente está en
+--   supabase/calendario-recordatorios.sql (aplicar esa también; no reejecutar
+--   este archivo en producción: más abajo borra tareas sin espacio).
+--   vercel.json llama GET /api/calendario/recordatorios cada minuto UTC.
+--   Hace falta CRON_SECRET, las claves VAPID y SUPABASE_SERVICE_ROLE_KEY.
+--   La hora de la tarea es hora de pared en America/Argentina/Buenos_Aires.
 
 alter table public.tareas_programadas
   add column if not exists espacio_id uuid references public.espacios (id) on delete cascade;
@@ -28,6 +27,18 @@ alter table public.tareas_programadas
 
 alter table public.tareas_programadas
   add column if not exists aviso_enviado_en timestamptz;
+
+alter table public.tareas_programadas
+  add column if not exists aviso_reclamado_en timestamptz;
+
+alter table public.tareas_programadas
+  add column if not exists aviso_intentos integer not null default 0;
+
+alter table public.tareas_programadas
+  add column if not exists aviso_reintento_en timestamptz;
+
+alter table public.tareas_programadas
+  add column if not exists aviso_cierre text;
 
 update public.tareas_programadas as tarea
 set espacio_id = unidad.espacio_id
@@ -448,7 +459,31 @@ begin
         fecha_programada = p_fecha,
         hora_programada = p_hora,
         aviso_push = coalesce(p_aviso_push, true),
-        aviso_enviado_en = aviso_previo
+        aviso_enviado_en = aviso_previo,
+        aviso_reclamado_en = case
+          when previa.fecha_programada is distinct from p_fecha
+            or previa.hora_programada is distinct from p_hora
+          then null
+          else previa.aviso_reclamado_en
+        end,
+        aviso_intentos = case
+          when previa.fecha_programada is distinct from p_fecha
+            or previa.hora_programada is distinct from p_hora
+          then 0
+          else previa.aviso_intentos
+        end,
+        aviso_reintento_en = case
+          when previa.fecha_programada is distinct from p_fecha
+            or previa.hora_programada is distinct from p_hora
+          then null
+          else previa.aviso_reintento_en
+        end,
+        aviso_cierre = case
+          when previa.fecha_programada is distinct from p_fecha
+            or previa.hora_programada is distinct from p_hora
+          then null
+          else previa.aviso_cierre
+        end
     where id = p_id
       and usuario_id = usuario;
 

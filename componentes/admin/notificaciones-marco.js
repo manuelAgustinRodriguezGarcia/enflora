@@ -357,3 +357,83 @@ export function FichaCampana({ campana }) {
     </article>
   );
 }
+
+const ESTADOS_EJECUCION = {
+  ok: "Terminó",
+  error: "Error",
+  omitido: "Omitido",
+};
+
+const MOTIVOS_EJECUCION = {
+  configuracion: "Faltaba la configuración de envío",
+  excepcion: "El proceso falló",
+  migracion: "Falta aplicar la migración",
+};
+
+export function RecordatoriosCalendario({ resultado }) {
+  return (
+    <article className="admin-dash__tarjeta">
+      <h2 id="recordatorios-calendario">Recordatorios del calendario</h2>
+      {resultado?.estado === "listo" ? (
+        <DetalleRecordatorios recordatorios={resultado.recordatorios} />
+      ) : (
+        <p className="admin-dash__aviso admin-dash__aviso--bloque" role="alert">
+          {resultado?.estado === "denegado"
+            ? "No tenés permiso para ver los recordatorios."
+            : resultado?.error || "No pudimos leer los recordatorios. No se muestran cifras parciales."}
+        </p>
+      )}
+    </article>
+  );
+}
+
+function DetalleRecordatorios({ recordatorios }) {
+  const ultima = recordatorios.ultima;
+  const proxima = recordatorios.proxima;
+  return (
+    <>
+      <p className="admin-dash__aclaracion">
+        El cron declarado es <code>{recordatorios.cronDeclarado}</code> en {recordatorios.zonaCron}. Este panel no
+        consulta a Vercel. Aceptado significa que el proveedor recibió el envío, no que el teléfono lo haya mostrado.
+      </p>
+      {recordatorios.hayEjecucion ? (
+        <dl>
+          <dt>Última ejecución</dt>
+          <dd>{textoInstante(ultima.iniciada_en)}</dd>
+          <dt>Estado</dt>
+          <dd>{ESTADOS_EJECUCION[ultima.estado] || "Estado desconocido"}</dd>
+          <dt>Detalle</dt>
+          <dd>{ultima.motivo ? MOTIVOS_EJECUCION[ultima.motivo] || "Sin detalle" : "Sin incidencia"}</dd>
+          <dt>Tareas examinadas</dt>
+          <dd>{textoEntero(ultima.examinadas)}</dd>
+          <dt>Tareas elegibles</dt>
+          <dd>{textoEntero(ultima.elegibles)}</dd>
+          <dt>Recordatorios procesados</dt>
+          <dd>{textoEntero(ultima.procesadas)}</dd>
+          <dt>Envíos aceptados por el proveedor</dt>
+          <dd>{textoEntero(ultima.aceptadas)}</dd>
+          <dt>Errores</dt>
+          <dd>{textoEntero(ultima.errores)}</dd>
+          <dt>Sin dispositivo</dt>
+          <dd>{textoEntero(ultima.sin_dispositivo)}</dd>
+          <dt>Suscripciones vencidas</dt>
+          <dd>{textoEntero(ultima.expiradas)}</dd>
+          <dt>Omitidos</dt>
+          <dd>{textoEntero(ultima.omitidas)}</dd>
+          <dt>Próxima ejecución estimada</dt>
+          <dd>
+            {proxima.fiable && proxima.estimada
+              ? textoInstante(proxima.estimada)
+              : "No se puede estimar: no hay una ejecución reciente que confirme que el cron sigue activo."}
+          </dd>
+        </dl>
+      ) : (
+        <p className="admin-dash__aclaracion">
+          No hay ejecuciones registradas. No se puede saber si Vercel está llamando al proceso, si el secreto no
+          coincide o si la migración todavía no está aplicada. La próxima ejecución no se estima sin una corrida
+          reciente.
+        </p>
+      )}
+    </>
+  );
+}

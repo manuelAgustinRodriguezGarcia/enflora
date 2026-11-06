@@ -9,6 +9,7 @@ import {
   PLATAFORMAS,
   RPC_DETALLE_CAMPANA,
   RPC_LISTAR_CAMPANAS,
+  RPC_RECORDATORIOS_CALENDARIO,
   RPC_RESUMEN_NOTIFICACIONES,
   argumentosDetalleCampana,
   argumentosListarCampanas,
@@ -19,6 +20,7 @@ import {
   interpretarConsultaNotificaciones,
   presentarCampanasNotificaciones,
   presentarDetalleCampana,
+  presentarRecordatoriosCalendario,
   presentarResumenNotificaciones,
   tasaErrorNotificaciones,
 } from "../lib/admin/notificaciones-reglas.js";
@@ -262,6 +264,22 @@ test("notificaciones solo puede leer sus tres agregados", () => {
   assert.equal(
     evaluarSolicitudAdmin(
       ACCESO_DATOS_ADMIN.notificaciones,
+      solicitud(RPC_RECORDATORIOS_CALENDARIO, "{}"),
+      destino,
+    ).ok,
+    true,
+  );
+  assert.equal(
+    evaluarSolicitudAdmin(
+      ACCESO_DATOS_ADMIN.notificaciones,
+      solicitud(RPC_RECORDATORIOS_CALENDARIO, JSON.stringify({ p_id: CAMPANA })),
+      destino,
+    ).ok,
+    false,
+  );
+  assert.equal(
+    evaluarSolicitudAdmin(
+      ACCESO_DATOS_ADMIN.notificaciones,
       { metodo: "GET", url: `${ORIGEN}/rest/v1/push_suscripciones?select=endpoint`, cabeceras: new Headers({ accept: "application/json" }) },
       destino,
     ).ok,
@@ -376,9 +394,83 @@ test("una migración pendiente o un fallo de la base no inventan cifras ni copia
   );
 });
 
+test("los recordatorios del calendario no inventan entregas ni muestran tareas ajenas", () => {
+  const ahora = Date.parse("2026-11-06T17:03:40.000Z");
+  const base = {
+    ok: true,
+    cron_declarado: "* * * * *",
+    zona_cron: "UTC",
+    vercel_confirmado: false,
+    entregas_disponibles: false,
+    medido_en: "2026-11-06T17:03:40.000Z",
+    hay_ejecucion: false,
+    ultima: null,
+  };
+  const vacio = presentarRecordatoriosCalendario(base, ahora);
+  assert.equal(vacio.ok, true);
+  assert.equal(vacio.recordatorios.hayEjecucion, false);
+  assert.equal(vacio.recordatorios.proxima.fiable, false);
+  assert.equal(vacio.recordatorios.entregasDisponibles, false);
+  assert.equal(vacio.recordatorios.vercelConfirmado, false);
+
+  const conDatos = presentarRecordatoriosCalendario(
+    {
+      ...base,
+      hay_ejecucion: true,
+      ultima: {
+        aceptadas: 1,
+        elegibles: 1,
+        errores: 0,
+        estado: "ok",
+        examinadas: 2,
+        expiradas: 0,
+        iniciada_en: "2026-11-06T17:03:10.000Z",
+        motivo: null,
+        omitidas: 0,
+        procesadas: 1,
+        sin_dispositivo: 0,
+        terminada_en: "2026-11-06T17:03:11.000Z",
+      },
+    },
+    ahora,
+  );
+  assert.equal(conDatos.ok, true);
+  assert.equal(conDatos.recordatorios.proxima.fiable, true);
+  assert.equal(conDatos.recordatorios.ultima.aceptadas, 1);
+
+  const privada = presentarRecordatoriosCalendario(
+    {
+      ...base,
+      hay_ejecucion: true,
+      ultima: {
+        aceptadas: 1,
+        elegibles: 1,
+        errores: 0,
+        estado: "ok",
+        examinadas: 2,
+        expiradas: 0,
+        iniciada_en: "2026-11-06T17:03:10.000Z",
+        motivo: null,
+        omitidas: 0,
+        procesadas: 1,
+        sin_dispositivo: 0,
+        terminada_en: "2026-11-06T17:03:11.000Z",
+        descripcion: "Medir pH",
+      },
+    },
+    ahora,
+  );
+  assert.equal(privada.ok, false);
+  assert.equal(presentarRecordatoriosCalendario({ ...base, vercel_confirmado: true }, ahora).ok, false);
+  assert.equal(presentarRecordatoriosCalendario({ ...base, entregas_disponibles: true }, ahora).ok, false);
+  const sql = fs.readFileSync(path.join(RAIZ, "supabase/calendario-recordatorios.sql"), "utf8");
+  assert.equal(/endpoint|p256dh|user_agent/.test(cuerpoSql(sql)), false);
+});
+
 test("la página conserva la prueba actual y no arma un envío masivo", () => {
   const pagina = fs.readFileSync(path.join(RAIZ, "app/admin/notificaciones/page.js"), "utf8");
   assert.match(pagina, /PruebaNotificacionesAdmin/);
+  assert.match(pagina, /RecordatoriosCalendario/);
   assert.equal(pagina.includes("masivo: true"), false);
   const sql = cuerpoSql(fs.readFileSync(path.join(RAIZ, "supabase/admin-notificaciones.sql"), "utf8"));
   assert.equal(/insert into public\.push_/.test(sql), false);

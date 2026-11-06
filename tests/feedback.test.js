@@ -220,8 +220,13 @@ test("la acción real no manda identidad ni campos administrativos", async () =>
   assert.match(formularioFuente, /¡Gracias por ayudarnos a mejorar Enflora! Leemos cada sugerencia\./);
   assert.doesNotMatch(formularioFuente, /dangerouslySetInnerHTML/);
   const perfil = fs.readFileSync(path.join(RAIZ, "componentes/perfil-vista.js"), "utf8");
-  assert.match(perfil, /href="\/perfil\/feedback"/);
-  assert.match(perfil, /Enviar feedback/);
+  const inicio = fs.readFileSync(path.join(RAIZ, "componentes/inicio/panel-inicio.js"), "utf8");
+  const invitacion = fs.readFileSync(path.join(RAIZ, "componentes/invitacion-feedback.js"), "utf8");
+  assert.match(perfil, /InvitacionFeedback/);
+  assert.match(inicio, /InvitacionFeedback/);
+  assert.match(invitacion, /href="\/perfil\/feedback"/);
+  assert.match(invitacion, /Enviar feedback/);
+  assert.match(invitacion, /Mejoremos juntos/);
   const cultivo = fs.readFileSync(path.join(RAIZ, "componentes/formulario-registro-cultivo.js"), "utf8");
   assert.match(cultivo, /problema/);
 

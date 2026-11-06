@@ -4,6 +4,7 @@ import { IconoNavegacion } from "@/componentes/icono-navegacion";
 import { IconoPreferencia } from "@/componentes/icono-preferencia";
 import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ResumenClimaInicio } from "@/componentes/clima/resumen-inicio";
+import { InvitacionFeedback } from "@/componentes/invitacion-feedback";
 import { BotonReporteProblema } from "@/componentes/problemas/boton-reporte-problema";
 import { ACCIONES_CULTIVO, hrefAccionCultivo } from "@/lib/inicio/resumen";
 
@@ -239,6 +240,7 @@ export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = []
       </Seccion>
 
       <FotosInicio fotos={fotos} />
+      <InvitacionFeedback />
     </div>
   );
 }

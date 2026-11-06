@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { EnlaceBoton } from "@/componentes/boton";
 import { CerrarSesion } from "@/componentes/cerrar-sesion";
 import { EditorSeguimiento } from "@/componentes/editor-seguimiento";
 import { FormularioPerfil } from "@/componentes/formulario-perfil";
+import { InvitacionFeedback } from "@/componentes/invitacion-feedback";
 import { PanelNotificaciones } from "@/componentes/panel-notificaciones";
 import { PerfilGuardarFlotante } from "@/componentes/perfil-guardar-flotante";
 import { SeccionClimaPerfil } from "@/componentes/perfil-clima";
@@ -151,9 +151,7 @@ export function PerfilVista({
       <PreferenciasFlora personalidadInicial={personalidadFlora} />
       <SeccionClimaPerfil clima={clima} />
       {muestraEstadoNotificaciones(email) ? <PanelNotificaciones /> : null}
-      <EnlaceBoton href="/perfil/feedback" variante="secundario" className="boton--ancho">
-        Enviar feedback
-      </EnlaceBoton>
+      <InvitacionFeedback />
       <PerfilGuardarFlotante visible={sucio} onGuardar={guardar} />
       <CerrarSesion />
     </section>
