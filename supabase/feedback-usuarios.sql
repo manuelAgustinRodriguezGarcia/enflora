@@ -16,6 +16,8 @@
 -- No hay lectura para la cuenta: no ofrecemos historial.
 -- El panel usa las funciones *_admin, solo con service_role, después de
 -- comprobar el módulo feedback en el servidor (ADMIN_IDS o ADMIN_IDS_FEEDBACK).
+-- El correo sale completo. El nombre feedback_admin_enmascarar se conserva
+-- porque las funciones ya instaladas lo llaman.
 --
 -- COALESCE, NULLIF y el resto de la sintaxis del parser quedan sin esquema.
 -- El conteo se escribe ::bigint.
@@ -179,12 +181,10 @@ set search_path = ''
 as $$
   select case
     when p_correo is null
-      or pg_catalog.strpos(p_correo, '@') < 2
-      or pg_catalog.split_part(p_correo, '@', 2) = ''
+      or pg_catalog.strpos(pg_catalog.btrim(p_correo), '@') < 2
+      or pg_catalog.split_part(pg_catalog.btrim(p_correo), '@', 2) = ''
       then null
-    else pg_catalog.left(pg_catalog.split_part(p_correo, '@', 1), 1)
-      || '***@'
-      || pg_catalog.split_part(p_correo, '@', 2)
+    else pg_catalog.btrim(p_correo)
   end;
 $$;
 

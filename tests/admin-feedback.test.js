@@ -56,7 +56,7 @@ function fila(extra = {}) {
     prioridad: "normal",
     nombre: "Ana",
     nombre_usuario: "ana",
-    correo: "a***@example.com",
+    correo: "ana.perez@example.com",
     ...extra,
   };
 }
@@ -86,7 +86,7 @@ function detalle(extra = {}) {
       nota_admin: null,
       nombre: "Ana",
       nombre_usuario: "ana",
-      correo: "a***@example.com",
+      correo: "ana.perez@example.com",
       revisado_en: null,
       ...extra,
     },
@@ -137,19 +137,20 @@ test("el SQL administrativo no se ejecuta como usuario y audita la gestión", ()
   assert.equal(/'usuario_id'/.test(detalleSql), false);
 });
 
-test("el listado rechaza correos completos, notas y mensajes ajenos al contrato", () => {
+test("el listado muestra el correo completo y rechaza notas y mensajes ajenos al contrato", () => {
   const consulta = consultaDe({ categoria: "error_app", estado: "nuevo", prioridad: "alta", pagina: "2" });
   assert.equal(consulta.offset, 20);
   const presentado = presentarListadoFeedback(listado(consulta), consulta);
   assert.equal(presentado.ok, true);
   assert.equal(presentado.pagina, 2);
   assert.equal(presentado.contadores.resueltos, 2);
-  assert.equal(presentado.filas[0].correo, "a***@example.com");
+  assert.equal(presentado.filas[0].correo, "ana.perez@example.com");
   assert.equal(Object.hasOwn(presentado.filas[0], "mensaje"), false);
   assert.equal(Object.hasOwn(presentado.filas[0], "nota"), false);
 
   const conCorreo = listado(consulta, [fila({ correo: "persona@example.com" })]);
-  assert.equal(presentarListadoFeedback(conCorreo, consulta).ok, false);
+  assert.equal(presentarListadoFeedback(conCorreo, consulta).ok, true);
+  assert.equal(presentarListadoFeedback(listado(consulta, [fila({ correo: "sin-arroba" })]), consulta).ok, false);
   const conNota = listado(consulta, [fila({ nota_admin: "interna" })]);
   assert.equal(presentarListadoFeedback(conNota, consulta).ok, false);
   const conUsuario = listado(consulta);
@@ -165,7 +166,9 @@ test("el listado rechaza correos completos, notas y mensajes ajenos al contrato"
   ajeno.feedback.usuario_id = ID_ADMIN;
   assert.equal(presentarDetalleFeedback(ajeno).ok, false);
   const correoEntero = detalle({ correo: "persona@example.com" });
-  assert.equal(presentarDetalleFeedback(correoEntero).ok, false);
+  assert.equal(presentarDetalleFeedback(correoEntero).ok, true);
+  assert.equal(presentarDetalleFeedback(correoEntero).feedback.correo, "persona@example.com");
+  assert.equal(presentarDetalleFeedback(detalle({ correo: "sin-arroba" })).ok, false);
   assert.equal(presentarGestionFeedback({ ok: true, cambio: true, nota_admin: "secreta" }).ok, false);
   assert.deepEqual(presentarGestionFeedback({ ok: true, cambio: true }), { ok: true, cambio: true });
   assert.equal(interpretarConsultaFeedback({ categoria: "cultivo" }).ok, false);

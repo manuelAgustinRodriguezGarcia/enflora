@@ -222,7 +222,7 @@ export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = []
         {cultivos.estado === "error" ? <Aviso error>No se pudieron cargar los cultivos.</Aviso> : null}
         {cultivos.estado === "vacio" ? (
           <div className="inicio__vacio-accion">
-            <Link className="inicio__crear" href="/cultivos/nuevo">
+            <Link className="inicio__crear" href="/cultivos/nuevo" data-tour="guia-crear-cultivo">
               Creá tu cultivo
             </Link>
           </div>

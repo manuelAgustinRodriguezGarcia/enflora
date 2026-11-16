@@ -11,7 +11,7 @@ export function ContenidoListaEspacios({ espacios, unidadesPorEspacio, plantasPo
     return (
       <div className="espacios__vacio">
         <p>Todavía no hay espacios de cultivo.</p>
-        <Link className="espacios__crear" href="/cultivos/nuevo">
+        <Link className="espacios__crear" href="/cultivos/nuevo" data-tour="guia-crear-cultivo">
           <IconoPlanta />
           Creá tu cultivo
         </Link>

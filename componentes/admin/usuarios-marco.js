@@ -94,7 +94,7 @@ export function FormularioUsuarios({ consulta }) {
         Aplicar filtros
       </button>
       <p className="admin-planes__contexto">
-        El correo se muestra enmascarado. La última conexión es el último inicio de sesión. La última actividad es el
+        La última conexión es el último inicio de sesión. La última actividad es el
         registro de cultivo más reciente. El rango de fechas filtra la fecha de alta.
       </p>
     </form>

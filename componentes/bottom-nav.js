@@ -164,6 +164,7 @@ export function BottomNav({ oculto = false }) {
                     href={destino.href}
                     className={clases}
                     aria-current={activo ? "page" : undefined}
+                    data-tour={destino.clave === "flora" ? "guia-flora-nav" : undefined}
                     onPointerDown={() => {
                       if (!activo) setDestinoPendiente(destino.clave);
                     }}

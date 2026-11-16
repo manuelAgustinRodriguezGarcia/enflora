@@ -23,7 +23,7 @@ export default async function PaginaDetalleUsuario({ params, searchParams }) {
   return (
     <MarcoUsuarios
       titulo="Ficha de usuario"
-      intro="Estadísticas agregadas de una cuenta. El correo sigue enmascarado y no hay datos del cultivo."
+      intro="Estadísticas agregadas de una cuenta. No hay datos del cultivo."
       aviso={AvisoUsuarios(detalle)}
     >
       <VolverUsuarios href={enlaceUsuarios(consulta)} />

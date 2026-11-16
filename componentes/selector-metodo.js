@@ -68,7 +68,7 @@ export function SelectorMetodo({
         </fieldset>
       </Aparecer>
       <Aparecer visible={visible}>
-        <label className="formulario__campo">
+        <label className="formulario__campo" data-tour="guia-plantas-sustrato">
           Sustrato
           <input
             type="text"

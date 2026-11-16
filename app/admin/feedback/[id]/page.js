@@ -25,7 +25,7 @@ export default async function PaginaDetalleFeedback({ params, searchParams }) {
   return (
     <MarcoFeedback
       titulo="Detalle de feedback"
-      intro="El mensaje completo y la nota interna. El correo sigue enmascarado."
+      intro="El mensaje completo, el correo y la nota interna."
       aviso={AvisoFeedback(detalle)}
     >
       <VolverFeedback href={enlaceFeedback(consulta)} />

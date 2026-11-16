@@ -40,7 +40,7 @@ function fila(extra = {}) {
     id: ID_USUARIO,
     nombre: "María",
     nombre_usuario: "maria",
-    correo: "m***@example.com",
+    correo: "maria@example.com",
     alta: "2026-11-01T15:00:00.000Z",
     ultima_conexion: "2026-11-02T15:00:00.000Z",
     confirmado: true,
@@ -130,17 +130,16 @@ test("búsqueda, filtros y paginación se resuelven antes de llamar a la base", 
   assert.equal(enlaceDetalleUsuario(consulta, ID_USUARIO).startsWith(`/admin/usuarios/${ID_USUARIO}?`), true);
 });
 
-test("el presentador rechaza correos completos, claves privadas y acepta un listado vacío", () => {
+test("el presentador muestra el correo completo, rechaza claves privadas y acepta un listado vacío", () => {
   const consulta = consultaDe();
   const presentado = presentarListadoUsuarios(listado([fila()]), consulta);
   assert.equal(presentado.ok, true);
-  assert.equal(presentado.filas[0].correo, "m***@example.com");
+  assert.equal(presentado.filas[0].correo, "maria@example.com");
   assert.equal(presentado.filas[0].ultimaConexion.startsWith("2026-11-02"), true);
   assert.equal(presentado.filas[0].ultimaActividad.startsWith("2026-11-03"), true);
-  assert.equal(JSON.stringify(presentado).includes("example.com") && JSON.stringify(presentado).includes("maria@"), false);
   assert.equal(presentarListadoUsuarios(listado([]), consulta).ok, true);
   assert.equal(presentarListadoUsuarios(listado([]), consulta).filas.length, 0);
-  assert.equal(presentarListadoUsuarios(listado([fila({ correo: "maria@example.com" })]), consulta).ok, false);
+  assert.equal(presentarListadoUsuarios(listado([fila({ correo: "sin-arroba" })]), consulta).ok, false);
   assert.equal(presentarListadoUsuarios(listado([fila({ apellido: "Pérez" })]), consulta).ok, false);
   assert.equal(presentarListadoUsuarios(listado([fila({ observacion: "nota" })]), consulta).ok, false);
   assert.equal(presentarListadoUsuarios(listado([fila({ email: "maria@example.com" })]), consulta).ok, false);

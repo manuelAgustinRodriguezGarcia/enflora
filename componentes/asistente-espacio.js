@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { Info, Pencil } from "lucide-react";
 import { agregarUnidad } from "@/app/cultivos/[id]/acciones";
@@ -58,6 +58,7 @@ import {
   tiposDeUnidad,
 } from "@/lib/unidades";
 import { toque, transicionRapida, transicionToque, variantesPaso } from "@/lib/animaciones";
+import { publicarGuia } from "@/lib/guias/eventos";
 import { etiquetaMetodo } from "@/lib/metodos";
 
 const TIPOS_ESPACIO = [
@@ -223,6 +224,15 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
   const [infoUnidadesAbierto, setInfoUnidadesAbierto] = useState(false);
   const [resultado, accion, pendiente] = useActionState(guardar, null);
   const claveAcordeon = `${estado.indice}:${estado.paso}`;
+
+  useEffect(() => {
+    publicarGuia({ tipo: "wizard-paso", paso: estado.paso, error: estado.error || "" });
+  }, [estado.paso, estado.error]);
+
+  useEffect(() => {
+    if (!resultado?.error || estado.paso !== "resumen") return;
+    publicarGuia({ tipo: "guardado-error", mensaje: resultado.error });
+  }, [resultado, estado.paso]);
   if (claveAcordeonVista !== claveAcordeon) {
     setClaveAcordeonVista(claveAcordeon);
     setAbierta(null);
@@ -347,7 +357,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
         >
           {estado.paso === "espacio" ? (
             <div className="asistente__campos">
-              <label className="formulario__campo">
+              <label className="formulario__campo" data-tour="guia-espacio-nombre">
                 Nombre del espacio
                 <input
                   type="text"
@@ -356,13 +366,15 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   onChange={(evento) => aplicar(cambiarNombreEspacio, evento.target.value)}
                 />
               </label>
-              <Selector
-                etiqueta="Tipo"
-                valor={estado.tipo || null}
-                onChange={(valor) => aplicar(cambiarTipoEspacio, valor)}
-                opciones={TIPOS_ESPACIO}
-                placeholder="Seleccionar"
-              />
+              <div data-tour="guia-espacio-tipo">
+                <Selector
+                  etiqueta="Tipo"
+                  valor={estado.tipo || null}
+                  onChange={(valor) => aplicar(cambiarTipoEspacio, valor)}
+                  opciones={TIPOS_ESPACIO}
+                  placeholder="Seleccionar"
+                />
+              </div>
             </div>
           ) : null}
 
@@ -374,7 +386,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                     ? "¿Cómo cultivás en exterior?"
                     : "¿Cómo cultivás en interior?"}
                 </p>
-                <div className="eleccion">
+                <div className="eleccion" data-tour="guia-unidad-tipo">
                   {tipos.map((tipo) => (
                     <motion.button
                       key={tipo.valor}
@@ -410,7 +422,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           ) : null}
 
           {estado.paso === "cantidad_unidades" ? (
-            <div className="asistente__cantidad-unidades">
+            <div className="asistente__cantidad-unidades" data-tour="guia-unidad-cantidad">
               <ContadorCantidad
                 valor={estado.cantidadUnidades}
                 minimo={1}
@@ -428,6 +440,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           ) : null}
 
           {unidad && estado.paso === "cantidad_plantas" ? (
+            <div data-tour="guia-plantas-cantidad">
             <ContadorCantidad
               valor={estado.cantidadPlantas}
               minimo={1}
@@ -436,6 +449,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               ariaLabel="Cantidad de plantas"
               onChange={(cantidad) => aplicar(cambiarCantidadPlantas, cantidad)}
             />
+            </div>
           ) : null}
 
           {unidad && estado.paso === "configuracion" ? (
@@ -444,7 +458,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                 <p className="asistente__actual">{unidad.nombre.trim() || "Unidad"}</p>
                 <PillPlantas cantidad={unidad.plantas.length} />
               </div>
-              <div className="eleccion eleccion--modos">
+              <div className="eleccion eleccion--modos" data-tour="guia-plantas-modo">
                 {MODOS.map((modo) => (
                   <motion.button
                     key={modo.valor}
@@ -470,6 +484,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   onChange={(seleccion) => aplicar(cambiarGeneral, "genetica", seleccion)}
                 />
               </Aparecer>
+              <div data-tour="guia-plantas-metodo">
               <Aparecer visible={usaMetodo(unidad.modo)}>
                 <SelectorMetodo
                   metodosPersonalizados={metodos}
@@ -518,11 +533,12 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
                   </PlantaAccordion>
                 ))}
               </div>
+              </div>
             </div>
           ) : null}
 
           {unidad && estado.paso === "etapa" ? (
-            <div className="bloque">
+            <div className="bloque" data-tour="guia-plantas-etapa">
               <fieldset className="opciones">
                 <legend>Etapa inicial</legend>
                 <p className="opciones__texto">
@@ -665,7 +681,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
               {estado.soloUnidad ? (
                 <input type="hidden" name="espacio_id" value={estado.espacioId} />
               ) : null}
-              <Boton className="boton boton--cta" type="submit" disabled={pendiente}>
+              <Boton className="boton boton--cta" type="submit" disabled={pendiente} data-tour="guia-resumen-confirmar">
                 {estado.soloUnidad ? "Crear unidad" : "Crear espacio"}
               </Boton>
             </form>
@@ -703,7 +719,7 @@ export function AsistenteEspacio({ metodosPersonalizados = [], espacio = null })
           ) : (
             <span />
           )}
-          <Boton type="button" onClick={seguir}>
+          <Boton type="button" onClick={seguir} data-tour="guia-asistente-continuar">
             Continuar
           </Boton>
         </div>

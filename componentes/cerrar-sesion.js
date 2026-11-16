@@ -5,6 +5,7 @@ import { salir } from "@/app/acciones/sesion";
 import { Boton } from "@/componentes/boton";
 import { ModalConfirmacion } from "@/componentes/modal-confirmacion";
 import { desvincularInstalacionActual } from "@/lib/push/cliente-dispositivo";
+import { limpiarGuiasLocales } from "@/lib/guias/persistencia";
 
 export function CerrarSesion({ className = "perfil__salir" }) {
   const [abierto, setAbierto] = useState(false);
@@ -14,6 +15,7 @@ export function CerrarSesion({ className = "perfil__salir" }) {
   async function confirmar() {
     if (cerrando || pendiente) return;
     setCerrando(true);
+    limpiarGuiasLocales();
     await desvincularInstalacionActual();
     accion();
   }

@@ -52,7 +52,7 @@ export default async function PaginaCultivos() {
           plantasPorEspacio={plantasPorEspacio}
         />
         <BannerPublicitario campañas={banners.campañas} />
-        <FabNuevoChatFlora href="/cultivos/nuevo" ariaLabel="Crear espacio" />
+        <FabNuevoChatFlora href="/cultivos/nuevo" ariaLabel="Crear espacio" marcaTour="guia-crear-cultivo" />
       </section>
     </TransicionVista>
   );

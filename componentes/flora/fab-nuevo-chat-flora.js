@@ -31,6 +31,7 @@ export function FabNuevoChatFlora({
   detrasCapas = false,
   ariaLabel = "Nuevo chat",
   icono = null,
+  marcaTour = "",
 }) {
   const montado = useSyncExternalStore(suscribirCliente, esCliente, esServidor);
 
@@ -46,6 +47,7 @@ export function FabNuevoChatFlora({
         href={href}
         className={className}
         aria-label={ariaLabel}
+        data-tour={marcaTour || undefined}
         whileTap={toqueFab}
         transition={transicionToqueFab}
       >

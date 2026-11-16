@@ -1,0 +1,66 @@
+{
+  "A": [
+    {
+      "archivo": "static/chunks/3amkgicj9l829.js",
+      "bytes": 145443,
+      "marcas": [
+        "framer"
+      ]
+    },
+    {
+      "archivo": "static/chunks/39go9r2eu2axp.js",
+      "bytes": 118391,
+      "marcas": [
+        "ScrollTrigger"
+      ]
+    },
+    {
+      "archivo": "static/chunks/1w--f6q7hakzv.js",
+      "bytes": 114413,
+      "marcas": [
+        "ScrollTrigger",
+        "registerPlugin"
+      ]
+    }
+  ],
+  "B": [
+    {
+      "archivo": "static/chunks/3amkgicj9l829.js",
+      "bytes": 145443,
+      "marcas": [
+        "framer"
+      ]
+    },
+    {
+      "archivo": "static/chunks/2q9agmqdlct5e.js",
+      "bytes": 118823,
+      "marcas": [
+        "ScrollTrigger",
+        "registerPlugin"
+      ]
+    },
+    {
+      "archivo": "static/chunks/23st8uynd9im8.js",
+      "bytes": 70984,
+      "marcas": [
+        "ScrollTrigger",
+        "registerPlugin"
+      ]
+    },
+    {
+      "archivo": "static/chunks/0-4rzs25i0-0o.js",
+      "bytes": 49688,
+      "marcas": [
+        "ScrollTrigger"
+      ]
+    },
+    {
+      "archivo": "static/chunks/0polnukrgbvxk.js",
+      "bytes": 43360,
+      "marcas": [
+        "ScrollTrigger",
+        "registerPlugin"
+      ]
+    }
+  ]
+}

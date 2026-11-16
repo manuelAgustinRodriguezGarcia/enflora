@@ -196,8 +196,8 @@ test("PostgreSQL ejecuta el alta, el cupo y la gestión sin la comprobación que
     assert.equal(lista.total, 6);
     const serializado = JSON.stringify(lista);
     assert.equal(serializado.includes("usuario_id"), false);
-    assert.equal(serializado.includes("ana.perez@example.com"), false);
-    assert.equal(serializado.includes("a***@example.com"), true);
+    assert.equal(serializado.includes("ana.perez@example.com"), true);
+    assert.equal(serializado.includes("a***@example.com"), false);
     assert.equal(lista.filas.some((fila) => fila.mensaje), false);
 
     const id = (
@@ -207,9 +207,9 @@ test("PostgreSQL ejecuta el alta, el cupo y la gestión sin la comprobación que
     const ficha = json(detalle.rows[0].dato);
     assert.equal(ficha.ok, true);
     assert.equal(ficha.feedback.mensaje, MENSAJE);
-    assert.equal(ficha.feedback.correo, "a***@example.com");
+    assert.equal(ficha.feedback.correo, "ana.perez@example.com");
     assert.equal(JSON.stringify(ficha).includes("usuario_id"), false);
-    assert.equal(JSON.stringify(ficha).includes("ana.perez@"), false);
+    assert.equal(JSON.stringify(ficha).includes("ana.perez@example.com"), true);
 
     const gestion = await como(
       db,

@@ -57,7 +57,7 @@ export function FormularioFeedbackAdmin({ consulta }) {
         Aplicar filtros
       </button>
       <p className="admin-planes__contexto">
-        El correo se muestra enmascarado. El mensaje de la bandeja está resumido. La nota interna solo aparece en el
+        El mensaje de la bandeja está resumido. La nota interna solo aparece en el
         detalle.
       </p>
     </form>

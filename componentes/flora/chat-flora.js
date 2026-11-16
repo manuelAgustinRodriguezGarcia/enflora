@@ -64,6 +64,7 @@ import {
 import { FabNuevoChatFlora } from "@/componentes/flora/fab-nuevo-chat-flora";
 import { EsperaFlora } from "@/componentes/flora/espera-flora";
 import { PERSONALIDAD_FLORA_DEFAULT } from "@/lib/flora-personalidad";
+import { EVENTO_GUIA } from "@/lib/guias/eventos";
 import { AdjuntoMensajeChat } from "@/componentes/flora/imagen-mensaje-flora";
 import { MensajeFloraMarkdown } from "@/componentes/flora/mensaje-flora-markdown";
 import { PieRespuestaFlora } from "@/componentes/flora/pie-respuesta-flora";
@@ -139,6 +140,17 @@ export function ChatFlora({
     return () => {
       montadoRef.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    function alEjemplo(evento) {
+      if (evento.detail?.tipo !== "flora-ejemplo") return;
+      const texto = String(evento.detail.texto || "");
+      if (!texto || cargandoRef.current) return;
+      setEntrada(texto);
+    }
+    window.addEventListener(EVENTO_GUIA, alEjemplo);
+    return () => window.removeEventListener(EVENTO_GUIA, alEjemplo);
   }, []);
 
   useEffect(() => {
@@ -1103,6 +1115,7 @@ export function ChatFlora({
             <textarea
               id="flora-chat-input"
               className="flora-chat-app__input"
+              data-tour="guia-flora-input"
               rows={1}
               placeholder="Preguntale a Flora…"
               value={entrada}

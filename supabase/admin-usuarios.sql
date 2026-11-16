@@ -12,7 +12,7 @@
 -- pg_catalog.coalesce ni equivalentes. El entero de 8 bytes se escribe ::bigint.
 --
 -- Lo que sale hacia el panel:
---   nombre, nombre de usuario, correo enmascarado, alta, última conexión,
+--   nombre, nombre de usuario, correo completo, alta, última conexión,
 --   confirmación, plan comercial de producción y conteos.
 -- Lo que no se lee: apellido, teléfono, observaciones, genéticas, fotos ni mensajes.
 -- La búsqueda no se guarda en la auditoría.
@@ -60,6 +60,8 @@ as $$
   );
 $$;
 
+-- El nombre se conserva: las funciones ya instaladas lo llaman.
+-- Quien pasó la autorización del panel recibe el correo completo.
 create or replace function public.usuarios_admin_enmascarar(p_correo text)
 returns text
 language sql
@@ -69,12 +71,10 @@ set search_path = ''
 as $$
   select case
     when p_correo is null
-      or pg_catalog.strpos(p_correo, '@') < 2
-      or pg_catalog.split_part(p_correo, '@', 2) = ''
+      or pg_catalog.strpos(pg_catalog.btrim(p_correo), '@') < 2
+      or pg_catalog.split_part(pg_catalog.btrim(p_correo), '@', 2) = ''
       then null
-    else pg_catalog.left(pg_catalog.split_part(p_correo, '@', 1), 1)
-      || '***@'
-      || pg_catalog.split_part(p_correo, '@', 2)
+    else pg_catalog.btrim(p_correo)
   end;
 $$;
 
