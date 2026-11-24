@@ -20,11 +20,11 @@ export default async function PaginaCampana({ params }) {
   const campana = detalle.estado === "listo" ? detalle.ficha : null;
   const comercios = campana ? await leerComerciosPartners(credencial, interpretarComercios({}).consulta) : { estado: "vacio", lista: { filas: [] } };
   const filas = comercios.estado === "listo" ? comercios.lista.filas : [];
-  const comerciosFormulario = campana && filas.some((fila) => fila.id === campana.comercio_id)
+  const comerciosFormulario = campana?.comercio_id && filas.some((fila) => fila.id === campana.comercio_id)
     ? filas
-    : campana
+    : campana?.comercio_id
       ? [{ id: campana.comercio_id, nombre: campana.comercio }, ...filas]
-      : [];
+      : filas;
   const tasa = campana ? tasaClics(campana.impresiones, campana.clics) : null;
   return (
     <MarcoPartners titulo="Campaña" intro="Pieza, destino y medición de esta campaña. No se activa al guardarla." aviso={AvisoPartners(detalle)}>
@@ -34,6 +34,7 @@ export default async function PaginaCampana({ params }) {
           <p>
             Estado {campana.estado}. Impresiones {textoEntero(campana.impresiones)}. Clics {textoEntero(campana.clics)}.{" "}
             {tasa == null ? "Sin CTR porque no hay impresiones." : `CTR ${new Intl.NumberFormat("es-AR", { maximumFractionDigits: 1 }).format(tasa * 100)} %.`}
+            {Number.isInteger(campana.cierres) ? ` Cierres ${textoEntero(campana.cierres)}.` : ""}
           </p>
           <BotonesCampana id={campana.id} estadoActual={campana.estado} />
           <FormularioCampana campana={campana} comercios={comerciosFormulario} />

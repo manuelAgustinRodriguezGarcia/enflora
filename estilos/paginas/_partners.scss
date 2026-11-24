@@ -1099,6 +1099,15 @@
     height: 100%;
     object-fit: cover;
   }
+
+  &--sutil {
+    margin-top: 0.75rem;
+
+    .banner-publicitario__enlace {
+      max-height: 4.25rem;
+      border-radius: 12px;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

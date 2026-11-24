@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   cambiarEstadoCampana,
   cambiarEstadoComercio,
@@ -8,6 +8,8 @@ import {
   guardarComercio,
   guardarSolicitudPartners,
 } from "@/app/admin/partners/acciones";
+import { VistaPreviaPromocion } from "@/componentes/promociones/vista-previa-promocion";
+import { SEGMENTOS_PROMOCION } from "@/lib/promociones";
 
 function Aviso({ estado }) {
   if (!estado) return null;
@@ -127,32 +129,132 @@ export function FormularioSolicitud({ solicitud }) {
 export function FormularioCampana({ campana, comercios }) {
   const [estado, accion, pendiente] = useActionState(guardarCampana, null);
   const valor = campana || {};
+  const iniciales = Array.isArray(valor.segmentos) && valor.segmentos.length ? valor.segmentos : ["gratuito", "plus", "licencia"];
+  const [tipo, setTipo] = useState(valor.tipo || "comercial");
+  const [formato, setFormato] = useState(valor.formato || "banner");
+  const [ubicacion, setUbicacion] = useState(valor.ubicacion || "listado_cultivos");
+  const [upsell, setUpsell] = useState(valor.es_upsell_plus === true);
+  const [anunciar, setAnunciar] = useState(valor.anunciar_futuros === true);
+  const [titulo, setTitulo] = useState(valor.titulo || "");
+  const [descripcion, setDescripcion] = useState(valor.descripcion || "");
+  const [cta, setCta] = useState(valor.cta || "");
+  const [enlace, setEnlace] = useState(valor.enlace || "");
+  const [segmentos, setSegmentos] = useState(iniciales);
+  const interna = tipo === "interna";
+  const vista = {
+    tipo,
+    formato,
+    titulo,
+    descripcion,
+    cta,
+    enlace: upsell ? "/pagos/plus" : enlace,
+    esUpsellPlus: interna && upsell,
+    anunciarFuturos: anunciar,
+    nombre: valor.nombre || titulo,
+    bannerUrl: valor.pieza_url || "",
+  };
+
+  function cambiarSegmento(segmento, activo) {
+    setSegmentos((actuales) => {
+      const siguiente = activosSin(actuales, segmento, activo);
+      return siguiente.length ? siguiente : actuales;
+    });
+  }
+
   return (
     <form className="admin-planes__filtros" action={accion}>
       {valor.id ? <input type="hidden" name="id" value={valor.id} /> : null}
-      <input type="hidden" name="ubicacion" value="listado_cultivos" />
       <label className="admin-planes__campo">
         Nombre interno
         <input name="nombre" defaultValue={valor.nombre || ""} required maxLength={120} />
       </label>
       <label className="admin-planes__campo">
-        Comercio
-        <select name="comercio" defaultValue={valor.comercio_id || ""} required>
-          <option value="">Elegir</option>
-          {comercios.map((comercio) => (
-            <option key={comercio.id} value={comercio.id}>
-              {comercio.nombre}
-            </option>
-          ))}
+        Tipo
+        <select name="tipo" value={tipo} onChange={(evento) => setTipo(evento.target.value)}>
+          <option value="comercial">Campaña comercial</option>
+          <option value="beneficio">Beneficio de partner</option>
+          <option value="interna">Promoción interna</option>
         </select>
+      </label>
+      <label className="admin-planes__campo">
+        Formato
+        <select
+          name="formato"
+          value={ubicacion === "listado_cultivos" ? "banner" : formato}
+          onChange={(evento) => setFormato(evento.target.value)}
+        >
+          <option value="banner">Banner</option>
+          <option value="modal" disabled={ubicacion === "listado_cultivos"}>Ventana</option>
+        </select>
+      </label>
+      <label className="admin-planes__campo">
+        Ubicación
+        <select
+          name="ubicacion"
+          value={ubicacion}
+          onChange={(evento) => {
+            setUbicacion(evento.target.value);
+            if (evento.target.value === "listado_cultivos") setFormato("banner");
+          }}
+        >
+          <option value="listado_cultivos">Listado de cultivos</option>
+          <option value="inicio">Inicio</option>
+        </select>
+      </label>
+      {interna ? null : (
+        <label className="admin-planes__campo">
+          Comercio
+          <select name="comercio" defaultValue={valor.comercio_id || ""} required>
+            <option value="">Elegir</option>
+            {comercios.map((comercio) => (
+              <option key={comercio.id} value={comercio.id}>
+                {comercio.nombre}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <fieldset className="admin-planes__campo">
+        <legend>A quién se muestra</legend>
+        {SEGMENTOS_PROMOCION.map((segmento) => (
+          <label key={segmento}>
+            <input
+              type="checkbox"
+              name="segmento"
+              value={segmento}
+              checked={segmentos.includes(segmento) && !(upsell && segmento === "plus")}
+              disabled={upsell && segmento === "plus"}
+              onChange={(evento) => cambiarSegmento(segmento, evento.target.checked)}
+            />
+            {segmento === "gratuito" ? " Gratuito" : segmento === "plus" ? " Plus" : " Pago único por cultivo"}
+          </label>
+        ))}
+      </fieldset>
+      <label className="admin-planes__campo">
+        Título
+        <input name="titulo" value={titulo} onChange={(evento) => setTitulo(evento.target.value)} maxLength={80} required={interna} />
+      </label>
+      <label className="admin-planes__campo">
+        Descripción
+        <textarea name="descripcion" value={descripcion} onChange={(evento) => setDescripcion(evento.target.value)} maxLength={400} rows={3} />
+      </label>
+      <label className="admin-planes__campo">
+        Texto del botón
+        <input name="cta" value={cta} onChange={(evento) => setCta(evento.target.value)} maxLength={40} required={interna} />
       </label>
       <label className="admin-planes__campo">
         Pieza https
         <input name="pieza" defaultValue={valor.pieza_url || ""} maxLength={500} />
       </label>
       <label className="admin-planes__campo">
-        Destino https
-        <input name="enlace" defaultValue={valor.enlace || ""} maxLength={500} />
+        Destino
+        <input
+          name="enlace"
+          value={upsell ? "/pagos/plus" : enlace}
+          onChange={(evento) => setEnlace(evento.target.value)}
+          maxLength={500}
+          readOnly={upsell}
+        />
       </label>
       <label className="admin-planes__campo">
         Inicio
@@ -166,15 +268,52 @@ export function FormularioCampana({ campana, comercios }) {
         Prioridad
         <input name="prioridad" type="number" min="0" max="100" defaultValue={valor.prioridad ?? 0} />
       </label>
+      <label className="admin-planes__campo">
+        Frecuencia del modal, en días
+        <input name="frecuencia" type="number" min="0" max="366" defaultValue={valor.frecuencia_dias ?? 0} />
+      </label>
+      {interna ? (
+        <label className="admin-planes__campo">
+          <input
+            type="checkbox"
+            name="es_upsell_plus"
+            value="si"
+            checked={upsell}
+            onChange={(evento) => {
+              const activo = evento.target.checked;
+              setUpsell(activo);
+              if (activo) {
+                setSegmentos((actuales) => {
+                  const sinPlus = actuales.filter((item) => item !== "plus");
+                  return sinPlus.length ? sinPlus : ["gratuito"];
+                });
+              }
+            }}
+          />
+          Oferta para contratar Plus
+        </label>
+      ) : null}
+      {interna ? (
+        <label className="admin-planes__campo">
+          <input type="checkbox" name="anunciar_futuros" value="si" checked={anunciar} onChange={(evento) => setAnunciar(evento.target.checked)} />
+          Anunciar beneficios que todavía no están disponibles
+        </label>
+      ) : null}
       <p className="admin-dash__aclaracion">
-        Se guarda en borrador. Aparece en el listado de cultivos solo después de activarla, si el comercio está aprobado, activo, vigente y en plan Visibilidad o Inteligente. El banner dice Publicidad.
+        Se guarda en borrador y no se publica. Una comercial o un beneficio solo puede activarse con comercio aprobado, vigente y en plan Visibilidad o Inteligente. Una interna no lleva comercio. El modal de Plus espera al menos 7 días en gratuito y 30 en Plus. No prometas una experiencia sin anuncios.
       </p>
+      <VistaPreviaPromocion campana={vista} />
       <button className="admin-dash__actualizar" type="submit" disabled={pendiente}>
         {valor.id ? "Guardar campaña" : "Crear borrador"}
       </button>
       <Aviso estado={estado} />
     </form>
   );
+}
+
+function activosSin(actuales, segmento, activo) {
+  if (activo) return actuales.includes(segmento) ? actuales : [...actuales, segmento];
+  return actuales.filter((item) => item !== segmento);
 }
 
 const SIGUIENTES = {

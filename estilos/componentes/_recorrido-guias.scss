@@ -57,7 +57,7 @@
 .enflora-guia .driver-popover-footer {
   display: flex;
   flex-flow: row wrap;
-  align-items: center;
+  align-items: stretch;
   gap: 0.45rem;
 }
 
@@ -67,26 +67,33 @@
   text-align: end;
 }
 
-.enflora-guia__salto {
-  flex: 1 1 0;
-}
-
 .enflora-guia .driver-popover-navigation-btns {
   display: flex;
-  flex: 1 1 0;
+  flex: 1 0 100%;
+  flex-wrap: nowrap;
+  order: 0;
   gap: 0.4rem;
-  min-width: 0;
-  width: auto;
+  width: 100%;
 }
 
+.enflora-guia__salto {
+  flex: 1 0 100%;
+  order: 1;
+  width: 100%;
+}
+
+.enflora-guia .driver-popover-prev-btn,
 .enflora-guia .driver-popover-next-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  flex: 1;
+  flex: 1 1 0;
   width: auto;
   min-width: 0;
+}
+
+.enflora-guia .driver-popover-next-btn {
+  gap: 0.4rem;
   border: 0;
   background: #0b3d2a;
   color: #eaedbb;

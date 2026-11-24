@@ -27,7 +27,7 @@ export default async function PaginaCampanas({ searchParams }) {
     ? enlace(consulta, consulta.offset + LIMITE_PARTNERS)
     : "";
   return (
-    <MarcoPartners titulo="Campañas" intro="Usan el banner del listado de cultivos. Una campaña nueva queda en borrador." aviso={AvisoPartners(listado)}>
+    <MarcoPartners titulo="Campañas" intro="Banners del listado de cultivos y piezas de Inicio. Una campaña nueva queda en borrador." aviso={AvisoPartners(listado)}>
       <p><Link href="/admin/partners/campanas/nueva">Nueva campaña</Link></p>
       <form className="admin-planes__filtros" method="get">
         <label className="admin-planes__campo">

@@ -545,3 +545,107 @@ a.inicio__lugar {
   }
 }
 
+.promo-inicio-zona {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.25rem 0 1rem;
+}
+
+.promo-inicio,
+.promo-inicio__enlace {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid rgba(11, 61, 42, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #0b3d2a;
+  text-align: left;
+  text-decoration: none;
+}
+
+.promo-inicio__etiqueta {
+  margin: 0;
+  color: rgba(11, 61, 42, 0.62);
+  font-family: var(--font-funcional);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.promo-inicio h2,
+.promo-inicio__precio,
+.promo-inicio p,
+.promo-inicio li {
+  margin: 0;
+  color: #0b3d2a;
+  font-family: var(--font-funcional);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.promo-inicio h2 {
+  font-family: var(--font-identidad);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.promo-inicio__precio {
+  font-weight: 700;
+}
+
+.promo-inicio__beneficios {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.15rem 0 0;
+  padding-left: 1.1rem;
+}
+
+.promo-inicio__imagen {
+  display: block;
+  width: 100%;
+  max-height: 7.5rem;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.promo-inicio-zona--sutil .promo-inicio,
+.promo-inicio-zona--sutil .promo-inicio__enlace {
+  padding: 0.65rem 0.75rem;
+}
+
+.promo-modal {
+  position: fixed;
+  z-index: 40;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 0.75rem;
+  max-height: min(70vh, 28rem);
+  overflow: auto;
+  padding: 0.85rem;
+  border-radius: 18px;
+  background: #f7f3e8;
+  box-shadow: 0 12px 40px rgba(11, 61, 42, 0.18);
+}
+
+.promo-modal__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-modal,
+  .promo-inicio,
+  .banner-publicitario--sutil {
+    animation: none;
+    transition: none;
+  }
+}
+

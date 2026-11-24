@@ -6,6 +6,8 @@ import { IndicadorEtapa } from "@/componentes/indicador-etapa";
 import { ResumenClimaInicio } from "@/componentes/clima/resumen-inicio";
 import { InvitacionFeedback } from "@/componentes/invitacion-feedback";
 import { BotonReporteProblema } from "@/componentes/problemas/boton-reporte-problema";
+import { ModalPromocional } from "@/componentes/promociones/modal-promocional";
+import { PromocionInicio } from "@/componentes/promociones/promocion-inicio";
 import { ACCIONES_CULTIVO, hrefAccionCultivo } from "@/lib/inicio/resumen";
 
 function textoDia(dia) {
@@ -202,7 +204,7 @@ function FotosInicio({ fotos }) {
   );
 }
 
-export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = [] }) {
+export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = [], promociones = null }) {
   const cultivos = panel.cultivos;
 
   return (
@@ -216,6 +218,8 @@ export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = []
         </h1>
       </header>
 
+      <PromocionInicio campañas={promociones?.banners || []} sutil={promociones?.sutil === true} />
+      <ModalPromocional promocion={promociones?.modal || null} />
       <ResumenClimaInicio clima={clima} />
 
       <Seccion id="inicio-cultivos" titulo="Tus cultivos">

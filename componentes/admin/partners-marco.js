@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { etiquetaFormato, etiquetaUbicacion } from "@/lib/promociones";
 import { textoDia, textoEntero, textoInstante } from "@/componentes/admin/formato-dashboard";
 
 const NAV = [
@@ -158,7 +159,10 @@ export function TablaCampanas({ filas }) {
               <p className="admin-dash__detalle">{fila.comercio}</p>
             </td>
             <td>{fila.estado}</td>
-            <td>Listado de cultivos</td>
+            <td>
+              {etiquetaUbicacion(fila.ubicacion)}
+              {fila.formato ? ` · ${etiquetaFormato(fila.formato)}` : ""}
+            </td>
             <td>{textoEntero(fila.impresiones)}</td>
             <td>{textoEntero(fila.clics)}</td>
           </tr>

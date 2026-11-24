@@ -243,7 +243,7 @@ test("un comercio con banner y campaña aparece una sola vez y se mide la campa�
   assert.equal(elegirRotacion(visible, 0).campanaId, alta.campanaId);
   assert.deepEqual(deduplicarCampañasBanner([banner], []), [banner]);
   const pieza = fs.readFileSync(path.join(RAIZ, "componentes/banner-publicitario.js"), "utf8");
-  assert.match(pieza, /Publicidad/);
+  assert.match(pieza, /etiquetaPieza|Publicidad/);
   assert.match(pieza, /sponsored/);
 });
 

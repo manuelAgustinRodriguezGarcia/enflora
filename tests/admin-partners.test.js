@@ -182,8 +182,9 @@ test("una migración pendiente no inventa cifras ni copia el mensaje de la base"
 
 test("el banner existente sigue identificando la publicidad y Flora no lo importa", () => {
   const banner = fs.readFileSync(path.join(RAIZ, "componentes/banner-publicitario.js"), "utf8");
-  assert.match(banner, /Publicidad/);
+  assert.match(banner, /etiquetaPieza/);
   assert.match(banner, /sponsored/);
+  assert.match(fs.readFileSync(path.join(RAIZ, "lib/promociones.js"), "utf8"), /Publicidad/);
   const flora = fs.readdirSync(path.join(RAIZ, "componentes/flora")).join("\n");
   assert.equal(flora.includes("banner-publicitario"), false);
   const publicidad = fs.readFileSync(path.join(RAIZ, "lib/publicidad.js"), "utf8");

@@ -76,7 +76,16 @@ export async function guardarCampana(_previo, formulario) {
   const entrada = campos(formulario);
   const sesion = await credencial();
   if (!sesion) return { ok: false, error: "No tenés permiso para cambiar partners." };
-  const validado = validarCampana({ ...entrada, comercio: entrada.comercio, ubicacion: "listado_cultivos" }, Boolean(entrada.id));
+  const validado = validarCampana(
+    {
+      ...entrada,
+      comercio: entrada.comercio,
+      segmentos: formulario.getAll("segmento").map((valor) => String(valor)),
+      anunciar_futuros: formulario.get("anunciar_futuros") === "si" ? "si" : "no",
+      es_upsell_plus: formulario.get("es_upsell_plus") === "si" ? "si" : "no",
+    },
+    Boolean(entrada.id),
+  );
   if (!validado.ok) return { ok: false, error: validado.error };
   const resultado = entrada.id ? await editarCampanaPartners(sesion, validado) : await crearCampanaPartners(sesion, validado);
   if (!resultado.ok) return { ok: false, error: resultado.error || mensajePartners("error") };

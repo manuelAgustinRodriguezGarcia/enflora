@@ -5,6 +5,7 @@ import { leerPersonalidadFloraUsuario } from "@/lib/flora-personalidad";
 import { cargarClimaInicio } from "@/lib/clima/cargar";
 import { cargarPanelInicio } from "@/lib/inicio/cargar";
 import { cargarFotosInicio } from "@/lib/inicio/fotos";
+import { cargarPromocionesInicio } from "@/lib/promociones-servidor";
 import { saludoInicio } from "@/lib/inicio/saludo";
 import { fechaHoy } from "@/lib/etapas";
 import { configuracionLista } from "@/lib/supabase/configuracion";
@@ -76,9 +77,16 @@ export default async function PaginaInicioCultivo() {
     clima = null;
   }
 
+  let promociones = null;
+  try {
+    promociones = await cargarPromocionesInicio(supabase, sesion.userId);
+  } catch {
+    promociones = null;
+  }
+
   return (
     <TransicionVista>
-      <PanelInicio panel={panel} saludo={saludo} clima={clima} fotos={fotos} />
+      <PanelInicio panel={panel} saludo={saludo} clima={clima} fotos={fotos} promociones={promociones} />
     </TransicionVista>
   );
 }

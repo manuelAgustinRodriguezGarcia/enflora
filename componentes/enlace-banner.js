@@ -28,18 +28,29 @@ function registrar(campanaId, tipo, token) {
   }).catch(() => {});
 }
 
-export function EnlaceBanner({ href, campanaId, children }) {
+export function medirCampana(campanaId, tipo) {
+  registrar(campanaId, tipo, tokenSesion());
+}
+
+export function RegistroImpresion({ campanaId }) {
   useEffect(() => {
-    registrar(campanaId, "impresion", tokenSesion());
+    medirCampana(campanaId, "impresion");
+  }, [campanaId]);
+  return null;
+}
+
+export function EnlaceBanner({ href, campanaId, children, externo = true, className = "banner-publicitario__enlace" }) {
+  useEffect(() => {
+    medirCampana(campanaId, "impresion");
   }, [campanaId]);
 
   return (
     <a
-      className="banner-publicitario__enlace"
+      className={className}
       href={href}
-      target="_blank"
-      rel="noopener noreferrer sponsored"
-      onClick={() => registrar(campanaId, "clic", tokenSesion())}
+      target={externo ? "_blank" : undefined}
+      rel={externo ? "noopener noreferrer sponsored" : undefined}
+      onClick={() => medirCampana(campanaId, "clic")}
     >
       {children}
     </a>
