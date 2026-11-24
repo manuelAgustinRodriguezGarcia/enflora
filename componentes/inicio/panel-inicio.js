@@ -8,6 +8,7 @@ import { InvitacionFeedback } from "@/componentes/invitacion-feedback";
 import { BotonReporteProblema } from "@/componentes/problemas/boton-reporte-problema";
 import { ModalPromocional } from "@/componentes/promociones/modal-promocional";
 import { PromocionInicio } from "@/componentes/promociones/promocion-inicio";
+import { AvisoInstalacion } from "@/componentes/inicio/aviso-instalacion";
 import { ACCIONES_CULTIVO, hrefAccionCultivo } from "@/lib/inicio/resumen";
 
 function textoDia(dia) {
@@ -209,6 +210,7 @@ export function PanelInicio({ panel, saludo = "Inicio", clima = null, fotos = []
 
   return (
     <div className="inicio">
+      <AvisoInstalacion />
       <header className="inicio__cabecera">
         <h1 className="inicio__saludo">
           <span className="inicio__saludo-texto">{saludo}</span>

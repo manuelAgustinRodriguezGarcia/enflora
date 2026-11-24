@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { MensajeInterno } from "@/componentes/mensaje-interno";
 import { anotarFalloRegistroWorker } from "@/lib/push/fallo-registro";
+import { sincronizarVinculoInstalacion } from "@/lib/push/cliente-dispositivo";
 
 export function RegistroServiceWorker() {
   useEffect(() => {
@@ -14,6 +15,7 @@ export function RegistroServiceWorker() {
         anotarFalloRegistroWorker(null);
         if (cancelado) return;
         registro.update().catch(() => {});
+        sincronizarVinculoInstalacion().catch(() => {});
       })
       .catch((error) => {
         anotarFalloRegistroWorker(error);

@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 import { enviarUna, procesarCampana } from "../lib/push/campana.js";
+import { sincronizarVinculoInstalacion } from "../lib/push/cliente-dispositivo.js";
+import {
+  decisionVinculo,
+  puedeDesvincular,
+  resultadoTrasGuardar,
+  usuarioParaSuscripcion,
+} from "../lib/push/vinculo.js";
 import {
   CLAVE_CAMPANA_LANZAMIENTO,
   LIMITE_ALTAS,
@@ -11,6 +19,7 @@ import {
   segundosReintento,
   textoEspera,
   clasificarResultadoPush,
+  interpretarDespachoPush,
   clasificarSoporte,
   claveAplicacionABytes,
   claveIdempotenciaCampana,
@@ -263,6 +272,8 @@ test("aceptar el envío no significa que el dispositivo lo haya mostrado", () =>
     credenciales: false,
     visualizado: false,
     temporal: false,
+    permanente: false,
+    categoria: "aceptado",
   });
   assert.equal(clasificarResultadoPush(410).expirada, true);
   assert.equal(clasificarResultadoPush(410).temporal, false);
@@ -272,6 +283,21 @@ test("aceptar el envío no significa que el dispositivo lo haya mostrado", () =>
   assert.equal(clasificarResultadoPush(500).visualizado, false);
   assert.equal(clasificarResultadoPush(503).temporal, true);
   assert.equal(clasificarResultadoPush(400).temporal, false);
+  assert.equal(clasificarResultadoPush(400).categoria, "rechazado");
+  assert.equal(clasificarResultadoPush(413).categoria, "rechazado");
+  assert.equal(clasificarResultadoPush(413).permanente, true);
+  assert.equal(clasificarResultadoPush(null).estado, "error");
+  assert.equal(clasificarResultadoPush(null).categoria, "sin_estado");
+  assert.notEqual(clasificarResultadoPush(undefined).estado, "aceptado");
+  const sinCodigo = interpretarDespachoPush({ respuesta: {} });
+  assert.equal(sinCodigo.estado, "error");
+  assert.equal(sinCodigo.categoria, "sin_estado");
+  assert.equal(sinCodigo.codigo, null);
+  const red = interpretarDespachoPush({ error: new Error("red") });
+  assert.equal(red.temporal, true);
+  assert.equal(red.codigo, null);
+  assert.equal(interpretarDespachoPush({ error: Object.assign(new Error("no"), { statusCode: 401 }) }).credenciales, true);
+  assert.equal(interpretarDespachoPush({ respuesta: { statusCode: 201 } }).estado, "aceptado");
 });
 
 test("la concurrencia no supera el límite", async () => {
@@ -749,4 +775,75 @@ test("el par VAPID se valida para detectar claves cambiadas a medias", () => {
   assert.equal(parVapidCoincide(actual.publicKey, otra.privateKey), false);
   assert.equal(parVapidCoincide(actual.publicKey, "no-es-una-clave"), false);
   assert.equal(parVapidCoincide(null, actual.privateKey), false);
+});
+
+test("el vínculo exige sesión y la instalación, y un cambio de cuenta reemplaza al dueño", async () => {
+  assert.equal(decisionVinculo({ sesion: false, activa: true, vinculada: false }).accion, "anonima");
+  assert.equal(decisionVinculo({ sesion: true, activa: true, vinculada: true }).accion, "confirmar");
+  assert.equal(decisionVinculo({ sesion: true, activa: true, vinculada: false }).accion, "vincular");
+  assert.equal(decisionVinculo({ sesion: true, activa: false, vinculada: false }).accion, "inactiva");
+  assert.equal(usuarioParaSuscripcion("cuenta-b", "cuenta-a"), "cuenta-b");
+  assert.equal(usuarioParaSuscripcion(null, "cuenta-a"), "cuenta-a");
+  assert.equal(usuarioParaSuscripcion(null, null), null);
+  assert.equal(puedeDesvincular("cuenta-a", "cuenta-a"), true);
+  assert.equal(puedeDesvincular("cuenta-a", "cuenta-b"), false);
+  assert.equal(puedeDesvincular(null, "cuenta-b"), false);
+  assert.deepEqual(resultadoTrasGuardar({ guardado: true, verificado: { sesion: false, activa: true, vinculada: false } }), {
+    estado: "activado",
+    registro: "sin-vincular",
+    temporal: false,
+  });
+  assert.equal(
+    resultadoTrasGuardar({ guardado: true, verificado: { sesion: true, activa: true, vinculada: true } }).registro,
+    "vinculada",
+  );
+  assert.equal(resultadoTrasGuardar({ guardado: true, verificado: { sesion: true, activa: true, vinculada: false } }).temporal, true);
+
+  const guardadas = [];
+  const anonima = await sincronizarVinculoInstalacion({
+    leerSuscripcion: async () => ({ endpoint: "https://fcm.googleapis.com/fcm/send/anon" }),
+    estado: async () => ({ sesion: false, activa: true, vinculada: false }),
+    guardar: async (suscripcion) => {
+      guardadas.push(suscripcion.endpoint);
+      return true;
+    },
+  });
+  assert.equal(anonima.accion, "anonima");
+  assert.deepEqual(guardadas, []);
+
+  const cambiada = await sincronizarVinculoInstalacion({
+    leerSuscripcion: async () => ({ endpoint: "https://fcm.googleapis.com/fcm/send/propia", getKey: () => null }),
+    estado: async () => ({ sesion: true, activa: true, vinculada: false }),
+    guardar: async (suscripcion) => {
+      guardadas.push(suscripcion.endpoint);
+      return true;
+    },
+  });
+  assert.equal(cambiada.accion, "temporal");
+  assert.deepEqual(guardadas, ["https://fcm.googleapis.com/fcm/send/propia"]);
+
+  const confirmada = await sincronizarVinculoInstalacion({
+    leerSuscripcion: async () => ({ endpoint: "https://fcm.googleapis.com/fcm/send/propia" }),
+    estado: async () => ({ sesion: true, activa: true, vinculada: true }),
+    guardar: async () => {
+      throw new Error("no debía guardar");
+    },
+  });
+  assert.equal(confirmada.accion, "confirmar");
+
+  const ausente = await sincronizarVinculoInstalacion({
+    leerSuscripcion: async () => null,
+    estado: async () => {
+      throw new Error("no debía consultar");
+    },
+    guardar: async () => {
+      throw new Error("no debía guardar");
+    },
+  });
+  assert.equal(ausente.accion, "ausente");
+
+  const formulario = fs.readFileSync(new URL("../componentes/usar-notificaciones-push.js", import.meta.url), "utf8");
+  assert.equal(formulario.includes("!info.sesion"), false);
+  assert.match(formulario, /decisionVinculo/);
+  assert.match(formulario, /conVerificacion/);
 });

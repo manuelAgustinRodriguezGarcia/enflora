@@ -52,9 +52,11 @@ export function MenuAccionesProducto({
                     type="button"
                     role="menuitem"
                     className="tarjeta-acciones-menu__opcion tarjeta-acciones-menu__opcion--destructivo"
-                    onClick={() => {
+                    onClick={(evento) => {
+                      evento.preventDefault();
+                      evento.stopPropagation();
                       setAbierto(false);
-                      onEliminar();
+                      window.setTimeout(onEliminar, 0);
                     }}
                   >
                     <IconoBasura />

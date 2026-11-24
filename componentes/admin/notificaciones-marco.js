@@ -437,3 +437,103 @@ function DetalleRecordatorios({ recordatorios }) {
     </>
   );
 }
+
+const CATEGORIAS_INTENTO = {
+  aceptado: "El proveedor aceptó el envío",
+  temporal: "Error temporal del proveedor",
+  credenciales: "Credenciales rechazadas (401 o 403)",
+  expirada: "Suscripción vencida (404 o 410)",
+  rechazado: "El proveedor rechazó el aviso (400 o 413)",
+  sin_estado: "Respuesta sin código HTTP",
+  sin_dispositivo: "Sin dispositivo vinculado",
+  payload: "No se pudo armar el aviso",
+  lectura: "No se pudo leer la tarea",
+  cierre: "No se pudo guardar el cierre del intento",
+  otro: "Otro motivo",
+};
+
+const ESTADOS_INTENTO = {
+  aceptado: "Aceptado por el proveedor",
+  error: "Error",
+  expirado: "Suscripción vencida",
+  omitido: "Omitido",
+};
+
+const CIERRES_AVISO = {
+  error: "Error de envío",
+  sin_dispositivo: "Sin dispositivo",
+  credenciales: "Credenciales",
+  rechazado: "Rechazado por el proveedor",
+  indeterminado: "Respuesta sin código",
+  vencido: "Fuera de la ventana, sin envío",
+};
+
+export function IntentosRecordatorios({ resultado }) {
+  return (
+    <article className="admin-dash__tarjeta">
+      <h2 id="intentos-recordatorios">Intentos por dispositivo</h2>
+      {resultado?.estado === "listo" ? (
+        <DetalleIntentos intentos={resultado.intentos} cierres={resultado.cierres} />
+      ) : (
+        <p className="admin-dash__aviso admin-dash__aviso--bloque" role="alert">
+          {resultado?.estado === "denegado"
+            ? "No tenés permiso para ver los intentos."
+            : resultado?.error || "No pudimos leer los intentos. No se muestran filas parciales."}
+        </p>
+      )}
+    </article>
+  );
+}
+
+function DetalleIntentos({ intentos, cierres }) {
+  return (
+    <>
+      <p className="admin-dash__aclaracion">
+        Cada fila es un intento de un recordatorio hacia un dispositivo. Aceptado significa que el proveedor recibió el
+        envío, no que el teléfono lo haya mostrado. No se listan descripciones, cuentas ni direcciones de dispositivo.
+      </p>
+      {cierres.length ? (
+        <ul className="admin-dash__intentos">
+          {cierres.map((cierre) => (
+            <li key={cierre.aviso_cierre}>
+              {CIERRES_AVISO[cierre.aviso_cierre] || cierre.aviso_cierre}: {textoEntero(cierre.cantidad)} en los últimos
+              dos días
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="admin-dash__aclaracion">No hay recordatorios cerrados en los últimos dos días.</p>
+      )}
+      {intentos.length ? (
+        <ul className="admin-dash__intentos">
+          {intentos.map((intento) => (
+            <li key={`${intento.referencia}-${intento.intentado_en}-${intento.numero_intento ?? "s"}`}>
+              <dl>
+                <dt>Cuándo</dt>
+                <dd>{textoInstante(intento.intentado_en)}</dd>
+                <dt>Referencia</dt>
+                <dd>{intento.referencia}</dd>
+                <dt>Horario</dt>
+                <dd>
+                  {intento.fecha_programada || "—"} {intento.hora_programada || ""}
+                </dd>
+                <dt>Intento</dt>
+                <dd>{intento.numero_intento == null ? "—" : textoEntero(intento.numero_intento)}</dd>
+                <dt>Estado</dt>
+                <dd>{ESTADOS_INTENTO[intento.estado] || intento.estado}</dd>
+                <dt>Motivo</dt>
+                <dd>{CATEGORIAS_INTENTO[intento.categoria] || intento.categoria}</dd>
+                <dt>Código HTTP</dt>
+                <dd>{intento.codigo_estado == null ? "Sin código" : textoEntero(intento.codigo_estado)}</dd>
+                <dt>Aceptado por el proveedor</dt>
+                <dd>{intento.aceptado_en ? textoInstante(intento.aceptado_en) : "No"}</dd>
+              </dl>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="admin-dash__aclaracion">Todavía no hay intentos registrados.</p>
+      )}
+    </>
+  );
+}

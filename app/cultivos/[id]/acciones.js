@@ -11,6 +11,7 @@ import { rutaFotoValida, rutaPerteneceAUsuario } from "@/lib/fotos";
 import { validarAltaPlantasEnUnidad } from "@/lib/flora-beneficios-plantas-servidor";
 import { aplicarVinculoGenetica, actualizarPlanta, insertarPlantas } from "@/lib/geneticas/plantas";
 import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES } from "@/lib/unidades";
+import { bloqueoPorCiclosDeUnidad, textoErrorBorrado } from "@/lib/eliminar-cultivo";
 
 const MAXIMO_PLANTAS_POR_ALTA = MAXIMO_PLANTAS;
 
@@ -548,6 +549,9 @@ export async function eliminarUnidad(_estado, formulario) {
 
   const rutasPortada = [unidad?.portada_ruta, unidad?.portada_miniatura].filter(Boolean);
 
+  const bloqueo = await bloqueoPorCiclosDeUnidad(acceso.supabase, unidadId, espacioId);
+  if (bloqueo) return bloqueo;
+
   const { data, error } = await acceso.supabase
     .from("unidades_cultivo")
     .delete()
@@ -555,7 +559,12 @@ export async function eliminarUnidad(_estado, formulario) {
     .eq("espacio_id", espacioId)
     .select("id");
 
-  if (error || !data?.length) return { error: "No se pudo eliminar la unidad." };
+  if (error) {
+    console.error("eliminarUnidad", error.code || "", error.message || "");
+    return { error: textoErrorBorrado("unidad", error) };
+  }
+
+  if (!data?.length) return { error: "No se pudo eliminar la unidad: sigue en tu cuenta." };
 
   await borrarArchivos(acceso.supabase, rutasPortada);
 

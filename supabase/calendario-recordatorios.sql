@@ -21,16 +21,20 @@ alter table public.tareas_programadas
 alter table public.tareas_programadas
   add column if not exists aviso_cierre text;
 
-do $$
-begin
-  if not exists (
-    select 1 from pg_constraint where conname = 'tareas_aviso_cierre_valido'
-  ) then
-    alter table public.tareas_programadas
-      add constraint tareas_aviso_cierre_valido
-      check (aviso_cierre is null or aviso_cierre in ('sin_dispositivo', 'error'));
-  end if;
-end $$;
+alter table public.tareas_programadas drop constraint if exists tareas_aviso_cierre_valido;
+alter table public.tareas_programadas
+  add constraint tareas_aviso_cierre_valido
+  check (
+    aviso_cierre is null
+    or aviso_cierre in (
+      'sin_dispositivo',
+      'error',
+      'credenciales',
+      'rechazado',
+      'indeterminado',
+      'vencido'
+    )
+  );
 
 create index if not exists tareas_avisos_calendario_idx
   on public.tareas_programadas (fecha_programada, hora_programada)
@@ -64,6 +68,59 @@ create index if not exists calendario_recordatorios_ejecuciones_inicio_idx
 
 alter table public.calendario_recordatorios_ejecuciones enable row level security;
 revoke all on table public.calendario_recordatorios_ejecuciones from public, anon, authenticated;
+
+-- Un intento por dispositivo. No guarda endpoints, claves ni el cuerpo del proveedor.
+-- Aceptado significa que el servicio push respondió 2xx, no que el teléfono lo mostró.
+create table if not exists public.calendario_aviso_intentos (
+  id uuid primary key default gen_random_uuid(),
+  tarea_id uuid not null references public.tareas_programadas (id) on delete cascade,
+  suscripcion_id uuid references public.push_suscripciones (id) on delete set null,
+  reclamado_en timestamptz,
+  intentado_en timestamptz not null default pg_catalog.now(),
+  numero_intento integer,
+  codigo_estado integer,
+  categoria text not null,
+  estado text not null,
+  aceptado_en timestamptz,
+  constraint calendario_aviso_intentos_estado check (
+    estado in ('aceptado', 'error', 'expirado', 'omitido')
+  ),
+  constraint calendario_aviso_intentos_categoria check (
+    categoria in (
+      'aceptado',
+      'temporal',
+      'credenciales',
+      'expirada',
+      'rechazado',
+      'sin_estado',
+      'sin_dispositivo',
+      'payload',
+      'lectura',
+      'cierre',
+      'otro'
+    )
+  ),
+  constraint calendario_aviso_intentos_codigo check (
+    codigo_estado is null or (codigo_estado >= 100 and codigo_estado <= 599)
+  ),
+  constraint calendario_aviso_intentos_numero check (
+    numero_intento is null or (numero_intento >= 0 and numero_intento <= 20)
+  )
+);
+
+create index if not exists calendario_aviso_intentos_tarea_idx
+  on public.calendario_aviso_intentos (tarea_id, intentado_en desc);
+
+create index if not exists calendario_aviso_intentos_recientes_idx
+  on public.calendario_aviso_intentos (intentado_en desc);
+
+create unique index if not exists calendario_aviso_intentos_aceptado_idx
+  on public.calendario_aviso_intentos (tarea_id, suscripcion_id)
+  where estado = 'aceptado' and suscripcion_id is not null;
+
+alter table public.calendario_aviso_intentos enable row level security;
+revoke all on table public.calendario_aviso_intentos from public, anon, authenticated;
+grant select, insert, update, delete on table public.calendario_aviso_intentos to service_role;
 
 create or replace function public.guardar_tarea_calendario(
   p_id uuid,
@@ -262,6 +319,17 @@ begin
     raise exception 'No autorizado.';
   end if;
 
+  -- Lo que ya salió de la ventana no se envía tarde y tampoco queda pendiente en silencio.
+  -- No toca un aviso_cierre ya puesto: los fallos históricos siguen cerrados.
+  update public.tareas_programadas as tarea
+  set aviso_cierre = 'vencido'
+  where tarea.estado = 'pendiente'
+    and tarea.aviso_push
+    and tarea.aviso_enviado_en is null
+    and tarea.aviso_cierre is null
+    and (tarea.fecha_programada + tarea.hora_programada) at time zone 'America/Argentina/Buenos_Aires'
+      <= now() - interval '30 minutes';
+
   select least(count(*)::bigint, 1000000)::int into examinadas
   from public.tareas_programadas as tarea
   where tarea.estado = 'pendiente'
@@ -301,7 +369,8 @@ begin
       tarea.unidad_cultivo_id,
       tarea.fecha_programada,
       tarea.hora_programada,
-      tarea.aviso_reclamado_en
+      tarea.aviso_reclamado_en,
+      tarea.aviso_intentos
   )
   select jsonb_build_object(
     'examinadas', examinadas,
@@ -315,7 +384,8 @@ begin
           'unidad_nombre', unidad.nombre,
           'fecha_programada', marcada.fecha_programada,
           'hora_programada', to_char(marcada.hora_programada, 'HH24:MI'),
-          'reclamado_en', marcada.aviso_reclamado_en
+          'reclamado_en', marcada.aviso_reclamado_en,
+          'intento', marcada.aviso_intentos
         )
       ),
       '[]'::jsonb
@@ -368,6 +438,18 @@ begin
   if p_resultado = 'liberar' then
     update public.tareas_programadas
     set aviso_reclamado_en = null
+    where id = p_id
+      and aviso_enviado_en is null
+      and aviso_reclamado_en >= p_reclamado_en - interval '2 seconds'
+      and aviso_reclamado_en <= p_reclamado_en + interval '2 seconds';
+    return;
+  end if;
+
+  if p_resultado in ('credenciales', 'rechazado', 'indeterminado') then
+    update public.tareas_programadas
+    set aviso_reclamado_en = null,
+        aviso_reintento_en = null,
+        aviso_cierre = p_resultado
     where id = p_id
       and aviso_enviado_en is null
       and aviso_reclamado_en >= p_reclamado_en - interval '2 seconds'
@@ -461,6 +543,9 @@ begin
 
   delete from public.calendario_recordatorios_ejecuciones
   where iniciada_en < pg_catalog.now() - interval '14 days';
+
+  delete from public.calendario_aviso_intentos
+  where intentado_en < pg_catalog.now() - interval '14 days';
 end;
 $$;
 
@@ -525,6 +610,72 @@ begin
 end;
 $$;
 
+create or replace function public.listar_intentos_recordatorios_calendario_admin(p_limite integer default 40)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  limite integer := least(greatest(coalesce(p_limite, 40), 1), 80);
+  intentos jsonb := '[]'::jsonb;
+  cierres jsonb := '[]'::jsonb;
+begin
+  if coalesce(auth.role(), '') <> 'service_role' then
+    return pg_catalog.jsonb_build_object('ok', false, 'codigo', 'no_autorizado');
+  end if;
+
+  select coalesce(pg_catalog.jsonb_agg(fila.dato order by fila.intentado_en desc), '[]'::jsonb)
+  into intentos
+  from (
+    select
+      intento.intentado_en,
+      pg_catalog.jsonb_build_object(
+        'intentado_en', intento.intentado_en,
+        'estado', intento.estado,
+        'categoria', intento.categoria,
+        'codigo_estado', intento.codigo_estado,
+        'numero_intento', intento.numero_intento,
+        'aceptado_en', intento.aceptado_en,
+        'fecha_programada', tarea.fecha_programada,
+        'hora_programada', pg_catalog.to_char(tarea.hora_programada, 'HH24:MI'),
+        'referencia', pg_catalog.substr(intento.tarea_id::text, 1, 8)
+      ) as dato
+    from public.calendario_aviso_intentos as intento
+    left join public.tareas_programadas as tarea on tarea.id = intento.tarea_id
+    order by intento.intentado_en desc
+    limit limite
+  ) as fila;
+
+  select coalesce(
+    pg_catalog.jsonb_agg(
+      pg_catalog.jsonb_build_object(
+        'aviso_cierre', cierre.aviso_cierre,
+        'cantidad', cierre.cantidad
+      )
+      order by cierre.aviso_cierre
+    ),
+    '[]'::jsonb
+  )
+  into cierres
+  from (
+    select tarea.aviso_cierre, count(*)::bigint as cantidad
+    from public.tareas_programadas as tarea
+    where tarea.aviso_cierre is not null
+      and tarea.fecha_programada >= (pg_catalog.timezone('America/Argentina/Buenos_Aires', pg_catalog.now()))::date - 2
+    group by tarea.aviso_cierre
+  ) as cierre;
+
+  return pg_catalog.jsonb_build_object(
+    'ok', true,
+    'entregas_disponibles', false,
+    'intentos', intentos,
+    'cierres', cierres
+  );
+end;
+$$;
+
 revoke all on function public.reclamar_avisos_calendario(integer) from public, anon, authenticated;
 grant execute on function public.reclamar_avisos_calendario(integer) to service_role;
 
@@ -536,3 +687,6 @@ grant execute on function public.registrar_ejecucion_recordatorios_calendario(js
 
 revoke all on function public.resumen_recordatorios_calendario_admin() from public, anon, authenticated;
 grant execute on function public.resumen_recordatorios_calendario_admin() to service_role;
+
+revoke all on function public.listar_intentos_recordatorios_calendario_admin(integer) from public, anon, authenticated;
+grant execute on function public.listar_intentos_recordatorios_calendario_admin(integer) to service_role;

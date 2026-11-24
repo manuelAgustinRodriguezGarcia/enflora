@@ -70,7 +70,11 @@ export function ModalConfirmacion({
       ) : null}
       <Dialog.Title className="modal__titulo">{titulo}</Dialog.Title>
       {descripcion ? <Dialog.Description className="modal__texto">{descripcion}</Dialog.Description> : null}
-      {error ? <p className="formulario__error">{error}</p> : null}
+      {error ? (
+        <p className="formulario__error" role="alert">
+          {error}
+        </p>
+      ) : null}
       {children}
       <div className={clasesAcciones.join(" ")}>
         {mostrarCancelar ? (

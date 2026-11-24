@@ -643,9 +643,203 @@ a.inicio__lugar {
 @media (prefers-reduced-motion: reduce) {
   .promo-modal,
   .promo-inicio,
-  .banner-publicitario--sutil {
+  .banner-publicitario--sutil,
+  .aviso-instalacion,
+  .aviso-instalacion__panel,
+  .aviso-instalacion__chevron {
     animation: none;
     transition: none;
   }
 }
 
+
+.aviso-instalacion {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgb(164 200 91 / 50%);
+  border-radius: 1.4rem;
+  background:
+    linear-gradient(180deg, rgb(244 248 238 / 96%), #fff 42%);
+  box-shadow: 0 16px 36px -22px rgb(11 61 42 / 45%);
+  color: #0b3d2a;
+  transition: padding 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+
+  &--abierto {
+    padding-bottom: 0.9rem;
+  }
+
+  &__disparador {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 44px;
+    margin: 0;
+    padding: 0.55rem 0.15rem;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid #0b3d2a;
+      outline-offset: 3px;
+      border-radius: 0.8rem;
+    }
+  }
+
+  &__descarga {
+    flex: none;
+    color: #0b3d2a;
+  }
+
+  &__texto {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    color: #3e5348;
+    font-family: var(--font-funcional);
+    font-size: clamp(0.95rem, 2.5vw, 1.08rem);
+    font-weight: 500;
+    line-height: 1.45;
+    text-align: left;
+    text-wrap: pretty;
+
+    .marca-enflora {
+      color: #0b3d2a;
+      font-family: var(--font-identidad);
+      font-weight: 600;
+    }
+  }
+
+  &__chevron {
+    flex: none;
+    color: #0b3d2a;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &--abierto &__chevron {
+    transform: rotate(180deg);
+  }
+
+  &__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  &--abierto &__panel {
+    grid-template-rows: 1fr;
+  }
+
+  &__panel-contenido {
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  &__acciones {
+    container-type: inline-size;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 0.7rem;
+    width: 100%;
+    max-width: 44rem;
+    margin-inline: auto;
+    padding-top: 0.85rem;
+  }
+
+  &__boton {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 0.7rem 0.55rem 0.8rem;
+    border: 1px solid rgb(11 61 42 / 10%);
+    border-radius: 1.05rem;
+    background: #fff;
+    box-shadow: 0 10px 22px -16px rgb(11 61 42 / 55%);
+    color: #0b3d2a;
+    font-family: var(--font-identidad);
+    font-size: clamp(0.92rem, 2.8vw, 1.05rem);
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    text-align: center;
+    cursor: pointer;
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease,
+      border-color 0.15s ease;
+
+    &:hover {
+      border-color: rgb(164 200 91 / 80%);
+      box-shadow: 0 14px 28px -14px rgb(11 61 42 / 40%);
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #0b3d2a;
+      outline-offset: 3px;
+    }
+  }
+
+  &__foto {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 3.6rem;
+    height: 4.6rem;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      user-select: none;
+    }
+  }
+
+  &__etiqueta {
+    display: block;
+    min-width: 0;
+  }
+
+  @container (min-width: 36rem) {
+    &__boton {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      padding: 0.45rem 0.9rem 0.45rem 0.4rem;
+      text-align: left;
+    }
+
+    &__foto {
+      width: 3.35rem;
+      height: 4.5rem;
+    }
+
+    &__etiqueta {
+      flex: 1 1 auto;
+    }
+  }
+}
+

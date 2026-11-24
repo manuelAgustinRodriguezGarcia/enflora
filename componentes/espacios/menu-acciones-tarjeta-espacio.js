@@ -5,11 +5,19 @@ import { Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { EliminarEspacio } from "@/componentes/eliminar-espacio";
-import { IconoLapiz } from "@/componentes/iconos-ui";
+import { IconoBasura, IconoLapiz } from "@/componentes/iconos-ui";
 
 export function MenuAccionesTarjetaEspacio({ espacioId, lado = "top" }) {
   const [abierto, setAbierto] = useState(false);
+  const [confirmar, setConfirmar] = useState(false);
   const hrefEditar = `/cultivos/${espacioId}/editar`;
+
+  function pedirEliminar(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
+    setAbierto(false);
+    window.setTimeout(() => setConfirmar(true), 0);
+  }
 
   return (
     <div className="tarjeta-acciones-menu acciones acciones--tarjeta">
@@ -44,17 +52,27 @@ export function MenuAccionesTarjetaEspacio({ espacioId, lado = "top" }) {
                   </Link>
                 </li>
                 <li role="none">
-                  <EliminarEspacio
-                    espacioId={espacioId}
-                    presentacion="menu"
-                    alAbrirModal={() => setAbierto(false)}
-                  />
+                  <button
+                    type="button"
+                    className="tarjeta-acciones-menu__opcion tarjeta-acciones-menu__opcion--destructivo"
+                    role="menuitem"
+                    onClick={pedirEliminar}
+                  >
+                    <IconoBasura />
+                    Eliminar
+                  </button>
                 </li>
               </ul>
             </Popover.Popup>
           </Popover.Positioner>
         </Popover.Portal>
       </Popover.Root>
+      <EliminarEspacio
+        espacioId={espacioId}
+        presentacion="oculto"
+        abierto={confirmar}
+        onCerrar={() => setConfirmar(false)}
+      />
     </div>
   );
 }

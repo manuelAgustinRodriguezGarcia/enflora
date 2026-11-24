@@ -10,6 +10,7 @@ import { aplicarVinculoGenetica, insertarPlantas } from "@/lib/geneticas/plantas
 import { configuracionLista } from "@/lib/supabase/configuracion";
 import { crearClienteServidor, obtenerSesionRapida } from "@/lib/supabase/servidor";
 import { datosTipoUnidad, MAXIMO_PLANTAS, MAXIMO_UNIDADES, tipoUnidadPermitido } from "@/lib/unidades";
+import { bloqueoPorCiclosDeEspacio, textoErrorBorrado } from "@/lib/eliminar-cultivo";
 
 const MAXIMO_UNIDADES_CREAR = MAXIMO_UNIDADES;
 const MAXIMO_PLANTAS_POR_ALTA = MAXIMO_PLANTAS;
@@ -274,14 +275,22 @@ export async function eliminarEspacio(_estado, formulario) {
     redirect("/ingreso");
   }
 
+  const bloqueo = await bloqueoPorCiclosDeEspacio(supabase, espacioId);
+  if (bloqueo) return bloqueo;
+
   const { data, error } = await supabase
     .from("espacios")
     .delete()
     .eq("id", espacioId)
     .select("id");
 
-  if (error || !data?.length) {
-    return { error: "No se pudo eliminar el espacio." };
+  if (error) {
+    console.error("eliminarEspacio", error.code || "", error.message || "");
+    return { error: textoErrorBorrado("espacio", error) };
+  }
+
+  if (!data?.length) {
+    return { error: "No se pudo eliminar el espacio: sigue en tu cuenta." };
   }
 
   revalidatePath("/cultivos");

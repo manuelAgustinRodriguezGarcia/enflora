@@ -355,6 +355,34 @@ body:has(.admin-app) {
     gap: 0.85rem;
   }
 
+  &__intentos {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+
+    li {
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--color-border);
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: minmax(7rem, 11rem) 1fr;
+      gap: 0.2rem 0.75rem;
+      margin: 0;
+    }
+
+    dt {
+      color: var(--text-secondary);
+    }
+
+    dd {
+      margin: 0;
+    }
+  }
+
   &__tarjeta {
     margin: 0;
     padding: 1rem 1.05rem 1.1rem;

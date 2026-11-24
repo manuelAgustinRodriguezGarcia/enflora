@@ -14,6 +14,7 @@ import {
   versionIosDesdeAgente,
 } from "@/lib/push/reglas";
 import { usePWAInstall } from "@/lib/use-pwa-install";
+import { decisionVinculo, resultadoTrasGuardar } from "@/lib/push/vinculo";
 
 export const TEXTOS_PUSH = {
   cargando: "Estamos revisando este dispositivo.",
@@ -102,6 +103,13 @@ async function estadoEnServidor(endpoint) {
     vinculada: datos.vinculada === true,
     sesion: datos.sesion === true,
   };
+}
+
+async function conVerificacion(endpoint, guardada) {
+  if (!guardada || guardada.estado !== "activado") return guardada;
+  const despues = await estadoEnServidor(endpoint).catch(() => null);
+  const cierre = resultadoTrasGuardar({ guardado: true, verificado: despues });
+  return { ...guardada, estado: cierre.estado, registro: cierre.registro };
 }
 
 async function estadoWorker() {
@@ -456,14 +464,16 @@ export function useNotificacionesPush(origen) {
         const suscripcion = registro ? await registro.pushManager.getSubscription() : null;
         const bytes = claveActual();
         if (suscripcion && bytes && !mismaClave(suscripcion.options?.applicationServerKey, bytes)) {
-          const renovada = await renovarSuscripcion(registro, suscripcion, bytes, origen, nombrePlataforma);
-          const siguiente = renovada.estado === "activado" ? "activado" : "desactivado";
+          const renovadaInicial = await renovarSuscripcion(registro, suscripcion, bytes, origen, nombrePlataforma);
+          const actual = await registro.pushManager.getSubscription();
+          const renovada = await conVerificacion(actual?.endpoint || suscripcion.endpoint, renovadaInicial);
+          const siguiente = renovada.estado === "activado" ? "activado" : renovada.estado === "sin-vincular" ? "sin-vincular" : "desactivado";
           return anotar(siguiente, {
             sw,
             scope,
             vapidEnvio,
-            suscripcion: siguiente === "activado" ? "activa" : "ausente",
-            registro: siguiente === "activado" ? "vinculada" : "desconocido",
+            suscripcion: siguiente === "desactivado" ? "ausente" : "activa",
+            registro: renovada.registro || "sin-vincular",
             error: renovada.fallo?.codigo || (renovada.estado === "error" ? "temporal" : null),
             fallo: renovada.fallo || null,
             registroServidor: renovada.registroServidor,
@@ -489,25 +499,43 @@ export function useNotificacionesPush(origen) {
             persistencia = "inactiva";
             error = null;
             fallo = null;
-          } else if (info.sesion && !info.vinculada) {
-            const guardada = await asegurarVinculo(suscripcion, origen, nombrePlataforma);
-            registroServidor = guardada.registroServidor || "no-intentado";
-            persistencia = guardada.persistencia || "no-intentada";
-            fallo = guardada.fallo || null;
-            if (guardada.estado === "activado") {
-              registroCuenta = "vinculada";
-              error = null;
-            } else {
-              siguiente = "sin-vincular";
-              registroCuenta = "sin-vincular";
-              error = guardada.fallo?.codigo || (guardada.estado === "limite" ? "limite" : "temporal");
-            }
           } else {
-            registroCuenta = info.vinculada ? "vinculada" : "sin-vincular";
-            registroServidor = "aceptado";
-            persistencia = "guardada";
-            error = null;
-            fallo = null;
+            const decision = decisionVinculo({
+              sesion: info.sesion === true,
+              activa: info.activa === true,
+              vinculada: info.vinculada === true,
+            });
+            if (decision.accion === "vincular") {
+              const guardada = await conVerificacion(
+                suscripcion.endpoint,
+                await asegurarVinculo(suscripcion, origen, nombrePlataforma),
+              );
+              registroServidor = guardada.registroServidor || "no-intentado";
+              persistencia = guardada.persistencia || "no-intentada";
+              fallo = guardada.fallo || null;
+              registroCuenta = guardada.registro || "sin-vincular";
+              if (guardada.estado === "activado" && guardada.registro === "vinculada") {
+                error = null;
+              } else if (guardada.estado === "limite") {
+                siguiente = "limite";
+                error = "limite";
+              } else if (guardada.registro !== "vinculada") {
+                siguiente = "sin-vincular";
+                error = guardada.fallo?.codigo || "temporal";
+              }
+            } else if (decision.accion === "confirmar") {
+              registroCuenta = "vinculada";
+              registroServidor = "aceptado";
+              persistencia = "guardada";
+              error = null;
+              fallo = null;
+            } else {
+              registroCuenta = "sin-vincular";
+              registroServidor = "aceptado";
+              persistencia = "guardada";
+              error = null;
+              fallo = null;
+            }
           }
         }
         return anotar(siguiente, {
@@ -566,11 +594,26 @@ export function useNotificacionesPush(origen) {
       if (previa) {
         const vigente = mismaClave(previa.options?.applicationServerKey, bytes);
         const info = vigente ? await estadoEnServidor(previa.endpoint).catch(() => null) : null;
-        const yaLista = info?.activa === true && (info.vinculada || !info.sesion);
-        if (vigente && yaLista) {
-          resultado = { estado: "activado", registroServidor: "aceptado", persistencia: "guardada" };
-        } else if (vigente) resultado = await guardarEnServidor(previa, origen, nombrePlataforma, null);
-        else resultado = await renovarSuscripcion(registro, previa, bytes, origen, nombrePlataforma);
+        const decision = info
+          ? decisionVinculo({
+              sesion: info.sesion === true,
+              activa: info.activa === true,
+              vinculada: info.vinculada === true,
+            })
+          : { accion: "vincular" };
+        if (vigente && decision.accion === "confirmar") {
+          resultado = { estado: "activado", registro: "vinculada", registroServidor: "aceptado", persistencia: "guardada" };
+        } else if (vigente && decision.accion === "anonima") {
+          resultado = { estado: "activado", registro: "sin-vincular", registroServidor: "aceptado", persistencia: "guardada" };
+        } else if (vigente) {
+          resultado = await conVerificacion(previa.endpoint, await guardarEnServidor(previa, origen, nombrePlataforma, null));
+        } else {
+          resultado = await renovarSuscripcion(registro, previa, bytes, origen, nombrePlataforma);
+          const actual = await registro.pushManager.getSubscription();
+          if (actual?.endpoint && resultado?.estado === "activado") {
+            resultado = await conVerificacion(actual.endpoint, resultado);
+          }
+        }
       } else {
         const nueva = await conTiempo(
           registro.pushManager.subscribe({
@@ -581,16 +624,17 @@ export function useNotificacionesPush(origen) {
           "suscripcion",
         );
         paso = "servidor";
-        resultado = await guardarEnServidor(nueva, origen, nombrePlataforma, null);
-        if (resultado.estado !== "activado") await nueva.unsubscribe().catch(() => false);
+        const guardada = await guardarEnServidor(nueva, origen, nombrePlataforma, null);
+        if (guardada.estado !== "activado") await nueva.unsubscribe().catch(() => false);
+        resultado = guardada.estado === "activado" ? await conVerificacion(nueva.endpoint, guardada) : guardada;
       }
 
       setEspera(resultado.estado === "limite" ? resultado.espera || null : null);
       return anotar(resultado.estado, {
         sw: "activo",
         scope,
-        suscripcion: resultado.estado === "activado" ? "activa" : "ausente",
-        registro: resultado.estado === "activado" ? "vinculada" : "desconocido",
+        suscripcion: resultado.estado === "activado" || resultado.estado === "sin-vincular" ? "activa" : "ausente",
+        registro: resultado.registro || (resultado.estado === "activado" ? "sin-vincular" : "desconocido"),
         error: resultado.fallo?.codigo || (resultado.estado === "error" ? "temporal" : resultado.estado === "limite" ? "limite" : null),
         fallo: resultado.fallo || null,
         registroServidor: resultado.registroServidor,

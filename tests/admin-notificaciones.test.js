@@ -9,6 +9,7 @@ import {
   PLATAFORMAS,
   RPC_DETALLE_CAMPANA,
   RPC_LISTAR_CAMPANAS,
+  RPC_INTENTOS_RECORDATORIOS,
   RPC_RECORDATORIOS_CALENDARIO,
   RPC_RESUMEN_NOTIFICACIONES,
   argumentosDetalleCampana,
@@ -20,6 +21,7 @@ import {
   interpretarConsultaNotificaciones,
   presentarCampanasNotificaciones,
   presentarDetalleCampana,
+  presentarIntentosRecordatorios,
   presentarRecordatoriosCalendario,
   presentarResumenNotificaciones,
   tasaErrorNotificaciones,
@@ -465,6 +467,74 @@ test("los recordatorios del calendario no inventan entregas ni muestran tareas a
   assert.equal(presentarRecordatoriosCalendario({ ...base, entregas_disponibles: true }, ahora).ok, false);
   const sql = fs.readFileSync(path.join(RAIZ, "supabase/calendario-recordatorios.sql"), "utf8");
   assert.equal(/endpoint|p256dh|user_agent/.test(cuerpoSql(sql)), false);
+
+  const intento = {
+    aceptado_en: null,
+    categoria: "rechazado",
+    codigo_estado: 400,
+    estado: "error",
+    fecha_programada: "2026-11-24",
+    hora_programada: "12:00",
+    intentado_en: "2026-11-24T15:18:46.000Z",
+    numero_intento: 5,
+    referencia: "55555555",
+  };
+  const visible = presentarIntentosRecordatorios({
+    ok: true,
+    entregas_disponibles: false,
+    intentos: [intento],
+    cierres: [{ aviso_cierre: "error", cantidad: 1 }],
+  });
+  assert.equal(visible.ok, true);
+  assert.equal(visible.intentos[0].codigo_estado, 400);
+  assert.equal(visible.cierres[0].aviso_cierre, "error");
+  assert.equal(
+    presentarIntentosRecordatorios({
+      ok: true,
+      entregas_disponibles: true,
+      intentos: [],
+      cierres: [],
+    }).ok,
+    false,
+  );
+  assert.equal(
+    presentarIntentosRecordatorios({
+      ok: true,
+      entregas_disponibles: false,
+      intentos: [{ ...intento, endpoint: "https://fcm.googleapis.com/fcm/send/a" }],
+      cierres: [],
+    }).ok,
+    false,
+  );
+  assert.equal(
+    presentarIntentosRecordatorios({
+      ok: true,
+      entregas_disponibles: false,
+      intentos: [{ ...intento, descripcion: "Riego" }],
+      cierres: [],
+    }).ok,
+    false,
+  );
+  assert.equal(
+    evaluarSolicitudAdmin(
+      ACCESO_DATOS_ADMIN.notificaciones,
+      solicitud(RPC_INTENTOS_RECORDATORIOS, JSON.stringify({ p_limite: 40 })),
+      { origen: ORIGEN },
+    ).ok,
+    true,
+  );
+  assert.equal(
+    evaluarSolicitudAdmin(
+      ACCESO_DATOS_ADMIN.notificaciones,
+      solicitud(RPC_INTENTOS_RECORDATORIOS, JSON.stringify({ p_limite: 40, p_usuario: USUARIO })),
+      { origen: ORIGEN },
+    ).ok,
+    false,
+  );
+  const pagina = fs.readFileSync(path.join(RAIZ, "app/admin/notificaciones/page.js"), "utf8");
+  assert.match(pagina, /IntentosRecordatorios/);
+  const intentosSql = cuerpoSql(fs.readFileSync(path.join(RAIZ, "supabase/calendario-recordatorios-intentos.sql"), "utf8"));
+  assert.equal(/endpoint|p256dh|user_agent/.test(intentosSql), false);
 });
 
 test("la página conserva la prueba actual y no arma un envío masivo", () => {

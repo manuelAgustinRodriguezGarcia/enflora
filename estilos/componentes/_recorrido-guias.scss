@@ -69,31 +69,29 @@
 
 .enflora-guia .driver-popover-navigation-btns {
   display: flex;
-  flex: 1 0 100%;
+  flex: 1 1 auto;
   flex-wrap: nowrap;
-  order: 0;
+  order: 2;
   gap: 0.4rem;
-  width: 100%;
+  min-width: 0;
+  width: auto;
 }
 
 .enflora-guia__salto {
-  flex: 1 0 100%;
+  flex: 0 0 auto;
   order: 1;
-  width: 100%;
+  width: auto;
+  padding: 0.4rem 0.85rem;
 }
 
-.enflora-guia .driver-popover-prev-btn,
 .enflora-guia .driver-popover-next-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1 1 0;
-  width: auto;
-  min-width: 0;
-}
-
-.enflora-guia .driver-popover-next-btn {
+  flex: 1 1 auto;
   gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
   border: 0;
   background: #0b3d2a;
   color: #eaedbb;
@@ -121,7 +119,16 @@
   cursor: pointer;
 }
 
-.enflora-guia .driver-popover-prev-btn,
+.enflora-guia .driver-popover-prev-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: auto;
+  border: 1px solid rgba(11, 61, 42, 0.2);
+  background: transparent;
+  color: #0b3d2a;
+}
 .enflora-guia__salto,
 .enflora-guia__ejemplo {
   border: 1px solid rgba(11, 61, 42, 0.2);
@@ -154,6 +161,22 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.modal--guia .modal__acciones {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.modal--guia .modal__acciones .boton:first-child {
+  flex: 0 0 auto;
+  width: auto;
+  padding-inline: 0.85rem;
+}
+
+.modal--guia .modal__acciones .boton:last-child {
+  flex: 1 1 auto;
+  width: auto;
 }
 
 .guias-perfil {

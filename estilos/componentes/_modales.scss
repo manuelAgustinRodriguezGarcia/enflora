@@ -64,6 +64,13 @@
       width: 100%;
       margin: 0;
       text-align: center;
+
+      .formulario__error {
+        width: 100%;
+        margin: 0;
+        line-height: 1.4;
+        text-wrap: pretty;
+      }
     }
   }
 

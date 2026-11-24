@@ -2,11 +2,12 @@ import { PruebaNotificacionesAdmin } from "@/componentes/admin/prueba-notificaci
 import {
   AvisoNotificaciones,
   FormularioNotificaciones,
+  IntentosRecordatorios,
   MarcoNotificaciones,
   RecordatoriosCalendario,
   ResumenNotificaciones,
 } from "@/componentes/admin/notificaciones-marco";
-import { leerPanelNotificaciones, leerRecordatoriosCalendario } from "@/lib/admin/notificaciones";
+import { leerIntentosRecordatorios, leerPanelNotificaciones, leerRecordatoriosCalendario } from "@/lib/admin/notificaciones";
 import { enlaceNotificaciones, prepararConsultaNotificaciones } from "@/lib/admin/notificaciones-reglas";
 import { credencialNotificaciones } from "./acceso";
 
@@ -25,6 +26,7 @@ export default async function PaginaNotificaciones({ searchParams }) {
     ? await leerPanelNotificaciones(credencial, consulta)
     : { ok: false, estado: "consulta", error: interpretado.error };
   const recordatorios = await leerRecordatoriosCalendario(credencial);
+  const intentos = await leerIntentosRecordatorios(credencial);
   const anterior = consulta.offset > 0 ? enlaceNotificaciones(consulta, { offset: Math.max(0, consulta.offset - 20) }) : "";
   const siguiente =
     panel.estado === "listo" && consulta.offset + panel.lista.filas.length < panel.lista.total
@@ -38,6 +40,7 @@ export default async function PaginaNotificaciones({ searchParams }) {
       aviso={AvisoNotificaciones(panel)}
     >
       <RecordatoriosCalendario resultado={recordatorios} />
+      <IntentosRecordatorios resultado={intentos} />
       {panel.estado === "listo" ? (
         <ResumenNotificaciones
           resumen={panel.resumen}

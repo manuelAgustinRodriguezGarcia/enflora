@@ -214,16 +214,15 @@ export function AnfitrionGuias({ usuarioId }) {
           confirmarBienvenida.current = true;
           despachar({ tipo: "aceptar-bienvenida" });
         }}
-        titulo="¡Bienvenido a Enflora!"
-        descripcion="Te voy a acompañar en tus primeros pasos para que puedas empezar a registrar y entender mejor tus cultivos."
-        textoConfirmar="¡Empecemos!"
-        textoCancelar="Ahora no"
+        titulo="¡Qué bueno tenerte acá!"
+        descripcion="Antes de empezar, Flora quiere enseñarte cómo usar Enflora de manera sencilla y rápida."
+        textoConfirmar="Siguiente"
+        textoCancelar="Saltar"
         icono={
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/images/flora-saluda.png" alt="" />
         }
         className="modal--guia"
-        accionesEnColumna
       />
       {estado.activa && esRutaApp(ruta) ? (
         <SpotlightGuia

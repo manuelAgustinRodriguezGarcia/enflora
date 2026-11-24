@@ -23,6 +23,8 @@ import {
   instanteProgramadoMs,
   mensajeAvisoTarea,
   procesarRecordatorios,
+  resultadoCierre,
+  temaAvisoTarea,
   proximaEjecucionEstimada,
   resumenEjecucion,
   suscripcionesDelUsuario,
@@ -563,4 +565,253 @@ test("el cron de recordatorios se suma sin tocar los crons que ya estaban", () =
   assert.match(sql, /set aviso_enviado_en = clock_timestamp\(\)/);
   const reclamo = sql.slice(sql.indexOf("function public.reclamar_avisos_calendario"), sql.indexOf("function public.cerrar_intento_aviso_calendario"));
   assert.equal(/aviso_enviado_en =/.test(reclamo), false);
+});
+
+test("el envío programado distingue aceptación, errores permanentes y un proveedor sin código", async () => {
+  const tema = temaAvisoTarea(TAREA);
+  assert.equal(tema.length <= 32, true);
+  assert.equal(tema, `t${TAREA.replace(/-/g, "").slice(0, 20)}`);
+  assert.equal(resultadoCierre({ alguno: true, temporal: true }), "aceptado");
+  assert.equal(resultadoCierre({ temporal: true }), "reintentar");
+  assert.equal(resultadoCierre({ sinEstado: true }), "indeterminado");
+  assert.equal(resultadoCierre({ rechazo: true }), "rechazado");
+  assert.equal(resultadoCierre({ credenciales: true }), "credenciales");
+  assert.equal(resultadoCierre({ expirada: true }), "sin_dispositivo");
+
+  const reclamadoEn = "2026-11-24T15:00:00.000Z";
+  const tarea = {
+    id: TAREA,
+    descripcion: "Riego",
+    unidadNombre: "Carpa",
+    fecha: "2026-11-24",
+    hora: "12:00",
+    reclamadoEn,
+    intento: 1,
+  };
+  const intentos = [];
+  const desactivadas = [];
+  const temas = [];
+  const mixto = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [
+        {
+          ...tarea,
+          suscripciones: [
+            { id: "equipo-ok", endpoint: "https://fcm.googleapis.com/fcm/send/a" },
+            { id: "equipo-mal", endpoint: "https://fcm.googleapis.com/fcm/send/b" },
+          ],
+        },
+      ],
+    }),
+    despachar: async (suscripcion, aviso, temaEnvio) => {
+      temas.push(temaEnvio);
+      assert.equal(aviso.titulo, "Flora te recuerda una tarea");
+      assert.match(aviso.mensaje, /Riego/);
+      assert.equal(aviso.url, `/calendario?tarea=${TAREA}`);
+      if (suscripcion.id === "equipo-mal") return { statusCode: 400 };
+      return { statusCode: 201 };
+    },
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    desactivar: async (id, motivo) => {
+      desactivadas.push([id, motivo]);
+    },
+    cerrar: async () => {},
+  });
+  assert.equal(mixto.aceptadas, 1);
+  assert.equal(mixto.errores, 0);
+  assert.deepEqual(temas, [tema, tema]);
+  assert.deepEqual(desactivadas, []);
+  assert.equal(intentos.find((fila) => fila.suscripcionId === "equipo-ok").estado, "aceptado");
+  assert.equal(intentos.find((fila) => fila.suscripcionId === "equipo-ok").codigo, 201);
+  assert.equal(intentos.find((fila) => fila.suscripcionId === "equipo-mal").categoria, "rechazado");
+  assert.equal(JSON.stringify(intentos).includes("fcm.googleapis.com"), false);
+
+  const cerradas = [];
+  const permanente = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...tarea, suscripciones: [{ id: "equipo-mal", endpoint: "https://fcm.googleapis.com/fcm/send/b" }] }],
+    }),
+    despachar: async () => ({ statusCode: 413 }),
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push(resultado);
+    },
+  });
+  assert.equal(permanente.aceptadas, 0);
+  assert.equal(permanente.errores, 1);
+  assert.deepEqual(cerradas, ["rechazado"]);
+
+  const credencial = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...tarea, suscripciones: [{ id: "equipo-clave", endpoint: "https://fcm.googleapis.com/fcm/send/c" }] }],
+    }),
+    despachar: async () => {
+      const error = new Error("forbidden");
+      error.statusCode = 403;
+      throw error;
+    },
+    desactivar: async (id, motivo) => {
+      desactivadas.push([id, motivo]);
+    },
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push(resultado);
+    },
+  });
+  assert.equal(credencial.errores, 1);
+  assert.deepEqual(desactivadas, [["equipo-clave", "credenciales"]]);
+  assert.equal(cerradas.at(-1), "credenciales");
+
+  const sinCodigo = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...tarea, suscripciones: [{ id: "equipo-raro", endpoint: "https://fcm.googleapis.com/fcm/send/d" }] }],
+    }),
+    despachar: async () => ({}),
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push(resultado);
+    },
+  });
+  assert.equal(sinCodigo.aceptadas, 0);
+  assert.equal(cerradas.at(-1), "indeterminado");
+  assert.equal(intentos.at(-1).categoria, "sin_estado");
+  assert.equal(intentos.at(-1).codigo, null);
+
+  const temporal = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({
+      examinadas: 1,
+      tareas: [{ ...tarea, suscripciones: [{ id: "equipo-tarde", endpoint: "https://fcm.googleapis.com/fcm/send/e" }] }],
+    }),
+    despachar: async () => {
+      const error = new Error("rate");
+      error.statusCode = 429;
+      throw error;
+    },
+    cerrar: async (id, marca, resultado) => {
+      cerradas.push(resultado);
+    },
+  });
+  assert.equal(temporal.errores, 1);
+  assert.equal(cerradas.at(-1), "reintentar");
+});
+
+test("un cierre que no se guarda no vuelve a despachar si el intento ya quedó aceptado", async () => {
+  const reclamadoEn = "2026-11-24T15:00:00.000Z";
+  const tarea = {
+    id: TAREA,
+    descripcion: "Riego",
+    unidadNombre: "Carpa",
+    reclamadoEn,
+    intento: 2,
+    suscripciones: [{ id: "equipo-ok", endpoint: "https://fcm.googleapis.com/fcm/send/a" }],
+  };
+  const intentos = [];
+  const primero = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({ examinadas: 1, tareas: [tarea] }),
+    despachar: async () => ({ statusCode: 201 }),
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+      if (fila.categoria === "cierre") return;
+    },
+    cerrar: async () => {
+      throw new Error("cierre");
+    },
+  });
+  assert.equal(primero.aceptadas, 1);
+  assert.equal(intentos.some((fila) => fila.estado === "aceptado" && fila.codigo === 201), true);
+  assert.equal(intentos.some((fila) => fila.categoria === "cierre" && fila.suscripcionId === null), true);
+
+  let envios = 0;
+  const segundo = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({ examinadas: 1, tareas: [tarea] }),
+    aceptadoPrevio: async () => true,
+    despachar: async () => {
+      envios += 1;
+      return { statusCode: 201 };
+    },
+    cerrar: async (id, marca, resultado) => {
+      assert.equal(resultado, "aceptado");
+    },
+  });
+  assert.equal(envios, 0);
+  assert.equal(segundo.aceptadas, 1);
+
+  const roto = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({ examinadas: 1, tareas: [{ ...tarea, descripcion: "" }] }),
+    despachar: async () => {
+      envios += 1;
+      return { statusCode: 201 };
+    },
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    cerrar: async () => {},
+  });
+  assert.equal(roto.errores, 1);
+  assert.equal(envios, 0);
+  assert.equal(intentos.at(-1).categoria, "payload");
+
+  const lectura = await procesarRecordatorios({
+    configurado: true,
+    reclamar: async () => ({ examinadas: 1, tareas: [tarea] }),
+    vigente: async () => {
+      throw new Error("lectura");
+    },
+    despachar: async () => {
+      envios += 1;
+    },
+    registrarIntento: async (fila) => {
+      intentos.push(fila);
+    },
+    cerrar: async () => {},
+  });
+  assert.equal(lectura.errores, 1);
+  assert.equal(envios, 0);
+  assert.equal(intentos.at(-1).categoria, "lectura");
+});
+
+test("la migración de intentos no reabre avisos ni mezcla el registro con las campañas", () => {
+  const sql = fs.readFileSync("supabase/calendario-recordatorios-intentos.sql", "utf8");
+  assert.equal(sql.charCodeAt(0), 45);
+  assert.match(sql, /for update skip locked/);
+  assert.match(sql, /interval '30 minutes'/);
+  assert.match(sql, /aviso_intentos < 5/);
+  assert.match(sql, /calendario_aviso_intentos/);
+  assert.match(sql, /listar_intentos_recordatorios_calendario_admin/);
+  assert.match(sql, /'credenciales'/);
+  assert.match(sql, /'indeterminado'/);
+  assert.match(sql, /'vencido'/);
+  assert.equal(/alter table public\.push_envios|insert into public\.push_envios|update public\.push_envios/i.test(sql), false);
+  const tabla = sql.slice(
+    sql.indexOf("create table if not exists public.calendario_aviso_intentos"),
+    sql.indexOf("create index if not exists calendario_aviso_intentos_tarea_idx"),
+  );
+  assert.equal(/endpoint|p256dh|user_agent/.test(tabla), false);
+  assert.equal(/update public\.tareas_programadas[\s\S]*aviso_cierre = null/i.test(sql), false);
+  const envio = fs.readFileSync("lib/calendario/enviar-recordatorios.js", "utf8");
+  assert.match(envio, /topic: tema/);
+  assert.match(envio, /calendario_aviso_intentos/);
+  assert.match(envio, /motivo === "credenciales"/);
+  assert.equal(envio.includes("tipo: \"prueba\""), false);
+  assert.equal(envio.includes("tipo: \"campana\""), false);
 });
