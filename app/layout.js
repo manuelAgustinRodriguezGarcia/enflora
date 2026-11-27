@@ -8,6 +8,7 @@ import { RegistroServiceWorker } from "@/componentes/registro-service-worker";
 import { MarcaEncabezado } from "@/componentes/marca-encabezado";
 import { AjusteTecladoViewport } from "@/componentes/ajuste-teclado-viewport";
 import { AnfitrionGuias } from "@/componentes/guias/anfitrion-guias";
+import { GUIAS_ACTIVAS } from "@/lib/guias/activas";
 import { BottomNav } from "@/componentes/bottom-nav";
 import { ClaseCuerpo } from "@/componentes/clase-cuerpo";
 import { ModalAccesoPrelanzamiento } from "@/componentes/modal-acceso-prelanzamiento";
@@ -140,7 +141,7 @@ export default async function Layout({ children }) {
             {children}
           </main>
           {conSupabase ? <BottomNav oculto={bloqueado} /> : null}
-          {conSupabase && usuario && !bloqueado && !esDemo ? <AnfitrionGuias usuarioId={usuario.id} /> : null}
+          {GUIAS_ACTIVAS && conSupabase && usuario && !bloqueado && !esDemo ? <AnfitrionGuias usuarioId={usuario.id} /> : null}
           <ModalAccesoPrelanzamiento abierto={bloqueado} />
           </ProveedorGuardSalidaFlora>
         </ProveedorMotion>

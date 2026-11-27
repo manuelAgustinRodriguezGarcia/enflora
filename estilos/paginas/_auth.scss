@@ -739,46 +739,13 @@
   padding: 0;
 }
 
+html:has(.marco-auth),
+body:has(.marco-auth) {
+  background: var(--brand-dark);
+}
+
 @media (max-width: 1023px) {
-  body:has(.marco-auth) {
-    overflow: hidden;
-  }
-
   body:has(.marco-auth) .encabezado {
-    position: fixed;
-    z-index: 50;
-    top: 0;
-    right: 0;
-    left: 0;
-    justify-content: flex-end;
-    background: transparent;
-    border-bottom: 0;
-    box-shadow: none;
-    pointer-events: none;
-
-    .encabezado__marca {
-      pointer-events: auto;
-      padding: 0.45rem 0.85rem;
-      border: 1px solid rgb(213 164 109 / 0.34);
-      border-radius: 999px;
-      background: rgb(41 26 19 / 0.96);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 10px 24px rgb(0 0 0 / 0.35);
-    }
-
-    .encabezado__logo {
-      height: 28px;
-    }
-
-    .encabezado__logo--oscuro {
-      display: none;
-    }
-
-    .encabezado__logo--claro {
-      display: block;
-    }
-
     .encabezado__notificaciones {
       display: none;
     }
@@ -792,7 +759,7 @@
 
   body:has(.marco-auth) .encabezado {
     padding-inline: 7vw;
-    background: transparent;
+    background: var(--brand-dark);
     border-bottom: 0;
     box-shadow: none;
 
@@ -829,7 +796,7 @@
 }
 
 .marco-auth {
-  --auth-fondo: #e8f2dc;
+  --auth-fondo: var(--brand-dark);
   --auth-vip-surface: rgb(2 18 12 / 0.72);
   --auth-vip-input: #083024;
   --auth-vip-input-hover: #0b3d2a;
@@ -841,8 +808,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  min-height: 100dvh;
+  justify-content: flex-start;
+  min-height: calc(100dvh - 4.5rem);
 
   &::before {
     content: "";
@@ -1038,6 +1005,9 @@
   }
 
   &--registro {
+    --auth-vip-input: #3f2c1e;
+    --auth-vip-input-hover: #4d3828;
+
     .formulario__fila {
       display: grid;
       grid-template-columns: minmax(0, 1fr);
@@ -1120,18 +1090,13 @@
     }
   }
 
-  &__flora {
-    display: none;
-  }
-
   &__panel {
     position: relative;
     z-index: 1;
     width: 100%;
-    padding: 1.75rem 24px calc(2.25rem + env(safe-area-inset-bottom, 0px));
+    padding: 1.75rem 1.25rem;
     border: 1px solid rgb(213 164 109 / 0.34);
-    border-bottom: 0;
-    border-radius: 24px 24px 0 0;
+    border-radius: 24px;
     background: var(--auth-vip-surface);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1188,68 +1153,38 @@
   }
 
   @media (max-width: 1023px) {
-    height: 100dvh;
-    min-height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    justify-content: flex-end;
+    min-height: calc(100dvh - 4.5rem);
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    justify-content: flex-start;
+    padding: 1.25rem 1rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
 
-    &::before {
-      background-color: #1a1210;
+    &--entrar {
+      justify-content: center;
     }
 
     .auth h1 {
       font-size: 1.75rem;
     }
 
-    .marco-auth__flora {
-      display: block;
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-      flex: none;
-      width: 100%;
-      height: 100%;
-      min-height: 0;
-      padding: 0;
-      margin: 0;
-      overflow: hidden;
-      line-height: 0;
-      pointer-events: none;
-
-      img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center top;
-      }
+    .marco-auth__panel,
+    &--registro .marco-auth__panel {
+      display: flex;
+      flex-direction: column;
+      flex: 0 0 auto;
+      max-height: none;
+      overflow: visible;
     }
 
-    .marco-auth__panel {
-      z-index: 1;
+    .marco-auth__contenido,
+    &--registro .marco-auth__contenido {
       flex: 0 0 auto;
-      min-height: 0;
+      min-height: auto;
+      overflow: visible;
     }
 
     &--registro {
-      .marco-auth__panel {
-        display: flex;
-        flex-direction: column;
-        flex: 0 1 auto;
-        max-height: min(72dvh, 40rem);
-        overflow: hidden;
-      }
-
-      .marco-auth__contenido {
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-x: hidden;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-      }
-
       .formulario__fila {
         grid-template-columns: minmax(0, 1fr);
 
@@ -1273,38 +1208,14 @@
       }
     }
 
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     min-height: calc(100dvh - 4.5rem);
     height: auto;
     max-height: none;
     padding: 1.5rem 7vw;
     overflow: visible;
-
-    &--entrar::before,
-    &--registro::before {
-      background-color: #1a1210;
-      background-repeat: no-repeat;
-      background-position: left center;
-      background-size: cover;
-    }
-
-    &--entrar::before {
-      background-image:
-        linear-gradient(rgb(8 4 2 / 0.38), rgb(8 4 2 / 0.38)),
-        url("/images/flora-landing-patova-buena.png");
-    }
-
-    &--registro::before {
-      background-image:
-        linear-gradient(rgb(8 4 2 / 0.38), rgb(8 4 2 / 0.38)),
-        url("/images/flora-register-patova.png");
-    }
-
-    .marco-auth__flora {
-      display: none;
-    }
 
     .marco-auth__panel {
       display: flex;
@@ -1324,8 +1235,13 @@
       box-shadow: 0 22px 56px rgb(0 0 0 / 0.48);
     }
 
+    &--entrar {
+      justify-content: center;
+    }
+
     &--registro {
       align-items: center;
+      justify-content: flex-start;
       padding-block: 1.5rem;
     }
 
@@ -1347,6 +1263,132 @@
       right: 0;
       left: 0;
       margin: 0 auto;
+    }
+  }
+
+  &--registro .marco-auth__panel {
+    background: #291a13;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  &--entrar {
+    .marco-auth__panel {
+      border-color: rgb(255 255 255 / 0.2);
+      background: #fff;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      box-shadow: 0 18px 40px rgb(0 0 0 / 0.28);
+    }
+
+    .auth,
+    .auth h1,
+    .formulario__campo {
+      color: var(--text-primary);
+    }
+
+    .auth__intro p,
+    .auth__alta,
+    .formulario__olvido {
+      color: var(--text-secondary);
+    }
+
+    .auth__alta a {
+      color: var(--brand-dark);
+      text-decoration-color: rgb(11 61 42 / 0.35);
+
+      &:hover {
+        color: var(--brand-dark-700);
+        text-decoration-color: var(--brand-dark);
+      }
+    }
+
+    .formulario__olvido:hover:not(:disabled) {
+      color: var(--brand-dark);
+    }
+
+    .formulario__icono,
+    .formulario__revelar {
+      color: var(--brand-dark);
+    }
+
+    .formulario__revelar:hover:not(:disabled) {
+      background: transparent;
+      color: var(--brand-dark-700);
+    }
+
+    .auth .formulario input:not([type="checkbox"]):not([type="radio"]),
+    .auth .formulario select {
+      border: 1px solid var(--border);
+      background: #fff;
+      background-color: #fff;
+      color: var(--text-primary);
+      caret-color: var(--text-primary);
+
+      &::placeholder {
+        color: var(--text-secondary);
+        opacity: 1;
+      }
+
+      &:hover:not(:focus) {
+        background: #fff;
+        background-color: #fff;
+        border-color: var(--brand-medium);
+      }
+
+      &:focus {
+        background: #fff;
+        background-color: #fff;
+        border-color: var(--brand-dark);
+        border-width: 1px;
+        box-shadow: 0 0 0 3px rgb(11 61 42 / 0.16);
+      }
+
+      &:-webkit-autofill,
+      &:-webkit-autofill:hover,
+      &:-webkit-autofill:active,
+      &:autofill {
+        border-color: var(--border);
+        -webkit-text-fill-color: var(--text-primary);
+        caret-color: var(--text-primary);
+        box-shadow: 0 0 0 1000px #fff inset;
+      }
+
+      &:-webkit-autofill:hover:not(:focus) {
+        border-color: var(--brand-medium);
+        box-shadow: 0 0 0 1000px #fff inset;
+      }
+
+      &:-webkit-autofill:focus,
+      &:autofill:focus {
+        border-color: var(--brand-dark);
+        -webkit-text-fill-color: var(--text-primary);
+        caret-color: var(--text-primary);
+        box-shadow:
+          0 0 0 1000px #fff inset,
+          0 0 0 3px rgb(11 61 42 / 0.16);
+      }
+    }
+
+    .formulario__enviar {
+      background: var(--brand-dark);
+      color: #fff;
+      box-shadow: none;
+
+      &:hover:not(:disabled) {
+        background: var(--brand-dark-700);
+        color: #fff;
+      }
+    }
+
+    .auth__aviso {
+      border-color: #e2a090;
+      background: #fff5f2;
+      color: #6b2a22;
+
+      svg {
+        color: #9b2c2c;
+      }
     }
   }
 }

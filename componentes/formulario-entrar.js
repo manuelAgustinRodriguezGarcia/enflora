@@ -170,7 +170,7 @@ export function FormularioEntrar({ aviso, siguiente = "" }) {
             ) : (
               <>
                 Entrar
-                <ArrowRight size={20} strokeWidth={2} color="#FDF1D7" aria-hidden="true" />
+                <ArrowRight size={20} strokeWidth={2} color="#fff" aria-hidden="true" />
               </>
             )}
           </button>

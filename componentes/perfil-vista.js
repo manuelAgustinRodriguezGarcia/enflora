@@ -11,6 +11,7 @@ import { PerfilGuardarFlotante } from "@/componentes/perfil-guardar-flotante";
 import { SeccionClimaPerfil } from "@/componentes/perfil-clima";
 import { PreferenciasFlora } from "@/componentes/preferencias-flora";
 import { PanelGuias } from "@/componentes/guias/panel-guias";
+import { GUIAS_ACTIVAS } from "@/lib/guias/activas";
 import { muestraEstadoNotificaciones } from "@/lib/perfil/notificaciones-visibles";
 
 function esRedireccion(error) {
@@ -153,7 +154,7 @@ export function PerfilVista({
       <SeccionClimaPerfil clima={clima} />
       {muestraEstadoNotificaciones(email) ? <PanelNotificaciones /> : null}
       <InvitacionFeedback />
-      <PanelGuias />
+      {GUIAS_ACTIVAS ? <PanelGuias /> : null}
       <PerfilGuardarFlotante visible={sucio} onGuardar={guardar} />
       <CerrarSesion />
     </section>
